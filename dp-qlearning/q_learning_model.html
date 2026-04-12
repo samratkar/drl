@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Q-Learning Model Tables</title>
+  <style>
+    :root {
+      --bg: #f3efe5;
+      --paper: #fffaf0;
+      --ink: #1f2933;
+      --muted: #5d6b78;
+      --accent: #9b87d8;
+      --accent-2: #c7b9ee;
+      --accent-deep: #7058b2;
+      --accent-soft: #f1ebff;
+      --line: #e5daf7;
+      --shadow: 0 18px 40px rgba(31, 41, 51, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Google Sans", "Product Sans", Inter, "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(199, 185, 238, 0.26), transparent 28%),
+        radial-gradient(circle at top right, rgba(155, 135, 216, 0.14), transparent 24%),
+        linear-gradient(180deg, #f8f4ec 0%, var(--bg) 100%);
+    }
+
+    .shell {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 16px 12px 24px;
+    }
+
+    .hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      min-height: 96px;
+      padding: 18px 18px 14px;
+      border: 1px solid rgba(155, 135, 216, 0.22);
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at left top, rgba(199, 185, 238, 0.55), transparent 34%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(241, 235, 255, 0.92));
+      box-shadow: 0 12px 26px rgba(112, 88, 178, 0.08);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.35rem, 1.9vw, 1.85rem);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      font-weight: 700;
+      color: var(--accent-deep);
+    }
+
+    .nav {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .nav a, .picker button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: 999px;
+      text-decoration: none;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent-deep), var(--accent));
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      cursor: pointer;
+      font: inherit;
+      box-shadow: 0 10px 20px rgba(112, 88, 178, 0.18);
+      white-space: nowrap;
+    }
+
+    select {
+      width: 100%;
+      min-height: 42px;
+      border-radius: 14px;
+      border: 1px solid rgba(155, 135, 216, 0.2);
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--ink);
+      padding: 0 12px;
+      font: inherit;
+    }
+
+    .nav a.secondary, .picker button.secondary {
+      background: var(--accent-soft);
+      color: var(--accent-deep);
+      border-color: rgba(155, 135, 216, 0.28);
+      box-shadow: none;
+    }
+
+    .layout {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .panel {
+      background: rgba(255, 250, 240, 0.9);
+      border: 1px solid rgba(155, 135, 216, 0.14);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .panel h2 {
+      margin: 0 0 8px;
+      font-size: 0.84rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent-deep);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .picker {
+      display: grid;
+      gap: 10px;
+    }
+
+    .picker-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .picker-grid button.active {
+      background: linear-gradient(135deg, var(--accent-deep), var(--accent));
+    }
+
+    .meta {
+      display: grid;
+      gap: 10px;
+    }
+
+    .meta-item {
+      padding: 12px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #fcfaff, #f5f0ff);
+    }
+
+    .meta-label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .meta-value {
+      margin-top: 5px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent-deep);
+    }
+
+    .tables {
+      display: grid;
+      gap: 10px;
+    }
+
+    .matrix-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(255, 255, 255, 0.82);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 0.86rem;
+    }
+
+    th {
+      background: linear-gradient(180deg, #f7f1ff, #efe6ff);
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    td.tie {
+      background: rgba(155, 135, 216, 0.16);
+      font-weight: 700;
+    }
+
+    .caption {
+      margin: 0;
+      font-size: 0.84rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .grid-table td:first-child,
+    .grid-table th:first-child {
+      width: 72px;
+    }
+
+    .small {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .transition-table th,
+    .transition-table td {
+      padding: 4px 6px;
+      font-size: 0.72rem;
+    }
+
+    @media (max-width: 920px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .matrix-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <h1>Q-Learning Model Tables</h1>
+      <div class="nav">
+        <a href="q_learning_game.html">Open Game View</a>
+      </div>
+    </section>
+
+    <section class="layout">
+      <aside class="stack">
+        <div class="panel">
+          <h2>State Picker</h2>
+          <div class="picker">
+            <select id="state-select"></select>
+            <div id="state-picker" class="picker-grid"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Current State</h2>
+          <div class="meta">
+            <div class="meta-item">
+              <div class="meta-label">State</div>
+              <div class="meta-value" id="current-state">0</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">max_a Q(s,a)</div>
+              <div class="meta-value" id="current-score">0.000</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Highest Policy Actions</div>
+              <div class="meta-value" id="current-best">RIGHT</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Export Summary</h2>
+          <div class="small">
+            <div>Episodes: <span id="num-episodes"></span></div>
+            <div>Alpha: <span id="alpha"></span></div>
+            <div>Gamma: <span id="gamma"></span></div><div>Epsilon Start: <span id="epsilon-start"></span></div><div>Epsilon Final: <span id="epsilon-final"></span></div><div>Action Order: <span id="action-order"></span></div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="tables">
+        <div class="matrix-row">
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Policy Matrix</h2>
+              <p class="caption">Rows are states. Columns follow the exported action order.</p>
+            </div>
+            <div id="policy-table"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Q Matrix</h2>
+              <p class="caption">Tied maxima are highlighted in each row.</p>
+            </div>
+            <div id="q-table"></div>
+          </div>
+        </div>
+
+      </main>
+    </section>
+  </div>
+
+  <script>
+    async function init() {
+      const response = await fetch("q_learning_policies.json", { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} while loading q_learning_policies.json`);
+      }
+      const policyData = await response.json();
+    const actionOrder = policyData.action_order;
+    const finalData = policyData.final;
+        const policyMatrix = finalData.policy_matrix;
+    const qMatrix = finalData.Q;
+    const stateScores = finalData.state_scores;
+    let selectedState = 0;
+
+    const pickerEl = document.getElementById("state-picker");
+    const stateSelectEl = document.getElementById("state-select");
+    const currentStateEl = document.getElementById("current-state");
+    const currentScoreEl = document.getElementById("current-score");
+    const currentBestEl = document.getElementById("current-best");
+    const numEpisodesEl = document.getElementById("num-episodes");
+    const alphaEl = document.getElementById("alpha");
+    const gammaEl = document.getElementById("gamma");
+    const epsilonStartEl = document.getElementById("epsilon-start");
+    const epsilonFinalEl = document.getElementById("epsilon-final");
+    const actionOrderEl = document.getElementById("action-order");
+    const policyTableEl = document.getElementById("policy-table");
+    const qTableEl = document.getElementById("q-table");
+    
+    function bestIndices(row) {
+      const maxValue = Math.max(...row);
+      return row
+        .map((prob, index) => [prob, index])
+        .filter(([prob]) => Math.abs(prob - maxValue) < 1e-12)
+        .map(([, index]) => index);
+    }
+
+    function bestActionsForState(stateId) {
+      return bestIndices(policyMatrix[stateId]).map((index) => actionOrder[index]);
+    }
+
+    function buildMatrixTable(title, matrix, digits = 3) {
+      const header = actionOrder.map((action) => `<th>${action}</th>`).join("");
+      const rows = matrix.map((row, state) => {
+        const tied = new Set(bestIndices(row));
+        const cols = row.map((value, index) => `<td class="${tied.has(index) ? "tie" : ""}">${Number(value).toFixed(digits)}</td>`).join("");
+        return `<tr><td><strong>${state}</strong></td>${cols}</tr>`;
+      }).join("");
+      return `
+        <table class="grid-table">
+          <thead>
+            <tr><th>State</th>${header}</tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    function renderPicker() {
+      pickerEl.innerHTML = "";
+      stateSelectEl.innerHTML = "";
+      for (let state = 0; state < policyMatrix.length; state += 1) {
+        const option = document.createElement("option");
+        option.value = String(state);
+        option.textContent = `State ${state}`;
+        option.selected = state === selectedState;
+        stateSelectEl.appendChild(option);
+
+        const button = document.createElement("button");
+        button.textContent = `s${state}`;
+        button.className = state === selectedState ? "active" : "secondary";
+        button.addEventListener("click", () => {
+          selectedState = state;
+          render();
+        });
+        pickerEl.appendChild(button);
+      }
+    }
+
+    function render() {
+      window.history.replaceState({}, "", `#state=${selectedState}`);
+      renderPicker();
+      currentStateEl.textContent = String(selectedState);
+      currentScoreEl.textContent = Number(stateScores[selectedState]).toFixed(3);
+      currentBestEl.textContent = bestActionsForState(selectedState).join(", ");
+      numEpisodesEl.textContent = String(policyData.num_episodes);
+      alphaEl.textContent = String(policyData.alpha);
+      gammaEl.textContent = String(policyData.gamma);
+      epsilonStartEl.textContent = String(policyData.epsilon_start);
+      epsilonFinalEl.textContent = String(policyData.epsilon_final);
+      actionOrderEl.textContent = actionOrder.join(", ");
+      policyTableEl.innerHTML = buildMatrixTable("Policy", policyMatrix, 3);
+      qTableEl.innerHTML = buildMatrixTable("Q", qMatrix, 3);
+    }
+
+    function initializeSelectedState() {
+      const hashMatch = window.location.hash.match(/(?:^#|&)state=(\d+)/);
+      const searchState = new URLSearchParams(window.location.search).get("state");
+      const rawState = Number.parseInt(hashMatch?.[1] ?? searchState ?? "0", 10);
+      if (Number.isInteger(rawState) && rawState >= 0 && rawState < policyMatrix.length) {
+        selectedState = rawState;
+      }
+    }
+
+    stateSelectEl.addEventListener("change", (event) => {
+      selectedState = Number.parseInt(event.target.value, 10);
+      render();
+    });
+
+    initializeSelectedState();
+    render();
+    }
+
+    init().catch((error) => {
+      console.error("Failed to load policy data", error);
+      document.body.innerHTML = `<pre style="padding:16px;font-family:monospace;">Failed to load q_learning_policies.json\n${String(error)}</pre>`;
+    });
+  </script>
+</body>
+</html>
