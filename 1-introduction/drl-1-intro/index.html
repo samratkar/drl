@@ -1,0 +1,628 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>A journey into the world of RL</title>
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://storage.googleapis.com/claat-public/codelab-elements.css">
+  <script>
+  MathJax = {
+    tex: {
+      inlineMath: [["$", "$"], ["\\(", "\\)"]],
+      displayMath: [["$$", "$$"], ["\\[", "\\]"]]
+    }
+  };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <google-codelab-analytics gaid="UA-49880327-14" ga4id=""></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  codelab-ga4id=""
+                  id="drl-1-intro"
+                  title="A journey into the world of RL"
+                  environment="web"
+                  feedback-link="">
+    
+      <google-codelab-step label="An introduction of the context" duration="0">
+        <ol type="1">
+<li>solves <strong>sequential decision</strong> making problems.</li>
+<li>there is always an <strong>objective</strong>. reach an objective involves taking many actions in sequence. each action changing the environment.</li>
+<li>example of balancing a flag pole. <code>slm-lab run --render</code></li>
+<li>environment : <ul>
+<li>states</li>
+<li>rewards for each state</li>
+<li>model dynamics / transition probability (conditional probability distribution of state transition and rewards given an action is taken in a given state - $P(s&#39;,r|s,a)$</li>
+<li>obstruction : states with negative / low rewards</li>
+<li>objective</li>
+</ul>
+</li>
+<li>agent : <ul>
+<li>policy : function that maps state to action : for stochastic cases it would be conditional probability of actions, given a state - $\pi(a|s)$</li>
+<li>action : the current state is changed, and a reward is received.</li>
+</ul>
+</li>
+<li>agent and environment are mutually exclusive</li>
+<li>$(s_t, a_t, r_t)$ control loop : experience.</li>
+<li>the control loop can repeat forever theoretically. However, they terminate after reaching a terminal state or a max number of steps t = T. time horizon from t=0 to t=T is known as an episode.</li>
+<li>a trajectory is a sequence of experiences in an episode : $\tau = (s_0,a_0,r_0), (s_1,a_1,r_1), (s_2,a_2,r_2), . . ., (s_T, a_T, r_t)$</li>
+<li>an agent typically needs several episodes to come up with a good policy. agent&#39;s objective is to fine tune its policy to get the maximum return.</li>
+</ol>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Value functions" duration="0">
+        <h2 is-upgraded>Return $G_i$</h2>
+<p><strong>return - a retrospective approach - one episode at a time</strong> : the discounted cumulative reward from time step $t$ to the <strong>end of the episode</strong>. $$G_t = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \dots = \sum_{k=0}^{T-t-1} \gamma^k R_{t+k+1}$$ where $\gamma \in [0,1]$ is the discount factor. $\gamma$ controls how much the agent values future rewards vs immediate rewards. $\gamma = 0$ makes the agent greedy (only cares about immediate reward), $\gamma = 1$ makes the agent far-sighted (values all future rewards equally). $G_t$ is a random variable — even for a single trajectory, the rewards depend on actions sampled from $\pi(a|s)$ and transitions sampled from $P(s&#39;,r|s,a)$. The computed value of $G_t$ is a single realization of this random variable. Its expected value, expanding the probabilities explicitly: $$E_\pi[G_t | S_t = s] = \sum_{a} \pi(a|s) \sum_{s&#39;,r} P(s&#39;,r|s,a) \left[r + \gamma , E_\pi[G_{t+1} | S_{t+1} = s&#39;]\right]$$ This is exactly $V^\pi(s)$ — the expected return is the state value function. Recursive form: $$G_t = R_{t+1} + \gamma , G_{t+1}$$ with $G_T = 0$. The return at time $t$ equals the immediate reward plus the discounted return from the next step.</p>
+<h2 is-upgraded>State value function $V^\pi(s)$</h2>
+<p><strong>state value function</strong> $V^\pi(s)$ : the expected return starting from state $s$ and following policy $\pi$. $$V^\pi(s) = E_\pi [G_t | S_t = s] = E_\pi \left[\sum_{k=0}^{T-t-1} \gamma^k R_{t+k+1} \mid S_t = s\right]$$ **expanding the expectation** — the agent picks action $a$ with probability $\pi(a|s)$, then the environment transitions to state $s&#39;$ with reward $r$ with probability $P(s&#39;,r|s,a)$. The future return from $s&#39;$ is still an expectation: $$V^\pi(s) = \sum_{a} \pi(a|s) \sum_{s&#39;,r} P(s&#39;,r|s,a) \left[r + \gamma , E_\pi[G_{t+1} | S_{t+1} = s&#39;]\right]$$ **recursive form (Bellman equation for $V^\pi$)** : $$V^\pi(s) = \sum_{a} \pi(a|s) \sum_{s&#39;,r} P(s&#39;,r|s,a) \left[r + \gamma , V^\pi(s&#39;)\right]$$. The value of a state equals the expected immediate reward plus the discounted value of the next state, averaged over all actions (weighted by policy) and all possible transitions.</p>
+<h2 is-upgraded>Action Value function $Q^\pi(s,a)$</h2>
+<p><strong>action Value function</strong> $Q^\pi(s,a)$ : the expected return starting from state $s$, taking action $a$, and then following policy $\pi$. $$Q^\pi(s,a) = E_\pi [G_t | S_t = s, A_t = a] = E_\pi \left[\sum_{k=0}^{T-t-1} \gamma^k R_{t+k+1} \mid S_t = s, A_t = a\right]$$ **expanding the expectation** — the action $a$ is already given, so we only sum over the environment dynamics. The environment transitions to state $s&#39;$ with reward $r$ with probability $P(s&#39;,r|s,a)$. The future return from $s&#39;$ is still an expectation: $$Q^\pi(s,a) = \sum_{s&#39;,r} P(s&#39;,r|s,a) \left[r + \gamma , E_\pi[G_{t+1} | S_{t+1} = s&#39;]\right]$$ **recursive form (Bellman equation for $Q^\pi$)** : $$Q^\pi(s,a) = \sum_{s&#39;,r} P(s&#39;,r|s,a) \left[r + \gamma \sum_{a&#39;} \pi(a&#39;|s&#39;) , Q^\pi(s&#39;,a&#39;)\right]$$. The value of taking action $a$ in state $s$ equals the expected immediate reward plus the discounted action value at the next state, averaged over the next action chosen by the policy.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Relationships between the value functions" duration="0">
+        <ol type="1">
+<li><strong>state and action value</strong>: $V^\pi(s) = \sum_{a} \pi(a|s) , Q^\pi(s,a)$ — the state value is the expected action value over all actions weighted by the policy.</li>
+<li><strong>return before vs after an episode</strong> : before the episode plays out, the return from state $s$ is unknown — it depends on what actions the policy will take and how the environment will respond. The best we can say is the <em>expected</em> return, which is $$V^\pi(s) = E_\pi[G_t | S_t = s]$$. **This is a prediction.** After the episode completes, we have the actual rewards $R_{t+1}, R_{t+2}, \dots, R_T$ and can compute the **realized return**: $$G_t = \sum_{k=0}^{T-t-1} \gamma^k R_{t+k+1}$$. **This is a single sample of the random variable $G_t$ after the episode has completed**.</li>
+<li><strong>timeline of what is available when</strong> :</li>
+</ol>
+<ul>
+<li><strong>during an episode</strong> : rewards $R_{t+1}$ are observed step by step, but $G_t$ is not yet available — we don&#39;t know the future rewards. The only thing we can work with is a prediction: $V^\pi(s)$ or $Q^\pi(s,a)$, but these require either a learned value function (from prior episodes) or known dynamics $P(s&#39;,r|s,a)$ to solve the Bellman equations.</li>
+<li><strong>after the episode</strong> : all rewards are known. We compute $G_t$ backwards from the terminal state using $G_t = R_{t+1} + \gamma , G_{t+1}$ with $G_T = 0$. This gives a single realized sample of return for every time step in the episode.</li>
+<li><strong>after many episodes</strong> : we accumulate many samples of $G_t$ for each state. Averaging these samples gives an estimate of $V^\pi(s)$ — this is Monte Carlo.</li>
+</ul>
+<h2 is-upgraded>One episode is not enough for $V^\pi(s)$ and $Q^\pi(s,a)$ :</h2>
+<p>even with a fixed policy, both $\pi(a|s)$ and $P(s&#39;,r|s,a)$ are stochastic. From the same state $s$, different episodes produce different trajectories with different rewards, giving different $G_t$ values. One episode gives one sample — one roll of the dice. The true $V^\pi(s)$ is the average over <em>all possible trajectories</em> from $s$, not the return from any single one. One episode would only be sufficient if both the policy and the environment were fully deterministic — then every trajectory from state $s$ would be identical, and a single $G_t$ would equal $V^\pi(s)$ exactly.</p>
+<h2 is-upgraded>monte carlo estimation</h2>
+<p>if we run many episodes and collect the realized return $G_t$ every time we visit state $s$, the average of those realized returns converges to the true state value: $$V^\pi(s) \approx \frac{1}{N(s)} \sum_{i=1}^{N(s)} G_t^{(i)}$$ where $N(s)$ is the number of times state $s$ was visited and $G_t^{(i)}$ is the realized return from the $i$-th visit. This is the **Monte Carlo method** — it estimates the expected value by averaging samples. It requires no knowledge of $P(s&#39;,r|s,a)$ (model-free), only completed episodes. The same idea applies to $Q^\pi(s,a)$: collect realized returns every time action $a$ is taken in state $s$, and average them: $$Q^\pi(s,a) \approx \frac{1}{N(s,a)} \sum_{i=1}^{N(s,a)} G_t^{(i)}$$</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Environment" duration="0">
+        <p class="image-container"><img src="img/b7f5e894184d9f86.svg"></p>
+<p><a href="/1-introduction/env.ipynb" target="_blank"><strong>environment in work</strong></a></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="From random actions to optimal policy — the dynamic programming transition" duration="0">
+        <h2 is-upgraded>The random agent baseline (<a href="./env.ipynb" target="_blank">env.ipynb</a>)</h2>
+<p>In <code>env.ipynb</code>, the agent picks actions uniformly at random: <code>action = env.action_space.sample()</code>. There is no learning, no memory, no strategy. The policy is: $$\pi(a|s) = \frac{1}{|\mathcal{A}|} \quad \forall , s, a$$</p>
+<p>This is useful as a baseline to observe what the environment looks like — what states are visited, what rewards come back, how episodes end. But the returns are poor. In Taxi-v3, for example, the random agent almost never delivers the passenger before the 200-step truncation. Every episode accumulates step penalties (-1 per step) and illegal-action penalties (-10), ending with deeply negative returns. The agent has no way to improve because it never uses the information it collects.</p>
+<p><strong>What is missing:</strong> the agent needs a mechanism to evaluate how good its current behavior is, and then change its behavior to be better.</p>
+<h2 is-upgraded>The dynamic programming agent (<a href="/1-introduction/dynamic-prog/dynamic_programming_case_study.ipynb" target="_blank">dynamic-prog/</a>)</h2>
+<p>Dynamic programming solves this by exploiting the <strong>full environment model</strong> $P(s&#39;,r|s,a)$. Unlike the random agent that must <em>run</em> episodes to see what happens, DP can <em>compute</em> what would happen under any policy without taking a single step.</p>
+<p>The algorithm — <strong>policy iteration</strong> — works in a loop:</p>
+<p><strong>Step 1 — Policy Evaluation: how good is the current policy?</strong> Start with the same uniform random policy as <code>env.ipynb</code>. Compute $V^\pi(s)$ for every state by solving the Bellman equation: $$V^\pi(s) = \sum_a \pi(a|s) \sum_{s&#39;,r} P(s&#39;,r|s,a)\left[r + \gamma V^\pi(s&#39;)\right]$$ This tells us the expected return from every state *if we keep following the current policy*. For the initial uniform policy on the 3x3 grid, all V values are negative — the random policy is bad.</p>
+<p><strong>Step 2 — Q from V: compare individual actions</strong> $V^\pi(s)$ tells us how good a <em>state</em> is, but to improve the policy we need to compare <em>actions</em>. Convert V to Q: $$Q^\pi(s,a) = \sum_{s&#39;,r} P(s&#39;,r|s,a)\left[r + \gamma V^\pi(s&#39;)\right]$$ Now for each state, we can see which action leads to the highest expected return. This is the critical bridge — Q breaks down the state value into per-action values so we can identify which actions are better than others.</p>
+<p><strong>Step 3 — Policy Improvement: shift probability to the best action</strong> For each state, find $\argmax_a Q^\pi(s,a)$ — the action(s) with the highest Q value. Build a new policy that puts most probability mass on those actions:</p>
+<ul>
+<li>Best action(s) get probability $\frac{1-\epsilon}{|\text{best actions}|} + \frac{\epsilon}{|\mathcal{A}|}$</li>
+<li>Other actions get just $\frac{\epsilon}{|\mathcal{A}|}$ (exploration floor)</li>
+</ul>
+<p>This is no longer uniform — the policy now <em>prefers</em> actions that lead to higher returns.</p>
+<p><strong>Step 4 — Repeat</strong> until the greedy actions stop changing (the policy is stable).</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="How the strategy improves — the 3x3 grid example - via Dynamic Programming" duration="0">
+        <p>The grid has state 0 (top-left) as start and state 8 (bottom-right, G) as goal. Step reward is -1, goal reward is +10.</p>
+<p><strong>Iteration 0 — evaluating the uniform policy:</strong></p>
+<table>
+<tr><td colspan="1" rowspan="1"></td><td colspan="1" rowspan="1"><p>Col 0</p>
+</td><td colspan="1" rowspan="1"><p>Col 1</p>
+</td><td colspan="1" rowspan="1"><p>Col 2</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>Row 0</p>
+</td><td colspan="1" rowspan="1"><p>-5.92</p>
+</td><td colspan="1" rowspan="1"><p>-5.02</p>
+</td><td colspan="1" rowspan="1"><p>-3.77</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>Row 1</p>
+</td><td colspan="1" rowspan="1"><p>-5.02</p>
+</td><td colspan="1" rowspan="1"><p>-3.14</p>
+</td><td colspan="1" rowspan="1"><p>0.25</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>Row 2</p>
+</td><td colspan="1" rowspan="1"><p>-3.77</p>
+</td><td colspan="1" rowspan="1"><p>0.25</p>
+</td><td colspan="1" rowspan="1"><p>G</p>
+</td></tr>
+</table>
+<p>All values are negative or near zero. The random policy wanders aimlessly, accumulating -1 penalties. Q values are computed, and for state 0, Q shows that RIGHT and DOWN (both -5.60) are better than UP and LEFT (both -6.25). This makes sense — RIGHT and DOWN move toward the goal. The policy is updated: RIGHT and DOWN get high probability in state 0.</p>
+<p><strong>Iteration 1 — evaluating the improved policy:</strong></p>
+<table>
+<tr><td colspan="1" rowspan="1"></td><td colspan="1" rowspan="1"><p>Col 0</p>
+</td><td colspan="1" rowspan="1"><p>Col 1</p>
+</td><td colspan="1" rowspan="1"><p>Col 2</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>Row 0</p>
+</td><td colspan="1" rowspan="1"><p>2.71</p>
+</td><td colspan="1" rowspan="1"><p>4.35</p>
+</td><td colspan="1" rowspan="1"><p>6.22</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>Row 1</p>
+</td><td colspan="1" rowspan="1"><p>4.35</p>
+</td><td colspan="1" rowspan="1"><p>6.46</p>
+</td><td colspan="1" rowspan="1"><p>8.93</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>Row 2</p>
+</td><td colspan="1" rowspan="1"><p>6.22</p>
+</td><td colspan="1" rowspan="1"><p>8.93</p>
+</td><td colspan="1" rowspan="1"><p>G</p>
+</td></tr>
+</table>
+<p>All values are now <strong>positive</strong>. The improved policy reaches the goal reliably enough that the +10 goal reward outweighs the step penalties. The greedy actions haven&#39;t changed from iteration 0 — the policy is already stable. Convergence in just 2 iterations.</p>
+<p>The final policy points every state toward the goal:</p>
+<pre><code>+---+---+---+
+|&gt;v | v | v |
++---+---+---+
+| &gt; |&gt;v | v |
++---+---+---+
+| &gt; | &gt; | G |
++---+---+---+
+</code></pre>
+<h2 is-upgraded>The key transition: why DP works where the random agent cannot</h2>
+<table>
+<tr><td colspan="1" rowspan="1"></td><td colspan="1" rowspan="1"><p>Random agent (env.ipynb)</p>
+</td><td colspan="1" rowspan="1"><p>DP agent (dynamic-prog/)</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Policy</strong></p>
+</td><td colspan="1" rowspan="1"><p>Fixed uniform $\pi(a|s) = 1/|\mathcal{A}|$</p>
+</td><td colspan="1" rowspan="1"><p>Iteratively improved toward optimal</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Uses model $P(s&#39;,r|s,a)$?</strong></p>
+</td><td colspan="1" rowspan="1"><p>No — just samples actions and observes</p>
+</td><td colspan="1" rowspan="1"><p>Yes — computes exact expectations</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Learning</strong></p>
+</td><td colspan="1" rowspan="1"><p>None — same policy forever</p>
+</td><td colspan="1" rowspan="1"><p>Policy evaluation + improvement loop</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Requires episodes?</strong></p>
+</td><td colspan="1" rowspan="1"><p>Yes — must run the environment</p>
+</td><td colspan="1" rowspan="1"><p>No — plans entirely from the model</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Limitation</strong></p>
+</td><td colspan="1" rowspan="1"><p>No improvement possible</p>
+</td><td colspan="1" rowspan="1"><p>Requires knowing the full model</p>
+</td></tr>
+</table>
+<p>The random agent in <code>env.ipynb</code> gives us the <strong>floor</strong> — what happens with zero intelligence. Dynamic programming gives us the <strong>ceiling</strong> for this MDP — the optimal policy computed exactly from the known model. The gap between them is what learning algorithms (Monte Carlo, TD, Q-learning) try to close <em>without</em> knowing $P(s&#39;,r|s,a)$.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Monte Carlo Estimation (montecarlo/)" duration="0">
+        <h2 is-upgraded>The problem: DP needs the full model, but what if we don&#39;t have it?</h2>
+<p>Dynamic programming computes exact expectations using $P(s&#39;,r|s,a)$. But in most real problems, the agent doesn&#39;t know the environment dynamics — it can only <em>interact</em> with the environment and observe what happens. Monte Carlo bridges this gap: it estimates $V^\pi(s)$ and $Q^\pi(s,a)$ from <strong>actual episode experience</strong> rather than from a known model.</p>
+<p>Recall from point 8 in the Value Functions section: $$V^\pi(s) \approx \frac{1}{N(s)} \sum_{i=1}^{N(s)} G_t^{(i)}$$</p>
+<p>This is the core idea — run many episodes, collect the realized return $G_t$ every time a state is visited, and average them. The law of large numbers guarantees convergence to the true expectation.</p>
+<h2 is-upgraded>How Monte Carlo control works — learning from complete episodes</h2>
+<p>The <a href="./montecarlo/monte_carlo_case_study.ipynb" target="_blank">Monte Carlo case study</a> implements <strong>first-visit on-policy MC control</strong> on the same 3x3 grid-world. The algorithm:</p>
+<p><strong>1. Initialize</strong> — $Q(s,a) = 0$ for all state-action pairs. Start with a uniform random policy (same as <code>env.ipynb</code>).</p>
+<p><strong>2. Generate an episode</strong> — follow the current policy to produce a trajectory: $$\tau = (s_0, a_0, r_1), (s_1, a_1, r_2), \dots, (s_T, a_T, r_T)$$</p>
+<p>This is exactly what <code>env.ipynb</code> does — but now we <em>use</em> the returns instead of just logging them.</p>
+<p><strong>3. Compute returns backwards</strong> — after the episode ends, walk backwards through the trajectory: $$G_t = r_{t+1} + \gamma , G_{t+1} \quad \text{with } G_T = 0$$</p>
+<p><strong>4. First-visit update</strong> — for each $(s_t, a_t)$ that appears for the first time in the episode, add $G_t$ to a running average: $$Q(s_t, a_t) \leftarrow \text{average of all } G_t \text{ samples for } (s_t, a_t)$$</p>
+<p><strong>5. Improve the policy</strong> — rebuild an epsilon-greedy policy from the updated Q values:</p>
+<ul>
+<li>Best action gets probability $\frac{1-\epsilon}{|\text{best}|} + \frac{\epsilon}{|\mathcal{A}|}$</li>
+<li>Other actions get $\frac{\epsilon}{|\mathcal{A}|}$</li>
+</ul>
+<p><strong>6. Repeat</strong> for many episodes (7000 in the case study), decaying epsilon from 0.25 to 0.02.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="How the policy improves — from random to near-optimal using Monte Carlo" duration="0">
+        <p>The training snapshots show the progression:</p>
+<p><strong>Episode 1</strong> — Q values are all zero, policy is random. The agent stumbles around just like the random agent in <code>env.ipynb</code>.</p>
+<p><strong>Episode 10</strong> — after just a few episodes, states near the goal already have meaningful Q values. State 5 (one step above goal) learns $V \approx 10.0$ quickly because any episode that reaches state 5 and goes DOWN gets +10. The policy near the goal is already correct.</p>
+<p><strong>Episode 100</strong> — the near-optimal policy is largely established. Q values propagate backwards from the goal: state 7 learns RIGHT is good (leads to goal), state 4 learns DOWN is good (leads to state 7), and so on. The policy reads:</p>
+<pre><code>+---+---+---+
+| &gt; | &gt; | v |
++---+---+---+
+| v | v | v |
++---+---+---+
+| ^ | &gt; | G |
++---+---+---+
+</code></pre>
+<p><strong>Episode 7000</strong> — final converged Q values:</p>
+<table>
+<tr><td colspan="1" rowspan="1"><p>State</p>
+</td><td colspan="1" rowspan="1"><p>UP</p>
+</td><td colspan="1" rowspan="1"><p>RIGHT</p>
+</td><td colspan="1" rowspan="1"><p>DOWN</p>
+</td><td colspan="1" rowspan="1"><p>LEFT</p>
+</td><td colspan="1" rowspan="1"><p>Best Action</p>
+</td><td colspan="1" rowspan="1"><p>V(s)</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>0</p>
+</td><td colspan="1" rowspan="1"><p>0.91</p>
+</td><td colspan="1" rowspan="1"><p><strong>2.85</strong></p>
+</td><td colspan="1" rowspan="1"><p>2.10</p>
+</td><td colspan="1" rowspan="1"><p>1.38</p>
+</td><td colspan="1" rowspan="1"><p>RIGHT</p>
+</td><td colspan="1" rowspan="1"><p>2.85</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>1</p>
+</td><td colspan="1" rowspan="1"><p>2.72</p>
+</td><td colspan="1" rowspan="1"><p><strong>4.97</strong></p>
+</td><td colspan="1" rowspan="1"><p>4.21</p>
+</td><td colspan="1" rowspan="1"><p>1.81</p>
+</td><td colspan="1" rowspan="1"><p>RIGHT</p>
+</td><td colspan="1" rowspan="1"><p>4.97</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>2</p>
+</td><td colspan="1" rowspan="1"><p>4.39</p>
+</td><td colspan="1" rowspan="1"><p>4.57</p>
+</td><td colspan="1" rowspan="1"><p><strong>7.05</strong></p>
+</td><td colspan="1" rowspan="1"><p>3.18</p>
+</td><td colspan="1" rowspan="1"><p>DOWN</p>
+</td><td colspan="1" rowspan="1"><p>7.05</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>3</p>
+</td><td colspan="1" rowspan="1"><p>1.08</p>
+</td><td colspan="1" rowspan="1"><p>3.75</p>
+</td><td colspan="1" rowspan="1"><p><strong>4.92</strong></p>
+</td><td colspan="1" rowspan="1"><p>1.95</p>
+</td><td colspan="1" rowspan="1"><p>DOWN</p>
+</td><td colspan="1" rowspan="1"><p>4.92</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>4</p>
+</td><td colspan="1" rowspan="1"><p>3.17</p>
+</td><td colspan="1" rowspan="1"><p>6.21</p>
+</td><td colspan="1" rowspan="1"><p><strong>7.13</strong></p>
+</td><td colspan="1" rowspan="1"><p>2.39</p>
+</td><td colspan="1" rowspan="1"><p>DOWN</p>
+</td><td colspan="1" rowspan="1"><p>7.13</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>5</p>
+</td><td colspan="1" rowspan="1"><p>4.55</p>
+</td><td colspan="1" rowspan="1"><p>7.23</p>
+</td><td colspan="1" rowspan="1"><p><strong>9.49</strong></p>
+</td><td colspan="1" rowspan="1"><p>5.32</p>
+</td><td colspan="1" rowspan="1"><p>DOWN</p>
+</td><td colspan="1" rowspan="1"><p>9.49</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>6</p>
+</td><td colspan="1" rowspan="1"><p>3.57</p>
+</td><td colspan="1" rowspan="1"><p><strong>7.06</strong></p>
+</td><td colspan="1" rowspan="1"><p>4.07</p>
+</td><td colspan="1" rowspan="1"><p>3.43</p>
+</td><td colspan="1" rowspan="1"><p>RIGHT</p>
+</td><td colspan="1" rowspan="1"><p>7.06</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>7</p>
+</td><td colspan="1" rowspan="1"><p>5.47</p>
+</td><td colspan="1" rowspan="1"><p><strong>9.90</strong></p>
+</td><td colspan="1" rowspan="1"><p>6.91</p>
+</td><td colspan="1" rowspan="1"><p>4.59</p>
+</td><td colspan="1" rowspan="1"><p>RIGHT</p>
+</td><td colspan="1" rowspan="1"><p>9.90</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>8</p>
+</td><td colspan="1" rowspan="1"><p>0.00</p>
+</td><td colspan="1" rowspan="1"><p>0.00</p>
+</td><td colspan="1" rowspan="1"><p>0.00</p>
+</td><td colspan="1" rowspan="1"><p>0.00</p>
+</td><td colspan="1" rowspan="1"><p>(goal)</p>
+</td><td colspan="1" rowspan="1"><p>0.00</p>
+</td></tr>
+</table>
+<p>The final policy consistently reaches the goal in 3-4 steps with return ~7:</p>
+<pre><code>s0 --RIGHT--&gt; s1 --RIGHT--&gt; s2 --DOWN--&gt; s5 --DOWN--&gt; s8 (return = 7)
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Monte Carlo vs random agent — what changed?" duration="0">
+        <p>The random agent and the early MC agent start from the same place — uniform random actions. The difference is what happens <em>after</em> each episode:</p>
+<table>
+<tr><td colspan="1" rowspan="1"></td><td colspan="1" rowspan="1"><p>Random agent (env.ipynb)</p>
+</td><td colspan="1" rowspan="1"><p>Monte Carlo agent</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>After an episode</strong></p>
+</td><td colspan="1" rowspan="1"><p>Logs returns to CSV, learns nothing</p>
+</td><td colspan="1" rowspan="1"><p>Computes $G_t$, updates $Q(s,a)$ averages</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Policy across episodes</strong></p>
+</td><td colspan="1" rowspan="1"><p>Never changes — always uniform</p>
+</td><td colspan="1" rowspan="1"><p>Gradually shifts probability toward better actions</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Episode returns</strong></p>
+</td><td colspan="1" rowspan="1"><p>Consistently poor (deep negatives in Taxi)</p>
+</td><td colspan="1" rowspan="1"><p>Improve over time as policy improves</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Requires model $P$?</strong></p>
+</td><td colspan="1" rowspan="1"><p>No</p>
+</td><td colspan="1" rowspan="1"><p>No — model-free, learns from experience only</p>
+</td></tr>
+</table>
+<p>The random agent computes returns but throws them away. The MC agent <em>uses</em> them to update Q, which updates the policy, which generates better episodes, which produce better return estimates — a virtuous cycle.</p>
+<h2 is-upgraded>Why MC is better than random but not as clean as DP</h2>
+<p><strong>Better than random</strong> — MC actually learns. After enough episodes, the agent discovers which actions lead to high returns and favors them. The 3x3 grid goes from random wandering to near-optimal navigation.</p>
+<p><strong>Noisier than DP</strong> — compare the MC Q values to the DP Q values:</p>
+<table>
+<tr><td colspan="1" rowspan="1"><p>State</p>
+</td><td colspan="1" rowspan="1"><p>DP $Q^*(s, \text{best})$</p>
+</td><td colspan="1" rowspan="1"><p>MC $Q(s, \text{best})$</p>
+</td><td colspan="1" rowspan="1"><p>Difference</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>0</p>
+</td><td colspan="1" rowspan="1"><p>2.77</p>
+</td><td colspan="1" rowspan="1"><p>2.85</p>
+</td><td colspan="1" rowspan="1"><p>+0.08</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>4</p>
+</td><td colspan="1" rowspan="1"><p>6.62</p>
+</td><td colspan="1" rowspan="1"><p>7.13</p>
+</td><td colspan="1" rowspan="1"><p>+0.51</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>7</p>
+</td><td colspan="1" rowspan="1"><p>9.19</p>
+</td><td colspan="1" rowspan="1"><p>9.90</p>
+</td><td colspan="1" rowspan="1"><p>+0.71</p>
+</td></tr>
+</table>
+<p>MC values are close but not exact — they are <strong>sample averages</strong>, not exact expectations. With more episodes, they would converge closer to the DP values. The remaining gap comes from:</p>
+<ul>
+<li><strong>Finite samples</strong> — 7000 episodes is a lot, but not infinite</li>
+<li><strong>Epsilon-soft policy</strong> — MC evaluates the epsilon-soft policy (with exploration), not the purely greedy one, so its V values reflect occasional random exploration steps</li>
+<li><strong>High variance</strong> — full-episode returns depend on the entire trajectory; one bad slip early in the episode affects the return for every state visited</li>
+</ul>
+<p><strong>The tradeoff</strong>: DP is exact but needs the model. MC is approximate but only needs episodes. This is the fundamental model-based vs model-free divide.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Temporal Difference Methods — improving on Monte Carlo" duration="0">
+        <h2 is-upgraded>The two limitations of Monte Carlo</h2>
+<p>MC is model-free and learns from experience — a big step up from DP&#39;s requirement of knowing $P(s&#39;,r|s,a)$. But it has two structural weaknesses:</p>
+<p><strong>1. Must wait for the episode to end.</strong> MC computes returns backwards from the terminal state: $G_t = r_{t+1} + \gamma G_{t+1}$. This means no learning happens *during* the episode — the agent must finish the entire trajectory before it can update any Q value. For environments with long episodes (or continuing tasks that never terminate), this is a serious problem.</p>
+<p><strong>2. High variance.</strong> The return $G_t$ depends on every reward from step $t$ all the way to the end. A single unlucky slip early in the episode contaminates the return for every state visited before it. More steps in the trajectory means more sources of randomness compounding into $G_t$.</p>
+<h2 is-upgraded>The key insight: what if we don&#39;t wait?</h2>
+<p>Recall the MC update for Q: $$Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \left[ G_t - Q(s_t, a_t) \right]$$</p>
+<p>The target is $G_t$ — the <em>actual</em> complete return, which requires waiting until the episode ends.</p>
+<p>Now recall the Bellman equation: $$Q^\pi(s,a) = \sum_{s&#39;,r} P(s&#39;,r|s,a)\left[r + \gamma V^\pi(s&#39;)\right]$$</p>
+<p>This says the value of taking action $a$ in state $s$ equals the immediate reward plus the discounted value of the next state. DP uses this with the known model. But what if we use it with <em>samples</em> instead?</p>
+<p>After taking one step — observing $r_{t+1}$ and $s_{t+1}$ — we already have a one-step estimate of the return: $$r_{t+1} + \gamma V(s_{t+1})$$</p>
+<p>We don&#39;t know the true $V(s_{t+1})$, but we have our current *estimate* of it. This is called **bootstrapping** — using an estimate to update another estimate. This is the core idea of temporal difference learning.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Bootstrapping walkthrough — how estimates build on estimates - in Temporal Difference" duration="0">
+        <p>The natural question is: where does $V(s_{t+1})$ come from if we haven&#39;t learned anything yet? The answer: **we initialize all values to zero (a wrong guess), and the real reward signal gradually corrects them, one state at a time, rippling backwards from the goal.**</p>
+<p>Walk through it on the 3x3 grid ($\alpha = 0.1$, $\gamma = 0.9$, all $V$ initialized to 0):</p>
+<pre><code>[s0] [s1] [s2]         V = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+[s3] [s4] [s5]
+[s6] [s7] [s8=G]
+</code></pre>
+<p><strong>Phase 1 — the goal&#39;s neighbors learn first.</strong></p>
+<p>The agent stumbles around randomly and eventually reaches state 7, then moves RIGHT to the goal:</p>
+<p><strong>Step:</strong> $s_7 \xrightarrow{\text{RIGHT}} s_8$ , reward = +10, done</p>
+<p>TD target = $r + \gamma \times V(s_8) = 10 + 0.9 \times 0 = 10$</p>
+<p>$$V(s_7) \leftarrow 0 + 0.1 \times (10 - 0) = 1.0$$</p>
+<pre><code>V = [0, 0, 0, 0, 0, 0, 0, 1.0, 0]
+</code></pre>
+<p>State 7 is no longer zero. It saw one real reward (+10) and updated. The estimate is far from the true value, but it encodes real information: &#34;something good happens after state 7.&#34;</p>
+<p>Similarly, another episode reaches state 5 and goes DOWN to the goal:</p>
+<p><strong>Step:</strong> $s_5 \xrightarrow{\text{DOWN}} s_8$ , reward = +10, done</p>
+<p>$$V(s_5) \leftarrow 0 + 0.1 \times (10 - 0) = 1.0$$</p>
+<pre><code>V = [0, 0, 0, 0, 0, 1.0, 0, 1.0, 0]
+</code></pre>
+<p><strong>Phase 2 — the signal propagates one hop backwards.</strong></p>
+<p>Now state 4 transitions to state 7 (which already has $V = 1.0$):</p>
+<p><strong>Step:</strong> $s_4 \xrightarrow{\text{DOWN}} s_7$ , reward = -1</p>
+<p>TD target = $-1 + 0.9 \times V(s_7) = -1 + 0.9 \times 1.0 = -0.1$</p>
+<p>$$V(s_4) \leftarrow 0 + 0.1 \times (-0.1 - 0) = -0.01$$</p>
+<pre><code>V = [0, 0, 0, 0, -0.01, 1.0, 0, 1.0, 0]
+</code></pre>
+<p>State 4 learned a small signal — not from the goal directly, but from state 7&#39;s estimate. The value is slightly negative because the -1 step cost dominates the small discounted estimate. But as $V(s_7)$ gets updated more (growing toward its true value), state 4&#39;s estimate will improve too.</p>
+<p><strong>Phase 3 — repeated visits refine the estimates.</strong></p>
+<p>After many more episodes, state 7 is visited repeatedly from different trajectories. Each visit nudges $V(s_7)$ closer to the true value:</p>
+<p>Visit 2: $V(s_7) \leftarrow 1.0 + 0.1 \times (10 - 1.0) = 1.9$ Visit 3: $V(s_7) \leftarrow 1.9 + 0.1 \times (10 - 1.9) = 2.71$ Visit 4: $V(s_7) \leftarrow 2.71 + 0.1 \times (10 - 2.71) = 3.439$ ...and so on, approaching the true value.</p>
+<p>As $V(s_7)$ grows, the next time state 4 transitions to state 7:</p>
+<p><strong>Step:</strong> $s_4 \xrightarrow{\text{DOWN}} s_7$ , reward = -1, $V(s_7) = 2.71$</p>
+<p>TD target = $-1 + 0.9 \times 2.71 = 1.439$</p>
+<p>$$V(s_4) \leftarrow -0.01 + 0.1 \times (1.439 - (-0.01)) = 0.1349$$</p>
+<p>State 4 just jumped from slightly negative to positive — the improving estimate of state 7 pulled it up.</p>
+<p><strong>Phase 4 — the chain reaches state 0.</strong></p>
+<p>The same process continues: state 1 learns from state 4&#39;s improving estimate, state 0 learns from state 1&#39;s improving estimate. Each state doesn&#39;t need to &#34;see&#34; the goal — it only needs to see one step ahead to a state whose estimate is already partially correct.</p>
+<pre><code>Goal (+10) → V(s7) corrected → V(s4) corrected → V(s1) corrected → V(s0) corrected
+                              → V(s5) corrected → V(s2) corrected → V(s0) corrected
+</code></pre>
+<p><strong>The contrast:</strong></p>
+<table>
+<tr><td colspan="1" rowspan="1"><p>Method</p>
+</td><td colspan="1" rowspan="1"><p>How does state 0 learn about the +10 goal reward?</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>MC</strong></p>
+</td><td colspan="1" rowspan="1"><p>Agent must walk all the way from $s_0$ to $s_8$ in one episode. Then $G_0 = r_1 + \gamma r_2 + \dots + \gamma^k \times 10$ is computed backwards. The entire trajectory is needed.</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>DP</strong></p>
+</td><td colspan="1" rowspan="1"><p>Computes $V(s_0)$ from $V(s_1)$ and $V(s_3)$ using the known model $P(s&#39;,r|s,a)$. No experience needed, but requires knowing every transition probability.</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>TD</strong></p>
+</td><td colspan="1" rowspan="1"><p>State 0 learns from state 1&#39;s estimate, which learned from state 4&#39;s estimate, which learned from state 7&#39;s estimate, which learned from the actual +10. Each link is one real observed transition. No model needed, no complete episode needed.</p>
+</td></tr>
+</table>
+<p>This is why bootstrapping works despite starting from wrong guesses — the real reward signal at the goal is the anchor, and it propagates backwards through the chain of estimates, one step at a time, getting more accurate with every visit.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="TD(0) prediction — learning V step by step" duration="0">
+        <p>The simplest TD method updates the state value after every single step: $$V(s_t) \leftarrow V(s_t) + \alpha \left[ r_{t+1} + \gamma V(s_{t+1}) - V(s_t) \right]$$</p>
+<p>Compare this to MC:</p>
+<table>
+<tr><td colspan="1" rowspan="1"></td><td colspan="1" rowspan="1"><p>MC</p>
+</td><td colspan="1" rowspan="1"><p>TD(0)</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Target</strong></p>
+</td><td colspan="1" rowspan="1"><p>$G_t$ (complete return)</p>
+</td><td colspan="1" rowspan="1"><p>$r_{t+1} + \gamma V(s_{t+1})$ (one-step estimate)</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>When it updates</strong></p>
+</td><td colspan="1" rowspan="1"><p>After the episode ends</p>
+</td><td colspan="1" rowspan="1"><p>After every step</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>What it uses for future value</strong></p>
+</td><td colspan="1" rowspan="1"><p>Actual future rewards</p>
+</td><td colspan="1" rowspan="1"><p>Current estimate $V(s_{t+1})$</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Bootstrapping</strong></p>
+</td><td colspan="1" rowspan="1"><p>No</p>
+</td><td colspan="1" rowspan="1"><p>Yes</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Bias</strong></p>
+</td><td colspan="1" rowspan="1"><p>Unbiased (uses real returns)</p>
+</td><td colspan="1" rowspan="1"><p>Biased (estimate depends on current V)</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Variance</strong></p>
+</td><td colspan="1" rowspan="1"><p>High (entire trajectory)</p>
+</td><td colspan="1" rowspan="1"><p>Lower (only one step of randomness)</p>
+</td></tr>
+</table>
+<p>The quantity $\delta_t = r_{t+1} + \gamma V(s_{t+1}) - V(s_t)$ is called the **TD error** — it measures how surprising the transition was relative to what we expected.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="From TD prediction to TD control — SARSA and Q-learning" duration="0">
+        <p>TD(0) learns $V(s)$, but to improve the policy we need $Q(s,a)$. Two classic approaches:</p>
+<p><strong>SARSA (on-policy TD control)</strong> — the agent takes action $a_t$ in state $s_t$, observes $r_{t+1}$ and $s_{t+1}$, then picks the *next action* $a_{t+1}$ from its current policy, and updates: $$Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \left[ r_{t+1} + \gamma Q(s_{t+1}, a_{t+1}) - Q(s_t, a_t) \right]$$</p>
+<p>The name comes from the quintuple used in the update: $(S_t, A_t, R_{t+1}, S_{t+1}, A_{t+1})$. SARSA learns the value of the policy it is actually following (including its exploration). If the policy explores with epsilon-greedy, SARSA&#39;s Q values reflect that exploration.</p>
+<p><strong>Q-learning (off-policy TD control)</strong> — instead of using the action the policy <em>would</em> take next, it uses the <em>best possible</em> action at the next state: $$Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \left[ r_{t+1} + \gamma \max_{a&#39;} Q(s_{t+1}, a&#39;) - Q(s_t, a_t) \right]$$</p>
+<p>The $\max$ makes this <strong>off-policy</strong> — the agent explores with epsilon-greedy but learns about the greedy policy. This separation means Q-learning converges to $Q^*$ (the optimal Q values) regardless of the exploration policy, as long as all state-action pairs are visited sufficiently.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Why TD is an improvement over MC" duration="0">
+        <p>Consider the 3x3 grid-world. Under MC, if the agent takes 30 steps to reach the goal in one episode, the return for state 0 includes all 30 rewards compounded together. One bad slip at step 15 affects the return estimate for state 0. Under TD, state 0&#39;s Q value is updated using only the immediate reward and the estimate of the next state — the slip at step 15 only directly affects the states near step 15.</p>
+<table>
+<tr><td colspan="1" rowspan="1"></td><td colspan="1" rowspan="1"><p>MC</p>
+</td><td colspan="1" rowspan="1"><p>TD</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Updates per episode</strong></p>
+</td><td colspan="1" rowspan="1"><p>One batch at the end</p>
+</td><td colspan="1" rowspan="1"><p>One after every step</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Can learn during episode</strong></p>
+</td><td colspan="1" rowspan="1"><p>No</p>
+</td><td colspan="1" rowspan="1"><p>Yes</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Works for continuing (non-episodic) tasks</strong></p>
+</td><td colspan="1" rowspan="1"><p>No</p>
+</td><td colspan="1" rowspan="1"><p>Yes</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Variance</strong></p>
+</td><td colspan="1" rowspan="1"><p>High — depends on full trajectory</p>
+</td><td colspan="1" rowspan="1"><p>Lower — depends on one transition</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Bias</strong></p>
+</td><td colspan="1" rowspan="1"><p>None — uses real returns</p>
+</td><td colspan="1" rowspan="1"><p>Some — bootstraps from estimates</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Sample efficiency</strong></p>
+</td><td colspan="1" rowspan="1"><p>Lower — needs many complete episodes</p>
+</td><td colspan="1" rowspan="1"><p>Higher — learns from every step</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Model required</strong></p>
+</td><td colspan="1" rowspan="1"><p>No</p>
+</td><td colspan="1" rowspan="1"><p>No</p>
+</td></tr>
+</table>
+<p>The bias-variance tradeoff is the key: MC is <em>unbiased</em> but <em>high variance</em>, TD is <em>biased</em> but <em>lower variance</em>. In practice, the lower variance of TD often leads to faster convergence, making it the more practical choice for most problems.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="The progression so far" duration="0">
+        <table>
+<tr><td colspan="1" rowspan="1"><p>Method</p>
+</td><td colspan="1" rowspan="1"><p>Model needed?</p>
+</td><td colspan="1" rowspan="1"><p>Learns from</p>
+</td><td colspan="1" rowspan="1"><p>Updates when</p>
+</td><td colspan="1" rowspan="1"><p>Key limitation</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Random agent</strong></p>
+</td><td colspan="1" rowspan="1"><p>No</p>
+</td><td colspan="1" rowspan="1"><p>Nothing</p>
+</td><td colspan="1" rowspan="1"><p>Never</p>
+</td><td colspan="1" rowspan="1"><p>No learning at all</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>DP</strong></p>
+</td><td colspan="1" rowspan="1"><p>Yes — full $P(s&#39;,r|s,a)$</p>
+</td><td colspan="1" rowspan="1"><p>Model computation</p>
+</td><td colspan="1" rowspan="1"><p>Full sweeps</p>
+</td><td colspan="1" rowspan="1"><p>Must know the environment</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Monte Carlo</strong></p>
+</td><td colspan="1" rowspan="1"><p>No</p>
+</td><td colspan="1" rowspan="1"><p>Complete episodes</p>
+</td><td colspan="1" rowspan="1"><p>End of episode</p>
+</td><td colspan="1" rowspan="1"><p>High variance, must wait for episode end</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>TD (SARSA / Q-learning)</strong></p>
+</td><td colspan="1" rowspan="1"><p>No</p>
+</td><td colspan="1" rowspan="1"><p>Single transitions</p>
+</td><td colspan="1" rowspan="1"><p>Every step</p>
+</td><td colspan="1" rowspan="1"><p>Biased estimates (bootstrap)</p>
+</td></tr>
+</table>
+<p>Each method relaxes a constraint of the previous one. DP needs the model — MC drops that. MC needs complete episodes — TD drops that. The next step is implementing these TD methods on the same grid-world to see how they compare in practice.</p>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://storage.googleapis.com/claat-public/native-shim.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/custom-elements.min.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/prettify.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+
+  <script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: false, theme: "default" });
+
+  window.addEventListener("load", async function() {
+    if (typeof MathJax !== "undefined" && MathJax.typesetPromise) {
+      MathJax.typesetPromise();
+    }
+    document.querySelectorAll("code.language-mermaid").forEach(function(code) {
+      var pre = code.parentElement;
+      var div = document.createElement("div");
+      div.className = "mermaid";
+      div.textContent = code.textContent;
+      pre.parentElement.replaceChild(div, pre);
+    });
+    await mermaid.run({ querySelector: ".mermaid" });
+  });
+  </script>
+</body>
+</html>
