@@ -5,7 +5,7 @@ categories: drl
 environments: Web
 status: Published
 
-# A journey into the world of RL 
+# A journey into the world of RL by Samrat Kar 
 ## An introduction of the context
 1. solves **sequential decision** making problems.
 2. there is always an **objective**. reach an objective involves taking many actions in sequence. each action changing the environment.
@@ -13,7 +13,7 @@ status: Published
 4. environment : 
    - states
    - rewards for each state
-   - model dynamics / transition probability (conditional probability distribution of state transition and rewards given an action is taken in a given state - $P(s',r|s,a)$
+   - model dynamics / transition probability - conditional probability distribution of state transition and rewards given an action is taken in a given state - $P(s',r|s,a)$
    - obstruction : states with negative / low rewards
    - objective 
 5. agent : 
@@ -24,6 +24,51 @@ status: Published
 8. the control loop can repeat forever theoretically. However, they terminate after reaching a terminal state or a max number of steps t = T. time horizon from t=0 to t=T is known as an episode.
 9.  a trajectory is a sequence of experiences in an episode : $\tau = (s_0,a_0,r_0), (s_1,a_1,r_1), (s_2,a_2,r_2), . . ., (s_T, a_T, r_t)$
 10. an agent typically needs several episodes to come up with a good policy. agent's objective is to fine tune its policy to get the maximum return.
+
+## Formulating a problem as an MDP
+A Markov Decision Process (MDP) is a mathematical framework used to model decision-making problems where outcomes are partly random and partly under the control of a decision-maker. An MDP is defined by the following components:
+1. **States $S$**: A set of all possible states in the environment.
+2. **Actions $A$**: A set of all possible actions that the agent can take.
+3. **Transition Probability $P(s'|s,a)$**: The probability of transitioning to state $s'$ given that the agent is in state $s$ and takes action $a$.
+4. **Reward Function $R(r|s,a)$**: The probability of receiving reward $r$ given that the agent is in state $s$ and takes action $a$.
+5. **Discount Factor $\gamma$**: A factor between 0 and 1 that represents the importance of future rewards compared to immediate rewards.
+
+### The Objective of an MDP
+The goal of an agent in an MDP is to learn a policy $\pi(a|s)$ that maximizes the expected cumulative reward over time. The Bellman equation is a fundamental recursive relationship that describes the value of a state or action in terms of the expected rewards and the values of subsequent states or actions. Solving an MDP typically involves finding an optimal policy that maximizes the expected cumulative reward, which can be achieved through various algorithms such as dynamic programming, Monte Carlo methods, and temporal difference learning.
+
+### Settings
+
+In dynamic programming, we assume the finite MDP is fully known:
+
+$$
+\mathcal{M} = \left(\mathcal{S}, \mathcal{A}, \pi(a \mid s), p(s', r \mid s, a), \gamma\right)
+$$
+
+In plain English, this means:
+
+- the environment is modeled as an MDP $\mathcal{M}$
+- $\mathcal{S}$ is the set of all states
+- $\mathcal{A}$ is the set of all actions
+- $\pi(a \mid s)$ is the policy that maps states to actions
+- $p(s', r \mid s, a)$ is the conditional probability of getting next state $s'$ and reward $r$, given current state $s$ and action $a$
+- $\gamma \in [0,1)$ is the discount factor used to discount future rewards
+
+
+Once the MDP model $\mathcal{M}$ is known, dynamic programming uses it to compute long-term return estimates. These are the state-value function $V_\pi(s)$ and the action-value function $Q_\pi(s,a)$. 
+
+For policy evaluation, the state-value function is:
+
+$$
+V^{\pi}(s) = \sum_a \pi(a \mid s)\sum_{s',r} p(s', r \mid s, a)\left[r + \gamma V^{\pi}(s')\right]
+$$
+
+For action values:
+
+$$
+Q^{\pi}(s,a) = \sum_{s',r} P(s', r \mid s, a)\left[r + \gamma \sum_{a'} \pi(a' \mid s') Q^{\pi}(s', a')\right]
+$$
+
+$$Q^{\pi}(s,a) = \sum_{s',r} P(s',r \mid s,a)\left[r + \gamma V^{\pi}(s')\right]$$
 
 ## Value functions 
 ### Return $G_i$
@@ -61,11 +106,11 @@ if we run many episodes and collect the realized return $G_t$ every time we visi
 
 ![](./assets/mdp.svg)
 
-**[environment in work](/1-introduction/env.ipynb)**
+**[environment in work](https://github.com/samratkar/drl/blob/main/1-introduction/env.ipynb)**
 
 ## From random actions to optimal policy — the dynamic programming transition
 
-### The random agent baseline ([env.ipynb](./env.ipynb))
+### The random agent baseline ([random actions agent](https://github.com/samratkar/drl/blob/main/1-introduction/env.ipynb))
 
 In `env.ipynb`, the agent picks actions uniformly at random: `action = env.action_space.sample()`. There is no learning, no memory, no strategy. The policy is:
 $$\pi(a|s) = \frac{1}{|\mathcal{A}|} \quad \forall \, s, a$$
@@ -74,7 +119,7 @@ This is useful as a baseline to observe what the environment looks like — what
 
 **What is missing:** the agent needs a mechanism to evaluate how good its current behavior is, and then change its behavior to be better.
 
-### The dynamic programming agent ([dynamic-prog/](/1-introduction/dynamic-prog/dynamic_programming_case_study.ipynb))
+### The dynamic programming agent ([dynamic programming implementation](https://github.com/samratkar/drl/blob/main/1-introduction/dynamic-prog/dynamic_programming_case_study.ipynb))
 
 Dynamic programming solves this by exploiting the **full environment model** $P(s',r|s,a)$. Unlike the random agent that must *run* episodes to see what happens, DP can *compute* what would happen under any policy without taking a single step.
 
@@ -144,7 +189,7 @@ The final policy points every state toward the goal:
 
 The random agent in `env.ipynb` gives us the **floor** — what happens with zero intelligence. Dynamic programming gives us the **ceiling** for this MDP — the optimal policy computed exactly from the known model. The gap between them is what learning algorithms (Monte Carlo, TD, Q-learning) try to close *without* knowing $P(s',r|s,a)$.
 
-## Monte Carlo Estimation ([montecarlo/](./montecarlo/monte_carlo_case_study.ipynb))
+## Monte Carlo Estimation [monte carlo implementation](https://github.com/samratkar/drl/blob/main/1-introduction/montecarlo/monte_carlo_case_study.ipynb)
 
 ### The problem: DP needs the full model, but what if we don't have it?
 
@@ -157,7 +202,7 @@ This is the core idea — run many episodes, collect the realized return $G_t$ e
 
 ### How Monte Carlo control works — learning from complete episodes
 
-The [Monte Carlo case study](./montecarlo/monte_carlo_case_study.ipynb) implements **first-visit on-policy MC control** on the same 3x3 grid-world. The algorithm:
+The [Monte Carlo case study](https://github.com/samratkar/drl/blob/main/1-introduction/montecarlo/monte_carlo_case_study.ipynb) implements **first-visit on-policy MC control** on the same 3x3 grid-world. The algorithm:
 
 **1. Initialize** — $Q(s,a) = 0$ for all state-action pairs. Start with a uniform random policy (same as `env.ipynb`).
 
@@ -279,7 +324,7 @@ We don't know the true $V(s_{t+1})$, but we have our current *estimate* of it. T
 
 The natural question is: where does $V(s_{t+1})$ come from if we haven't learned anything yet? The answer: **we initialize all values to zero (a wrong guess), and the real reward signal gradually corrects them, one state at a time, rippling backwards from the goal.**
 
-Walk through it on the 3x3 grid ($\alpha = 0.1$, $\gamma = 0.9$, all $V$ initialized to 0):
+Walk through it on the 3x3 grid $\alpha = 0.1$, $\gamma = 0.9$, all $V$ initialized to 0:
 
 ```
 [s0] [s1] [s2]         V = [0, 0, 0, 0, 0, 0, 0, 0, 0]

@@ -6,15 +6,15 @@
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
   <meta name="theme-color" content="#4F7DC9">
   <meta charset="UTF-8">
-  <title>A journey into the world of RL</title>
+  <title>A journey into the world of RL by Samrat Kar</title>
   <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
   <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
   <link rel="stylesheet" href="https://storage.googleapis.com/claat-public/codelab-elements.css">
   <script>
   MathJax = {
     tex: {
-      inlineMath: [["$", "$"], ["\\(", "\\)"]],
-      displayMath: [["$$", "$$"], ["\\[", "\\]"]]
+      inlineMath: [['$', '$'], ['\(', '\)']],
+      displayMath: [['$$', '$$'], ['\[', '\]']]
     }
   };
   </script>
@@ -29,11 +29,10 @@
   </style>
 </head>
 <body>
-  <google-codelab-analytics gaid="UA-49880327-14" ga4id=""></google-codelab-analytics>
+  <google-codelab-analytics gaid="UA-49880327-14"></google-codelab-analytics>
   <google-codelab codelab-gaid=""
-                  codelab-ga4id=""
                   id="drl-1-intro"
-                  title="A journey into the world of RL"
+                  title="A journey into the world of RL by Samrat Kar"
                   environment="web"
                   feedback-link="">
     
@@ -45,7 +44,7 @@
 <li>environment : <ul>
 <li>states</li>
 <li>rewards for each state</li>
-<li>model dynamics / transition probability (conditional probability distribution of state transition and rewards given an action is taken in a given state - $P(s&#39;,r|s,a)$</li>
+<li>model dynamics / transition probability - conditional probability distribution of state transition and rewards given an action is taken in a given state - $P(s&#39;,r|s,a)$</li>
 <li>obstruction : states with negative / low rewards</li>
 <li>objective</li>
 </ul>
@@ -61,6 +60,39 @@
 <li>a trajectory is a sequence of experiences in an episode : $\tau = (s_0,a_0,r_0), (s_1,a_1,r_1), (s_2,a_2,r_2), . . ., (s_T, a_T, r_t)$</li>
 <li>an agent typically needs several episodes to come up with a good policy. agent&#39;s objective is to fine tune its policy to get the maximum return.</li>
 </ol>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Formulating a problem as an MDP" duration="0">
+        <p>A Markov Decision Process (MDP) is a mathematical framework used to model decision-making problems where outcomes are partly random and partly under the control of a decision-maker. An MDP is defined by the following components:</p>
+<ol type="1">
+<li><strong>States $S$</strong>: A set of all possible states in the environment.</li>
+<li><strong>Actions $A$</strong>: A set of all possible actions that the agent can take.</li>
+<li><strong>Transition Probability $P(s&#39;|s,a)$</strong>: The probability of transitioning to state $s&#39;$ given that the agent is in state $s$ and takes action $a$.</li>
+<li><strong>Reward Function $R(r|s,a)$</strong>: The probability of receiving reward $r$ given that the agent is in state $s$ and takes action $a$.</li>
+<li><strong>Discount Factor $\gamma$</strong>: A factor between 0 and 1 that represents the importance of future rewards compared to immediate rewards.</li>
+</ol>
+<h2 is-upgraded>The Objective of an MDP</h2>
+<p>The goal of an agent in an MDP is to learn a policy $\pi(a|s)$ that maximizes the expected cumulative reward over time. The Bellman equation is a fundamental recursive relationship that describes the value of a state or action in terms of the expected rewards and the values of subsequent states or actions. Solving an MDP typically involves finding an optimal policy that maximizes the expected cumulative reward, which can be achieved through various algorithms such as dynamic programming, Monte Carlo methods, and temporal difference learning.</p>
+<h2 is-upgraded>Settings</h2>
+<p>In dynamic programming, we assume the finite MDP is fully known:</p>
+<p>$$ \mathcal{M} = \left(\mathcal{S}, \mathcal{A}, \pi(a \mid s), p(s&#39;, r \mid s, a), \gamma\right) $$</p>
+<p>In plain English, this means:</p>
+<ul>
+<li>the environment is modeled as an MDP $\mathcal{M}$</li>
+<li>$\mathcal{S}$ is the set of all states</li>
+<li>$\mathcal{A}$ is the set of all actions</li>
+<li>$\pi(a \mid s)$ is the policy that maps states to actions</li>
+<li>$p(s&#39;, r \mid s, a)$ is the conditional probability of getting next state $s&#39;$ and reward $r$, given current state $s$ and action $a$</li>
+<li>$\gamma \in [0,1)$ is the discount factor used to discount future rewards</li>
+</ul>
+<p>Once the MDP model $\mathcal{M}$ is known, dynamic programming uses it to compute long-term return estimates. These are the state-value function $V_\pi(s)$ and the action-value function $Q_\pi(s,a)$.</p>
+<p>For policy evaluation, the state-value function is:</p>
+<p>$$ V^{\pi}(s) = \sum_a \pi(a \mid s)\sum_{s&#39;,r} p(s&#39;, r \mid s, a)\left[r + \gamma V^{\pi}(s&#39;)\right] $$</p>
+<p>For action values:</p>
+<p>$$ Q^{\pi}(s,a) = \sum_{s&#39;,r} P(s&#39;, r \mid s, a)\left[r + \gamma \sum_{a&#39;} \pi(a&#39; \mid s&#39;) Q^{\pi}(s&#39;, a&#39;)\right] $$</p>
+<p>$$Q^{\pi}(s,a) = \sum_{s&#39;,r} P(s&#39;,r \mid s,a)\left[r + \gamma V^{\pi}(s&#39;)\right]$$</p>
 
 
       </google-codelab-step>
@@ -96,18 +128,18 @@
       </google-codelab-step>
     
       <google-codelab-step label="Environment" duration="0">
-        <p class="image-container"><img src="img/b7f5e894184d9f86.svg"></p>
-<p><a href="/1-introduction/env.ipynb" target="_blank"><strong>environment in work</strong></a></p>
+        <p class="image-container"><img src="img\\9a5f4e773254b421.svg"></p>
+<p><a href="https://github.com/samratkar/drl/blob/main/1-introduction/env.ipynb" target="_blank"><strong>environment in work</strong></a></p>
 
 
       </google-codelab-step>
     
       <google-codelab-step label="From random actions to optimal policy — the dynamic programming transition" duration="0">
-        <h2 is-upgraded>The random agent baseline (<a href="./env.ipynb" target="_blank">env.ipynb</a>)</h2>
+        <h2 is-upgraded>The random agent baseline (<a href="https://github.com/samratkar/drl/blob/main/1-introduction/env.ipynb" target="_blank">random actions agent</a>)</h2>
 <p>In <code>env.ipynb</code>, the agent picks actions uniformly at random: <code>action = env.action_space.sample()</code>. There is no learning, no memory, no strategy. The policy is: $$\pi(a|s) = \frac{1}{|\mathcal{A}|} \quad \forall , s, a$$</p>
 <p>This is useful as a baseline to observe what the environment looks like — what states are visited, what rewards come back, how episodes end. But the returns are poor. In Taxi-v3, for example, the random agent almost never delivers the passenger before the 200-step truncation. Every episode accumulates step penalties (-1 per step) and illegal-action penalties (-10), ending with deeply negative returns. The agent has no way to improve because it never uses the information it collects.</p>
 <p><strong>What is missing:</strong> the agent needs a mechanism to evaluate how good its current behavior is, and then change its behavior to be better.</p>
-<h2 is-upgraded>The dynamic programming agent (<a href="/1-introduction/dynamic-prog/dynamic_programming_case_study.ipynb" target="_blank">dynamic-prog/</a>)</h2>
+<h2 is-upgraded>The dynamic programming agent (<a href="https://github.com/samratkar/drl/blob/main/1-introduction/dynamic-prog/dynamic_programming_case_study.ipynb" target="_blank">dynamic programming implementation</a>)</h2>
 <p>Dynamic programming solves this by exploiting the <strong>full environment model</strong> $P(s&#39;,r|s,a)$. Unlike the random agent that must <em>run</em> episodes to see what happens, DP can <em>compute</em> what would happen under any policy without taking a single step.</p>
 <p>The algorithm — <strong>policy iteration</strong> — works in a loop:</p>
 <p><strong>Step 1 — Policy Evaluation: how good is the current policy?</strong> Start with the same uniform random policy as <code>env.ipynb</code>. Compute $V^\pi(s)$ for every state by solving the Bellman equation: $$V^\pi(s) = \sum_a \pi(a|s) \sum_{s&#39;,r} P(s&#39;,r|s,a)\left[r + \gamma V^\pi(s&#39;)\right]$$ This tells us the expected return from every state *if we keep following the current policy*. For the initial uniform policy on the 3x3 grid, all V values are negative — the random policy is bad.</p>
@@ -211,13 +243,13 @@
 
       </google-codelab-step>
     
-      <google-codelab-step label="Monte Carlo Estimation (montecarlo/)" duration="0">
+      <google-codelab-step label="Monte Carlo Estimation monte carlo implementation" duration="0">
         <h2 is-upgraded>The problem: DP needs the full model, but what if we don&#39;t have it?</h2>
 <p>Dynamic programming computes exact expectations using $P(s&#39;,r|s,a)$. But in most real problems, the agent doesn&#39;t know the environment dynamics — it can only <em>interact</em> with the environment and observe what happens. Monte Carlo bridges this gap: it estimates $V^\pi(s)$ and $Q^\pi(s,a)$ from <strong>actual episode experience</strong> rather than from a known model.</p>
 <p>Recall from point 8 in the Value Functions section: $$V^\pi(s) \approx \frac{1}{N(s)} \sum_{i=1}^{N(s)} G_t^{(i)}$$</p>
 <p>This is the core idea — run many episodes, collect the realized return $G_t$ every time a state is visited, and average them. The law of large numbers guarantees convergence to the true expectation.</p>
 <h2 is-upgraded>How Monte Carlo control works — learning from complete episodes</h2>
-<p>The <a href="./montecarlo/monte_carlo_case_study.ipynb" target="_blank">Monte Carlo case study</a> implements <strong>first-visit on-policy MC control</strong> on the same 3x3 grid-world. The algorithm:</p>
+<p>The <a href="https://github.com/samratkar/drl/blob/main/1-introduction/montecarlo/monte_carlo_case_study.ipynb" target="_blank">Monte Carlo case study</a> implements <strong>first-visit on-policy MC control</strong> on the same 3x3 grid-world. The algorithm:</p>
 <p><strong>1. Initialize</strong> — $Q(s,a) = 0$ for all state-action pairs. Start with a uniform random policy (same as <code>env.ipynb</code>).</p>
 <p><strong>2. Generate an episode</strong> — follow the current policy to produce a trajectory: $$\tau = (s_0, a_0, r_1), (s_1, a_1, r_2), \dots, (s_T, a_T, r_T)$$</p>
 <p>This is exactly what <code>env.ipynb</code> does — but now we <em>use</em> the returns instead of just logging them.</p>
@@ -414,7 +446,7 @@
     
       <google-codelab-step label="Bootstrapping walkthrough — how estimates build on estimates - in Temporal Difference" duration="0">
         <p>The natural question is: where does $V(s_{t+1})$ come from if we haven&#39;t learned anything yet? The answer: **we initialize all values to zero (a wrong guess), and the real reward signal gradually corrects them, one state at a time, rippling backwards from the goal.**</p>
-<p>Walk through it on the 3x3 grid ($\alpha = 0.1$, $\gamma = 0.9$, all $V$ initialized to 0):</p>
+<p>Walk through it on the 3x3 grid $\alpha = 0.1$, $\gamma = 0.9$, all $V$ initialized to 0:</p>
 <pre><code>[s0] [s1] [s2]         V = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 [s3] [s4] [s5]
 [s6] [s7] [s8=G]

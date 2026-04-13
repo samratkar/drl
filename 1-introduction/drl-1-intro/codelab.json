@@ -3,12 +3,12 @@
   "format": "html",
   "prefix": "https://storage.googleapis.com",
   "mainga": "UA-49880327-14",
-  "updated": "2026-04-13T15:01:35+05:30",
+  "updated": "2026-04-14T00:10:30+05:30",
   "id": "drl-1-intro",
   "duration": 0,
-  "title": "A journey into the world of RL",
+  "title": "A journey into the world of RL by Samrat Kar",
   "summary": "Introduction to Reinforcement Learning",
-  "source": "/Users/samrat.kar/git/drl/1-introduction/notes.md",
+  "source": "C:\\github\\drl\\1-introduction\\notes.md",
   "theme": "",
   "status": [
     "published"
