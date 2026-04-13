@@ -39,3 +39,84 @@ Recursive form: $$G_t = R_{t+1} + \gamma \, G_{t+1}$$ with $G_T = 0$. The return
 9. **[environment in work](./env.ipynb)**
 10. **[mdp definition](./mdp-definition.md)**
 11.  ![](/assets/mdp.svg)
+
+## From random actions to optimal policy — the dynamic programming transition
+
+### The random agent baseline ([env.ipynb](./env.ipynb))
+
+In `env.ipynb`, the agent picks actions uniformly at random: `action = env.action_space.sample()`. There is no learning, no memory, no strategy. The policy is:
+$$\pi(a|s) = \frac{1}{|\mathcal{A}|} \quad \forall \, s, a$$
+
+This is useful as a baseline to observe what the environment looks like — what states are visited, what rewards come back, how episodes end. But the returns are poor. In Taxi-v3, for example, the random agent almost never delivers the passenger before the 200-step truncation. Every episode accumulates step penalties (-1 per step) and illegal-action penalties (-10), ending with deeply negative returns. The agent has no way to improve because it never uses the information it collects.
+
+**What is missing:** the agent needs a mechanism to evaluate how good its current behavior is, and then change its behavior to be better.
+
+### The dynamic programming agent ([dynamic-prog/](./dynamic-prog/dynamic_programming_case_study.ipynb))
+
+Dynamic programming solves this by exploiting the **full environment model** $P(s',r|s,a)$. Unlike the random agent that must *run* episodes to see what happens, DP can *compute* what would happen under any policy without taking a single step.
+
+The algorithm — **policy iteration** — works in a loop:
+
+**Step 1 — Policy Evaluation: how good is the current policy?**
+Start with the same uniform random policy as `env.ipynb`. Compute $V^\pi(s)$ for every state by solving the Bellman equation:
+$$V^\pi(s) = \sum_a \pi(a|s) \sum_{s',r} P(s',r|s,a)\left[r + \gamma V^\pi(s')\right]$$
+This tells us the expected return from every state *if we keep following the current policy*. For the initial uniform policy on the 3x3 grid, all V values are negative — the random policy is bad.
+
+**Step 2 — Q from V: compare individual actions**
+$V^\pi(s)$ tells us how good a *state* is, but to improve the policy we need to compare *actions*. Convert V to Q:
+$$Q^\pi(s,a) = \sum_{s',r} P(s',r|s,a)\left[r + \gamma V^\pi(s')\right]$$
+Now for each state, we can see which action leads to the highest expected return. This is the critical bridge — Q breaks down the state value into per-action values so we can identify which actions are better than others.
+
+**Step 3 — Policy Improvement: shift probability to the best action**
+For each state, find $\argmax_a Q^\pi(s,a)$ — the action(s) with the highest Q value. Build a new policy that puts most probability mass on those actions:
+- Best action(s) get probability $\frac{1-\epsilon}{|\text{best actions}|} + \frac{\epsilon}{|\mathcal{A}|}$
+- Other actions get just $\frac{\epsilon}{|\mathcal{A}|}$ (exploration floor)
+
+This is no longer uniform — the policy now *prefers* actions that lead to higher returns.
+
+**Step 4 — Repeat** until the greedy actions stop changing (the policy is stable).
+
+### How the strategy improves — the 3x3 grid example
+
+The grid has state 0 (top-left) as start and state 8 (bottom-right, G) as goal. Step reward is -1, goal reward is +10.
+
+**Iteration 0 — evaluating the uniform policy:**
+| | Col 0 | Col 1 | Col 2 |
+|---|---|---|---|
+| Row 0 | -5.92 | -5.02 | -3.77 |
+| Row 1 | -5.02 | -3.14 | 0.25 |
+| Row 2 | -3.77 | 0.25 | G |
+
+All values are negative or near zero. The random policy wanders aimlessly, accumulating -1 penalties. Q values are computed, and for state 0, Q shows that RIGHT and DOWN (both -5.60) are better than UP and LEFT (both -6.25). This makes sense — RIGHT and DOWN move toward the goal. The policy is updated: RIGHT and DOWN get high probability in state 0.
+
+**Iteration 1 — evaluating the improved policy:**
+| | Col 0 | Col 1 | Col 2 |
+|---|---|---|---|
+| Row 0 | 2.71 | 4.35 | 6.22 |
+| Row 1 | 4.35 | 6.46 | 8.93 |
+| Row 2 | 6.22 | 8.93 | G |
+
+All values are now **positive**. The improved policy reaches the goal reliably enough that the +10 goal reward outweighs the step penalties. The greedy actions haven't changed from iteration 0 — the policy is already stable. Convergence in just 2 iterations.
+
+The final policy points every state toward the goal:
+```
++---+---+---+
+|>v | v | v |
++---+---+---+
+| > |>v | v |
++---+---+---+
+| > | > | G |
++---+---+---+
+```
+
+### The key transition: why DP works where the random agent cannot
+
+| | Random agent (env.ipynb) | DP agent (dynamic-prog/) |
+|---|---|---|
+| **Policy** | Fixed uniform $\pi(a\|s) = 1/\|\mathcal{A}\|$ | Iteratively improved toward optimal |
+| **Uses model $P(s',r\|s,a)$?** | No — just samples actions and observes | Yes — computes exact expectations |
+| **Learning** | None — same policy forever | Policy evaluation + improvement loop |
+| **Requires episodes?** | Yes — must run the environment | No — plans entirely from the model |
+| **Limitation** | No improvement possible | Requires knowing the full model |
+
+The random agent in `env.ipynb` gives us the **floor** — what happens with zero intelligence. Dynamic programming gives us the **ceiling** for this MDP — the optimal policy computed exactly from the known model. The gap between them is what learning algorithms (Monte Carlo, TD, Q-learning) try to close *without* knowing $P(s',r|s,a)$.
