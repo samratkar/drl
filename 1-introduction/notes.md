@@ -146,6 +146,8 @@ This is no longer uniform — the policy now *prefers* actions that lead to high
 
 ## How the strategy improves — the 3x3 grid example - via Dynamic Programming
 
+[Working demo of a DP agent solving the 3x3 grid](https://samratkar.github.io/assets/drl/webinars/dp-qlearning/src/dynamic_programming_game.html)
+
 The grid has state 0 (top-left) as start and state 8 (bottom-right, G) as goal. Step reward is -1, goal reward is +10.
 
 **Iteration 0 — evaluating the uniform policy:**
@@ -431,6 +433,8 @@ Compare this to MC:
 The quantity $\delta_t = r_{t+1} + \gamma V(s_{t+1}) - V(s_t)$ is called the **TD error** — it measures how surprising the transition was relative to what we expected.
 
 ## From TD prediction to TD control — SARSA and Q-learning
+
+[Working demo of a TD agent solving the 3x3 grid](https://samratkar.github.io/assets/drl/webinars/dp-qlearning/src/q_learning_game.html)
 
 TD(0) learns $V(s)$, but to improve the policy we need $Q(s,a)$. Two classic approaches:
 

@@ -156,7 +156,8 @@
       </google-codelab-step>
     
       <google-codelab-step label="How the strategy improves — the 3x3 grid example - via Dynamic Programming" duration="0">
-        <p>The grid has state 0 (top-left) as start and state 8 (bottom-right, G) as goal. Step reward is -1, goal reward is +10.</p>
+        <p><a href="https://samratkar.github.io/assets/drl/webinars/dp-qlearning/src/dynamic_programming_game.html" target="_blank">Working demo of a DP agent solving the 3x3 grid</a></p>
+<p>The grid has state 0 (top-left) as start and state 8 (bottom-right, G) as goal. Step reward is -1, goal reward is +10.</p>
 <p><strong>Iteration 0 — evaluating the uniform policy:</strong></p>
 <table>
 <tr><td colspan="1" rowspan="1"></td><td colspan="1" rowspan="1"><p>Col 0</p>
@@ -543,7 +544,8 @@
       </google-codelab-step>
     
       <google-codelab-step label="From TD prediction to TD control — SARSA and Q-learning" duration="0">
-        <p>TD(0) learns $V(s)$, but to improve the policy we need $Q(s,a)$. Two classic approaches:</p>
+        <p><a href="https://samratkar.github.io/assets/drl/webinars/dp-qlearning/src/q_learning_game.html" target="_blank">Working demo of a TD agent solving the 3x3 grid</a></p>
+<p>TD(0) learns $V(s)$, but to improve the policy we need $Q(s,a)$. Two classic approaches:</p>
 <p><strong>SARSA (on-policy TD control)</strong> — the agent takes action $a_t$ in state $s_t$, observes $r_{t+1}$ and $s_{t+1}$, then picks the *next action* $a_{t+1}$ from its current policy, and updates: $$Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \left[ r_{t+1} + \gamma Q(s_{t+1}, a_{t+1}) - Q(s_t, a_t) \right]$$</p>
 <p>The name comes from the quintuple used in the update: $(S_t, A_t, R_{t+1}, S_{t+1}, A_{t+1})$. SARSA learns the value of the policy it is actually following (including its exploration). If the policy explores with epsilon-greedy, SARSA&#39;s Q values reflect that exploration.</p>
 <p><strong>Q-learning (off-policy TD control)</strong> — instead of using the action the policy <em>would</em> take next, it uses the <em>best possible</em> action at the next state: $$Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \left[ r_{t+1} + \gamma \max_{a&#39;} Q(s_{t+1}, a&#39;) - Q(s_t, a_t) \right]$$</p>
