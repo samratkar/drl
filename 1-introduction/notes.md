@@ -11,23 +11,35 @@ status: Published
 the exchange between agent and environment unfolds in time - therefore it can be thought of a sequential decision making process.
 ![](./assets/rl-system.svg)
 2. RL solves **sequential decision** making problems.
-3. RL problems have an **objective**, which is the sum of rewards received by an agent. **An agent's goal is to maximize the objective by selecting good actions**. i.e - fine tuning the policy.
-4. there is always an **objective**. reach an objective involves taking many actions in sequence. each action changing the environment.
-5. example of balancing a flag pole. `slm-lab run --render`
-6. environment : 
+3. RL is a specialized learning method (closest to nature and the way learning works in the living world), where the following happens - 
+   - the agent senses the environment (S)
+   - based on the state values sensed by the agent, it takes some action, that changes the environment state again (A)
+   - this agent is long term goal directed. it looks for maximizing a goal - which is a numerical value of reward signals being accumulated by the agent as a fallout of its actions (G)
+4. **un-supervised learning and RL** - unlike unsupervised learning, RL does not look for underlying patters in a data set. It's sole job is to maximize rewards. 
+5. **supervised learning and RL** - unlike supervised learning, RL does not need pre-existing supervisor who would prescribe what to be done and what not in terms of training data set or labels. RL agents learn things in run-time using sole interaction with the environment.  
+6. RL problems have an **objective**, which is the sum of rewards received by an agent. **An agent's goal is to maximize the objective by selecting good actions**. i.e - fine tuning the policy.
+7. **policy** - it is a mapping of all states in the states space of the environment to the action (or a probability distribution of the actions). 
+Formally:         
+  - Deterministic policy: $\pi(s) = a$ -- for every state $s \in \mathcal{S}$, it specifies one action                  
+  - Stochastic policy: $\pi(a|s)$ -- for every state $s \in \mathcal{S}$, it gives a probability distribution over all actions.          
+Key point: a policy is a **complete recipe** -- it tells the agent what to do in any state it might find itself in, regardless of which episode or trajectory it's in. It's defined over the full state space, not tied to a particular episode.
+A trajectory/episode is just one realization -- a sequence of states the agent happened to visit by following the policy. The policy itself exists for states the agent hasn't even visited yet.
+1. there is always an **objective**. reach an objective involves taking many actions in sequence. each action changing the environment.
+2. example of balancing a flag pole. `slm-lab run --render`
+3. environment : 
    - states
    - rewards for each state
    - model dynamics / transition probability - conditional probability distribution of state transition and rewards given an action is taken in a given state - $P(s',r|s,a)$
    - obstruction : states with negative / low rewards
    - objective 
-7. agent : 
+4.  agent : 
    - policy : function that maps state to action : for stochastic cases it would be conditional probability of actions, given a state - $\pi(a|s)$
    - action : the current state is changed, and a reward is received.
-8. agent and environment are mutually exclusive
-9. $(s_t, a_t, r_t)$ control loop : experience.
-10.  the control loop can repeat forever theoretically. However, they terminate after reaching a terminal state or a max number of steps t = T. time horizon from t=0 to t=T is known as an episode.
-11. a trajectory is a sequence of experiences in an episode : $\tau = (s_0,a_0,r_0), (s_1,a_1,r_1), (s_2,a_2,r_2), . . ., (s_T, a_T, r_t)$
-12. an agent typically needs several episodes to come up with a good policy. agent's objective is to fine tune its policy to get the maximum return.
+5.   agent and environment are mutually exclusive
+6.    $(s_t, a_t, r_t)$ control loop : experience.
+7.     the control loop can repeat forever theoretically. However, they terminate after reaching a terminal state or a max number of steps t = T. time horizon from t=0 to t=T is known as an episode.
+8.    a trajectory is a sequence of experiences in an episode : $\tau = (s_0,a_0,r_0), (s_1,a_1,r_1), (s_2,a_2,r_2), . . ., (s_T, a_T, r_t)$
+9.    an agent typically needs several episodes to come up with a good policy. agent's objective is to fine tune its policy to get the maximum return.
 
 ## Formulating a problem as an MDP
 A Markov Decision Process (MDP) is a mathematical framework used to model decision-making problems where outcomes are partly random and partly under the control of a decision-maker. An MDP is defined by the following components:
@@ -130,8 +142,8 @@ Dynamic programming solves this by exploiting the **full environment model** $P(
 The algorithm — **policy iteration** — works in a loop:
 
 **Step 1 — Policy Evaluation: how good is the current policy?**
-Start with the same uniform random policy as `env.ipynb`. Compute $V^\pi(s)$ for every state by solving the Bellman equation:
-$$V^\pi(s) = \sum_a \pi(a|s) \sum_{s',r} P(s',r|s,a)\left[r + \gamma V^\pi(s')\right]$$
+Start with the same uniform random policy as `env.ipynb`. Compute $V^\pi(s)$ for every state by solving the Bellman equation. (See the detailed section below: "Sweeps, episodes, and solving the Bellman equation" for a full explanation of how this is solved and what sweeps are.)
+
 This tells us the expected return from every state *if we keep following the current policy*. For the initial uniform policy on the 3x3 grid, all V values are negative — the random policy is bad.
 
 **Step 2 — Q from V: compare individual actions**
@@ -147,6 +159,259 @@ For each state, find $\argmax_a Q^\pi(s,a)$ — the action(s) with the highest Q
 This is no longer uniform — the policy now *prefers* actions that lead to higher returns.
 
 **Step 4 — Repeat** until the greedy actions stop changing (the policy is stable).
+
+## $V^\pi$, $Q^\pi$ vs $V^*$, $Q^*$ — the value of *a* policy vs the value of *the best* policy
+
+### Under a specific policy $\pi$
+
+**$V^\pi(s)$** is the value of state $s$ under **one specific policy** $\pi$. Every policy has its own $V^\pi$. The uniform random policy has one (with poor values). A policy that always goes RIGHT has a different one. An epsilon-greedy policy after some improvement has yet another one. $V^\pi$ answers: "how good is state $s$ if I follow *this particular* policy?"
+
+**$Q^\pi(s,a)$** is the value of taking action $a$ in state $s$ and then following policy $\pi$ from there. It answers a finer question: "how good is it to take *this specific action* in this state, and then follow $\pi$?" The relationship between them:
+$$V^\pi(s) = \sum_a \pi(a|s) \, Q^\pi(s,a)$$
+The state value is just the average of the action values, weighted by the policy. $V^\pi$ tells you how good a state is overall; $Q^\pi$ breaks that down per action so you can compare them.
+
+### Under the optimal policy $\pi^*$
+
+**$V^*(s)$** is the value of state $s$ under **the best possible policy**:
+$$V^*(s) = \max_\pi V^\pi(s)$$
+
+Among all possible policies, there exists one (the optimal policy $\pi^*$) whose $V^\pi$ is the highest at every state. That $V^\pi$ is $V^*$. It satisfies the **Bellman optimality equation for state values**:
+$$V^*(s) = \max_a \sum_{s',r} P(s',r|s,a)\left[r + \gamma V^*(s')\right]$$
+
+**$Q^*(s,a)$** is the value of taking action $a$ in state $s$ and then following the **optimal policy** from there:
+$$Q^*(s,a) = \sum_{s',r} P(s',r|s,a)\left[r + \gamma V^*(s')\right]$$
+
+It satisfies the **Bellman optimality equation for action values**:
+$$Q^*(s,a) = \sum_{s',r} P(s',r|s,a)\left[r + \gamma \max_{a'} Q^*(s',a')\right]$$
+
+The relationship between $V^*$ and $Q^*$ is:
+$$V^*(s) = \max_a Q^*(s,a)$$
+
+This is the key equation — the optimal state value is simply the best action value available. Once you have $Q^*$, the optimal policy falls out trivially: $\pi^*(s) = \argmax_a Q^*(s,a)$ — just pick the action with the highest $Q^*$ in every state.
+
+### Why $Q^*$ matters more than $V^*$ in practice — definition vs learning
+
+The *definition* of $Q^*$ references the model: $Q^*(s,a) = \sum_{s',r} P(s',r|s,a)[r + \gamma \max_{a'} Q^*(s',a')]$. But you don't need to *use* that equation to *learn* $Q^*$. Q-learning does this instead: the agent takes action $a$ in state $s$, observes what actually happens (gets reward $r$, lands in $s'$), and updates:
+$$Q(s,a) \leftarrow Q(s,a) + \alpha [r + \gamma \max_{a'} Q(s',a') - Q(s,a)]$$
+No $P(s',r|s,a)$ anywhere. The agent doesn't sum over all possible next states weighted by their probabilities. It uses the **one transition it actually experienced** — the single $r$ and $s'$ it observed. The environment's stochasticity is handled implicitly through repeated sampling over many episodes.
+
+### How Q-learning implicitly reconstructs the probability distribution
+
+The $\max$ in Q-learning is over **actions at the next state**, not over episodes:
+$$Q(s,a) \leftarrow Q(s,a) + \alpha [r + \gamma \max_{a'} Q(s',a') - Q(s,a)]$$
+The $\max_{a'}$ asks: "at the next state $s'$, which action has the highest Q value right now?" It's picking the best action within a single update, not comparing across episodes.
+
+The implicit probability reconstruction happens through something different — there is **one single Q table that persists across all episodes**. Every episode's every step writes into the same table. So $Q(s_4, \text{RIGHT})$ is not "the Q value from episode 37" — it's the accumulated result of every time the agent was in state 4, took RIGHT, and observed what happened.
+
+Say the environment dynamics for state 4, action RIGHT are:
+- 80% chance → land in $s_5$, reward = -1
+- 10% chance → slip to $s_1$, reward = -1
+- 10% chance → slip to $s_7$, reward = -1
+
+DP computes this explicitly: $Q(s_4, \text{RIGHT}) = 0.8 \times (-1 + \gamma V(s_5)) + 0.1 \times (-1 + \gamma V(s_1)) + 0.1 \times (-1 + \gamma V(s_7))$
+
+Q-learning doesn't know these probabilities. But over many episodes, the same Q entry accumulates updates from sampled transitions:
+
+```
+Episode 1:  s4, RIGHT → lands in s5  → nudges Q(s4, RIGHT) toward (-1 + γ max Q(s5, ·))
+Episode 5:  s4, RIGHT → lands in s7  → nudges Q(s4, RIGHT) toward (-1 + γ max Q(s7, ·))
+Episode 12: s4, RIGHT → lands in s5  → nudges Q(s4, RIGHT) toward (-1 + γ max Q(s5, ·))
+Episode 20: s4, RIGHT → lands in s5  → nudges Q(s4, RIGHT) toward (-1 + γ max Q(s5, ·))
+Episode 31: s4, RIGHT → lands in s1  → nudges Q(s4, RIGHT) toward (-1 + γ max Q(s1, ·))
+...
+```
+
+After hundreds of episodes, ~80% of the updates used $s' = s_5$, ~10% used $s' = s_1$, ~10% used $s' = s_7$ — because that's how the environment actually behaves. The accumulated Q value converges to the same weighted average that DP computes explicitly, not because anyone computed the probabilities, but because **the environment sampled them at the correct frequencies and all those samples landed in the same persistent Q entry**.
+
+The learning rate $\alpha$ ensures each sample makes a small correction rather than overwriting the previous estimate. If Q were reset every episode, this wouldn't work — you'd lose all the accumulated frequency information. The single persistent Q table across all episodes is what makes the implicit probability reconstruction possible.
+
+This is also why Q-learning needs many episodes to converge — it needs enough samples for the sampled frequencies to approximate the true probabilities. DP gets the exact answer in sweeps because it reads $P(s',r|s,a)$ directly. Q-learning gets an approximate answer that improves with more samples.
+
+**The Q-learning algorithm in code:**
+
+```python
+# One single Q table — persists across ALL episodes
+Q = np.zeros((num_states, num_actions))
+
+for episode in range(num_episodes):
+    state = env.reset()
+    done = False
+
+    while not done:
+        # Pick action: epsilon-greedy (explore vs exploit)
+        if np.random.random() < epsilon:
+            action = np.random.randint(num_actions)     # explore: random action
+        else:
+            action = np.argmax(Q[state])                 # exploit: best known action
+
+        # Take action, observe ONE transition (no model needed)
+        next_state, reward, done = env.step(action)
+
+        # Q-learning update: use max over next actions (off-policy)
+        # This single line is where learning happens.
+        # - reward and next_state are the ONE sampled transition
+        # - max Q[next_state] evaluates the best action (greedy/optimal policy)
+        # - alpha controls how much this single sample nudges the accumulated Q
+        Q[state, action] += alpha * (
+            reward + gamma * np.max(Q[next_state]) - Q[state, action]
+        )
+
+        state = next_state
+
+    # Q is NOT reset here — it carries forward to the next episode.
+    # This is critical: the accumulated Q values across episodes
+    # implicitly reconstruct the probability-weighted expectations.
+```
+
+Notice: `Q` is allocated once before all episodes and never reset. Every `env.step(action)` returns one sampled $(r, s')$ — the agent never sees $P(s',r|s,a)$. Over many episodes, the same `Q[state, action]` entry is updated by transitions sampled at their true frequencies, converging to $Q^*$.
+
+Now contrast this with $V^*$. Even if you somehow learned $V^*$ perfectly, you'd be stuck at **decision time**. To act, you need to pick the best action at each state. That means answering: "if I take action $a$ in state $s$, what state do I end up in, and what's the value there?" That requires knowing $P(s',r|s,a)$ — the model. With $Q^*$, this problem disappears — $Q^*(s,a)$ already has the answer baked in for each action. Just pick $\argmax_a Q^*(s,a)$.
+
+| | **Learning** | **Acting (picking actions)** |
+|---|---|---|
+| **$V^*$** | Requires the model (value iteration) | Also requires the model to compare actions |
+| **$Q^*$** | Model-free (Q-learning — uses sampled transitions) | Model-free (just $\argmax_a Q^*(s,a)$) |
+
+$Q^*$ is model-free at both stages. $V^*$ needs the model at both stages. This is why Q-learning was such a breakthrough — it made the entire pipeline model-free.
+
+### The difference between the Bellman expectation and optimality equations
+
+| | **Bellman expectation** (for $\pi$) | **Bellman optimality** (for $\pi^*$) |
+|---|---|---|
+| **State values** | $V^\pi(s) = \sum_a \pi(a\|s) \sum_{s',r} P(\dots)[r + \gamma V^\pi(s')]$ | $V^*(s) = \max_a \sum_{s',r} P(\dots)[r + \gamma V^*(s')]$ |
+| **Action values** | $Q^\pi(s,a) = \sum_{s',r} P(\dots)[r + \gamma \sum_{a'} \pi(a'\|s') Q^\pi(s',a')]$ | $Q^*(s,a) = \sum_{s',r} P(\dots)[r + \gamma \max_{a'} Q^*(s',a')]$ |
+| **Over actions** | Averages using $\pi(a\|s)$ — the policy is fixed | Takes $\max$ — asks "what if I pick the best?" |
+| **What it computes** | Value of a given policy | Value of the best possible policy |
+
+**Policy iteration** is the process of finding $V^*$ and $Q^*$ — start with some policy $\pi$, compute $V^\pi$ (policy evaluation), derive $Q^\pi$, improve $\pi$ by acting greedily w.r.t. $Q^\pi$ (policy improvement), repeat. Each cycle gives a better policy with higher values. When $V^\pi$ stops changing, you've reached $V^\pi = V^*$, $Q^\pi = Q^*$, and $\pi = \pi^*$.
+
+## Sweeps, episodes, and solving the Bellman equation
+
+### The Bellman equation is a system of simultaneous equations
+
+The Bellman equation for policy evaluation is:
+
+$$V^\pi(s) = \sum_a \pi(a|s) \sum_{s',r} P(s',r|s,a)\left[r + \gamma V^\pi(s')\right]$$
+
+The same $V^\pi$ appears on both sides. This is not an update rule — it is a **statement of what the true values must satisfy**. For $n$ states, this is $n$ equations with $n$ unknowns — one equation per state, one unknown value per state. Every state's value depends on other states' values simultaneously.
+
+**Concrete example — the 3x3 grid under the uniform random policy ($\pi(a|s) = 0.25$ for all $a$):**
+
+The grid has 9 states (0 through 8). State 8 is the goal (terminal, value = 0). That leaves 8 unknowns: $V(s_0)$ through $V(s_7)$. Each state's Bellman equation says: "my value = weighted average over actions of [reward + $\gamma$ × value of next state]."
+
+For state 0 (top-left corner), the equation looks like:
+$$V(s_0) = 0.25 \times [\text{UP transitions}] + 0.25 \times [\text{RIGHT transitions}] + 0.25 \times [\text{DOWN transitions}] + 0.25 \times [\text{LEFT transitions}]$$
+
+Each action term expands into the stochastic outcomes. For example, the RIGHT action from state 0:
+- With probability 0.8: go to $s_1$, reward $= -1$ → contributes $0.8 \times (-1 + \gamma \, V(s_1))$
+- With probability 0.1: stay at $s_0$ (slip), reward $= -1$ → contributes $0.1 \times (-1 + \gamma \, V(s_0))$
+- With probability 0.1: go to $s_3$ (slip), reward $= -1$ → contributes $0.1 \times (-1 + \gamma \, V(s_3))$
+
+When you write out all 8 equations fully, you get something like:
+$$V(s_0) = c_0 + \gamma \, [a_{00} \, V(s_0) + a_{01} \, V(s_1) + a_{03} \, V(s_3) + \dots]$$
+$$V(s_1) = c_1 + \gamma \, [a_{10} \, V(s_0) + a_{11} \, V(s_1) + a_{12} \, V(s_2) + a_{14} \, V(s_4) + \dots]$$
+$$V(s_2) = c_2 + \gamma \, [\dots]$$
+$$\vdots$$
+$$V(s_7) = c_7 + \gamma \, [\dots V(s_8) \dots]$$
+
+where each $c_i$ is the expected immediate reward for state $i$ (a known number from the model), and each $a_{ij}$ is the probability of transitioning from state $i$ to state $j$ under the policy (also known from the model). Every $V(s_i)$ appears in multiple equations — they are all coupled. You cannot solve for $V(s_0)$ alone without knowing $V(s_1)$ and $V(s_3)$, which in turn depend on other states.
+
+This is a standard **system of linear equations** — the kind you see in linear algebra.
+
+### Solving method 1: direct matrix inversion (small state spaces)
+
+Since the Bellman equation is linear in $V$, the entire system can be written as one matrix equation:
+
+$$\mathbf{V}^\pi = \mathbf{R}^\pi + \gamma \, \mathbf{P}^\pi \, \mathbf{V}^\pi$$
+
+where:
+- $\mathbf{V}^\pi$ is the column vector of state values (the 8 unknowns)
+- $\mathbf{R}^\pi$ is the column vector of expected immediate rewards per state (known from the model)
+- $\mathbf{P}^\pi$ is the $n \times n$ state transition matrix under policy $\pi$, where entry $P^\pi_{ij}$ is the probability of going from state $i$ to state $j$ when following policy $\pi$ (known from the model)
+
+Rearranging:
+$$\mathbf{V}^\pi - \gamma \, \mathbf{P}^\pi \, \mathbf{V}^\pi = \mathbf{R}^\pi$$
+$$(\mathbf{I} - \gamma \, \mathbf{P}^\pi) \, \mathbf{V}^\pi = \mathbf{R}^\pi$$
+$$\mathbf{V}^\pi = (\mathbf{I} - \gamma \, \mathbf{P}^\pi)^{-1} \, \mathbf{R}^\pi$$
+
+One matrix inversion, done. All values computed in one shot. No iteration, no sweeps. This is the purest reading of Bellman — solve the simultaneous equations directly. For our 3x3 grid with 9 states, this is a 9×9 matrix inversion, perfectly feasible. The matrix $(\mathbf{I} - \gamma \, \mathbf{P}^\pi)$ is always invertible when $\gamma < 1$ because the eigenvalues of $\gamma \mathbf{P}^\pi$ are all less than 1 in magnitude.
+
+**Why don't we always do this?** Matrix inversion is $O(n^3)$. For 9 states, that's $729$ operations — trivial. For 1,000 states, it's $10^9$ — slow but possible. For 1,000,000 states (common in real problems), it's $10^{18}$ — completely infeasible. You'd also need to store an $n \times n$ matrix in memory, which for a million states is $10^{12}$ entries.
+
+### Solving method 2: iterative sweeps (large state spaces)
+
+Instead of solving the system directly, we can use an iterative approach: start with a guess $V(s) = 0$ for all states, apply the Bellman equation to compute new values, and repeat until the values stop changing.
+
+**What is a sweep?**
+
+A **sweep** is one pass through every state in the state space, applying the Bellman equation once to each state. In code:
+
+```python
+for s in range(num_states):        # loop over every state
+    V[s] = bellman_backup(s, V)    # apply the equation using current V
+```
+
+This is purely computation — reading from the model $P(s',r|s,a)$ and doing math. No agent is walking around. No actions are being taken in the environment. No rewards are being collected. Nobody interacts with the environment. The environment isn't even "running" — we're just reading its model (the transition probabilities) and computing.
+
+**Why is one sweep not enough?**
+
+After one sweep, every state's value was computed using its neighbors' values — but those neighbors' values were also wrong (they were 0 at the start). The result after one sweep is *less wrong* than the initial guess, but not correct.
+
+Think of the simultaneous equations: $V(s_0)$ depends on $V(s_1)$ which depends on $V(s_4)$ which depends on $V(s_7)$ which depends on the goal reward. In one sweep, state 0's update uses state 1's old value (0), which knows nothing about the goal yet. It takes multiple sweeps for the goal's information to propagate backwards through the chain of dependencies.
+
+**Why does repeating sweeps converge?**
+
+Each sweep shrinks the error by a factor of $\gamma$. The update is $V(s) = r + \gamma V(s')$. The reward $r$ comes from the model (correct). The error is only in $V(s')$, and it gets multiplied by $\gamma < 1$. So if your estimate of $V(s')$ is off by 10, that error contributes only $\gamma \times 10 = 9$ (for $\gamma = 0.9$) to $V(s)$. The error shrinks every sweep:
+
+- After sweep 1: error $\leq E_0 \times \gamma$
+- After sweep 2: error $\leq E_0 \times \gamma^2$
+- After sweep $k$: error $\leq E_0 \times \gamma^k$
+- ...approaches 0 as $k \to \infty$
+
+This is the **contraction mapping** property. No matter what initial guess you start with ($V = 0$, $V = 1000000$, anything), the error shrinks every sweep. The Banach fixed-point theorem guarantees: (1) a unique solution $V^\pi$ exists, and (2) the iterative procedure converges to it.
+
+**When do we stop?**
+
+In our `policy_evaluation()` code, we track `delta` — the largest absolute change to any state's value during one sweep. When `delta` drops below `theta` (set to $10^{-8}$), we declare convergence: no state's value is changing meaningfully anymore.
+
+For the 3x3 grid with $\gamma = 0.9$ and $\theta = 10^{-8}$, policy evaluation converges in roughly 150 sweeps when evaluating the uniform policy. After policy improvement, evaluating the improved policy takes a similar number of sweeps. The outer policy iteration loop converges in just 2 rounds — but each round's policy evaluation does ~150 inner sweeps.
+
+### What is an episode, and why is it fundamentally different from a sweep?
+
+An **episode** is an agent **interacting** with the environment: start in some state, take actions according to a policy, receive rewards, transition to new states, repeat until a terminal state or step limit. The agent *experiences* the environment — it doesn't know the transition probabilities, it just observes what happens.
+
+The fundamental difference:
+
+| | **Sweep (DP)** | **Episode (MC / TD)** |
+|---|---|---|
+| **What happens** | Loop through every state, compute Bellman equation from the model | Agent walks through the environment, taking actions and observing outcomes |
+| **Requires model $P(s',r\|s,a)$?** | Yes — reads the model directly | No — learns from observed transitions |
+| **Agent interaction** | None — pure computation | Yes — the agent acts and the environment responds |
+| **States visited** | All states, every sweep | Only states the agent happens to visit |
+| **When values update** | All states updated in each sweep | Only visited states update |
+| **Source of information** | Known transition probabilities | Sampled experience (rewards, next states) |
+
+DP has **sweeps, not episodes**. There is no agent running around. DP knows the full model, so it just sits and computes. Think of it as solving a system of equations by repeated substitution, not by running experiments.
+
+MC and TD have **episodes** (or steps within episodes). The agent doesn't know the model — it must actually run the environment, collect experience, and learn from what it observes.
+
+This is the core tradeoff: DP is exact and efficient per sweep (it updates every state using the true model), but requires knowing the model. MC/TD don't need the model, but they only learn about states the agent actually visits, and the learning is noisy because it's based on sampled experience rather than exact expectations.
+
+### Summary: the two levels of iteration in policy iteration
+
+Policy iteration has two nested loops:
+
+**Outer loop — policy iteration rounds (2 rounds for the 3x3 grid):**
+1. Evaluate current policy → get $V^\pi$ (calls `policy_evaluation`)
+2. Improve policy → get new $\pi'$ (calls `policy_improvement`)
+3. If $\pi'$ = $\pi$, stop (policy is stable). Otherwise, set $\pi = \pi'$ and go to step 1.
+
+**Inner loop — sweeps inside policy evaluation (~150 sweeps per round for the 3x3 grid):**
+1. Initialize $V(s) = 0$ for all states
+2. Sweep: apply Bellman equation to every state, track `delta` (largest change)
+3. If `delta < theta`, return $V$. Otherwise, sweep again.
+
+The "Iteration 0" and "Iteration 1" in the notebook output are the **outer** loop (policy iteration rounds). The ~150 sweeps inside each `policy_evaluation` call are the **inner** loop — previously invisible because the code didn't print the count.
 
 ## How the strategy improves — the 3x3 grid example - via Dynamic Programming
 
@@ -440,17 +705,59 @@ The quantity $\delta_t = r_{t+1} + \gamma V(s_{t+1}) - V(s_t)$ is called the **T
 
 [Working demo of a TD agent solving the 3x3 grid](https://samratkar.github.io/assets/drl/webinars/dp-qlearning/src/q_learning_game.html)
 
-TD(0) learns $V(s)$, but to improve the policy we need $Q(s,a)$. Two classic approaches:
+### Why TD prediction ($V$) is not enough for control
 
-**SARSA (on-policy TD control)** — the agent takes action $a_t$ in state $s_t$, observes $r_{t+1}$ and $s_{t+1}$, then picks the *next action* $a_{t+1}$ from its current policy, and updates:
+TD(0) learns $V^\pi(s)$ — the state value under the current policy. But as discussed in the "$V^\pi$, $Q^\pi$ vs $V^*$, $Q^*$" section, $V$ alone is not actionable. To pick the best action, you need to compare actions — and with $V$ alone, that requires the model $P(s',r|s,a)$ to figure out which action leads to which next state. Since the whole point of TD is to be model-free, learning $V$ defeats the purpose. We need $Q(s,a)$ instead — it tells us the value of each action directly, so we can just pick $\argmax_a Q(s,a)$.
+
+This is why TD *control* methods learn $Q$ rather than $V$.
+
+### On-policy vs off-policy — which policy's values are you learning?
+
+This is a fundamental distinction, separate from the $V$ vs $Q$ choice:
+
+**On-policy** = learn the value of the policy you are currently following (including its exploration). The policy you use to **act** (behavior policy) and the policy you **evaluate** (target policy) are the same.
+
+**Off-policy** = learn the value of a *different* (usually better) policy than the one you are following. The behavior policy (what you actually do) and the target policy (what you are evaluating) are different.
+
+### SARSA — on-policy TD control (learns $Q^\pi$)
+
+The agent takes action $a_t$ in state $s_t$, observes $r_{t+1}$ and $s_{t+1}$, then picks the *next action* $a_{t+1}$ from its current policy, and updates:
 $$Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \left[ r_{t+1} + \gamma Q(s_{t+1}, a_{t+1}) - Q(s_t, a_t) \right]$$
 
-The name comes from the quintuple used in the update: $(S_t, A_t, R_{t+1}, S_{t+1}, A_{t+1})$. SARSA learns the value of the policy it is actually following (including its exploration). If the policy explores with epsilon-greedy, SARSA's Q values reflect that exploration.
+The name comes from the quintuple used in the update: $(S_t, A_t, R_{t+1}, S_{t+1}, A_{t+1})$.
 
-**Q-learning (off-policy TD control)** — instead of using the action the policy *would* take next, it uses the *best possible* action at the next state:
+SARSA is **on-policy** because the target uses $Q(s_{t+1}, a_{t+1})$ — the value of the action **actually taken** by the current policy at the next state. So SARSA learns $Q^\pi$ — the action values of the policy it is actually following, including its exploration. If the policy explores with epsilon-greedy and sometimes stumbles into bad states, SARSA's Q values reflect that risk.
+
+### Q-learning — off-policy TD control (learns $Q^*$)
+
+Instead of using the action the policy *would* take next, it uses the *best possible* action at the next state:
 $$Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \left[ r_{t+1} + \gamma \max_{a'} Q(s_{t+1}, a') - Q(s_t, a_t) \right]$$
 
-The $\max$ makes this **off-policy** — the agent explores with epsilon-greedy but learns about the greedy policy. This separation means Q-learning converges to $Q^*$ (the optimal Q values) regardless of the exploration policy, as long as all state-action pairs are visited sufficiently.
+Q-learning is **off-policy** because the target uses $\max_{a'} Q(s_{t+1}, a')$ — the value of the **best** action, not the action actually taken. The agent explores with epsilon-greedy (behavior policy), but learns about the greedy policy (target policy). These are two different policies. This separation means Q-learning converges to $Q^*$ (the optimal action values) regardless of how the agent explores, as long as all state-action pairs are visited sufficiently.
+
+### The key difference: what do the Q values reflect?
+
+| | **SARSA (on-policy)** | **Q-learning (off-policy)** |
+|---|---|---|
+| **What it learns** | $Q^\pi$ — action values of the current epsilon-greedy policy | $Q^*$ — action values of the optimal policy |
+| **Target in update** | $Q(s_{t+1}, a_{t+1})$ — the action actually taken next | $\max_{a'} Q(s_{t+1}, a')$ — the best action, regardless of what was taken |
+| **Behavior policy** | Epsilon-greedy | Epsilon-greedy |
+| **Target policy** | Same epsilon-greedy (on-policy) | Greedy / optimal (off-policy) |
+| **Q values account for exploration?** | Yes — if exploration causes falls, Q values reflect it | No — Q values reflect optimal behavior, ignoring exploration |
+
+**Cliff walking example:** In the classic cliff walking environment, SARSA learns the **safe path** away from the cliff edge because it knows its own epsilon-greedy policy sometimes explores randomly — and a random step near the cliff means falling in. SARSA's Q values account for that risk. Q-learning learns the **optimal path** along the cliff edge because it evaluates the greedy policy which never explores — it doesn't account for the epsilon-random steps. However, during actual execution with epsilon-greedy, Q-learning's agent occasionally falls off the cliff, getting lower online reward than SARSA despite having learned the "better" policy.
+
+### Connection to TD(0) prediction
+
+TD(0) prediction (learning $V^\pi$) is inherently **on-policy** — it learns the state values of whatever policy the agent is following. But as discussed, $V^\pi$ is not actionable without the model. This is why TD control methods switched to learning $Q$ instead:
+
+| | What it learns | On/off-policy | Model needed to act? |
+|---|---|---|---|
+| **TD(0) prediction** | $V^\pi$ (state values of current policy) | On-policy | Yes — $V$ alone can't pick actions |
+| **SARSA** | $Q^\pi$ (action values of current policy) | On-policy | No — $\argmax_a Q^\pi(s,a)$ |
+| **Q-learning** | $Q^*$ (action values of optimal policy) | Off-policy | No — $\argmax_a Q^*(s,a)$ |
+
+The progression: TD(0) prediction showed that model-free bootstrapping works. SARSA applied it to $Q$ instead of $V$, making it actionable. Q-learning went further — by evaluating the optimal policy instead of the current one, it learns $Q^*$ directly, converging to optimal behavior regardless of how the agent explores.
 
 ## Why TD is an improvement over MC
 
