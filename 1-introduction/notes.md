@@ -7,23 +7,27 @@ status: Published
 
 # A journey into the world of RL by Samrat Kar 
 ## An introduction of the context
-1. solves **sequential decision** making problems.
-2. there is always an **objective**. reach an objective involves taking many actions in sequence. each action changing the environment.
-3. example of balancing a flag pole. `slm-lab run --render`
-4. environment : 
+1. RL is a **system** of two entities : **environment** and **agent**. Environment has the ability to present out to the agent its condition which is known as **state**. agent interacts with the environment by observing the state and using this information to select an **action**. The environment accepts the action, and transitions to the next state. it then returns the next state and a reward to the agent. this cycle from state -> action -> reward & new state , is known as a step. Multiple such steps stitched together to form **episode**. An episode defines a series of states. that series of states is known as **trajectory**. the cycle repeats until the environment terminates, for example with the problem is solved. the agent's action producing function is known as **policy**. formally the mapping from state to action is known as policy. An action will change the environment, and affect what an agent observes and does next. **An action changes the environment and what the agent observes and does next.**
+the exchange between agent and environment unfolds in time - therefore it can be thought of a sequential decision making process.
+![](./assets/rl-system.svg)
+2. RL solves **sequential decision** making problems.
+3. RL problems have an **objective**, which is the sum of rewards received by an agent. **An agent's goal is to maximize the objective by selecting good actions**. i.e - fine tuning the policy.
+4. there is always an **objective**. reach an objective involves taking many actions in sequence. each action changing the environment.
+5. example of balancing a flag pole. `slm-lab run --render`
+6. environment : 
    - states
    - rewards for each state
    - model dynamics / transition probability - conditional probability distribution of state transition and rewards given an action is taken in a given state - $P(s',r|s,a)$
    - obstruction : states with negative / low rewards
    - objective 
-5. agent : 
+7. agent : 
    - policy : function that maps state to action : for stochastic cases it would be conditional probability of actions, given a state - $\pi(a|s)$
    - action : the current state is changed, and a reward is received.
-6. agent and environment are mutually exclusive
-7. $(s_t, a_t, r_t)$ control loop : experience.
-8. the control loop can repeat forever theoretically. However, they terminate after reaching a terminal state or a max number of steps t = T. time horizon from t=0 to t=T is known as an episode.
-9.  a trajectory is a sequence of experiences in an episode : $\tau = (s_0,a_0,r_0), (s_1,a_1,r_1), (s_2,a_2,r_2), . . ., (s_T, a_T, r_t)$
-10. an agent typically needs several episodes to come up with a good policy. agent's objective is to fine tune its policy to get the maximum return.
+8. agent and environment are mutually exclusive
+9. $(s_t, a_t, r_t)$ control loop : experience.
+10.  the control loop can repeat forever theoretically. However, they terminate after reaching a terminal state or a max number of steps t = T. time horizon from t=0 to t=T is known as an episode.
+11. a trajectory is a sequence of experiences in an episode : $\tau = (s_0,a_0,r_0), (s_1,a_1,r_1), (s_2,a_2,r_2), . . ., (s_T, a_T, r_t)$
+12. an agent typically needs several episodes to come up with a good policy. agent's objective is to fine tune its policy to get the maximum return.
 
 ## Formulating a problem as an MDP
 A Markov Decision Process (MDP) is a mathematical framework used to model decision-making problems where outcomes are partly random and partly under the control of a decision-maker. An MDP is defined by the following components:
