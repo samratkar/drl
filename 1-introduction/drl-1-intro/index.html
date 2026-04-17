@@ -178,22 +178,21 @@
 
       </google-codelab-step>
     
-      <google-codelab-step label="$V^\pi$, $Q^\pi$ vs $V^
-$, $Q^$ — the value of 
+      <google-codelab-step label="$V^\pi$, $Q^\pi$ vs $V^{\ast}$, $Q^{\ast}$ — the value of 
 a policy vs the value of 
 the best policy" duration="0">
         <h2 is-upgraded>Under a specific policy $\pi$</h2>
 <p><strong>$V^\pi(s)$</strong> is the value of state $s$ under <strong>one specific policy</strong> $\pi$. Every policy has its own $V^\pi$. The uniform random policy has one (with poor values). A policy that always goes RIGHT has a different one. An epsilon-greedy policy after some improvement has yet another one. $V^\pi$ answers: &#34;how good is state $s$ if I follow <em>this particular</em> policy?&#34;</p>
 <p><strong>$Q^\pi(s,a)$</strong> is the value of taking action $a$ in state $s$ and then following policy $\pi$ from there. It answers a finer question: &#34;how good is it to take <em>this specific action</em> in this state, and then follow $\pi$?&#34; The relationship between them: $$V^\pi(s) = \sum_a \pi(a|s) , Q^\pi(s,a)$$ The state value is just the average of the action values, weighted by the policy. $V^\pi$ tells you how good a state is overall; $Q^\pi$ breaks that down per action so you can compare them.</p>
-<h2 is-upgraded>Under the optimal policy $\pi^*$</h2>
-<p><strong>$V^*(s)$</strong> is the value of state $s$ under <strong>the best possible policy</strong>: $$V^*(s) = \max_\pi V^\pi(s)$$</p>
-<p>Among all possible policies, there exists one (the optimal policy $\pi^<em>$) whose $V^\pi$ is the highest at every state. That $V^\pi$ is $V^</em>$. It satisfies the <strong>Bellman optimality equation for state values</strong>: $$V^*(s) = \max_a \sum_{s&#39;,r} P(s&#39;,r|s,a)\left[r + \gamma V^*(s&#39;)\right]$$</p>
-<p><strong>$Q^*(s,a)$</strong> is the value of taking action $a$ in state $s$ and then following the <strong>optimal policy</strong> from there: $$Q^*(s,a) = \sum_{s&#39;,r} P(s&#39;,r|s,a)\left[r + \gamma V^*(s&#39;)\right]$$</p>
-<p>It satisfies the <strong>Bellman optimality equation for action values</strong>: $$Q^*(s,a) = \sum_{s&#39;,r} P(s&#39;,r|s,a)\left[r + \gamma \max_{a&#39;} Q^*(s&#39;,a&#39;)\right]$$</p>
-<p>The relationship between $V^<em>$ and $Q^</em>$ is: $$V^<em>(s) = \max_a Q^</em>(s,a)$$</p>
-<p>This is the key equation — the optimal state value is simply the best action value available. Once you have $Q^<em>$, the optimal policy falls out trivially: $\pi^</em>(s) = \argmax_a Q^<em>(s,a)$ — just pick the action with the highest $Q^</em>$ in every state.</p>
-<h2 is-upgraded>Why $Q^<em>$ matters more than $V^</em>$ in practice — definition vs learning</h2>
-<p>The <em>definition</em> of $Q^<em>$ references the model: $Q^</em>(s,a) = \sum_{s&#39;,r} P(s&#39;,r|s,a)[r + \gamma \max_{a&#39;} Q^*(s&#39;,a&#39;)]$. But you don&#39;t need to *use* that equation to *learn* $Q^*$. Q-learning does this instead: the agent takes action $a$ in state $s$, observes what actually happens (gets reward $r$, lands in $s&#39;$), and updates: $$Q(s,a) \leftarrow Q(s,a) + \alpha [r + \gamma \max_{a&#39;} Q(s&#39;,a&#39;) - Q(s,a)]$$ No $P(s&#39;,r|s,a)$ anywhere. The agent doesn&#39;t sum over all possible next states weighted by their probabilities. It uses the **one transition it actually experienced** — the single $r$ and $s&#39;$ it observed. The environment&#39;s stochasticity is handled implicitly through repeated sampling over many episodes.</p>
+<h2 is-upgraded>Under the optimal policy $\pi^{\ast}$</h2>
+<p><strong>$V^{\ast}(s)$</strong> is the value of state $s$ under <strong>the best possible policy</strong>: $$V^{\ast}(s) = \max_\pi V^\pi(s)$$</p>
+<p>Among all possible policies, there exists one (the optimal policy $\pi^{\ast}$) whose $V^\pi$ is the highest at every state. That $V^\pi$ is $V^{\ast}$. It satisfies the <strong>Bellman optimality equation for state values</strong>: $$V^{\ast}(s) = \max_a \sum_{s&#39;,r} P(s&#39;,r|s,a)\left[r + \gamma V^{\ast}(s&#39;)\right]$$</p>
+<p><strong>$Q^{\ast}(s,a)$</strong> is the value of taking action $a$ in state $s$ and then following the <strong>optimal policy</strong> from there: $$Q^{\ast}(s,a) = \sum_{s&#39;,r} P(s&#39;,r|s,a)\left[r + \gamma V^{\ast}(s&#39;)\right]$$</p>
+<p>It satisfies the <strong>Bellman optimality equation for action values</strong>: $$Q^{\ast}(s,a) = \sum_{s&#39;,r} P(s&#39;,r|s,a)\left[r + \gamma \max_{a&#39;} Q^{\ast}(s&#39;,a&#39;)\right]$$</p>
+<p>The relationship between $V^{\ast}$ and $Q^{\ast}$ is: $$V^{\ast}(s) = \max_a Q^{\ast}(s,a)$$</p>
+<p>This is the key equation — the optimal state value is simply the best action value available. Once you have $Q^{\ast}$, the optimal policy falls out trivially: $\pi^{\ast}(s) = \argmax_a Q^{\ast}(s,a)$ — just pick the action with the highest $Q^{\ast}$ in every state.</p>
+<h2 is-upgraded>Why $Q^{\ast}$ matters more than $V^{\ast}$ in practice — definition vs learning</h2>
+<p>The <em>definition</em> of $Q^{\ast}$ references the model: $Q^{\ast}(s,a) = \sum_{s&#39;,r} P(s&#39;,r|s,a)[r + \gamma \max_{a&#39;} Q^{\ast}(s&#39;,a&#39;)]$. But you don&#39;t need to *use* that equation to *learn* $Q^{\ast}$. Q-learning does this instead: the agent takes action $a$ in state $s$, observes what actually happens (gets reward $r$, lands in $s&#39;$), and updates: $$Q(s,a) \leftarrow Q(s,a) + \alpha [r + \gamma \max_{a&#39;} Q(s&#39;,a&#39;) - Q(s,a)]$$ No $P(s&#39;,r|s,a)$ anywhere. The agent doesn&#39;t sum over all possible next states weighted by their probabilities. It uses the **one transition it actually experienced** — the single $r$ and $s&#39;$ it observed. The environment&#39;s stochasticity is handled implicitly through repeated sampling over many episodes.</p>
 <h2 is-upgraded>How Q-learning implicitly reconstructs the probability distribution</h2>
 <p>The $\max$ in Q-learning is over <strong>actions at the next state</strong>, not over episodes: $$Q(s,a) \leftarrow Q(s,a) + \alpha [r + \gamma \max_{a&#39;} Q(s&#39;,a&#39;) - Q(s,a)]$$ The $\max_{a&#39;}$ asks: &#34;at the next state $s&#39;$, which action has the highest Q value right now?&#34; It&#39;s picking the best action within a single update, not comparing across episodes.</p>
 <p>The implicit probability reconstruction happens through something different — there is <strong>one single Q table that persists across all episodes</strong>. Every episode&#39;s every step writes into the same table. So $Q(s_4, \text{RIGHT})$ is not &#34;the Q value from episode 37&#34; — it&#39;s the accumulated result of every time the agent was in state 4, took RIGHT, and observed what happened.</p>
@@ -248,34 +247,34 @@ for episode in range(num_episodes):
     # This is critical: the accumulated Q values across episodes
     # implicitly reconstruct the probability-weighted expectations.
 </code></pre>
-<p>Notice: <code>Q</code> is allocated once before all episodes and never reset. Every <code>env.step(action)</code> returns one sampled $(r, s&#39;)$ — the agent never sees $P(s&#39;,r|s,a)$. Over many episodes, the same <code>Q[state, action]</code> entry is updated by transitions sampled at their true frequencies, converging to $Q^*$.</p>
-<p>Now contrast this with $V^<em>$. Even if you somehow learned $V^</em>$ perfectly, you&#39;d be stuck at <strong>decision time</strong>. To act, you need to pick the best action at each state. That means answering: &#34;if I take action $a$ in state $s$, what state do I end up in, and what&#39;s the value there?&#34; That requires knowing $P(s&#39;,r|s,a)$ — the model. With $Q^<em>$, this problem disappears — $Q^</em>(s,a)$ already has the answer baked in for each action. Just pick $\argmax_a Q^*(s,a)$.</p>
+<p>Notice: <code>Q</code> is allocated once before all episodes and never reset. Every <code>env.step(action)</code> returns one sampled $(r, s&#39;)$ — the agent never sees $P(s&#39;,r|s,a)$. Over many episodes, the same <code>Q[state, action]</code> entry is updated by transitions sampled at their true frequencies, converging to $Q^{\ast}$.</p>
+<p>Now contrast this with $V^{\ast}$. Even if you somehow learned $V^{\ast}$ perfectly, you&#39;d be stuck at <strong>decision time</strong>. To act, you need to pick the best action at each state. That means answering: &#34;if I take action $a$ in state $s$, what state do I end up in, and what&#39;s the value there?&#34; That requires knowing $P(s&#39;,r|s,a)$ — the model. With $Q^{\ast}$, this problem disappears — $Q^{\ast}(s,a)$ already has the answer baked in for each action. Just pick $\argmax_a Q^{\ast}(s,a)$.</p>
 <table>
 <tr><td colspan="1" rowspan="1"></td><td colspan="1" rowspan="1"><p><strong>Learning</strong></p>
 </td><td colspan="1" rowspan="1"><p><strong>Acting (picking actions)</strong></p>
 </td></tr>
-<tr><td colspan="1" rowspan="1"><p><strong>$V^*$</strong></p>
+<tr><td colspan="1" rowspan="1"><p><strong>$V^{\ast}$</strong></p>
 </td><td colspan="1" rowspan="1"><p>Requires the model (value iteration)</p>
 </td><td colspan="1" rowspan="1"><p>Also requires the model to compare actions</p>
 </td></tr>
-<tr><td colspan="1" rowspan="1"><p><strong>$Q^*$</strong></p>
+<tr><td colspan="1" rowspan="1"><p><strong>$Q^{\ast}$</strong></p>
 </td><td colspan="1" rowspan="1"><p>Model-free (Q-learning — uses sampled transitions)</p>
-</td><td colspan="1" rowspan="1"><p>Model-free (just $\argmax_a Q^*(s,a)$)</p>
+</td><td colspan="1" rowspan="1"><p>Model-free (just $\argmax_a Q^{\ast}(s,a)$)</p>
 </td></tr>
 </table>
-<p>$Q^<em>$ is model-free at both stages. $V^</em>$ needs the model at both stages. This is why Q-learning was such a breakthrough — it made the entire pipeline model-free.</p>
+<p>$Q^{\ast}$ is model-free at both stages. $V^{\ast}$ needs the model at both stages. This is why Q-learning was such a breakthrough — it made the entire pipeline model-free.</p>
 <h2 is-upgraded>The difference between the Bellman expectation and optimality equations</h2>
 <table>
 <tr><td colspan="1" rowspan="1"></td><td colspan="1" rowspan="1"><p><strong>Bellman expectation</strong> (for $\pi$)</p>
-</td><td colspan="1" rowspan="1"><p><strong>Bellman optimality</strong> (for $\pi^*$)</p>
+</td><td colspan="1" rowspan="1"><p><strong>Bellman optimality</strong> (for $\pi^{\ast}$)</p>
 </td></tr>
 <tr><td colspan="1" rowspan="1"><p><strong>State values</strong></p>
 </td><td colspan="1" rowspan="1"><p>$V^\pi(s) = \sum_a \pi(a|s) \sum_{s&#39;,r} P(\dots)[r + \gamma V^\pi(s&#39;)]$</p>
-</td><td colspan="1" rowspan="1"><p>$V^*(s) = \max_a \sum_{s&#39;,r} P(\dots)[r + \gamma V^*(s&#39;)]$</p>
+</td><td colspan="1" rowspan="1"><p>$V^{\ast}(s) = \max_a \sum_{s&#39;,r} P(\dots)[r + \gamma V^{\ast}(s&#39;)]$</p>
 </td></tr>
 <tr><td colspan="1" rowspan="1"><p><strong>Action values</strong></p>
 </td><td colspan="1" rowspan="1"><p>$Q^\pi(s,a) = \sum_{s&#39;,r} P(\dots)[r + \gamma \sum_{a&#39;} \pi(a&#39;|s&#39;) Q^\pi(s&#39;,a&#39;)]$</p>
-</td><td colspan="1" rowspan="1"><p>$Q^*(s,a) = \sum_{s&#39;,r} P(\dots)[r + \gamma \max_{a&#39;} Q^*(s&#39;,a&#39;)]$</p>
+</td><td colspan="1" rowspan="1"><p>$Q^{\ast}(s,a) = \sum_{s&#39;,r} P(\dots)[r + \gamma \max_{a&#39;} Q^{\ast}(s&#39;,a&#39;)]$</p>
 </td></tr>
 <tr><td colspan="1" rowspan="1"><p><strong>Over actions</strong></p>
 </td><td colspan="1" rowspan="1"><p>Averages using $\pi(a|s)$ — the policy is fixed</p>
@@ -286,7 +285,7 @@ for episode in range(num_episodes):
 </td><td colspan="1" rowspan="1"><p>Value of the best possible policy</p>
 </td></tr>
 </table>
-<p><strong>Policy iteration</strong> is the process of finding $V^<em>$ and $Q^</em>$ — start with some policy $\pi$, compute $V^\pi$ (policy evaluation), derive $Q^\pi$, improve $\pi$ by acting greedily w.r.t. $Q^\pi$ (policy improvement), repeat. Each cycle gives a better policy with higher values. When $V^\pi$ stops changing, you&#39;ve reached $V^\pi = V^<em>$, $Q^\pi = Q^</em>$, and $\pi = \pi^*$.</p>
+<p><strong>Policy iteration</strong> is the process of finding $V^{\ast}$ and $Q^{\ast}$ — start with some policy $\pi$, compute $V^\pi$ (policy evaluation), derive $Q^\pi$, improve $\pi$ by acting greedily w.r.t. $Q^\pi$ (policy improvement), repeat. Each cycle gives a better policy with higher values. When $V^\pi$ stops changing, you&#39;ve reached $V^\pi = V^{\ast}$, $Q^\pi = Q^{\ast}$, and $\pi = \pi^{\ast}$.</p>
 
 
       </google-codelab-step>
@@ -640,7 +639,7 @@ for episode in range(num_episodes):
 <p><strong>Noisier than DP</strong> — compare the MC Q values to the DP Q values:</p>
 <table>
 <tr><td colspan="1" rowspan="1"><p>State</p>
-</td><td colspan="1" rowspan="1"><p>DP $Q^*(s, \text{best})$</p>
+</td><td colspan="1" rowspan="1"><p>DP $Q^{\ast}(s, \text{best})$</p>
 </td><td colspan="1" rowspan="1"><p>MC $Q(s, \text{best})$</p>
 </td><td colspan="1" rowspan="1"><p>Difference</p>
 </td></tr>
@@ -788,7 +787,7 @@ for episode in range(num_episodes):
       <google-codelab-step label="From TD prediction to TD control — SARSA and Q-learning" duration="0">
         <p><a href="https://samratkar.github.io/assets/drl/webinars/dp-qlearning/src/q_learning_game.html" target="_blank">Working demo of a TD agent solving the 3x3 grid</a></p>
 <h2 is-upgraded>Why TD prediction ($V$) is not enough for control</h2>
-<p>TD(0) learns $V^\pi(s)$ — the state value under the current policy. But as discussed in the &#34;$V^\pi$, $Q^\pi$ vs $V^<em>$, $Q^</em>$&#34; section, $V$ alone is not actionable. To pick the best action, you need to compare actions — and with $V$ alone, that requires the model $P(s&#39;,r|s,a)$ to figure out which action leads to which next state. Since the whole point of TD is to be model-free, learning $V$ defeats the purpose. We need $Q(s,a)$ instead — it tells us the value of each action directly, so we can just pick $\argmax_a Q(s,a)$.</p>
+<p>TD(0) learns $V^\pi(s)$ — the state value under the current policy. But as discussed in the &#34;$V^\pi$, $Q^\pi$ vs $V^{\ast}$, $Q^{\ast}$&#34; section, $V$ alone is not actionable. To pick the best action, you need to compare actions — and with $V$ alone, that requires the model $P(s&#39;,r|s,a)$ to figure out which action leads to which next state. Since the whole point of TD is to be model-free, learning $V$ defeats the purpose. We need $Q(s,a)$ instead — it tells us the value of each action directly, so we can just pick $\argmax_a Q(s,a)$.</p>
 <p>This is why TD <em>control</em> methods learn $Q$ rather than $V$.</p>
 <h2 is-upgraded>On-policy vs off-policy — which policy&#39;s values are you learning?</h2>
 <p>This is a fundamental distinction, separate from the $V$ vs $Q$ choice:</p>
@@ -798,9 +797,9 @@ for episode in range(num_episodes):
 <p>The agent takes action $a_t$ in state $s_t$, observes $r_{t+1}$ and $s_{t+1}$, then picks the *next action* $a_{t+1}$ from its current policy, and updates: $$Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \left[ r_{t+1} + \gamma Q(s_{t+1}, a_{t+1}) - Q(s_t, a_t) \right]$$</p>
 <p>The name comes from the quintuple used in the update: $(S_t, A_t, R_{t+1}, S_{t+1}, A_{t+1})$.</p>
 <p>SARSA is <strong>on-policy</strong> because the target uses $Q(s_{t+1}, a_{t+1})$ — the value of the action **actually taken** by the current policy at the next state. So SARSA learns $Q^\pi$ — the action values of the policy it is actually following, including its exploration. If the policy explores with epsilon-greedy and sometimes stumbles into bad states, SARSA&#39;s Q values reflect that risk.</p>
-<h2 is-upgraded>Q-learning — off-policy TD control (learns $Q^*$)</h2>
+<h2 is-upgraded>Q-learning — off-policy TD control (learns $Q^{\ast}$)</h2>
 <p>Instead of using the action the policy <em>would</em> take next, it uses the <em>best possible</em> action at the next state: $$Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \left[ r_{t+1} + \gamma \max_{a&#39;} Q(s_{t+1}, a&#39;) - Q(s_t, a_t) \right]$$</p>
-<p>Q-learning is <strong>off-policy</strong> because the target uses $\max_{a&#39;} Q(s_{t+1}, a&#39;)$ — the value of the **best** action, not the action actually taken. The agent explores with epsilon-greedy (behavior policy), but learns about the greedy policy (target policy). These are two different policies. This separation means Q-learning converges to $Q^*$ (the optimal action values) regardless of how the agent explores, as long as all state-action pairs are visited sufficiently.</p>
+<p>Q-learning is <strong>off-policy</strong> because the target uses $\max_{a&#39;} Q(s_{t+1}, a&#39;)$ — the value of the **best** action, not the action actually taken. The agent explores with epsilon-greedy (behavior policy), but learns about the greedy policy (target policy). These are two different policies. This separation means Q-learning converges to $Q^{\ast}$ (the optimal action values) regardless of how the agent explores, as long as all state-action pairs are visited sufficiently.</p>
 <h2 is-upgraded>The key difference: what do the Q values reflect?</h2>
 <table>
 <tr><td colspan="1" rowspan="1"></td><td colspan="1" rowspan="1"><p><strong>SARSA (on-policy)</strong></p>
@@ -808,7 +807,7 @@ for episode in range(num_episodes):
 </td></tr>
 <tr><td colspan="1" rowspan="1"><p><strong>What it learns</strong></p>
 </td><td colspan="1" rowspan="1"><p>$Q^\pi$ — action values of the current epsilon-greedy policy</p>
-</td><td colspan="1" rowspan="1"><p>$Q^*$ — action values of the optimal policy</p>
+</td><td colspan="1" rowspan="1"><p>$Q^{\ast}$ — action values of the optimal policy</p>
 </td></tr>
 <tr><td colspan="1" rowspan="1"><p><strong>Target in update</strong></p>
 </td><td colspan="1" rowspan="1"><p>$Q(s_{t+1}, a_{t+1})$ — the action actually taken next</p>
@@ -846,12 +845,12 @@ for episode in range(num_episodes):
 </td><td colspan="1" rowspan="1"><p>No — $\argmax_a Q^\pi(s,a)$</p>
 </td></tr>
 <tr><td colspan="1" rowspan="1"><p><strong>Q-learning</strong></p>
-</td><td colspan="1" rowspan="1"><p>$Q^*$ (action values of optimal policy)</p>
+</td><td colspan="1" rowspan="1"><p>$Q^{\ast}$ (action values of optimal policy)</p>
 </td><td colspan="1" rowspan="1"><p>Off-policy</p>
-</td><td colspan="1" rowspan="1"><p>No — $\argmax_a Q^*(s,a)$</p>
+</td><td colspan="1" rowspan="1"><p>No — $\argmax_a Q^{\ast}(s,a)$</p>
 </td></tr>
 </table>
-<p>The progression: TD(0) prediction showed that model-free bootstrapping works. SARSA applied it to $Q$ instead of $V$, making it actionable. Q-learning went further — by evaluating the optimal policy instead of the current one, it learns $Q^*$ directly, converging to optimal behavior regardless of how the agent explores.</p>
+<p>The progression: TD(0) prediction showed that model-free bootstrapping works. SARSA applied it to $Q$ instead of $V$, making it actionable. Q-learning went further — by evaluating the optimal policy instead of the current one, it learns $Q^{\ast}$ directly, converging to optimal behavior regardless of how the agent explores.</p>
 
 
       </google-codelab-step>
