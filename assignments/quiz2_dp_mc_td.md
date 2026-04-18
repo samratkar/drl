@@ -35,7 +35,7 @@ The same $V^\pi$ appears on both sides — this is a fixed-point equation defini
 
 ---
 
-**Q3.** Consider a $4 \times 4$ gridworld where all transitions yield a reward of $-1$ and the discount factor $\gamma = 1$. Under the equiprobable random policy, after running policy evaluation to convergence, which cells will have the **most negative** state values?
+**Q3.** Consider the $4 \times 4$ gridworld (Sutton & Barto, Example 4.1) with **two terminal states** at diagonally opposite corners (top-left and bottom-right). All transitions yield a reward of $-1$ and the discount factor $\gamma = 1$. Under the equiprobable random policy, after running policy evaluation to convergence, which cells will have the **most negative** state values?
 
 (a) Cells adjacent to a terminal state
 (b) Cells in the center of the grid, farthest from any terminal state
@@ -119,7 +119,7 @@ Which variant (first-visit vs. every-visit) has an unbiased estimate of $v_\pi(s
 **Q11.** Why is it important to maintain **exploring starts** or use an $\varepsilon$-soft policy in Monte Carlo control?
 
 (a) To ensure the value function converges faster
-(b) To guarantee that every state-action pair is visited infinitely often in the limit, which is necessary for convergence to optimal values
+(b) To ensure that every state-action pair gets tried enough times so the agent doesn't get stuck on a suboptimal action just because it never tried the better alternatives
 (c) To reduce the variance of the return estimates
 (d) To ensure that episodes terminate in finite time
 
@@ -302,7 +302,7 @@ What advantage does Expected SARSA have over standard SARSA?
 
 **Q10 (c):** On-policy MC with $\varepsilon$-greedy finds the best policy within the class of $\varepsilon$-soft policies, not the globally optimal policy.
 
-**Q11 (b):** Without sufficient exploration, some state-action pairs may never be visited, preventing convergence to optimal values. Exploring starts or $\varepsilon$-soft policies ensure all pairs are visited infinitely often.
+**Q11 (b):** MC control can only update Q-values for (state, action) pairs it has actually tried. Without exploration, the agent sticks with the first decent action it finds and never discovers better alternatives. Exploring starts or $\varepsilon$-soft policies force the agent to keep trying all actions, so it eventually learns the true value of every option.
 
 **Q12 (b):** Ordinary importance sampling is unbiased but a single large importance-sampling ratio can cause the variance to explode, especially with long episodes.
 
