@@ -684,22 +684,10 @@ The trade-off: weighted IS introduces a small bias (it's not perfectly accurate 
 
 #### Summary: The Full Picture of MC Methods
 
-```
-MC Methods
-├── On-Policy MC
-│   ├── Uses same policy for acting and learning
-│   ├── Policy must be ε-soft (explore)
-│   ├── Optimal among ε-soft policies only (Q10)
-│   └── Needs exploring starts or ε-soft for coverage (Q11)
-│
-└── Off-Policy MC
-    ├── Behavior policy b (explores) ≠ Target policy π (greedy)
-    ├── Can learn truly optimal policy
-    ├── Needs importance sampling to correct data mismatch
-    ├── Ordinary IS: unbiased but high variance (Q12)
-    ├── Weighted IS: low variance but slightly biased (Q13)
-    └── Coverage assumption: π(a|s) > 0 ⟹ b(a|s) > 0 (Q14)
-```
+| MC Method | Key Properties |
+|---|---|
+| **On-Policy MC** | Uses same policy for acting and learning; policy must be ε-soft (explore); optimal among ε-soft policies only (Q10); needs exploring starts or ε-soft for coverage (Q11). |
+| **Off-Policy MC** | Behavior policy **b** (explores) ≠ target policy **π** (greedy); can learn truly optimal policy; needs importance sampling to correct data mismatch; ordinary IS: unbiased but high variance (Q12); weighted IS: low variance but slightly biased (Q13); coverage: π(a\|s) > 0 ⟹ b(a\|s) > 0 (Q14). |
 
 ---
 
@@ -793,12 +781,12 @@ graph LR
 
 Consider a $4 \times 4$ gridworld with **two terminal states** at diagonally opposite corners — top-left $(0,0)$ and bottom-right $(3,3)$. The agent can move up, down, left, or right. Moves that would take the agent off the grid leave the state unchanged. Every transition yields a reward of $-1$ and the discount factor is $\gamma = 1$.
 
-```
- T  .  .  .
- .  .  .  .
- .  .  .  .
- .  .  .  T
-```
+|     | Col 0 | Col 1 | Col 2 | Col 3 |
+|---|---|---|---|---|
+| **Row 0** | T | . | . | . |
+| **Row 1** | . | . | . | . |
+| **Row 2** | . | . | . | . |
+| **Row 3** | . | . | . | T |
 
 ---
 
@@ -977,12 +965,12 @@ The most negative value is $-3$, occurring at the **anti-diagonal** cells: $(0,3
 
 **Optimal policy arrows (showing which terminal the agent heads toward):**
 
-```
-  T    ←    ←    ↓ or ←
-  ↑    ↑/←  ↓/→   ↓
-  ↑    ↑/←  ↓/→   ↓
-  → or ↑  →    →    T
-```
+|     | Col 0 | Col 1 | Col 2 | Col 3 |
+|---|---|---|---|---|
+| **Row 0** | T | ← | ← | ↓ or ← |
+| **Row 1** | ↑ | ↑/← | ↓/→ | ↓ |
+| **Row 2** | ↑ | ↑/← | ↓/→ | ↓ |
+| **Row 3** | → or ↑ | → | → | T |
 
 Cells on the anti-diagonal have **tied** distances, so multiple optimal actions exist (both directions are equally good).
 
@@ -1105,15 +1093,13 @@ The key issue: $q_\pi(s,a)$ answers the question *"take action $a$ at state $s$,
 
 Consider a 4-state environment with actions Left (L) and Right (R):
 
-```
-[Start] --L--> [A] --L--> [Goal +10]
-   |                         ^
-   +------R--> [B] ---R-----+
-```
+| Current State | Action L | Action R |
+|---------------|----------|----------|
+| Start | → A (reward 0) | → B (reward 0) |
+| A | → Goal (reward +10) | → Goal (reward +2) |
+| B | → Goal (reward +3) | → Goal (reward +8) |
+| Goal | (terminal) | (terminal) |
 
-- From Start: L → A (reward 0), R → B (reward 0)
-- From A: L → Goal (reward +10), R → Goal (reward +2)
-- From B: L → Goal (reward +3), R → Goal (reward +8)
 - $\gamma = 1$
 
 **Round 1: Start with a bad policy $\pi_0$**

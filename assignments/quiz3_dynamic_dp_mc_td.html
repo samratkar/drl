@@ -1,0 +1,3494 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Quiz 3: Gridworld Value Analysis — Random vs. Optimal Policy</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+  </style>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js"
+  type="text/javascript"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+mermaid.initialize({ startOnLoad: true });
+</script>
+<style>
+html {
+  background: #f5f7fb;
+}
+body {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 32px 40px 56px;
+  background: #ffffff;
+  color: #1f1f1f;
+  font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+  box-shadow: 0 8px 24px rgba(60, 64, 67, 0.12);
+  border-radius: 16px;
+}
+header#title-block-header {
+  display: none;
+}
+h1, h2, h3, h4 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #9370db;
+}
+h1 {
+  margin-top: 0;
+  margin-bottom: 24px;
+  font-size: 2.25rem;
+  text-align: left;
+  letter-spacing: -0.02em;
+}
+h2 {
+  margin-top: 36px;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e3eb;
+  font-size: 1.52rem;
+}
+h3 {
+  margin-top: 28px;
+  margin-bottom: 10px;
+  font-size: 1.22rem;
+}
+h4 {
+  margin-top: 22px;
+  margin-bottom: 8px;
+  font-size: 1rem;
+  color: #3c4043;
+}
+p, li {
+  text-align: left;
+}
+p {
+  margin: 0.75rem 0 1rem;
+}
+ul, ol {
+  margin-top: 0.35rem;
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+li {
+  margin: 0.24rem 0;
+}
+hr {
+  height: 1px;
+  border: 0;
+  background: #e0e3eb;
+  margin: 24px 0;
+}
+a {
+  color: #1a73e8;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+blockquote {
+  border-left: 4px solid #1a73e8;
+  color: #3c4043;
+  background: #f8fbff;
+  margin: 1rem 0;
+  padding: 0.4rem 1rem;
+  border-radius: 0 8px 8px 0;
+}
+code, pre code {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.9em;
+}
+code {
+  background: #f1f3f4;
+  padding: 0.12rem 0.3rem;
+  border-radius: 4px;
+}
+pre {
+  background: #f8f9fa;
+  border: 1px solid #e0e3eb;
+  border-radius: 10px;
+  padding: 14px 16px;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre;
+}
+pre > code {
+  display: block;
+  white-space: pre;
+  word-break: normal;
+  overflow-wrap: normal;
+  tab-size: 4;
+}
+table {
+  width: auto;
+  max-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 1.25rem auto;
+  display: inline-table;
+  table-layout: auto;
+  font-size: 0.96em;
+  border: 1px solid #d8bfd8;
+  border-top: none;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(147, 112, 219, 0.12);
+}
+th, td {
+  border-right: 1px solid #e9d5ff;
+  border-bottom: 1px solid #e9d5ff;
+  padding: 10px 12px;
+  vertical-align: top;
+}
+th {
+  background: #ede9fe;
+  color: #202124;
+}
+thead th {
+  font-weight: 700;
+  border-top: none !important;
+}
+tbody tr:nth-child(even) td {
+  background: #fbfcfe;
+}
+tbody tr:hover td {
+  background: #faf5ff;
+}
+tr > *:last-child {
+  border-right: 0;
+}
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+thead tr:first-child th:first-child {
+  border-top: none !important;
+}
+thead tr:first-child th {
+  border-top: none !important;
+}
+.sourceCode,
+pre code {
+  font-variant-ligatures: none;
+}
+.math.display {
+  overflow-x: auto;
+  margin: 1rem 0 1.1rem;
+  text-align: center;
+}
+.math.inline {
+  white-space: normal;
+}
+.mermaid {
+  text-align: center;
+  margin: 1.2rem 0 1.35rem;
+}
+pre.mermaid {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+img, svg {
+  display: block;
+  margin: 1rem auto;
+  max-width: 100%;
+}
+@page {
+  margin: 0.6in;
+}
+@media print {
+  html {
+    background: white;
+  }
+  body {
+    box-shadow: none;
+    background: white;
+    padding: 0;
+    font-size: 12pt;
+    border-radius: 0;
+    max-width: none;
+  }
+  a {
+    color: inherit;
+  }
+}
+</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Quiz 3: Gridworld Value Analysis — Random vs. Optimal
+Policy</h1>
+</header>
+<h1 id="quiz-3-gridworld-value-analysis-random-vs.-optimal-policy">Quiz
+3: Gridworld Value Analysis — Random vs. Optimal Policy</h1>
+<p><strong>Course:</strong> Deep Reinforcement Learning (MTech)
+<strong>Total Marks:</strong> 1.0 (4 questions x 0.25 marks each)
+<strong>Reference:</strong> Sutton &amp; Barto, <em>Reinforcement
+Learning: An Introduction</em>, 2nd ed. (Example 4.1)</p>
+<hr />
+<h2 id="dynamic-programming-overview">Dynamic Programming Overview</h2>
+<h3 id="the-big-picture-how-dp-methods-relate">The Big Picture: How DP
+Methods Relate</h3>
+<pre class="mermaid">graph TD
+    subgraph "Dynamic Programming Methods"
+        BEE["<b>Bellman Expectation Equation</b><br/>V^π(s) = Σ_a π(a|s) Σ_{s',r} p(s',r|s,a)[r + γV^π(s')]<br/><i>Evaluates a fixed policy</i>"]
+        BOE["<b>Bellman Optimality Equation</b><br/>V*(s) = max_a Σ_{s',r} p(s',r|s,a)[r + γV*(s')]<br/><i>Defines the optimal value directly</i>"]
+    end
+
+    BEE --> PI["<b>Policy Iteration</b>"]
+    BOE --> VI["<b>Value Iteration</b>"]
+    PI --> GPI["<b>Generalized Policy Iteration (GPI)</b>"]
+    VI --> GPI
+
+    style BEE fill:#e1f5fe
+    style BOE fill:#fff3e0
+    style PI fill:#e8f5e9
+    style VI fill:#fce4ec
+    style GPI fill:#f3e5f5</pre>
+<hr />
+<h3 id="policy-iteration-full-process">Policy Iteration: Full
+Process</h3>
+<pre class="mermaid">graph TD
+    START["Initialize V(s) = 0 for all s<br/>Initialize π(s) = arbitrary for all s"] --> EVAL
+
+    subgraph EVAL_BOX ["<b>Step 1: Policy Evaluation</b> (using Bellman Expectation Equation)"]
+        EVAL["Set sweep counter k = 0"]
+        EVAL --> SWEEP["<b>Sweep k:</b> For each state s:<br/>V_{k+1}(s) = Σ_a π(a|s) Σ_{s',r} p(s',r|s,a)[r + γV_k(s')]"]
+        SWEEP --> DELTA{"max_s |V_{k+1}(s) - V_k(s)| < θ ?"}
+        DELTA -- "No: values still changing" --> INCR["k = k + 1"]
+        INCR --> SWEEP
+    end
+
+    DELTA -- "Yes: V ≈ V^π (converged)" --> IMPROVE
+
+    subgraph IMPROVE_BOX ["<b>Step 2: Policy Improvement</b> (Greedy w.r.t. V^π)"]
+        IMPROVE["For each state s:<br/>π'(s) = argmax_a Σ_{s',r} p(s',r|s,a)[r + γV^π(s')]"]
+    end
+
+    IMPROVE --> CHECK{"π' = π ?<br/>(no action changed)"}
+    CHECK -- "No: policy improved<br/>but may not be optimal yet<br/>(stale values problem)" --> UPDATE["π = π'"]
+    UPDATE --> EVAL
+    CHECK -- "Yes: fixed point reached<br/>π = π* (optimal policy)<br/>V = V* (optimal values)" --> DONE["✓ Done: π* and V* found"]
+
+    style START fill:#f5f5f5
+    style EVAL_BOX fill:#e1f5fe
+    style IMPROVE_BOX fill:#e8f5e9
+    style DONE fill:#c8e6c9
+    style CHECK fill:#fff9c4</pre>
+<p><strong>Key insight:</strong> Policy evaluation runs <strong>many
+sweeps</strong> to converge <span class="math inline">\(V\)</span>
+before each improvement step. This makes each improvement well-informed
+but each iteration expensive.</p>
+<hr />
+<h3 id="value-iteration-full-process">Value Iteration: Full Process</h3>
+<pre class="mermaid">graph TD
+    START["Initialize V(s) = 0 for all s"] --> SWEEP
+
+    subgraph VI_BOX ["<b>Iterate</b> (using Bellman Optimality Equation)"]
+        SWEEP["<b>Sweep k:</b> For each state s:<br/>V_{k+1}(s) = max_a Σ_{s',r} p(s',r|s,a)[r + γV_k(s')]"]
+        SWEEP --> DELTA{"max_s |V_{k+1}(s) - V_k(s)| < θ ?"}
+        DELTA -- "No: values still changing" --> INCR["k = k + 1"]
+        INCR --> SWEEP
+    end
+
+    DELTA -- "Yes: V ≈ V*" --> EXTRACT["<b>Extract optimal policy (once):</b><br/>π*(s) = argmax_a Σ_{s',r} p(s',r|s,a)[r + γV*(s')]"]
+
+    EXTRACT --> DONE["✓ Done: π* and V* found"]
+
+    style START fill:#f5f5f5
+    style VI_BOX fill:#fff3e0
+    style EXTRACT fill:#e8f5e9
+    style DONE fill:#c8e6c9</pre>
+<p><strong>Key insight:</strong> Value iteration = <strong>1 sweep of
+evaluation + improvement combined</strong> per iteration. It directly
+applies the Bellman <strong>optimality</strong> operator (with max), so
+no explicit policy is maintained during iteration. The policy is
+extracted only at the end.</p>
+<hr />
+<h3 id="policy-iteration-vs.-value-iteration-side-by-side">Policy
+Iteration vs. Value Iteration: Side-by-Side</h3>
+<pre class="mermaid">graph LR
+    subgraph PI ["<b>Policy Iteration</b>"]
+        direction TB
+        PI_E1["Evaluate π₀<br/>(many sweeps → V^π₀)"]
+        PI_I1["Improve → π₁"]
+        PI_E2["Evaluate π₁<br/>(many sweeps → V^π₁)"]
+        PI_I2["Improve → π₂"]
+        PI_E3["Evaluate π₂<br/>(many sweeps → V^π₂)"]
+        PI_I3["π₃ = π₂ → Optimal!"]
+        PI_E1 --> PI_I1 --> PI_E2 --> PI_I2 --> PI_E3 --> PI_I3
+    end
+
+    subgraph VI ["<b>Value Iteration</b>"]
+        direction TB
+        VI_1["Sweep 1: eval(1 sweep) + improve"]
+        VI_2["Sweep 2: eval(1 sweep) + improve"]
+        VI_3["Sweep 3: eval(1 sweep) + improve"]
+        VI_4["..."]
+        VI_N["Sweep N: converged → Extract π*"]
+        VI_1 --> VI_2 --> VI_3 --> VI_4 --> VI_N
+    end
+
+    style PI fill:#e1f5fe
+    style VI fill:#fff3e0</pre>
+<table>
+<colgroup>
+<col style="width: 19%" />
+<col style="width: 40%" />
+<col style="width: 40%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Aspect</th>
+<th>Policy Iteration</th>
+<th>Value Iteration</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Equation used</strong></td>
+<td>Bellman Expectation (evaluation) + greedy (improvement)</td>
+<td>Bellman Optimality (both at once)</td>
+</tr>
+<tr class="even">
+<td><strong>Evaluation sweeps per round</strong></td>
+<td>Many (until convergence)</td>
+<td>Exactly 1</td>
+</tr>
+<tr class="odd">
+<td><strong>Explicit policy maintained?</strong></td>
+<td>Yes, updated each round</td>
+<td>No, extracted at the end</td>
+</tr>
+<tr class="even">
+<td><strong>Total outer iterations</strong></td>
+<td>Few (policy converges fast)</td>
+<td>Many (values converge slowly)</td>
+</tr>
+<tr class="odd">
+<td><strong>Total sweeps overall</strong></td>
+<td>Often fewer total sweeps</td>
+<td>Often more total sweeps</td>
+</tr>
+<tr class="even">
+<td><strong>Best for</strong></td>
+<td>Small-medium state spaces</td>
+<td>When full evaluation is too expensive</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="generalized-policy-iteration-gpi">Generalized Policy Iteration
+(GPI)</h3>
+<pre class="mermaid">graph TD
+    subgraph GPI ["<b>Generalized Policy Iteration</b>"]
+        E["<b>Policy Evaluation</b><br/>(any amount: 1 sweep to full convergence)<br/>V → V^π"]
+        I["<b>Policy Improvement</b><br/>(greedy w.r.t. current V)<br/>π → greedy(V)"]
+        E -- "V pushed toward V^π" --> I
+        I -- "π changes, so V^π changes<br/>(values become stale again)" --> E
+    end
+
+    PI_note["Policy Iteration:<br/>evaluation = full convergence"] -.-> GPI
+    VI_note["Value Iteration:<br/>evaluation = single sweep"] -.-> GPI
+    ASYNC_note["Async DP:<br/>evaluation = single state update"] -.-> GPI
+
+    style GPI fill:#f3e5f5
+    style PI_note fill:#e1f5fe
+    style VI_note fill:#fff3e0
+    style ASYNC_note fill:#fce4ec</pre>
+<p>Policy iteration and value iteration are both <strong>special
+cases</strong> of GPI — they differ only in <strong>how much
+evaluation</strong> is done before each improvement:</p>
+<ul>
+<li><strong>Policy Iteration:</strong> Full evaluation (many sweeps
+until <span class="math inline">\(V \approx V^\pi\)</span>)</li>
+<li><strong>Value Iteration:</strong> Minimal evaluation (1 sweep)</li>
+<li><strong>Async DP:</strong> Even less (update a single state, then
+improve)</li>
+</ul>
+<p>All GPI methods converge to <span class="math inline">\(V^*\)</span>
+and <span class="math inline">\(\pi^*\)</span> because evaluation and
+improvement keep pushing toward each other — evaluation makes <span
+class="math inline">\(V\)</span> accurate for the current <span
+class="math inline">\(\pi\)</span>, and improvement makes <span
+class="math inline">\(\pi\)</span> greedy for the current <span
+class="math inline">\(V\)</span>. When both stabilize, optimality is
+reached.</p>
+<blockquote>
+<p><strong>Terminology note:</strong> GPI stands for
+<strong>Generalized</strong> Policy Iteration, not “General Policy
+Iteration.” It is <strong>not</strong> a specific algorithm or flowchart
+— it is an <strong>umbrella concept</strong> describing any DP method
+that interleaves evaluation and improvement in any proportion. The word
+“Generalized” means it <strong>generalizes over</strong> all possible
+combinations of evaluation and improvement. Policy Iteration, Value
+Iteration, and Async DP are all concrete algorithms that fall under the
+GPI umbrella. You can even invent your own GPI variant (e.g., “do 3
+sweeps of evaluation, then improve”) and it will converge — GPI
+guarantees this as long as both processes keep running.</p>
+<table>
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 74%" />
+<col style="width: 11%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>How much evaluation before improvement?</th>
+<th>GPI?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Policy Iteration</strong></td>
+<td>Full convergence (many sweeps until <span
+class="math inline">\(\Delta &lt; \theta\)</span>)</td>
+<td>Yes — the “most evaluation” extreme</td>
+</tr>
+<tr class="even">
+<td><strong>Value Iteration</strong></td>
+<td>Exactly 1 sweep</td>
+<td>Yes — the “least evaluation with full state coverage” extreme</td>
+</tr>
+<tr class="odd">
+<td><strong>Async DP</strong></td>
+<td>1 single state update</td>
+<td>Yes — the “least evaluation” extreme</td>
+</tr>
+<tr class="even">
+<td><strong>Custom: 5 sweeps then improve</strong></td>
+<td>5 sweeps</td>
+<td>Yes — a middle ground</td>
+</tr>
+<tr class="odd">
+<td><strong>Any mix</strong></td>
+<td>Any amount &gt; 0</td>
+<td>Yes — all are GPI</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Why does GPI always converge?</strong> The two processes act
+as opposing forces that drive toward a shared fixed point: - Evaluation
+says: <em>“Your values are wrong for this policy, let me fix them”</em>
+→ pushes <span class="math inline">\(V\)</span> toward <span
+class="math inline">\(V^\pi\)</span> - Improvement says: <em>“Given
+these values, your policy is suboptimal, let me fix it”</em> → pushes
+<span class="math inline">\(\pi\)</span> toward <span
+class="math inline">\(\text{greedy}(V)\)</span></p>
+<p>Each process invalidates the other (improving <span
+class="math inline">\(\pi\)</span> makes <span
+class="math inline">\(V\)</span> stale; updating <span
+class="math inline">\(V\)</span> may reveal better actions). But the key
+insight is that both processes push in the <strong>same
+direction</strong> — toward <span class="math inline">\(V^*\)</span> and
+<span class="math inline">\(\pi^*\)</span>. The only state where neither
+process wants to change anything is the optimal fixed point where <span
+class="math inline">\(V = V^*\)</span> and <span
+class="math inline">\(\pi = \pi^*\)</span>.</p>
+<p>This is directly tested in <strong>Quiz 2, Q6</strong> — option (b)
+states “GPI requires that policy evaluation be run to convergence before
+each improvement step,” which is <strong>FALSE</strong>. That describes
+only Policy Iteration, not GPI in general.</p>
+</blockquote>
+<hr />
+<h3
+id="the-curse-of-dimensionality-why-dp-becomes-intractable-quiz-2-q7">The
+Curse of Dimensionality: Why DP Becomes Intractable (Quiz 2, Q7)</h3>
+<h4 id="what-does-n-state-variables-each-taking-k-values-mean">What Does
+“n State Variables Each Taking k Values” Mean?</h4>
+<p>In real-world problems, the state is not a single number — it is
+described by <strong>multiple variables</strong> (features/dimensions).
+Each variable can take a range of values. The total state space is the
+<strong>Cartesian product</strong> of all variable ranges.</p>
+<p><span class="math display">\[|\mathcal{S}| = k^n \quad \text{(total
+states = values per variable}^{\text{number of variables)}}\]</span></p>
+<h4 id="example-1-robot-in-a-warehouse">Example 1: Robot in a
+Warehouse</h4>
+<p>Suppose a robot’s state has <span class="math inline">\(n =
+4\)</span> variables, each taking <span class="math inline">\(k =
+10\)</span> values:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Variable</th>
+<th>Possible values</th>
+<th>Count</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>x-position</td>
+<td>1, 2, …, 10</td>
+<td>10</td>
+</tr>
+<tr class="even">
+<td>y-position</td>
+<td>1, 2, …, 10</td>
+<td>10</td>
+</tr>
+<tr class="odd">
+<td>Battery level</td>
+<td>1, 2, …, 10</td>
+<td>10</td>
+</tr>
+<tr class="even">
+<td>Carrying item?</td>
+<td>0, 1, 2, …, 9 (item types)</td>
+<td>10</td>
+</tr>
+</tbody>
+</table>
+<p>A single state is a tuple like: (x=3, y=7, battery=5, item=2)</p>
+<p>Total states = <span class="math inline">\(10^4 =
+10{,}000\)</span></p>
+<p>The robot has <span class="math inline">\(m = 6\)</span> actions: up,
+down, left, right, pick, place.</p>
+<h4 id="example-2-our-44-gridworld">Example 2: Our 4×4 Gridworld</h4>
+<table>
+<thead>
+<tr class="header">
+<th>Representation</th>
+<th>Variables</th>
+<th>Values per variable</th>
+<th>Total states</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Single index</td>
+<td><span class="math inline">\(n = 1\)</span></td>
+<td><span class="math inline">\(k = 16\)</span> (cell 0–15)</td>
+<td><span class="math inline">\(16^1 = 16\)</span></td>
+</tr>
+<tr class="even">
+<td>Row + Column</td>
+<td><span class="math inline">\(n = 2\)</span></td>
+<td><span class="math inline">\(k = 4\)</span> (0–3 each)</td>
+<td><span class="math inline">\(4^2 = 16\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Same 16 states either way.</p>
+<h4 id="example-3-how-it-explodes">Example 3: How It Explodes</h4>
+<table>
+<colgroup>
+<col style="width: 19%" />
+<col style="width: 9%" />
+<col style="width: 11%" />
+<col style="width: 29%" />
+<col style="width: 29%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Scenario</th>
+<th><span class="math inline">\(n\)</span></th>
+<th><span class="math inline">\(k\)</span></th>
+<th>States (<span class="math inline">\(k^n\)</span>)</th>
+<th>Actions (<span class="math inline">\(m\)</span>)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>4×4 gridworld</td>
+<td>2</td>
+<td>4</td>
+<td>16</td>
+<td>4</td>
+</tr>
+<tr class="even">
+<td>10×10 grid with battery</td>
+<td>3</td>
+<td>10</td>
+<td>1,000</td>
+<td>4</td>
+</tr>
+<tr class="odd">
+<td>Robot arm (6 joints, 100 angles each)</td>
+<td>6</td>
+<td>100</td>
+<td><span class="math inline">\(10^{12}\)</span> (1 trillion)</td>
+<td>6</td>
+</tr>
+<tr class="even">
+<td>Go board (19×19, 3 states per cell)</td>
+<td>361</td>
+<td>3</td>
+<td><span class="math inline">\(3^{361} \approx 10^{172}\)</span></td>
+<td>~361</td>
+</tr>
+</tbody>
+</table>
+<h4 id="why-value-iteration-costs-okn-cdot-m-cdot-kn-per-sweep">Why
+Value Iteration Costs <span class="math inline">\(O(k^n \cdot m \cdot
+k^n)\)</span> Per Sweep</h4>
+<p>One sweep of value iteration does:</p>
+<pre><code>For each state s:                          ← k^n states
+    For each action a:                     ← m actions
+        For each possible next state s&#39;:   ← k^n next states
+            sum += p(s&#39;, r | s, a) × [r + γ × V(s&#39;)]
+        V_new(s) = max over actions of these sums</code></pre>
+<p><strong>Step-by-step cost for the warehouse robot (<span
+class="math inline">\(k=10, n=4, m=6\)</span>):</strong></p>
+<table>
+<colgroup>
+<col style="width: 35%" />
+<col style="width: 22%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Loop level</th>
+<th>Count</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Outer: each state <span class="math inline">\(s\)</span></td>
+<td><span class="math inline">\(10^4 = 10{,}000\)</span></td>
+<td>Visit every possible (x, y, battery, item)</td>
+</tr>
+<tr class="even">
+<td>Middle: each action <span class="math inline">\(a\)</span></td>
+<td><span class="math inline">\(6\)</span></td>
+<td>Try up, down, left, right, pick, place</td>
+</tr>
+<tr class="odd">
+<td>Inner: each next state <span
+class="math inline">\(s&#39;\)</span></td>
+<td><span class="math inline">\(10^4 = 10{,}000\)</span></td>
+<td>Look up <span class="math inline">\(p(s&#39;|s,a)\)</span> and <span
+class="math inline">\(V(s&#39;)\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Total operations per sweep = <span class="math inline">\(10{,}000
+\times 6 \times 10{,}000 = 600{,}000{,}000\)</span> (600 million)</p>
+<p>For the robot arm: <span class="math inline">\(10^{12} \times 6
+\times 10^{12} = 6 \times 10^{24}\)</span> — completely impossible.</p>
+<h4 id="why-the-inner-loop-over-all-kn-next-states">Why the Inner Loop
+Over All <span class="math inline">\(k^n\)</span> Next States?</h4>
+<p>This is the part that surprises most people. Why do we sum over
+<strong>all</strong> possible next states?</p>
+<p>Because the transition model <span
+class="math inline">\(p(s&#39;|s,a)\)</span> is a <strong>probability
+distribution over all states</strong>. In the general case, taking
+action <span class="math inline">\(a\)</span> in state <span
+class="math inline">\(s\)</span> could land you in <strong>any</strong>
+next state with some probability.</p>
+<p><strong>In the gridworld</strong> this seems wasteful — moving
+“right” from (1,1) always goes to (1,2), so only 1 next state matters.
+But DP handles the <strong>general</strong> case:</p>
+<table>
+<colgroup>
+<col style="width: 32%" />
+<col style="width: 55%" />
+<col style="width: 12%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Environment</th>
+<th>Next states per (s, a)</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Deterministic gridworld</td>
+<td>1</td>
+<td>Action always leads to same cell</td>
+</tr>
+<tr class="even">
+<td>Stochastic gridworld (slippery ice)</td>
+<td>4</td>
+<td>Intended direction 70%, each other direction 10%</td>
+</tr>
+<tr class="odd">
+<td>Warehouse robot</td>
+<td>Many</td>
+<td>Battery might drain randomly, item might slip, bumps might push
+robot</td>
+</tr>
+<tr class="even">
+<td>General MDP</td>
+<td>Up to <span class="math inline">\(k^n\)</span></td>
+<td>Any transition is possible in theory</td>
+</tr>
+</tbody>
+</table>
+<p>The Bellman equation requires summing over <strong>all</strong> <span
+class="math inline">\(s&#39;\)</span>:</p>
+<p><span class="math display">\[V(s) = \max_a \sum_{\mathbf{all}\
+s&#39;} \sum_r p(s&#39;,r|s,a)\left[r + \gamma\,
+V(s&#39;)\right]\]</span></p>
+<p>Even if most <span class="math inline">\(p(s&#39;|s,a) = 0\)</span>,
+the algorithm doesn’t know which ones are zero without checking. In the
+<strong>worst case</strong>, every next state has nonzero probability,
+giving <span class="math inline">\(O(k^n)\)</span> per action per
+state.</p>
+<h4 id="practical-consequence-why-we-need-approximation">Practical
+Consequence: Why We Need Approximation</h4>
+<table>
+<colgroup>
+<col style="width: 41%" />
+<col style="width: 58%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>State space size</th>
+<th>Feasibility of exact DP</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(&lt; 10^6\)</span></td>
+<td>Feasible on a modern computer</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(10^6\)</span> to <span
+class="math inline">\(10^9\)</span></td>
+<td>Feasible with sparse transitions (skip zero-probability next
+states)</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(&gt; 10^9\)</span></td>
+<td><strong>Intractable</strong> — need function approximation (neural
+networks, etc.)</td>
+</tr>
+</tbody>
+</table>
+<p>This is precisely why <strong>deep</strong> RL exists — methods like
+DQN, policy gradient, and actor-critic replace the exact value table
+with a neural network that <strong>approximates</strong> <span
+class="math inline">\(V(s)\)</span> or <span
+class="math inline">\(Q(s,a)\)</span>, avoiding the need to enumerate
+all states.</p>
+<hr />
+<h3 id="ε-soft-policies-ε-greedy-and-entropy-quiz-2-q10">ε-Soft
+Policies, ε-Greedy, and Entropy (Quiz 2, Q10)</h3>
+<h4 id="what-is-an-ε-soft-policy">What Is an ε-Soft Policy?</h4>
+<p>An <strong>ε-soft</strong> policy is any policy that assigns at least
+<span class="math inline">\(\varepsilon / |\mathcal{A}|\)</span>
+probability to <strong>every</strong> action in every state. The “soft”
+means “no hard zeros” — every action always has some chance of being
+selected.</p>
+<p><span class="math display">\[\pi(a|s) \geq
+\frac{\varepsilon}{|\mathcal{A}|} \quad \text{for all actions } a \text{
+and all states } s\]</span></p>
+<p>For example, with 4 actions and <span
+class="math inline">\(\varepsilon = 0.2\)</span>, every action must get
+at least <span class="math inline">\(0.2 / 4 = 5\%\)</span>
+probability.</p>
+<h4 id="ε-greedy-is-one-specific-ε-soft-policy">ε-Greedy Is One Specific
+ε-Soft Policy</h4>
+<p>An ε-greedy policy is the <strong>most greedy</strong> policy you can
+make while still being ε-soft. It puts the minimum required probability
+on non-best actions and dumps everything else on the best action:</p>
+<ul>
+<li>Best action gets: <span class="math inline">\(1 - \varepsilon +
+\varepsilon/|\mathcal{A}|\)</span></li>
+<li>Every other action gets: <span class="math inline">\(\varepsilon /
+|\mathcal{A}|\)</span> (the minimum allowed)</li>
+</ul>
+<p>But there are many other ε-soft policies. Here’s a comparison (4
+actions, <span class="math inline">\(\varepsilon = 0.2\)</span>):</p>
+<table>
+<colgroup>
+<col style="width: 11%" />
+<col style="width: 14%" />
+<col style="width: 14%" />
+<col style="width: 14%" />
+<col style="width: 14%" />
+<col style="width: 12%" />
+<col style="width: 18%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Policy</th>
+<th>Action 1</th>
+<th>Action 2</th>
+<th>Action 3</th>
+<th>Action 4</th>
+<th>ε-soft?</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>ε-greedy (action 1 is best)</td>
+<td>85%</td>
+<td>5%</td>
+<td>5%</td>
+<td>5%</td>
+<td><strong>Yes</strong> — min is 5% = ε/4</td>
+<td>As greedy as allowed</td>
+</tr>
+<tr class="even">
+<td>Spread out</td>
+<td>30%</td>
+<td>25%</td>
+<td>25%</td>
+<td>20%</td>
+<td><strong>Yes</strong> — min is 20% &gt; 5%</td>
+<td>More exploratory</td>
+</tr>
+<tr class="odd">
+<td>Fully uniform</td>
+<td>25%</td>
+<td>25%</td>
+<td>25%</td>
+<td>25%</td>
+<td><strong>Yes</strong> — min is 25% &gt; 5%</td>
+<td>Maximum exploration</td>
+</tr>
+<tr class="even">
+<td>Deterministic</td>
+<td>100%</td>
+<td>0%</td>
+<td>0%</td>
+<td>0%</td>
+<td><strong>No</strong> — has 0% &lt; 5%</td>
+<td>Fully greedy, not soft</td>
+</tr>
+<tr class="odd">
+<td>Nearly greedy</td>
+<td>95%</td>
+<td>3%</td>
+<td>1%</td>
+<td>1%</td>
+<td><strong>No</strong> — has 1% &lt; 5%</td>
+<td>Below minimum</td>
+</tr>
+</tbody>
+</table>
+<h4
+id="why-on-policy-mc-control-is-optimal-only-among-ε-soft-policies">Why
+On-Policy MC Control Is Optimal Only Among ε-Soft Policies</h4>
+<p>On-policy MC control <strong>uses the same ε-greedy policy for both
+acting and learning</strong>. The agent must keep exploring (giving
+<span class="math inline">\(\geq \varepsilon/|\mathcal{A}|\)</span> to
+every action) to ensure all state-action pairs are visited. This
+exploration is baked into the policy — it cannot be removed.</p>
+<p>This means the learned policy is handicapped. Consider state (0,1) in
+our gridworld, one step left of terminal (0,0):</p>
+<table>
+<colgroup>
+<col style="width: 31%" />
+<col style="width: 31%" />
+<col style="width: 36%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Policy type</th>
+<th>What happens</th>
+<th>Expected value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Optimal (fully greedy)</strong></td>
+<td>Go Left 100% → reach terminal in 1 step</td>
+<td><span class="math inline">\(-1\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>ε-greedy (ε=0.2)</strong></td>
+<td>Go Left 85%, but 15% of the time wander away</td>
+<td>Worse than <span class="math inline">\(-1\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>The ε-greedy policy <strong>can never</strong> assign 100% to Left.
+It’s forced to waste 5% on each of the three wrong directions. So it can
+never achieve the truly optimal value.</p>
+<p><strong>What it CAN do</strong> is find the best policy
+<strong>within the ε-soft class</strong> — i.e., given the constraint
+that you must always explore at least this much, what’s the best you can
+do? That’s what on-policy MC control converges to.</p>
+<p><strong>Analogy:</strong> It’s like finding the fastest runner
+wearing a 5kg backpack. The winner is the best among backpack-wearers,
+but not the fastest runner overall. The ε-exploration is the backpack —
+a handicap that on-policy methods cannot remove.</p>
+<p><strong>How to get the truly optimal policy?</strong> Use
+<strong>off-policy</strong> methods (e.g., off-policy MC control,
+Q-learning). These use a separate exploratory behavior policy <span
+class="math inline">\(b\)</span> (with the backpack) to collect data,
+while learning a target policy <span class="math inline">\(\pi\)</span>
+(without the backpack) that can be fully greedy.</p>
+<h4 id="what-is-entropy-and-why-option-d-is-wrong">What Is Entropy? (And
+Why Option (d) Is Wrong)</h4>
+<p><strong>Entropy</strong> measures how spread out (random) a
+probability distribution is:</p>
+<p><span class="math display">\[H(\pi) = -\sum_a \pi(a|s) \log
+\pi(a|s)\]</span></p>
+<table>
+<colgroup>
+<col style="width: 32%" />
+<col style="width: 25%" />
+<col style="width: 15%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Policy (4 actions)</th>
+<th>Probabilities</th>
+<th>Entropy</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Deterministic</td>
+<td>100%, 0%, 0%, 0%</td>
+<td>0 (minimum)</td>
+<td>No randomness — fully certain</td>
+</tr>
+<tr class="even">
+<td>ε-greedy (ε=0.2)</td>
+<td>85%, 5%, 5%, 5%</td>
+<td>0.61</td>
+<td>Mostly certain, little randomness</td>
+</tr>
+<tr class="odd">
+<td>Slightly spread</td>
+<td>40%, 30%, 20%, 10%</td>
+<td>1.28</td>
+<td>Moderate randomness</td>
+</tr>
+<tr class="even">
+<td>Fully uniform</td>
+<td>25%, 25%, 25%, 25%</td>
+<td>1.39 (maximum)</td>
+<td>Maximum randomness</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Why “entropy above a threshold” ≠ “ε-soft”:</strong></p>
+<p>These are two different constraints. Entropy measures the
+<strong>overall spread</strong>, while ε-soft constrains the
+<strong>minimum per action</strong>. They can disagree:</p>
+<table>
+<colgroup>
+<col style="width: 11%" />
+<col style="width: 22%" />
+<col style="width: 13%" />
+<col style="width: 25%" />
+<col style="width: 27%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Policy</th>
+<th>Probabilities</th>
+<th>Entropy</th>
+<th>ε-soft (ε=0.2)?</th>
+<th>Why they disagree</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>High entropy but not ε-soft</td>
+<td>50%, 50%, 0%, 0%</td>
+<td>1.0 (high)</td>
+<td><strong>No</strong> — has zeros</td>
+<td>Spread across 2 actions, but ignores 2 others</td>
+</tr>
+<tr class="even">
+<td>Low entropy but ε-soft</td>
+<td>85%, 5%, 5%, 5%</td>
+<td>0.61 (low)</td>
+<td><strong>Yes</strong> — min is 5%</td>
+<td>Concentrated on 1 action, but no zeros</td>
+</tr>
+<tr class="odd">
+<td>High entropy and ε-soft</td>
+<td>25%, 25%, 25%, 25%</td>
+<td>1.39 (max)</td>
+<td><strong>Yes</strong> — min is 25%</td>
+<td>Both criteria satisfied</td>
+</tr>
+</tbody>
+</table>
+<p>A policy can have high entropy by spreading probability over
+<strong>some</strong> actions while assigning zero to others — this is
+not ε-soft. Conversely, a policy can have low entropy by being very
+focused on one action while giving a tiny (but nonzero) amount to every
+action — this IS ε-soft.</p>
+<p>Option (d) in Quiz 2 Q10 says “all stochastic policies with entropy
+above a threshold.” This is wrong because: 1. High entropy doesn’t
+guarantee every action gets nonzero probability 2. On-policy MC
+control’s constraint is about <strong>minimum per-action
+probability</strong> (ε-soft), not overall spread (entropy) 3. The
+convergence guarantee specifically relies on every action being tried at
+every state, which ε-soft guarantees but entropy doesn’t</p>
+<hr />
+<h3 id="why-exploration-is-essential-in-mc-control-quiz-2-q11">Why
+Exploration Is Essential in MC Control (Quiz 2, Q11)</h3>
+<h4 id="the-problem-mc-can-only-improve-what-it-has-seen">The Problem:
+MC Can Only Improve What It Has Seen</h4>
+<p>MC control works by: 1. Run an episode using the current policy 2.
+For each (state, action) pair visited in the episode, update <span
+class="math inline">\(Q(s,a)\)</span> using the observed return 3.
+Improve the policy: at each state, pick the action with the highest
+<span class="math inline">\(Q(s,a)\)</span> 4. Repeat</p>
+<p>The critical issue: <strong>if a (state, action) pair is never
+visited, its Q-value is never updated.</strong> It stays at its initial
+value (usually 0), and the policy may be wrong at that state
+forever.</p>
+<h4 id="concrete-example-getting-stuck-without-exploration">Concrete
+Example: Getting Stuck Without Exploration</h4>
+<p>Imagine state <span class="math inline">\(s\)</span> has 4 actions.
+Early on, the agent tries Left and gets reward +5. The greedy policy now
+always picks Left, so the other actions are <strong>never
+tried</strong>:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Action</th>
+<th><span class="math inline">\(Q(s, a)\)</span></th>
+<th>Times visited</th>
+<th>True value (unknown to agent)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Left</td>
+<td>+5</td>
+<td>12</td>
+<td>+5</td>
+</tr>
+<tr class="even">
+<td>Right</td>
+<td>0 (initial)</td>
+<td>0</td>
+<td><strong>+100</strong> ← much better!</td>
+</tr>
+<tr class="odd">
+<td>Up</td>
+<td>0 (initial)</td>
+<td>0</td>
+<td>+2</td>
+</tr>
+<tr class="even">
+<td>Down</td>
+<td>0 (initial)</td>
+<td>0</td>
+<td>−3</td>
+</tr>
+</tbody>
+</table>
+<p>The greedy policy picks Left (highest Q = +5) forever. Right’s Q
+stays at 0 because it’s never tried. The agent <strong>never
+discovers</strong> that Right gives +100.</p>
+<p>This is the <strong>exploration-exploitation dilemma</strong>: -
+<strong>Exploitation:</strong> pick the best known action (Left at +5) →
+safe but possibly suboptimal - <strong>Exploration:</strong> try unknown
+actions (Right, Up, Down) → risky but might discover something
+better</p>
+<p>Without forced exploration, MC control gets <strong>trapped</strong>
+at the first decent action it finds.</p>
+<h4 id="solution-1-exploring-starts">Solution 1: Exploring Starts</h4>
+<p>Every episode begins at a <strong>randomly chosen</strong> (state,
+action) pair. This forces every pair to be a starting point
+eventually:</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 37%" />
+<col style="width: 37%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Episode</th>
+<th>Forced start</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td><span class="math inline">\((s, \text{Left})\)</span></td>
+<td>Observe return from Left, update <span class="math inline">\(Q(s,
+L)\)</span></td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td><span class="math inline">\((s, \text{Right})\)</span></td>
+<td>Observe return from Right, update <span class="math inline">\(Q(s,
+R)\)</span> → discovers +100!</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td><span class="math inline">\((s&#39;, \text{Up})\)</span></td>
+<td>Different state explored</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td><span class="math inline">\((s, \text{Down})\)</span></td>
+<td>Observe return from Down, update <span class="math inline">\(Q(s,
+D)\)</span></td>
+</tr>
+<tr class="odd">
+<td>…</td>
+<td>random</td>
+<td>Eventually all pairs are covered</td>
+</tr>
+</tbody>
+</table>
+<p>After enough episodes:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Action</th>
+<th><span class="math inline">\(Q(s, a)\)</span></th>
+<th>Times visited</th>
+<th>Agent now knows</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Left</td>
+<td>+5.1</td>
+<td>250</td>
+<td>Good, but not the best</td>
+</tr>
+<tr class="even">
+<td>Right</td>
+<td>+99.7</td>
+<td>248</td>
+<td><strong>Best action!</strong></td>
+</tr>
+<tr class="odd">
+<td>Up</td>
+<td>+1.8</td>
+<td>251</td>
+<td>Mediocre</td>
+</tr>
+<tr class="even">
+<td>Down</td>
+<td>−3.2</td>
+<td>251</td>
+<td>Bad</td>
+</tr>
+</tbody>
+</table>
+<p>Policy switches to Right. Problem solved.</p>
+<p><strong>Limitation:</strong> Exploring starts assumes you can start
+an episode from any (state, action) pair. In practice, this is often
+impossible — you can’t tell a self-driving car “start in the middle of
+an intersection going backwards,” or tell a robot “start with your arm
+in this exact position holding this exact object.”</p>
+<h4 id="solution-2-ε-soft-policy">Solution 2: ε-Soft Policy</h4>
+<p>Instead of being 100% greedy, always give every action at least <span
+class="math inline">\(\varepsilon / |\mathcal{A}|\)</span>
+probability:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Action</th>
+<th>Greedy policy (gets stuck)</th>
+<th>ε-greedy policy (explores)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Left (best so far)</td>
+<td>100% → always chosen</td>
+<td>85% → usually chosen</td>
+</tr>
+<tr class="even">
+<td>Right (untried)</td>
+<td><strong>0% → never tried!</strong></td>
+<td>5% → occasionally tried</td>
+</tr>
+<tr class="odd">
+<td>Up (untried)</td>
+<td><strong>0% → never tried!</strong></td>
+<td>5% → occasionally tried</td>
+</tr>
+<tr class="even">
+<td>Down (untried)</td>
+<td><strong>0% → never tried!</strong></td>
+<td>5% → occasionally tried</td>
+</tr>
+</tbody>
+</table>
+<p>Now every action gets tried occasionally. Even though Right is only
+chosen 5% of the time, over thousands of episodes it will be tried
+hundreds of times. The agent will discover that Right gives +100 and
+shift the ε-greedy distribution to favor Right:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Action</th>
+<th>Updated ε-greedy</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Right (now known best)</td>
+<td>85%</td>
+</tr>
+<tr class="even">
+<td>Left</td>
+<td>5%</td>
+</tr>
+<tr class="odd">
+<td>Up</td>
+<td>5%</td>
+</tr>
+<tr class="even">
+<td>Down</td>
+<td>5%</td>
+</tr>
+</tbody>
+</table>
+<h4 id="why-infinitely-often-matters">Why “Infinitely Often”
+Matters</h4>
+<p>The mathematical condition is that every (state, action) pair must be
+visited <strong>infinitely often</strong> in the limit. One visit isn’t
+enough because MC estimates are averages — they need many samples to
+converge:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Visits to <span class="math inline">\((s,
+\text{Right})\)</span></th>
+<th><span class="math inline">\(Q\)</span> estimate</th>
+<th>True value</th>
+<th>Error</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>+120 (got lucky)</td>
+<td>+100</td>
+<td>20% off</td>
+</tr>
+<tr class="even">
+<td>10</td>
+<td>+95</td>
+<td>+100</td>
+<td>5% off</td>
+</tr>
+<tr class="odd">
+<td>100</td>
+<td>+99.3</td>
+<td>+100</td>
+<td>0.7% off</td>
+</tr>
+<tr class="even">
+<td>1000</td>
+<td>+100.1</td>
+<td>+100</td>
+<td>0.1% off</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\infty\)</span></td>
+<td>+100 (converged)</td>
+<td>+100</td>
+<td>0%</td>
+</tr>
+</tbody>
+</table>
+<p>This is the <strong>law of large numbers</strong> — averages converge
+to the true expected value as the number of samples grows. Without
+infinite visits, Q-values are noisy estimates, and the policy may be
+wrong due to noise rather than true inferiority.</p>
+<h4 id="what-happens-with-vs.-without-exploration-full-comparison">What
+Happens With vs. Without Exploration: Full Comparison</h4>
+<table>
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 37%" />
+<col style="width: 26%" />
+<col style="width: 23%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Aspect</th>
+<th>No exploration (greedy)</th>
+<th>Exploring starts</th>
+<th>ε-soft policy</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Visits all (s, a) pairs?</td>
+<td><strong>No</strong> — only visits what the greedy policy
+selects</td>
+<td><strong>Yes</strong> — forced random starts</td>
+<td><strong>Yes</strong> — every action has nonzero probability</td>
+</tr>
+<tr class="even">
+<td>Can get stuck?</td>
+<td><strong>Yes</strong> — locks onto first decent action</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr class="odd">
+<td>Converges to optimal?</td>
+<td><strong>No</strong> — only among visited pairs</td>
+<td>Yes (among all policies)</td>
+<td>Yes (among ε-soft policies only)</td>
+</tr>
+<tr class="even">
+<td>Practical?</td>
+<td>Easy but broken</td>
+<td>Often impossible (can’t choose start states)</td>
+<td>Easy and practical</td>
+</tr>
+<tr class="odd">
+<td>Used in practice?</td>
+<td>Rarely alone</td>
+<td>Theoretical mainly</td>
+<td><strong>Very common</strong></td>
+</tr>
+</tbody>
+</table>
+<h4 id="why-each-wrong-answer-in-q11-is-wrong">Why Each Wrong Answer in
+Q11 Is Wrong</h4>
+<p><strong>(a) “To ensure the value function converges faster”</strong>
+— Wrong. Exploration actually makes convergence <strong>slower</strong>,
+not faster. Every time the agent explores a bad action, it “wastes” an
+episode that could have been spent refining the good action’s estimate.
+Exploration is about <strong>correctness</strong> (converging to the
+right answer), not <strong>speed</strong> (converging quickly).</p>
+<p><strong>(c) “To reduce the variance of return estimates”</strong> —
+Wrong. Exploration doesn’t reduce variance — if anything, it increases
+variance by sampling different actions with different returns. What
+reduces variance is <strong>more visits to the same (state, action)
+pair</strong>, which is a consequence of running more episodes, not of
+exploration itself.</p>
+<p><strong>(d) “To ensure that episodes terminate in finite
+time”</strong> — Wrong. Episode termination is a property of the
+<strong>environment</strong> (reaching a terminal state), not the
+<strong>policy</strong>. A greedy policy terminates just as well as an
+exploratory one — the environment determines when episodes end, not how
+the agent explores.</p>
+<hr />
+<h3
+id="on-policy-vs-off-policy-mc-and-importance-sampling-quiz-2-q12-q13">On-Policy
+vs Off-Policy MC and Importance Sampling (Quiz 2, Q12 &amp; Q13)</h3>
+<h4 id="on-policy-vs-off-policy-the-core-difference">On-Policy vs
+Off-Policy: The Core Difference</h4>
+<p>In <strong>on-policy</strong>, the same policy does both jobs —
+exploring and learning. In <strong>off-policy</strong>, two separate
+policies divide the work:</p>
+<table>
+<colgroup>
+<col style="width: 6%" />
+<col style="width: 43%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>On-policy MC</th>
+<th>Off-policy MC</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Who explores?</strong></td>
+<td>Policy π (the one we’re improving)</td>
+<td>Behavior policy <span class="math inline">\(b\)</span> (a separate,
+exploratory policy)</td>
+</tr>
+<tr class="even">
+<td><strong>Who do we learn about?</strong></td>
+<td>Same policy π</td>
+<td>Target policy π (a separate, greedy policy)</td>
+</tr>
+<tr class="odd">
+<td><strong>Example</strong></td>
+<td>You learn to cook by trying random recipes yourself</td>
+<td>You watch a YouTube chef (<span class="math inline">\(b\)</span>),
+but figure out what YOU would do differently (π)</td>
+</tr>
+<tr class="even">
+<td><strong>Exploration constraint</strong></td>
+<td>π must be ε-soft (forced to explore)</td>
+<td>Only <span class="math inline">\(b\)</span> needs to explore; π can
+be fully greedy</td>
+</tr>
+<tr class="odd">
+<td><strong>Optimality</strong></td>
+<td>Best among ε-soft policies only (Q10)</td>
+<td>Can learn the truly optimal policy</td>
+</tr>
+</tbody>
+</table>
+<h4 id="why-off-policy-exists">Why Off-Policy Exists</h4>
+<p>Recall from Q10 and Q11: on-policy MC forces the learning policy π to
+explore (ε-soft). This means π can never be fully greedy, so it’s only
+optimal among ε-soft policies — not globally optimal.</p>
+<p>Off-policy solves this by using <strong>two separate
+policies</strong>:</p>
+<ul>
+<li><strong>Behavior policy <span
+class="math inline">\(b\)</span></strong>: ε-greedy, random, or any
+exploratory policy — its job is to collect data by trying lots of
+different actions</li>
+<li><strong>Target policy π</strong>: fully deterministic and greedy —
+the policy we actually want to learn and deploy</li>
+</ul>
+<p>The agent <strong>acts</strong> using <span
+class="math inline">\(b\)</span> (explores freely) but
+<strong>updates</strong> Q-values as if π were acting. This way π can be
+fully optimal without ever needing to explore itself.</p>
+<h4 id="the-problem-the-data-doesnt-match-the-target-policy">The
+Problem: The Data Doesn’t Match the Target Policy</h4>
+<p>Here’s the catch. The episodes were generated by <span
+class="math inline">\(b\)</span>, not π. The data is
+<strong>biased</strong> — actions that <span
+class="math inline">\(b\)</span> likes are over-represented, and actions
+that <span class="math inline">\(b\)</span> avoids are
+under-represented.</p>
+<p><strong>Example:</strong> Suppose at some state, <span
+class="math inline">\(b\)</span> goes Left 80% and Right 20%, but π
+would go Left 30% and Right 70%.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Action</th>
+<th><span class="math inline">\(b\)</span> takes it</th>
+<th>π would take it</th>
+<th>Mismatch</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Left</td>
+<td>80%</td>
+<td>30%</td>
+<td>Over-represented in data</td>
+</tr>
+<tr class="even">
+<td>Right</td>
+<td>20%</td>
+<td>70%</td>
+<td>Under-represented in data</td>
+</tr>
+</tbody>
+</table>
+<p>If we naively average the returns from <span
+class="math inline">\(b\)</span>’s episodes, we’d over-weight Left
+outcomes and under-weight Right outcomes — giving us <span
+class="math inline">\(b\)</span>’s values, not π’s values.</p>
+<p>We need to <strong>correct</strong> for this mismatch. That’s what
+<strong>importance sampling</strong> does.</p>
+<h4 id="importance-sampling-correcting-the-bias">Importance Sampling:
+Correcting the Bias</h4>
+<p>The idea is simple: weight each episode’s return by how much more (or
+less) likely it was under π compared to <span
+class="math inline">\(b\)</span>.</p>
+<p>For a trajectory from time <span class="math inline">\(t\)</span> to
+terminal time <span class="math inline">\(T\)</span>:</p>
+<p><span class="math display">\[\rho_{t:T-1} = \prod_{k=t}^{T-1}
+\frac{\pi(A_k|S_k)}{b(A_k|S_k)}\]</span></p>
+<p>At each step, we ask: “How much more likely would π have chosen this
+action compared to <span class="math inline">\(b\)</span>?” Then we
+multiply all these ratios together.</p>
+<p><strong>Step-by-step example:</strong> 3-step episode, 2 actions
+(Left/Right)</p>
+<table>
+<colgroup>
+<col style="width: 8%" />
+<col style="width: 27%" />
+<col style="width: 27%" />
+<col style="width: 22%" />
+<col style="width: 14%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Step</th>
+<th>Action taken by <span class="math inline">\(b\)</span></th>
+<th><span class="math inline">\(b\)</span>’s probability</th>
+<th>π’s probability</th>
+<th>Step ratio</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>Left</td>
+<td>0.5</td>
+<td>0.9</td>
+<td>0.9 / 0.5 = <strong>1.8</strong></td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>Right</td>
+<td>0.5</td>
+<td>0.1</td>
+<td>0.1 / 0.5 = <strong>0.2</strong></td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td>Left</td>
+<td>0.5</td>
+<td>0.9</td>
+<td>0.9 / 0.5 = <strong>1.8</strong></td>
+</tr>
+</tbody>
+</table>
+<p><span class="math display">\[\rho = 1.8 \times 0.2 \times 1.8 =
+0.648\]</span></p>
+<p><strong>Interpretation:</strong> This trajectory is 64.8% as likely
+under π as under <span class="math inline">\(b\)</span>. So we scale
+this episode’s return by 0.648 — it counts for less because π wouldn’t
+have taken these exact actions as often.</p>
+<p>Another example — trajectory that π strongly favors:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Step</th>
+<th>Action taken</th>
+<th><span class="math inline">\(b\)</span>’s prob</th>
+<th>π’s prob</th>
+<th>Ratio</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>Right</td>
+<td>0.2</td>
+<td>0.9</td>
+<td>4.5</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>Right</td>
+<td>0.2</td>
+<td>0.9</td>
+<td>4.5</td>
+</tr>
+</tbody>
+</table>
+<p><span class="math display">\[\rho = 4.5 \times 4.5 =
+20.25\]</span></p>
+<p>This trajectory counts <strong>20× more</strong> because π would have
+taken these actions much more often than <span
+class="math inline">\(b\)</span> did.</p>
+<h4 id="ordinary-importance-sampling">Ordinary Importance Sampling</h4>
+<p>The simplest approach: average the <strong>weighted
+returns</strong>:</p>
+<p><span class="math display">\[V(s) = \frac{1}{N} \sum_{i=1}^{N} \rho_i
+\cdot G_i\]</span></p>
+<p>where <span class="math inline">\(N\)</span> = number of episodes
+starting from <span class="math inline">\(s\)</span>, <span
+class="math inline">\(\rho_i\)</span> = importance ratio for episode
+<span class="math inline">\(i\)</span>, <span
+class="math inline">\(G_i\)</span> = return from episode <span
+class="math inline">\(i\)</span>.</p>
+<p><strong>Properties:</strong> - <strong>Unbiased</strong> — on
+average, it gives the correct answer: <span
+class="math inline">\(\mathbb{E}[\rho \cdot G] = V^\pi(s)\)</span> -
+<strong>High variance</strong> — individual estimates can be wildly
+off</p>
+<h4 id="why-ordinary-is-has-high-variance-quiz-2-q12-answer">Why
+Ordinary IS Has High Variance (Quiz 2, Q12 Answer)</h4>
+<p>The ratio <span class="math inline">\(\rho\)</span> is a
+<strong>product</strong> over all steps. Products can explode or
+collapse:</p>
+<table>
+<colgroup>
+<col style="width: 18%" />
+<col style="width: 29%" />
+<col style="width: 29%" />
+<col style="width: 23%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Scenario</th>
+<th>Per-step ratios</th>
+<th>Product <span class="math inline">\(\rho\)</span></th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Policies mostly agree</td>
+<td>1.1, 0.9, 1.0, 1.1</td>
+<td>≈ 1.1</td>
+<td>Fine — small correction</td>
+</tr>
+<tr class="even">
+<td>One big disagreement</td>
+<td>1.1, 0.9, <strong>10.0</strong>, 1.1</td>
+<td>≈ 10.9</td>
+<td>This episode counts 10× — dominates the average</td>
+</tr>
+<tr class="odd">
+<td>Long episode, small disagreements</td>
+<td>1.5 × 20 steps</td>
+<td><span class="math inline">\(1.5^{20} \approx 3{,}325\)</span></td>
+<td>One episode counts 3,325× — completely dominates!</td>
+</tr>
+<tr class="even">
+<td>π would never take that action</td>
+<td>1.1, 0.9, <strong>0.0</strong>, 1.1</td>
+<td>0</td>
+<td>Entire episode thrown away — wasted data</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Numerical example showing the variance problem:</strong></p>
+<p>Suppose we have 5 episodes from state <span
+class="math inline">\(s\)</span>:</p>
+<table>
+<colgroup>
+<col style="width: 13%" />
+<col style="width: 20%" />
+<col style="width: 24%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Episode</th>
+<th>Return <span class="math inline">\(G_i\)</span></th>
+<th>Ratio <span class="math inline">\(\rho_i\)</span></th>
+<th>Weighted <span class="math inline">\(\rho_i \cdot G_i\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>+10</td>
+<td>1.2</td>
+<td>+12</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>+8</td>
+<td>0.8</td>
+<td>+6.4</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>+12</td>
+<td><strong>3{,}325</strong></td>
+<td><strong>+39{,}900</strong></td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>+9</td>
+<td>1.5</td>
+<td>+13.5</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>+11</td>
+<td>0.3</td>
+<td>+3.3</td>
+</tr>
+</tbody>
+</table>
+<p><span class="math display">\[V(s) = \frac{12 + 6.4 + 39{,}900 + 13.5
++ 3.3}{5} = \frac{39{,}935.2}{5} = 7{,}987\]</span></p>
+<p>The true value might be around +10, but episode 3’s enormous weight
+(<span class="math inline">\(\rho = 3{,}325\)</span>) makes the estimate
+7,987. One episode completely ruined the average. That’s extreme
+variance.</p>
+<h4
+id="weighted-importance-sampling-quiz-2-q13-answer-detailed-explanation">Weighted
+Importance Sampling (Quiz 2, Q13 Answer) — Detailed Explanation</h4>
+<p>The key difference between ordinary and weighted IS is <strong>what
+you divide by</strong>.</p>
+<p><strong>Ordinary IS:</strong> divide by the <strong>number of
+episodes</strong> (<span class="math inline">\(N\)</span>)</p>
+<p><span class="math display">\[V(s) = \frac{\rho_1 G_1 + \rho_2 G_2 +
+\cdots + \rho_N G_N}{N}\]</span></p>
+<p><strong>Weighted IS:</strong> divide by the <strong>sum of the
+weights</strong> (<span class="math inline">\(\sum \rho_i\)</span>)</p>
+<p><span class="math display">\[V(s) = \frac{\rho_1 G_1 + \rho_2 G_2 +
+\cdots + \rho_N G_N}{\rho_1 + \rho_2 + \cdots + \rho_N}\]</span></p>
+<p><strong>Why this matters — worked example with 3
+episodes:</strong></p>
+<table>
+<colgroup>
+<col style="width: 13%" />
+<col style="width: 16%" />
+<col style="width: 21%" />
+<col style="width: 47%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Episode</th>
+<th>Return <span class="math inline">\(G\)</span></th>
+<th>Weight <span class="math inline">\(\rho\)</span></th>
+<th>Weighted return <span class="math inline">\(\rho \cdot
+G\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>+10</td>
+<td>1.0</td>
+<td>10</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>+8</td>
+<td>1.0</td>
+<td>8</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>+12</td>
+<td><strong>1000</strong></td>
+<td><strong>12,000</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Episode 3 has <span class="math inline">\(\rho = 1000\)</span>
+because <span class="math inline">\(b\)</span> took a very unlikely path
+that π would strongly prefer.</p>
+<p><strong>Ordinary IS:</strong></p>
+<p><span class="math display">\[V = \frac{10 + 8 + 12{,}000}{3} =
+4{,}006\]</span></p>
+<p>Dividing by 3 (number of episodes). Episode 3 completely dominates.
+The estimate is wildly off from the true value (~10).</p>
+<p><strong>Weighted IS:</strong></p>
+<p><span class="math display">\[V = \frac{10 + 8 + 12{,}000}{1.0 + 1.0 +
+1000} = \frac{12{,}018}{1002} \approx 12.0\]</span></p>
+<p>Dividing by the sum of weights (1002). Episode 3 has high weight, but
+the denominator <strong>scales with it</strong>. It can’t blow up the
+average.</p>
+<p><strong>Same calculation with the 5-episode example from
+earlier:</strong></p>
+<table>
+<colgroup>
+<col style="width: 13%" />
+<col style="width: 20%" />
+<col style="width: 24%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Episode</th>
+<th>Return <span class="math inline">\(G_i\)</span></th>
+<th>Ratio <span class="math inline">\(\rho_i\)</span></th>
+<th>Weighted <span class="math inline">\(\rho_i \cdot G_i\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>+10</td>
+<td>1.2</td>
+<td>+12</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>+8</td>
+<td>0.8</td>
+<td>+6.4</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>+12</td>
+<td>3,325</td>
+<td>+39,900</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>+9</td>
+<td>1.5</td>
+<td>+13.5</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>+11</td>
+<td>0.3</td>
+<td>+3.3</td>
+</tr>
+</tbody>
+</table>
+<p>Ordinary IS: <span class="math inline">\(\frac{39{,}935.2}{5} =
+7{,}987\)</span> — wildly off</p>
+<p>Weighted IS: <span class="math inline">\(\frac{39{,}935.2}{1.2 + 0.8
++ 3{,}325 + 1.5 + 0.3} = \frac{39{,}935.2}{3{,}328.8} \approx
+12.0\)</span> — reasonable</p>
+<p><strong>Analogy: House price voting</strong></p>
+<p>Three people estimate the value of a house. Each person has a
+“credibility weight”: - Person 1 (weight 1): “It’s worth ₹100k” - Person
+2 (weight 1): “It’s worth ₹80k” - Person 3 (weight 1000): “It’s worth
+₹120k”</p>
+<p><strong>Ordinary IS</strong> = give each person one vote, but
+multiply their answer by their weight:</p>
+<p><span class="math display">\[\frac{1 \times 100k + 1 \times 80k +
+1000 \times 120k}{3} = 40{,}060k\]</span></p>
+<p>Absurd — Person 3’s weight makes the average meaningless.</p>
+<p><strong>Weighted IS</strong> = give each person votes
+<strong>proportional</strong> to their weight:</p>
+<p><span class="math display">\[\frac{1 \times 100k + 1 \times 80k +
+1000 \times 120k}{1 + 1 + 1000} = \frac{120{,}180k}{1002} \approx
+120k\]</span></p>
+<p>Person 3 has more influence (1000 votes vs 1), but their influence is
+<strong>proportional</strong>, not overwhelming. The result stays in a
+reasonable range.</p>
+<h4 id="why-weighted-is-is-biased-but-thats-ok">Why Weighted IS Is
+Biased (But That’s OK)</h4>
+<p>With just <strong>1 episode</strong>, weighted IS always gives:</p>
+<p><span class="math display">\[V = \frac{\rho_1 \cdot G_1}{\rho_1} =
+G_1\]</span></p>
+<p>The <span class="math inline">\(\rho\)</span> cancels out completely!
+You just get the raw return, as if no importance correction happened at
+all. That’s <strong>biased</strong> — you’re treating <span
+class="math inline">\(b\)</span>’s experience as if it were π’s
+experience.</p>
+<p>With <strong>2 episodes</strong> where <span
+class="math inline">\(\rho\)</span> values differ, the cancellation is
+only partial — some correction happens, but it’s imperfect. Still
+biased, but less so.</p>
+<p>With <strong>many episodes</strong>, the different <span
+class="math inline">\(\rho\)</span> values create a proper weighted
+distribution, and the estimate converges to the correct value. The bias
+<strong>shrinks to zero</strong> as <span class="math inline">\(N \to
+\infty\)</span>.</p>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 42%" />
+<col style="width: 28%" />
+<col style="width: 28%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Number of episodes</th>
+<th>Ordinary IS</th>
+<th>Weighted IS</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>Correct on average (unbiased) but could be 4,006 or 0.001 — wildly
+unstable</td>
+<td>Always returns <span class="math inline">\(G_1\)</span> — biased but
+stable</td>
+</tr>
+<tr class="even">
+<td>10</td>
+<td>Still high variance from occasional extreme <span
+class="math inline">\(\rho\)</span></td>
+<td>Low variance, small bias remaining</td>
+</tr>
+<tr class="odd">
+<td>100</td>
+<td>Variance still a problem with long episodes</td>
+<td>Bias nearly gone, variance low</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\infty\)</span></td>
+<td>Correct</td>
+<td>Correct</td>
+</tr>
+</tbody>
+</table>
+<h4 id="comparison-summary">Comparison Summary</h4>
+<table>
+<colgroup>
+<col style="width: 7%" />
+<col style="width: 46%" />
+<col style="width: 46%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>Ordinary IS</th>
+<th>Weighted IS</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Formula</strong></td>
+<td><span class="math inline">\(\frac{1}{N}\sum \rho_i G_i\)</span>
+(divide by count)</td>
+<td><span class="math inline">\(\frac{\sum \rho_i G_i}{\sum
+\rho_i}\)</span> (divide by sum of weights)</td>
+</tr>
+<tr class="even">
+<td><strong>Bias</strong></td>
+<td><strong>Unbiased</strong></td>
+<td><strong>Biased</strong> (but bias → 0 as <span
+class="math inline">\(N \to \infty\)</span>)</td>
+</tr>
+<tr class="odd">
+<td><strong>Variance</strong></td>
+<td><strong>High</strong> (can be infinite)</td>
+<td><strong>Low</strong> (weights are normalized)</td>
+</tr>
+<tr class="even">
+<td><strong>One extreme <span
+class="math inline">\(\rho\)</span></strong></td>
+<td>Destroys the estimate</td>
+<td>Gets normalized away</td>
+</tr>
+<tr class="odd">
+<td><strong>With 1 episode</strong></td>
+<td><span class="math inline">\(\rho \cdot G\)</span> — could be
+anything</td>
+<td><span class="math inline">\(G\)</span> — ignores correction
+entirely</td>
+</tr>
+<tr class="even">
+<td><strong>Preferred in practice?</strong></td>
+<td>Rarely</td>
+<td><strong>Almost always</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The trade-off: weighted IS introduces a small bias (it’s not
+perfectly accurate with few samples), but the bias shrinks to zero as
+more episodes are collected, and the variance is dramatically lower. In
+practice, <strong>weighted IS is almost always preferred</strong>
+because a tiny temporary bias is a far smaller problem than estimates
+that swing between 0 and 7,987.</p>
+<h4 id="summary-the-full-picture-of-mc-methods">Summary: The Full
+Picture of MC Methods</h4>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>MC Method</th>
+<th>Key Properties</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>On-Policy MC</strong></td>
+<td>Uses same policy for acting and learning; policy must be ε-soft
+(explore); optimal among ε-soft policies only (Q10); needs exploring
+starts or ε-soft for coverage (Q11).</td>
+</tr>
+<tr class="even">
+<td><strong>Off-Policy MC</strong></td>
+<td>Behavior policy <strong>b</strong> (explores) ≠ target policy
+<strong>π</strong> (greedy); can learn truly optimal policy; needs
+importance sampling to correct data mismatch; ordinary IS: unbiased but
+high variance (Q12); weighted IS: low variance but slightly biased
+(Q13); coverage: π(a|s) &gt; 0 ⟹ b(a|s) &gt; 0 (Q14).</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3
+id="convergence-of-v-how-values-evolve-in-the-44-gridworld">Convergence
+of V: How Values Evolve in the 4×4 Gridworld</h3>
+<p>The following shows how <span class="math inline">\(V(s)\)</span>
+converges during <strong>policy evaluation</strong> of the random policy
+(<span class="math inline">\(\gamma = 1\)</span>, <span
+class="math inline">\(r = -1\)</span>):</p>
+<p><strong>Sweep 0 (initialization):</strong></p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th>Col 0</th>
+<th>Col 1</th>
+<th>Col 2</th>
+<th>Col 3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Row 0</strong></td>
+<td>0 (T)</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td><strong>Row 1</strong></td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td><strong>Row 2</strong></td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td><strong>Row 3</strong></td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0 (T)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Sweep 1:</strong> Each non-terminal state gets <span
+class="math inline">\(V(s) = -1 + 0.25 \times [\text{sum of
+neighbors&#39; old values}] = -1\)</span></p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th>Col 0</th>
+<th>Col 1</th>
+<th>Col 2</th>
+<th>Col 3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Row 0</strong></td>
+<td>0 (T)</td>
+<td>−1.0</td>
+<td>−1.0</td>
+<td>−1.0</td>
+</tr>
+<tr class="even">
+<td><strong>Row 1</strong></td>
+<td>−1.0</td>
+<td>−1.0</td>
+<td>−1.0</td>
+<td>−1.0</td>
+</tr>
+<tr class="odd">
+<td><strong>Row 2</strong></td>
+<td>−1.0</td>
+<td>−1.0</td>
+<td>−1.0</td>
+<td>−1.0</td>
+</tr>
+<tr class="even">
+<td><strong>Row 3</strong></td>
+<td>−1.0</td>
+<td>−1.0</td>
+<td>−1.0</td>
+<td>0 (T)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Sweep 2:</strong> States near terminals see some 0-valued
+neighbors; interior states see all −1 neighbors.</p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th>Col 0</th>
+<th>Col 1</th>
+<th>Col 2</th>
+<th>Col 3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Row 0</strong></td>
+<td>0 (T)</td>
+<td>−1.75</td>
+<td>−2.0</td>
+<td>−2.0</td>
+</tr>
+<tr class="even">
+<td><strong>Row 1</strong></td>
+<td>−1.75</td>
+<td>−2.0</td>
+<td>−2.0</td>
+<td>−2.0</td>
+</tr>
+<tr class="odd">
+<td><strong>Row 2</strong></td>
+<td>−2.0</td>
+<td>−2.0</td>
+<td>−2.0</td>
+<td>−1.75</td>
+</tr>
+<tr class="even">
+<td><strong>Row 3</strong></td>
+<td>−2.0</td>
+<td>−2.0</td>
+<td>−1.75</td>
+<td>0 (T)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Sweep 3:</strong></p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th>Col 0</th>
+<th>Col 1</th>
+<th>Col 2</th>
+<th>Col 3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Row 0</strong></td>
+<td>0 (T)</td>
+<td>−2.4</td>
+<td>−2.9</td>
+<td>−3.0</td>
+</tr>
+<tr class="even">
+<td><strong>Row 1</strong></td>
+<td>−2.4</td>
+<td>−2.9</td>
+<td>−3.0</td>
+<td>−2.9</td>
+</tr>
+<tr class="odd">
+<td><strong>Row 2</strong></td>
+<td>−2.9</td>
+<td>−3.0</td>
+<td>−2.9</td>
+<td>−2.4</td>
+</tr>
+<tr class="even">
+<td><strong>Row 3</strong></td>
+<td>−3.0</td>
+<td>−2.9</td>
+<td>−2.4</td>
+<td>0 (T)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Sweep 10:</strong></p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th>Col 0</th>
+<th>Col 1</th>
+<th>Col 2</th>
+<th>Col 3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Row 0</strong></td>
+<td>0 (T)</td>
+<td>−7.3</td>
+<td>−10.2</td>
+<td>−11.3</td>
+</tr>
+<tr class="even">
+<td><strong>Row 1</strong></td>
+<td>−7.3</td>
+<td>−9.6</td>
+<td>−10.6</td>
+<td>−10.4</td>
+</tr>
+<tr class="odd">
+<td><strong>Row 2</strong></td>
+<td>−10.2</td>
+<td>−10.6</td>
+<td>−9.6</td>
+<td>−7.3</td>
+</tr>
+<tr class="even">
+<td><strong>Row 3</strong></td>
+<td>−11.3</td>
+<td>−10.4</td>
+<td>−7.3</td>
+<td>0 (T)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Converged (sweep ∞):</strong></p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th>Col 0</th>
+<th>Col 1</th>
+<th>Col 2</th>
+<th>Col 3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Row 0</strong></td>
+<td>0 (T)</td>
+<td>−14</td>
+<td>−20</td>
+<td>−22</td>
+</tr>
+<tr class="even">
+<td><strong>Row 1</strong></td>
+<td>−14</td>
+<td>−18</td>
+<td>−20</td>
+<td>−20</td>
+</tr>
+<tr class="odd">
+<td><strong>Row 2</strong></td>
+<td>−20</td>
+<td>−20</td>
+<td>−18</td>
+<td>−14</td>
+</tr>
+<tr class="even">
+<td><strong>Row 3</strong></td>
+<td>−22</td>
+<td>−20</td>
+<td>−14</td>
+<td>0 (T)</td>
+</tr>
+</tbody>
+</table>
+<pre class="mermaid">graph LR
+    subgraph "Convergence Pattern"
+        direction LR
+        S0["Sweep 0<br/>All V = 0"] --> S1["Sweep 1<br/>All V = −1"]
+        S1 --> S2["Sweep 2<br/>Near-terminal: −1.75<br/>Interior: −2.0"]
+        S2 --> S3["Sweep 3<br/>Gradient forming:<br/>−2.4 to −3.0"]
+        S3 --> S10["Sweep 10<br/>Gradient steeper:<br/>−7.3 to −11.3"]
+        S10 --> SINF["Converged<br/>Final: −14 to −22"]
+    end
+
+    style S0 fill:#e8f5e9
+    style S1 fill:#c8e6c9
+    style S2 fill:#a5d6a7
+    style S3 fill:#81c784
+    style S10 fill:#66bb6a
+    style SINF fill:#43a047,color:#fff</pre>
+<p><strong>What to observe:</strong> 1. <strong>Information propagates
+outward from terminals</strong> — cells near (0,0) and (3,3) get useful
+information first 2. <strong>Each sweep, information travels one cell
+further</strong> — sweep <span class="math inline">\(k\)</span> can only
+“see” terminals up to <span class="math inline">\(k\)</span> steps away
+3. <strong>Center cells converge last</strong> — they are farthest from
+both terminals, so it takes the most sweeps for terminal information to
+reach them 4. <strong>Values are always monotonically
+decreasing</strong> — each sweep makes values more negative (or keeps
+them the same) because we’re accumulating more <span
+class="math inline">\(-1\)</span> costs 5. <strong>The grid is
+symmetric</strong> about the main diagonal — because the two terminals
+are at opposite corners and the random policy is symmetric</p>
+<hr />
+<h2 id="gridworld-setup-common-to-both-questions">Gridworld Setup
+(Common to Both Questions)</h2>
+<p>Consider a <span class="math inline">\(4 \times 4\)</span> gridworld
+with <strong>two terminal states</strong> at diagonally opposite corners
+— top-left <span class="math inline">\((0,0)\)</span> and bottom-right
+<span class="math inline">\((3,3)\)</span>. The agent can move up, down,
+left, or right. Moves that would take the agent off the grid leave the
+state unchanged. Every transition yields a reward of <span
+class="math inline">\(-1\)</span> and the discount factor is <span
+class="math inline">\(\gamma = 1\)</span>.</p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th>Col 0</th>
+<th>Col 1</th>
+<th>Col 2</th>
+<th>Col 3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Row 0</strong></td>
+<td>T</td>
+<td>.</td>
+<td>.</td>
+<td>.</td>
+</tr>
+<tr class="even">
+<td><strong>Row 1</strong></td>
+<td>.</td>
+<td>.</td>
+<td>.</td>
+<td>.</td>
+</tr>
+<tr class="odd">
+<td><strong>Row 2</strong></td>
+<td>.</td>
+<td>.</td>
+<td>.</td>
+<td>.</td>
+</tr>
+<tr class="even">
+<td><strong>Row 3</strong></td>
+<td>.</td>
+<td>.</td>
+<td>.</td>
+<td>T</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="questions">Questions</h2>
+<p><strong>Q1.</strong> Under the <strong>equiprobable random
+policy</strong> (each action chosen with probability <span
+class="math inline">\(0.25\)</span>), policy evaluation is run to
+convergence. Which non-terminal cells will have the <strong>most
+negative</strong> state values?</p>
+<ol type="a">
+<li>The corner cells <span class="math inline">\((0,3)\)</span> and
+<span class="math inline">\((3,0)\)</span>, because they are farthest
+from terminal states by Manhattan distance</li>
+<li>The center cells <span class="math inline">\((1,1)\)</span>, <span
+class="math inline">\((1,2)\)</span>, <span
+class="math inline">\((2,1)\)</span>, <span
+class="math inline">\((2,2)\)</span>, because a random walk starting
+there takes the most expected steps to reach any terminal</li>
+<li>The cells adjacent to terminal states, because they receive <span
+class="math inline">\(-1\)</span> reward most frequently</li>
+<li>All non-terminal cells have the same value since the policy treats
+all actions equally</li>
+</ol>
+<hr />
+<p><strong>Q2.</strong> Now suppose we run <strong>policy
+improvement</strong> and obtain the optimal (greedy) policy, where the
+agent always moves toward the nearest terminal state. Under this optimal
+policy, which non-terminal cells will have the <strong>most
+negative</strong> state values?</p>
+<ol type="a">
+<li>The center cells <span class="math inline">\((1,1)\)</span>, <span
+class="math inline">\((1,2)\)</span>, <span
+class="math inline">\((2,1)\)</span>, <span
+class="math inline">\((2,2)\)</span>, because they are in the middle of
+the grid</li>
+<li>The cells along the anti-diagonal — <span
+class="math inline">\((0,3)\)</span>, <span
+class="math inline">\((3,0)\)</span>, <span
+class="math inline">\((1,2)\)</span>, <span
+class="math inline">\((2,1)\)</span> — because they are equidistant from
+both terminal states and have the largest minimum Manhattan distance of
+<span class="math inline">\(3\)</span></li>
+<li>The corner cells <span class="math inline">\((0,3)\)</span> and
+<span class="math inline">\((3,0)\)</span> only, because corners have
+fewer movement options</li>
+<li>The cells adjacent to terminal states, because every step incurs a
+<span class="math inline">\(-1\)</span> reward</li>
+</ol>
+<hr />
+<p><strong>Q3.</strong> The <strong>policy improvement theorem</strong>
+states that if <span class="math inline">\(q_\pi(s, \pi&#39;(s)) \geq
+v_\pi(s)\)</span> for all states <span class="math inline">\(s\)</span>,
+then <span class="math inline">\(v_{\pi&#39;}(s) \geq v_\pi(s)\)</span>
+for all states. The greedy policy <span
+class="math inline">\(\pi&#39;(s) = \arg\max_a q_\pi(s,a)\)</span>
+satisfies this condition. <strong>Why</strong> does proving that <span
+class="math inline">\(\pi&#39;\)</span> is better at a single action
+(one step) guarantee it is better over the entire trajectory (all future
+steps)?</p>
+<ol type="a">
+<li>Because the discount factor <span class="math inline">\(\gamma &lt;
+1\)</span> makes future steps negligible, so only the first step
+matters</li>
+<li>Because <span class="math inline">\(\pi&#39;\)</span> is defined
+greedily <strong>at every state simultaneously</strong>, so the one-step
+improvement argument applies at each subsequent state in the chain, and
+unrolling these inequalities across all future steps proves <span
+class="math inline">\(v_{\pi&#39;}(s) \geq v_\pi(s)\)</span></li>
+<li>Because after one step of improvement, the agent switches back to
+<span class="math inline">\(\pi\)</span>, so only the first step needs
+to be better</li>
+<li>Because the policy improvement theorem requires running <span
+class="math inline">\(\pi&#39;\)</span> to completion and comparing
+total returns with <span class="math inline">\(\pi\)</span></li>
+</ol>
+<hr />
+<p><strong>Q4.</strong> The policy improvement theorem guarantees that
+<span class="math inline">\(v_{\pi&#39;}(s) \geq v_\pi(s)\)</span> for
+all states — meaning <span class="math inline">\(\pi&#39;\)</span> is at
+least as good as <span class="math inline">\(\pi\)</span> everywhere.
+Since <span class="math inline">\(\pi&#39;\)</span> is better at every
+state, <strong>why does this NOT guarantee that <span
+class="math inline">\(\pi&#39;\)</span> is the optimal policy?</strong>
+Why do we need to repeat evaluation and improvement in a loop (policy
+iteration)?</p>
+<ol type="a">
+<li>Because <span class="math inline">\(\pi&#39;\)</span> only improves
+the first action; subsequent actions still follow <span
+class="math inline">\(\pi\)</span></li>
+<li>Because the discount factor <span
+class="math inline">\(\gamma\)</span> causes the improvement to decay
+over time</li>
+<li>Because <span class="math inline">\(\pi&#39;\)</span> was
+constructed greedily using <span class="math inline">\(v_\pi\)</span>
+(the old policy’s values), and once we switch to <span
+class="math inline">\(\pi&#39;\)</span>, the state values change —
+actions that looked best under <span
+class="math inline">\(v_\pi\)</span> may no longer be best under <span
+class="math inline">\(v_{\pi&#39;}\)</span></li>
+<li>Because the policy improvement theorem is only an approximation and
+does not guarantee exact improvement</li>
+</ol>
+<hr />
+<h2 id="answer-key">Answer Key</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Q</th>
+<th>Answer</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>(b)</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>(b)</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>(b)</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>(c)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="detailed-working">Detailed Working</h2>
+<h3 id="key-principle">Key Principle</h3>
+<p>With <span class="math inline">\(\gamma = 1\)</span> and <span
+class="math inline">\(r = -1\)</span> for every step, the value of any
+state equals:</p>
+<p><span class="math display">\[V(s) = -\mathbb{E}[\text{number of steps
+to reach a terminal state from } s]\]</span></p>
+<p>The more steps the agent takes on average, the more negative the
+value.</p>
+<hr />
+<h3 id="q1-random-policy-detailed-working">Q1: Random Policy — Detailed
+Working</h3>
+<p>Under the equiprobable random policy, the agent moves up, down, left,
+or right each with probability <span
+class="math inline">\(0.25\)</span>. This is essentially a
+<strong>random walk</strong> on the grid.</p>
+<p><strong>Bellman equation for each state:</strong></p>
+<p><span class="math display">\[V(s) = \sum_{a \in \{U,D,L,R\}} 0.25
+\times [-1 + V(s&#39;)]\]</span></p>
+<p><span class="math display">\[V(s) = -1 + 0.25 \times [V(s&#39;_U) +
+V(s&#39;_D) + V(s&#39;_L) + V(s&#39;_R)]\]</span></p>
+<p>where <span class="math inline">\(s&#39;_a\)</span> is the next state
+after taking action <span class="math inline">\(a\)</span> (or <span
+class="math inline">\(s\)</span> itself if the move hits a wall).</p>
+<p><strong>Example: Solving for state <span
+class="math inline">\((0,1)\)</span></strong></p>
+<p>Actions from <span class="math inline">\((0,1)\)</span>: - Up → hits
+wall, stays at <span class="math inline">\((0,1)\)</span> - Down → goes
+to <span class="math inline">\((1,1)\)</span> - Left → goes to <span
+class="math inline">\((0,0)\)</span> which is terminal, <span
+class="math inline">\(V = 0\)</span> - Right → goes to <span
+class="math inline">\((0,2)\)</span></p>
+<p><span class="math display">\[V(0,1) = -1 + 0.25 \times [V(0,1) +
+V(1,1) + 0 + V(0,2)]\]</span></p>
+<p><strong>Example: Solving for state <span
+class="math inline">\((1,1)\)</span> (center-adjacent)</strong></p>
+<p>Actions from <span class="math inline">\((1,1)\)</span>: - Up → <span
+class="math inline">\((0,1)\)</span> - Down → <span
+class="math inline">\((2,1)\)</span> - Left → <span
+class="math inline">\((1,0)\)</span> - Right → <span
+class="math inline">\((1,2)\)</span></p>
+<p><span class="math display">\[V(1,1) = -1 + 0.25 \times [V(0,1) +
+V(2,1) + V(1,0) + V(1,2)]\]</span></p>
+<p>This creates a system of 14 simultaneous linear equations (14
+non-terminal states). Solving this system (via iterative policy
+evaluation or direct matrix solution) yields the converged values:</p>
+<p><strong>Converged value table under the random policy:</strong></p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th>Col 0</th>
+<th>Col 1</th>
+<th>Col 2</th>
+<th>Col 3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Row 0</strong></td>
+<td><strong>0</strong> (T)</td>
+<td>−14</td>
+<td>−20</td>
+<td>−22</td>
+</tr>
+<tr class="even">
+<td><strong>Row 1</strong></td>
+<td>−14</td>
+<td>−18</td>
+<td>−20</td>
+<td>−20</td>
+</tr>
+<tr class="odd">
+<td><strong>Row 2</strong></td>
+<td>−20</td>
+<td>−20</td>
+<td>−18</td>
+<td>−14</td>
+</tr>
+<tr class="even">
+<td><strong>Row 3</strong></td>
+<td>−22</td>
+<td>−20</td>
+<td>−14</td>
+<td><strong>0</strong> (T)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Verification of <span
+class="math inline">\((0,1)\)</span>:</strong></p>
+<p><span class="math display">\[V(0,1) = -1 + 0.25 \times [V(0,1) +
+V(1,1) + V(0,0) + V(0,2)]\]</span> <span class="math display">\[-14 = -1
++ 0.25 \times [(-14) + (-18) + 0 + (-20)]\]</span> <span
+class="math display">\[-14 = -1 + 0.25 \times (-52)\]</span> <span
+class="math display">\[-14 = -1 + (-13) = -14 \quad
+\checkmark\]</span></p>
+<p><strong>Verification of <span
+class="math inline">\((1,1)\)</span>:</strong></p>
+<p><span class="math display">\[V(1,1) = -1 + 0.25 \times [V(0,1) +
+V(2,1) + V(1,0) + V(1,2)]\]</span> <span class="math display">\[-18 = -1
++ 0.25 \times [(-14) + (-20) + (-14) + (-20)]\]</span> <span
+class="math display">\[-18 = -1 + 0.25 \times (-68)\]</span> <span
+class="math display">\[-18 = -1 + (-17) = -18 \quad
+\checkmark\]</span></p>
+<p><strong>Observations:</strong></p>
+<table>
+<colgroup>
+<col style="width: 21%" />
+<col style="width: 18%" />
+<col style="width: 21%" />
+<col style="width: 39%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Region</th>
+<th>Cells</th>
+<th>Values</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Adjacent to terminals</td>
+<td><span class="math inline">\((0,1)\)</span>, <span
+class="math inline">\((1,0)\)</span>, <span
+class="math inline">\((2,3)\)</span>, <span
+class="math inline">\((3,2)\)</span></td>
+<td><span class="math inline">\(-14\)</span></td>
+<td>Random walk escapes relatively quickly near an exit</td>
+</tr>
+<tr class="even">
+<td>Center cells</td>
+<td><span class="math inline">\((1,1)\)</span>, <span
+class="math inline">\((1,2)\)</span>, <span
+class="math inline">\((2,1)\)</span>, <span
+class="math inline">\((2,2)\)</span></td>
+<td><span class="math inline">\(-18\)</span> to <span
+class="math inline">\(-20\)</span></td>
+<td><strong>Most negative interior values</strong> — random walk gets
+trapped bouncing around</td>
+</tr>
+<tr class="odd">
+<td>Anti-diagonal corners</td>
+<td><span class="math inline">\((0,3)\)</span>, <span
+class="math inline">\((3,0)\)</span></td>
+<td><span class="math inline">\(-22\)</span></td>
+<td><strong>Most negative overall</strong> — far from both terminals AND
+cornered against walls</td>
+</tr>
+<tr class="even">
+<td>Anti-diagonal mid</td>
+<td><span class="math inline">\((1,2)\)</span>, <span
+class="math inline">\((2,1)\)</span></td>
+<td><span class="math inline">\(-20\)</span></td>
+<td>Also very negative — equidistant from both terminals</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Why center/anti-diagonal cells are worst:</strong> Under a
+random walk, the agent has no preference for direction. Center cells are
+surrounded on all four sides by other non-terminal cells, so the random
+walk diffuses aimlessly. The wall-bouncing effect at corners and edges
+actually makes <span class="math inline">\((0,3)\)</span> and <span
+class="math inline">\((3,0)\)</span> even worse — the agent keeps
+bumping into walls, wasting steps, while being maximally far from both
+terminals.</p>
+<hr />
+<h3 id="q2-optimal-greedy-policy-detailed-working">Q2: Optimal (Greedy)
+Policy — Detailed Working</h3>
+<p>After policy improvement, the agent always picks the action that
+moves toward the <strong>nearest</strong> terminal state. Under this
+deterministic optimal policy, the value of each state is simply:</p>
+<p><span class="math display">\[V^*(s) = -\min(d_1(s),\
+d_2(s))\]</span></p>
+<p>where <span class="math inline">\(d_1(s)\)</span> is the Manhattan
+distance from <span class="math inline">\(s\)</span> to terminal <span
+class="math inline">\((0,0)\)</span> and <span
+class="math inline">\(d_2(s)\)</span> is the Manhattan distance to
+terminal <span class="math inline">\((3,3)\)</span>.</p>
+<p><strong>Distance calculation for every cell:</strong></p>
+<table>
+<colgroup>
+<col style="width: 7%" />
+<col style="width: 28%" />
+<col style="width: 28%" />
+<col style="width: 22%" />
+<col style="width: 12%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Cell</th>
+<th><span class="math inline">\(d_1\)</span> = dist to <span
+class="math inline">\((0,0)\)</span></th>
+<th><span class="math inline">\(d_2\)</span> = dist to <span
+class="math inline">\((3,3)\)</span></th>
+<th><span class="math inline">\(\min(d_1, d_2)\)</span></th>
+<th><span class="math inline">\(V^*(s)\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\((0,0)\)</span></td>
+<td>0</td>
+<td>6</td>
+<td>0</td>
+<td><strong>0</strong> (T)</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\((0,1)\)</span></td>
+<td>1</td>
+<td>5</td>
+<td>1</td>
+<td><span class="math inline">\(-1\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\((0,2)\)</span></td>
+<td>2</td>
+<td>4</td>
+<td>2</td>
+<td><span class="math inline">\(-2\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\((0,3)\)</span></td>
+<td>3</td>
+<td>3</td>
+<td><strong>3</strong></td>
+<td><span class="math inline">\(\mathbf{-3}\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\((1,0)\)</span></td>
+<td>1</td>
+<td>5</td>
+<td>1</td>
+<td><span class="math inline">\(-1\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\((1,1)\)</span></td>
+<td>2</td>
+<td>4</td>
+<td>2</td>
+<td><span class="math inline">\(-2\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\((1,2)\)</span></td>
+<td>3</td>
+<td>3</td>
+<td><strong>3</strong></td>
+<td><span class="math inline">\(\mathbf{-3}\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\((1,3)\)</span></td>
+<td>4</td>
+<td>2</td>
+<td>2</td>
+<td><span class="math inline">\(-2\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\((2,0)\)</span></td>
+<td>2</td>
+<td>4</td>
+<td>2</td>
+<td><span class="math inline">\(-2\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\((2,1)\)</span></td>
+<td>3</td>
+<td>3</td>
+<td><strong>3</strong></td>
+<td><span class="math inline">\(\mathbf{-3}\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\((2,2)\)</span></td>
+<td>4</td>
+<td>2</td>
+<td>2</td>
+<td><span class="math inline">\(-2\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\((2,3)\)</span></td>
+<td>5</td>
+<td>1</td>
+<td>1</td>
+<td><span class="math inline">\(-1\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\((3,0)\)</span></td>
+<td>3</td>
+<td>3</td>
+<td><strong>3</strong></td>
+<td><span class="math inline">\(\mathbf{-3}\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\((3,1)\)</span></td>
+<td>4</td>
+<td>2</td>
+<td>2</td>
+<td><span class="math inline">\(-2\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\((3,2)\)</span></td>
+<td>5</td>
+<td>1</td>
+<td>1</td>
+<td><span class="math inline">\(-1\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\((3,3)\)</span></td>
+<td>6</td>
+<td>0</td>
+<td>0</td>
+<td><strong>0</strong> (T)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Optimal policy value grid:</strong></p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th>Col 0</th>
+<th>Col 1</th>
+<th>Col 2</th>
+<th>Col 3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Row 0</strong></td>
+<td><strong>0</strong> (T)</td>
+<td><span class="math inline">\(-1\)</span></td>
+<td><span class="math inline">\(-2\)</span></td>
+<td><span class="math inline">\(\mathbf{-3}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>Row 1</strong></td>
+<td><span class="math inline">\(-1\)</span></td>
+<td><span class="math inline">\(-2\)</span></td>
+<td><span class="math inline">\(\mathbf{-3}\)</span></td>
+<td><span class="math inline">\(-2\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>Row 2</strong></td>
+<td><span class="math inline">\(-2\)</span></td>
+<td><span class="math inline">\(\mathbf{-3}\)</span></td>
+<td><span class="math inline">\(-2\)</span></td>
+<td><span class="math inline">\(-1\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>Row 3</strong></td>
+<td><span class="math inline">\(\mathbf{-3}\)</span></td>
+<td><span class="math inline">\(-2\)</span></td>
+<td><span class="math inline">\(-1\)</span></td>
+<td><strong>0</strong> (T)</td>
+</tr>
+</tbody>
+</table>
+<p>The most negative value is <span class="math inline">\(-3\)</span>,
+occurring at the <strong>anti-diagonal</strong> cells: <span
+class="math inline">\((0,3)\)</span>, <span
+class="math inline">\((1,2)\)</span>, <span
+class="math inline">\((2,1)\)</span>, <span
+class="math inline">\((3,0)\)</span>.</p>
+<p><strong>Why these cells are worst:</strong> These four cells are each
+exactly <span class="math inline">\(3\)</span> steps from
+<strong>both</strong> terminals — there is no “closer” terminal to
+exploit. Every other cell has at least one terminal within <span
+class="math inline">\(1\)</span> or <span
+class="math inline">\(2\)</span> steps.</p>
+<p><strong>Optimal policy arrows (showing which terminal the agent heads
+toward):</strong></p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th>Col 0</th>
+<th>Col 1</th>
+<th>Col 2</th>
+<th>Col 3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Row 0</strong></td>
+<td>T</td>
+<td>←</td>
+<td>←</td>
+<td>↓ or ←</td>
+</tr>
+<tr class="even">
+<td><strong>Row 1</strong></td>
+<td>↑</td>
+<td>↑/←</td>
+<td>↓/→</td>
+<td>↓</td>
+</tr>
+<tr class="odd">
+<td><strong>Row 2</strong></td>
+<td>↑</td>
+<td>↑/←</td>
+<td>↓/→</td>
+<td>↓</td>
+</tr>
+<tr class="even">
+<td><strong>Row 3</strong></td>
+<td>→ or ↑</td>
+<td>→</td>
+<td>→</td>
+<td>T</td>
+</tr>
+</tbody>
+</table>
+<p>Cells on the anti-diagonal have <strong>tied</strong> distances, so
+multiple optimal actions exist (both directions are equally good).</p>
+<hr />
+<h3 id="comparison-summary-1">Comparison Summary</h3>
+<table>
+<colgroup>
+<col style="width: 21%" />
+<col style="width: 36%" />
+<col style="width: 42%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Aspect</th>
+<th>Random Policy</th>
+<th>Optimal Policy</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Most negative cells</strong></td>
+<td><span class="math inline">\((0,3)\)</span>, <span
+class="math inline">\((3,0)\)</span> at <span
+class="math inline">\(-22\)</span>; center at <span
+class="math inline">\(-18\)</span> to <span
+class="math inline">\(-20\)</span></td>
+<td>Anti-diagonal at <span class="math inline">\(-3\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>Least negative non-terminal cells</strong></td>
+<td><span class="math inline">\((0,1)\)</span>, <span
+class="math inline">\((1,0)\)</span>, <span
+class="math inline">\((2,3)\)</span>, <span
+class="math inline">\((3,2)\)</span> at <span
+class="math inline">\(-14\)</span></td>
+<td><span class="math inline">\((0,1)\)</span>, <span
+class="math inline">\((1,0)\)</span>, <span
+class="math inline">\((2,3)\)</span>, <span
+class="math inline">\((3,2)\)</span> at <span
+class="math inline">\(-1\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>Value range</strong></td>
+<td><span class="math inline">\(-14\)</span> to <span
+class="math inline">\(-22\)</span> (spread of <span
+class="math inline">\(8\)</span>)</td>
+<td><span class="math inline">\(-1\)</span> to <span
+class="math inline">\(-3\)</span> (spread of <span
+class="math inline">\(2\)</span>)</td>
+</tr>
+<tr class="even">
+<td><strong>Why center is bad/not bad</strong></td>
+<td>Random walk gets trapped — no directional bias to escape</td>
+<td>Center cells are only <span class="math inline">\(2\)</span> steps
+from nearest terminal</td>
+</tr>
+<tr class="odd">
+<td><strong>Why anti-diagonal is worst</strong></td>
+<td>Far from both terminals + wall-bouncing wastes steps</td>
+<td>Equidistant from both terminals — no closer exit exists</td>
+</tr>
+<tr class="even">
+<td><strong>Key insight</strong></td>
+<td>Movement is undirected → distance from exits + topology matters</td>
+<td>Movement is directed → only shortest-path distance matters</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="q3-why-policy-improvement-works-detailed-working">Q3: Why Policy
+Improvement Works — Detailed Working</h3>
+<h4 id="the-common-misconception">The Common Misconception</h4>
+<p>It’s easy to misread the policy improvement theorem as: <em>“try
+<span class="math inline">\(\pi&#39;\)</span> for one step, follow <span
+class="math inline">\(\pi\)</span> after that, and if it’s better,
+switch.”</em> This is <strong>not</strong> what happens. The agent fully
+switches to <span class="math inline">\(\pi&#39;\)</span> at every
+state. The one-step argument is a <strong>proof technique</strong>, not
+the algorithm’s behavior.</p>
+<h4 id="setup">Setup</h4>
+<p>We have a current policy <span class="math inline">\(\pi\)</span>
+with known values <span class="math inline">\(v_\pi(s)\)</span> and
+<span class="math inline">\(q_\pi(s,a)\)</span>.</p>
+<p>We construct a new greedy policy:</p>
+<p><span class="math display">\[\pi&#39;(s) = \arg\max_a q_\pi(s, a)
+\quad \text{for ALL states } s\]</span></p>
+<p>This means <span class="math inline">\(\pi&#39;\)</span> picks the
+best action (according to <span class="math inline">\(\pi\)</span>’s
+evaluation) <strong>at every state</strong>, not just the starting
+state.</p>
+<h4 id="what-q_pis-pis-geq-v_pis-really-means">What <span
+class="math inline">\(q_\pi(s, \pi&#39;(s)) \geq v_\pi(s)\)</span>
+Really Means</h4>
+<ul>
+<li><span class="math inline">\(v_\pi(s)\)</span>: expected return if
+you follow <span class="math inline">\(\pi\)</span> from state <span
+class="math inline">\(s\)</span> forever</li>
+<li><span class="math inline">\(q_\pi(s, \pi&#39;(s))\)</span>: expected
+return if you take <span class="math inline">\(\pi&#39;\)</span>’s
+action <strong>once</strong>, then follow <span
+class="math inline">\(\pi\)</span> forever</li>
+</ul>
+<p>Since <span class="math inline">\(\pi&#39;\)</span> picks the <span
+class="math inline">\(\arg\max\)</span>:</p>
+<p><span class="math display">\[q_\pi(s, \pi&#39;(s)) = \max_a
+q_\pi(s,a) \geq q_\pi(s, \pi(s)) = v_\pi(s)\]</span></p>
+<p>This holds trivially — the best action is at least as good as the
+action <span class="math inline">\(\pi\)</span> would have chosen.</p>
+<h4 id="the-chain-of-inequalities-the-actual-proof">The Chain of
+Inequalities (The Actual Proof)</h4>
+<p>Start with the one-step result:</p>
+<p><span class="math display">\[v_\pi(s) \leq q_\pi(s,
+\pi&#39;(s))\]</span></p>
+<p>Expand <span class="math inline">\(q_\pi(s, \pi&#39;(s))\)</span>
+using the definition of the action-value function:</p>
+<p><span class="math display">\[= \mathbb{E}\left[R_{t+1} + \gamma\,
+v_\pi(S_{t+1}) \mid S_t = s, A_t = \pi&#39;(s)\right]\]</span></p>
+<p>Now, at <span class="math inline">\(S_{t+1}\)</span>, we can apply
+the <strong>same inequality</strong> again because <span
+class="math inline">\(\pi&#39;\)</span> is greedy at <strong>every
+state</strong>:</p>
+<p><span class="math display">\[v_\pi(S_{t+1}) \leq q_\pi(S_{t+1},
+\pi&#39;(S_{t+1}))\]</span></p>
+<p>Substitute this back:</p>
+<p><span class="math display">\[v_\pi(s) \leq \mathbb{E}\left[R_{t+1} +
+\gamma\, q_\pi(S_{t+1}, \pi&#39;(S_{t+1}))\right]\]</span></p>
+<p>Expand <span class="math inline">\(q_\pi(S_{t+1},
+\pi&#39;(S_{t+1}))\)</span> again:</p>
+<p><span class="math display">\[= \mathbb{E}\left[R_{t+1} + \gamma\,
+R_{t+2} + \gamma^2\, v_\pi(S_{t+2})\right]\]</span></p>
+<p>Apply the same inequality at <span
+class="math inline">\(S_{t+2}\)</span>, then <span
+class="math inline">\(S_{t+3}\)</span>, and so on:</p>
+<p><span class="math display">\[v_\pi(s) \leq \mathbb{E}\left[R_{t+1} +
+\gamma R_{t+2} + \gamma^2 R_{t+3} + \cdots \mid S_t = s,
+\pi&#39;\right]\]</span></p>
+<p><span class="math display">\[v_\pi(s) \leq
+v_{\pi&#39;}(s)\]</span></p>
+<h4 id="why-this-works-a-step-by-step-walkthrough">Why This Works: A
+Step-by-Step Walkthrough</h4>
+<p>Consider a simple 3-state chain: <span class="math inline">\(A \to B
+\to C \to\)</span> terminal.</p>
+<table>
+<colgroup>
+<col style="width: 16%" />
+<col style="width: 52%" />
+<col style="width: 30%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Step</th>
+<th>What the proof does</th>
+<th>Inequality</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>At <span class="math inline">\(A\)</span></td>
+<td><span class="math inline">\(\pi&#39;\)</span> picks a better action
+than <span class="math inline">\(\pi\)</span> at <span
+class="math inline">\(A\)</span></td>
+<td><span class="math inline">\(v_\pi(A) \leq q_\pi(A,
+\pi&#39;(A))\)</span></td>
+</tr>
+<tr class="even">
+<td>At <span class="math inline">\(B\)</span></td>
+<td><span class="math inline">\(\pi&#39;\)</span> picks a better action
+than <span class="math inline">\(\pi\)</span> at <span
+class="math inline">\(B\)</span> too</td>
+<td><span class="math inline">\(v_\pi(B) \leq q_\pi(B,
+\pi&#39;(B))\)</span></td>
+</tr>
+<tr class="odd">
+<td>At <span class="math inline">\(C\)</span></td>
+<td><span class="math inline">\(\pi&#39;\)</span> picks a better action
+than <span class="math inline">\(\pi\)</span> at <span
+class="math inline">\(C\)</span> too</td>
+<td><span class="math inline">\(v_\pi(C) \leq q_\pi(C,
+\pi&#39;(C))\)</span></td>
+</tr>
+<tr class="even">
+<td>Combined</td>
+<td>Better at A + better at B + better at C = better overall</td>
+<td><span class="math inline">\(v_\pi(A) \leq
+v_{\pi&#39;}(A)\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>The chain works because <span class="math inline">\(\pi&#39;\)</span>
+is defined greedily <strong>at every state simultaneously</strong>. If
+<span class="math inline">\(\pi&#39;\)</span> only improved one state,
+the chain would break.</p>
+<h4 id="why-each-wrong-answer-is-wrong">Why Each Wrong Answer is
+Wrong</h4>
+<p><strong>(a) “Because <span class="math inline">\(\gamma &lt;
+1\)</span> makes future steps negligible”</strong> — Wrong. The theorem
+works even with <span class="math inline">\(\gamma = 1\)</span> (as in
+our gridworld example). Gamma ensures convergence of policy evaluation,
+but the improvement theorem relies on the greedy construction, not
+discounting.</p>
+<p><strong>(c) “After one step, the agent switches back to <span
+class="math inline">\(\pi\)</span>”</strong> — Wrong. This describes
+<span class="math inline">\(q_\pi(s, \pi&#39;(s))\)</span>, which is one
+term in the proof, not the actual execution. The agent fully commits to
+<span class="math inline">\(\pi&#39;\)</span>.</p>
+<p><strong>(d) “Requires running <span
+class="math inline">\(\pi&#39;\)</span> to completion”</strong> — Wrong.
+The whole point of the theorem is that we <strong>don’t</strong> need to
+evaluate <span class="math inline">\(\pi&#39;\)</span>. We prove <span
+class="math inline">\(\pi&#39;\)</span> is better using only <span
+class="math inline">\(\pi\)</span>’s value function, which we already
+computed.</p>
+<h4 id="analogy">Analogy</h4>
+<p>Imagine you have a route to work (policy <span
+class="math inline">\(\pi\)</span>). Someone gives you better
+turn-by-turn directions (policy <span
+class="math inline">\(\pi&#39;\)</span>) — not just a better first turn,
+but a better choice <strong>at every intersection</strong>. You don’t
+need to drive the entire new route to know it’s better. If every single
+turn is at least as good as your old turn, the whole route must be at
+least as good. That’s the policy improvement theorem.</p>
+<hr />
+<h3 id="q4-why-better-does-not-mean-optimal-detailed-working">Q4: Why
+“Better” Does Not Mean “Optimal” — Detailed Working</h3>
+<h4 id="the-core-issue">The Core Issue</h4>
+<p>The policy improvement theorem proves:</p>
+<p><span class="math display">\[v_{\pi&#39;}(s) \geq v_\pi(s) \quad
+\text{for all } s\]</span></p>
+<p>This is a <strong>relative</strong> guarantee — <span
+class="math inline">\(\pi&#39;\)</span> is better than <span
+class="math inline">\(\pi\)</span>. It is <strong>not</strong> an
+absolute guarantee that <span class="math inline">\(\pi&#39;\)</span> is
+the best possible policy. The reason is subtle but fundamental.</p>
+<h4 id="the-stale-values-problem">The Stale Values Problem</h4>
+<p><span class="math inline">\(\pi&#39;\)</span> was constructed by:</p>
+<p><span class="math display">\[\pi&#39;(s) = \arg\max_a q_\pi(s,
+a)\]</span></p>
+<p>The key issue: <span class="math inline">\(q_\pi(s,a)\)</span>
+answers the question <em>“take action <span
+class="math inline">\(a\)</span> at state <span
+class="math inline">\(s\)</span>, then follow <span
+class="math inline">\(\pi\)</span> forever.”</em> But after we switch to
+<span class="math inline">\(\pi&#39;\)</span>, the agent doesn’t follow
+<span class="math inline">\(\pi\)</span> anymore — it follows <span
+class="math inline">\(\pi&#39;\)</span>. The values <span
+class="math inline">\(v_\pi\)</span> and <span
+class="math inline">\(q_\pi\)</span> are <strong>stale</strong> the
+moment we adopt <span class="math inline">\(\pi&#39;\)</span>.</p>
+<h4 id="concrete-example-why-one-round-is-not-enough">Concrete Example:
+Why One Round Is Not Enough</h4>
+<p>Consider a 4-state environment with actions Left (L) and Right
+(R):</p>
+<table>
+<thead>
+<tr class="header">
+<th>Current State</th>
+<th>Action L</th>
+<th>Action R</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Start</td>
+<td>→ A (reward 0)</td>
+<td>→ B (reward 0)</td>
+</tr>
+<tr class="even">
+<td>A</td>
+<td>→ Goal (reward +10)</td>
+<td>→ Goal (reward +2)</td>
+</tr>
+<tr class="odd">
+<td>B</td>
+<td>→ Goal (reward +3)</td>
+<td>→ Goal (reward +8)</td>
+</tr>
+<tr class="even">
+<td>Goal</td>
+<td>(terminal)</td>
+<td>(terminal)</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><span class="math inline">\(\gamma = 1\)</span></li>
+</ul>
+<p><strong>Round 1: Start with a bad policy <span
+class="math inline">\(\pi_0\)</span></strong></p>
+<p><span class="math inline">\(\pi_0\)</span>: always go Left at every
+state.</p>
+<p>Policy evaluation gives: - <span
+class="math inline">\(v_{\pi_0}(\text{Start}) = 0 + 0 + 10 = 10\)</span>
+(Start →L→ A →L→ Goal: 0 + 0 + 10) - <span
+class="math inline">\(v_{\pi_0}(A) = 10\)</span> (A →L→ Goal: +10) -
+<span class="math inline">\(v_{\pi_0}(B) = 3\)</span> (B →L→ Goal:
++3)</p>
+<p>Now compute <span class="math inline">\(q_{\pi_0}\)</span> to build
+<span class="math inline">\(\pi_1\)</span>: - <span
+class="math inline">\(q_{\pi_0}(\text{Start}, L) = 0 + v_{\pi_0}(A) =
+10\)</span> - <span class="math inline">\(q_{\pi_0}(\text{Start}, R) = 0
++ v_{\pi_0}(B) = 3\)</span> - <span class="math inline">\(q_{\pi_0}(A,
+L) = 10\)</span>, <span class="math inline">\(q_{\pi_0}(A, R) =
+2\)</span> - <span class="math inline">\(q_{\pi_0}(B, L) = 3\)</span>,
+<span class="math inline">\(q_{\pi_0}(B, R) = 8\)</span></p>
+<p>Greedy policy <span class="math inline">\(\pi_1\)</span>: - At Start:
+<span class="math inline">\(\arg\max(10, 3) = L\)</span> → go to A - At
+A: <span class="math inline">\(\arg\max(10, 2) = L\)</span> → go to Goal
+(+10) - At B: <span class="math inline">\(\arg\max(3, 8) = R\)</span> →
+go to Goal (+8)</p>
+<p><span class="math inline">\(\pi_1\)</span>’s path from Start: Start
+→L→ A →L→ Goal = reward <strong>10</strong>.</p>
+<p><strong>Is <span class="math inline">\(\pi_1\)</span> optimal? Let’s
+check.</strong></p>
+<p>Re-evaluate with <span class="math inline">\(\pi_1\)</span>: - <span
+class="math inline">\(v_{\pi_1}(A) = 10\)</span> (A →L→ Goal) - <span
+class="math inline">\(v_{\pi_1}(B) = 8\)</span> (B →R→ Goal) ←
+<strong>changed from 3 to 8!</strong> - <span
+class="math inline">\(v_{\pi_1}(\text{Start}) = 0 + v_{\pi_1}(A) =
+10\)</span></p>
+<p><strong>Round 2: Build <span class="math inline">\(\pi_2\)</span>
+from <span class="math inline">\(v_{\pi_1}\)</span></strong></p>
+<ul>
+<li><span class="math inline">\(q_{\pi_1}(\text{Start}, L) = 0 +
+v_{\pi_1}(A) = 10\)</span></li>
+<li><span class="math inline">\(q_{\pi_1}(\text{Start}, R) = 0 +
+v_{\pi_1}(B) = 8\)</span></li>
+</ul>
+<p><span class="math inline">\(\pi_2\)</span> at Start: <span
+class="math inline">\(\arg\max(10, 8) = L\)</span> → same as before. No
+change. <span class="math inline">\(\pi_2 = \pi_1\)</span>.</p>
+<p>In this case, <span class="math inline">\(\pi_1\)</span> happened to
+be optimal. But notice what happened:</p>
+<p><strong>The critical insight: <span
+class="math inline">\(v_{\pi_0}(B) = 3\)</span> was stale.</strong>
+Under <span class="math inline">\(\pi_0\)</span>, <span
+class="math inline">\(B\)</span>’s value was 3 (because <span
+class="math inline">\(\pi_0\)</span> went Left from B, getting +3). But
+<span class="math inline">\(\pi_1\)</span> fixed B’s action to Right,
+making <span class="math inline">\(B\)</span>’s true value 8. When we
+re-evaluated, <span class="math inline">\(B\)</span>’s value jumped from
+3 to 8. If the gap had been larger, it could have
+<strong>flipped</strong> the decision at Start.</p>
+<h4 id="a-case-where-the-decision-actually-flips">A Case Where the
+Decision Actually Flips</h4>
+<p>Modify the example slightly:</p>
+<ul>
+<li>From A: L → Goal (reward +5), R → Goal (reward +2)</li>
+<li>From B: L → Goal (reward +1), R → Goal (reward +9)</li>
+</ul>
+<p><strong>Round 1 with <span class="math inline">\(\pi_0\)</span>
+(always Left):</strong></p>
+<p>Evaluation: - <span class="math inline">\(v_{\pi_0}(A) = 5\)</span>,
+<span class="math inline">\(v_{\pi_0}(B) = 1\)</span></p>
+<p>Build <span class="math inline">\(\pi_1\)</span>: - <span
+class="math inline">\(q_{\pi_0}(\text{Start}, L) = 0 + 5 = 5\)</span> -
+<span class="math inline">\(q_{\pi_0}(\text{Start}, R) = 0 + 1 =
+1\)</span> - At Start: pick L → go to A ✓ - At A: <span
+class="math inline">\(\arg\max(5, 2) = L\)</span> ✓ - At B: <span
+class="math inline">\(\arg\max(1, 9) = R\)</span> ← fixed!</p>
+<p><span class="math inline">\(\pi_1\)</span>’s path: Start →L→ A →L→
+Goal = reward <strong>5</strong></p>
+<p><strong>Round 2: Re-evaluate <span
+class="math inline">\(\pi_1\)</span></strong></p>
+<ul>
+<li><span class="math inline">\(v_{\pi_1}(A) = 5\)</span></li>
+<li><span class="math inline">\(v_{\pi_1}(B) = 9\)</span> ←
+<strong>jumped from 1 to 9!</strong></li>
+</ul>
+<p>Build <span class="math inline">\(\pi_2\)</span>: - <span
+class="math inline">\(q_{\pi_1}(\text{Start}, L) = 0 + 5 = 5\)</span> -
+<span class="math inline">\(q_{\pi_1}(\text{Start}, R) = 0 + 9 =
+9\)</span> - At Start: pick R → <strong>go to B now!</strong> ←
+<strong>DECISION FLIPPED</strong></p>
+<p><span class="math inline">\(\pi_2\)</span>’s path: Start →R→ B →R→
+Goal = reward <strong>9</strong> ✓ (optimal)</p>
+<p><strong>What happened:</strong> 1. <span
+class="math inline">\(\pi_0\)</span> (always Left) scored B as 1 — very
+low 2. <span class="math inline">\(\pi_1\)</span> fixed B’s local action
+(L→R), but still routed Start through A, because B <strong>looked
+bad</strong> under the old values 3. Only after re-evaluation revealed
+B’s true value (9) did <span class="math inline">\(\pi_2\)</span>
+<strong>reroute Start through B</strong></p>
+<p><span class="math inline">\(\pi_1\)</span> was
+<strong>better</strong> than <span class="math inline">\(\pi_0\)</span>
+(it fixed B), but <strong>not optimal</strong> (it still sent Start to
+A). The stale values from <span class="math inline">\(\pi_0\)</span>
+made B look worse than it really was under <span
+class="math inline">\(\pi_1\)</span>.</p>
+<h4 id="why-policy-iteration-must-loop">Why Policy Iteration Must
+Loop</h4>
+<table>
+<colgroup>
+<col style="width: 30%" />
+<col style="width: 36%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Iteration</th>
+<th>What happens</th>
+<th>Why needed</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Evaluate <span class="math inline">\(\pi_k\)</span></td>
+<td>Compute true values <span class="math inline">\(v_{\pi_k}\)</span>
+for current policy</td>
+<td>The values from the previous round are stale</td>
+</tr>
+<tr class="even">
+<td>Improve to <span class="math inline">\(\pi_{k+1}\)</span></td>
+<td>Pick greedy actions w.r.t. fresh <span
+class="math inline">\(v_{\pi_k}\)</span></td>
+<td>Greedy w.r.t. accurate values = better decisions</td>
+</tr>
+<tr class="odd">
+<td>Repeat</td>
+<td>Until <span class="math inline">\(\pi_{k+1} = \pi_k\)</span></td>
+<td>Only when no action changes is the policy optimal</td>
+</tr>
+</tbody>
+</table>
+<p>The loop converges because: 1. Each improvement is guaranteed to be
+at least as good (policy improvement theorem) 2. The number of
+deterministic policies is finite (<span
+class="math inline">\(|\mathcal{A}|^{|\mathcal{S}|}\)</span>) 3.
+Strictly improving + finite policies = must terminate at the optimal
+policy</p>
+<h4 id="why-each-wrong-answer-for-q4-is-wrong">Why Each Wrong Answer for
+Q4 is Wrong</h4>
+<p><strong>(a) “<span class="math inline">\(\pi&#39;\)</span> only
+improves the first action”</strong> — Wrong. As shown in Q3, <span
+class="math inline">\(\pi&#39;\)</span> improves actions at
+<strong>every</strong> state. The issue isn’t coverage of states — it’s
+that the values used to pick those actions were computed under <span
+class="math inline">\(\pi\)</span>, not <span
+class="math inline">\(\pi&#39;\)</span>.</p>
+<p><strong>(b) “Discount factor causes improvement to decay”</strong> —
+Wrong. Gamma has nothing to do with why multiple rounds are needed. Even
+with <span class="math inline">\(\gamma = 1\)</span>, the stale-values
+problem exists.</p>
+<p><strong>(d) “The theorem is only an approximation”</strong> — Wrong.
+The policy improvement theorem is exact: <span
+class="math inline">\(v_{\pi&#39;}(s) \geq v_\pi(s)\)</span> is a
+rigorous mathematical guarantee, not an approximation. The limitation is
+that “better” ≠ “best”.</p>
+<h4 id="analogy-1">Analogy</h4>
+<p>Think of a GPS that re-routes you. Your old route (policy <span
+class="math inline">\(\pi\)</span>) avoids highway B because there used
+to be construction (low value under <span
+class="math inline">\(\pi\)</span>). The GPS improves your local turns
+(<span class="math inline">\(\pi&#39;\)</span>), including fixing the
+highway B section. But it still routes you through highway A at the
+start, because <strong>at the time of planning</strong>, B looked bad.
+Only after driving the new route and discovering B is now fast
+(re-evaluation) does the GPS <strong>next time</strong> reroute you
+through B entirely (<span class="math inline">\(\pi&#39;&#39;\)</span>).
+Each re-route is better, but it takes multiple updates to fully
+propagate the improved information.</p>
+</body>
+</html>
+
