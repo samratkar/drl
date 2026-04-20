@@ -20,7 +20,7 @@ fi
 [[ -n "$input_path" ]] || usage
 [[ -f "$input_path" ]] || { echo "Input file not found: $input_path" >&2; exit 1; }
 
-case "${input_path,,}" in
+case "$(printf '%s' "$input_path" | tr '[:upper:]' '[:lower:]')" in
   *.md) ;;
   *) echo "Input must be a Markdown file: $input_path" >&2; exit 1 ;;
 esac

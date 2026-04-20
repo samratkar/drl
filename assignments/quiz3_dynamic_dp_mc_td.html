@@ -1,11 +1,14 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>Quiz 3: Gridworld Value Analysis — Random vs. Optimal Policy</title>
   <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
     html {
       color: #1a1a1a;
       background-color: #fdfdfd;
@@ -88,6 +91,7 @@
       color: #606060;
     }
     code {
+      white-space: pre-wrap;
       font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
       font-size: 85%;
       margin: 0;
@@ -107,8 +111,8 @@
      overflow: visible;
     }
     hr {
-      background-color: #1a1a1a;
       border: none;
+      border-top: 1px solid #1a1a1a;
       height: 1px;
       margin: 1em 0;
     }
@@ -151,7 +155,6 @@
     #TOC a:not(:hover) {
       text-decoration: none;
     }
-    code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
     div.columns{display: flex; gap: min(4vw, 1.5em);}
     div.column{flex: auto; overflow-x: auto;}
@@ -166,8 +169,7 @@
       vertical-align: middle;
     }
   </style>
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-  <script
+  <script defer=""
   src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js"
   type="text/javascript"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -381,6 +383,7 @@ img, svg {
   }
 }
 </style>
+
 </head>
 <body>
 <header id="title-block-header">
@@ -506,39 +509,39 @@ Iteration vs. Value Iteration: Side-by-Side</h3>
 <col style="width: 40%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Aspect</th>
 <th>Policy Iteration</th>
 <th>Value Iteration</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><strong>Equation used</strong></td>
 <td>Bellman Expectation (evaluation) + greedy (improvement)</td>
 <td>Bellman Optimality (both at once)</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Evaluation sweeps per round</strong></td>
 <td>Many (until convergence)</td>
 <td>Exactly 1</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong>Explicit policy maintained?</strong></td>
 <td>Yes, updated each round</td>
 <td>No, extracted at the end</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Total outer iterations</strong></td>
 <td>Few (policy converges fast)</td>
 <td>Many (values converge slowly)</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong>Total sweeps overall</strong></td>
 <td>Often fewer total sweeps</td>
 <td>Often more total sweeps</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Best for</strong></td>
 <td>Small-medium state spaces</td>
 <td>When full evaluation is too expensive</td>
@@ -601,35 +604,35 @@ guarantees this as long as both processes keep running.</p>
 <col style="width: 11%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Method</th>
 <th>How much evaluation before improvement?</th>
 <th>GPI?</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><strong>Policy Iteration</strong></td>
 <td>Full convergence (many sweeps until <span
 class="math inline">\(\Delta &lt; \theta\)</span>)</td>
 <td>Yes — the “most evaluation” extreme</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Value Iteration</strong></td>
 <td>Exactly 1 sweep</td>
 <td>Yes — the “least evaluation with full state coverage” extreme</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong>Async DP</strong></td>
 <td>1 single state update</td>
 <td>Yes — the “least evaluation” extreme</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Custom: 5 sweeps then improve</strong></td>
 <td>5 sweeps</td>
 <td>Yes — a middle ground</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong>Any mix</strong></td>
 <td>Any amount &gt; 0</td>
 <td>Yes — all are GPI</td>
@@ -678,29 +681,29 @@ Warehouse</h4>
 10\)</span> values:</p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th>Variable</th>
 <th>Possible values</th>
 <th>Count</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>x-position</td>
 <td>1, 2, …, 10</td>
 <td>10</td>
 </tr>
-<tr class="even">
+<tr>
 <td>y-position</td>
 <td>1, 2, …, 10</td>
 <td>10</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Battery level</td>
 <td>1, 2, …, 10</td>
 <td>10</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Carrying item?</td>
 <td>0, 1, 2, …, 9 (item types)</td>
 <td>10</td>
@@ -715,7 +718,7 @@ down, left, right, pick, place.</p>
 <h4 id="example-2-our-44-gridworld">Example 2: Our 4×4 Gridworld</h4>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th>Representation</th>
 <th>Variables</th>
 <th>Values per variable</th>
@@ -723,13 +726,13 @@ down, left, right, pick, place.</p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Single index</td>
 <td><span class="math inline">\(n = 1\)</span></td>
 <td><span class="math inline">\(k = 16\)</span> (cell 0–15)</td>
 <td><span class="math inline">\(16^1 = 16\)</span></td>
 </tr>
-<tr class="even">
+<tr>
 <td>Row + Column</td>
 <td><span class="math inline">\(n = 2\)</span></td>
 <td><span class="math inline">\(k = 4\)</span> (0–3 each)</td>
@@ -748,7 +751,7 @@ down, left, right, pick, place.</p>
 <col style="width: 29%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Scenario</th>
 <th><span class="math inline">\(n\)</span></th>
 <th><span class="math inline">\(k\)</span></th>
@@ -757,28 +760,28 @@ down, left, right, pick, place.</p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>4×4 gridworld</td>
 <td>2</td>
 <td>4</td>
 <td>16</td>
 <td>4</td>
 </tr>
-<tr class="even">
+<tr>
 <td>10×10 grid with battery</td>
 <td>3</td>
 <td>10</td>
 <td>1,000</td>
 <td>4</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Robot arm (6 joints, 100 angles each)</td>
 <td>6</td>
 <td>100</td>
 <td><span class="math inline">\(10^{12}\)</span> (1 trillion)</td>
 <td>6</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Go board (19×19, 3 states per cell)</td>
 <td>361</td>
 <td>3</td>
@@ -805,24 +808,24 @@ class="math inline">\(k=10, n=4, m=6\)</span>):</strong></p>
 <col style="width: 41%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Loop level</th>
 <th>Count</th>
 <th>What it does</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Outer: each state <span class="math inline">\(s\)</span></td>
 <td><span class="math inline">\(10^4 = 10{,}000\)</span></td>
 <td>Visit every possible (x, y, battery, item)</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Middle: each action <span class="math inline">\(a\)</span></td>
 <td><span class="math inline">\(6\)</span></td>
 <td>Try up, down, left, right, pick, place</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Inner: each next state <span
 class="math inline">\(s&#39;\)</span></td>
 <td><span class="math inline">\(10^4 = 10{,}000\)</span></td>
@@ -855,30 +858,30 @@ But DP handles the <strong>general</strong> case:</p>
 <col style="width: 12%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Environment</th>
 <th>Next states per (s, a)</th>
 <th>Why</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Deterministic gridworld</td>
 <td>1</td>
 <td>Action always leads to same cell</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Stochastic gridworld (slippery ice)</td>
 <td>4</td>
 <td>Intended direction 70%, each other direction 10%</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Warehouse robot</td>
 <td>Many</td>
 <td>Battery might drain randomly, item might slip, bumps might push
 robot</td>
 </tr>
-<tr class="even">
+<tr>
 <td>General MDP</td>
 <td>Up to <span class="math inline">\(k^n\)</span></td>
 <td>Any transition is possible in theory</td>
@@ -903,23 +906,23 @@ Consequence: Why We Need Approximation</h4>
 <col style="width: 58%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>State space size</th>
 <th>Feasibility of exact DP</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><span class="math inline">\(&lt; 10^6\)</span></td>
 <td>Feasible on a modern computer</td>
 </tr>
-<tr class="even">
+<tr>
 <td><span class="math inline">\(10^6\)</span> to <span
 class="math inline">\(10^9\)</span></td>
 <td>Feasible with sparse transitions (skip zero-probability next
 states)</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><span class="math inline">\(&gt; 10^9\)</span></td>
 <td><strong>Intractable</strong> — need function approximation (neural
 networks, etc.)</td>
@@ -972,7 +975,7 @@ actions, <span class="math inline">\(\varepsilon = 0.2\)</span>):</p>
 <col style="width: 18%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Policy</th>
 <th>Action 1</th>
 <th>Action 2</th>
@@ -983,7 +986,7 @@ actions, <span class="math inline">\(\varepsilon = 0.2\)</span>):</p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>ε-greedy (action 1 is best)</td>
 <td>85%</td>
 <td>5%</td>
@@ -992,7 +995,7 @@ actions, <span class="math inline">\(\varepsilon = 0.2\)</span>):</p>
 <td><strong>Yes</strong> — min is 5% = ε/4</td>
 <td>As greedy as allowed</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Spread out</td>
 <td>30%</td>
 <td>25%</td>
@@ -1001,7 +1004,7 @@ actions, <span class="math inline">\(\varepsilon = 0.2\)</span>):</p>
 <td><strong>Yes</strong> — min is 20% &gt; 5%</td>
 <td>More exploratory</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Fully uniform</td>
 <td>25%</td>
 <td>25%</td>
@@ -1010,7 +1013,7 @@ actions, <span class="math inline">\(\varepsilon = 0.2\)</span>):</p>
 <td><strong>Yes</strong> — min is 25% &gt; 5%</td>
 <td>Maximum exploration</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Deterministic</td>
 <td>100%</td>
 <td>0%</td>
@@ -1019,7 +1022,7 @@ actions, <span class="math inline">\(\varepsilon = 0.2\)</span>):</p>
 <td><strong>No</strong> — has 0% &lt; 5%</td>
 <td>Fully greedy, not soft</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Nearly greedy</td>
 <td>95%</td>
 <td>3%</td>
@@ -1047,19 +1050,19 @@ our gridworld, one step left of terminal (0,0):</p>
 <col style="width: 36%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Policy type</th>
 <th>What happens</th>
 <th>Expected value</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><strong>Optimal (fully greedy)</strong></td>
 <td>Go Left 100% → reach terminal in 1 step</td>
 <td><span class="math inline">\(-1\)</span></td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>ε-greedy (ε=0.2)</strong></td>
 <td>Go Left 85%, but 15% of the time wander away</td>
 <td>Worse than <span class="math inline">\(-1\)</span></td>
@@ -1097,7 +1100,7 @@ probability distribution is:</p>
 <col style="width: 25%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Policy (4 actions)</th>
 <th>Probabilities</th>
 <th>Entropy</th>
@@ -1105,25 +1108,25 @@ probability distribution is:</p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Deterministic</td>
 <td>100%, 0%, 0%, 0%</td>
 <td>0 (minimum)</td>
 <td>No randomness — fully certain</td>
 </tr>
-<tr class="even">
+<tr>
 <td>ε-greedy (ε=0.2)</td>
 <td>85%, 5%, 5%, 5%</td>
 <td>0.61</td>
 <td>Mostly certain, little randomness</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Slightly spread</td>
 <td>40%, 30%, 20%, 10%</td>
 <td>1.28</td>
 <td>Moderate randomness</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Fully uniform</td>
 <td>25%, 25%, 25%, 25%</td>
 <td>1.39 (maximum)</td>
@@ -1144,7 +1147,7 @@ probability distribution is:</p>
 <col style="width: 27%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Policy</th>
 <th>Probabilities</th>
 <th>Entropy</th>
@@ -1153,21 +1156,21 @@ probability distribution is:</p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>High entropy but not ε-soft</td>
 <td>50%, 50%, 0%, 0%</td>
 <td>1.0 (high)</td>
 <td><strong>No</strong> — has zeros</td>
 <td>Spread across 2 actions, but ignores 2 others</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Low entropy but ε-soft</td>
 <td>85%, 5%, 5%, 5%</td>
 <td>0.61 (low)</td>
 <td><strong>Yes</strong> — min is 5%</td>
 <td>Concentrated on 1 action, but no zeros</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>High entropy and ε-soft</td>
 <td>25%, 25%, 25%, 25%</td>
 <td>1.39 (max)</td>
@@ -1210,7 +1213,7 @@ always picks Left, so the other actions are <strong>never
 tried</strong>:</p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th>Action</th>
 <th><span class="math inline">\(Q(s, a)\)</span></th>
 <th>Times visited</th>
@@ -1218,25 +1221,25 @@ tried</strong>:</p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Left</td>
 <td>+5</td>
 <td>12</td>
 <td>+5</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Right</td>
 <td>0 (initial)</td>
 <td>0</td>
 <td><strong>+100</strong> ← much better!</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Up</td>
 <td>0 (initial)</td>
 <td>0</td>
 <td>+2</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Down</td>
 <td>0 (initial)</td>
 <td>0</td>
@@ -1265,37 +1268,37 @@ eventually:</p>
 <col style="width: 37%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Episode</th>
 <th>Forced start</th>
 <th>What happens</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>1</td>
 <td><span class="math inline">\((s, \text{Left})\)</span></td>
 <td>Observe return from Left, update <span class="math inline">\(Q(s,
 L)\)</span></td>
 </tr>
-<tr class="even">
+<tr>
 <td>2</td>
 <td><span class="math inline">\((s, \text{Right})\)</span></td>
 <td>Observe return from Right, update <span class="math inline">\(Q(s,
 R)\)</span> → discovers +100!</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>3</td>
 <td><span class="math inline">\((s&#39;, \text{Up})\)</span></td>
 <td>Different state explored</td>
 </tr>
-<tr class="even">
+<tr>
 <td>4</td>
 <td><span class="math inline">\((s, \text{Down})\)</span></td>
 <td>Observe return from Down, update <span class="math inline">\(Q(s,
 D)\)</span></td>
 </tr>
-<tr class="odd">
+<tr>
 <td>…</td>
 <td>random</td>
 <td>Eventually all pairs are covered</td>
@@ -1305,7 +1308,7 @@ D)\)</span></td>
 <p>After enough episodes:</p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th>Action</th>
 <th><span class="math inline">\(Q(s, a)\)</span></th>
 <th>Times visited</th>
@@ -1313,25 +1316,25 @@ D)\)</span></td>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Left</td>
 <td>+5.1</td>
 <td>250</td>
 <td>Good, but not the best</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Right</td>
 <td>+99.7</td>
 <td>248</td>
 <td><strong>Best action!</strong></td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Up</td>
 <td>+1.8</td>
 <td>251</td>
 <td>Mediocre</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Down</td>
 <td>−3.2</td>
 <td>251</td>
@@ -1351,29 +1354,29 @@ class="math inline">\(\varepsilon / |\mathcal{A}|\)</span>
 probability:</p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th>Action</th>
 <th>Greedy policy (gets stuck)</th>
 <th>ε-greedy policy (explores)</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Left (best so far)</td>
 <td>100% → always chosen</td>
 <td>85% → usually chosen</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Right (untried)</td>
 <td><strong>0% → never tried!</strong></td>
 <td>5% → occasionally tried</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Up (untried)</td>
 <td><strong>0% → never tried!</strong></td>
 <td>5% → occasionally tried</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Down (untried)</td>
 <td><strong>0% → never tried!</strong></td>
 <td>5% → occasionally tried</td>
@@ -1386,25 +1389,25 @@ hundreds of times. The agent will discover that Right gives +100 and
 shift the ε-greedy distribution to favor Right:</p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th>Action</th>
 <th>Updated ε-greedy</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Right (now known best)</td>
 <td>85%</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Left</td>
 <td>5%</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Up</td>
 <td>5%</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Down</td>
 <td>5%</td>
 </tr>
@@ -1418,7 +1421,7 @@ enough because MC estimates are averages — they need many samples to
 converge:</p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th>Visits to <span class="math inline">\((s,
 \text{Right})\)</span></th>
 <th><span class="math inline">\(Q\)</span> estimate</th>
@@ -1427,31 +1430,31 @@ converge:</p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>1</td>
 <td>+120 (got lucky)</td>
 <td>+100</td>
 <td>20% off</td>
 </tr>
-<tr class="even">
+<tr>
 <td>10</td>
 <td>+95</td>
 <td>+100</td>
 <td>5% off</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>100</td>
 <td>+99.3</td>
 <td>+100</td>
 <td>0.7% off</td>
 </tr>
-<tr class="even">
+<tr>
 <td>1000</td>
 <td>+100.1</td>
 <td>+100</td>
 <td>0.1% off</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><span class="math inline">\(\infty\)</span></td>
 <td>+100 (converged)</td>
 <td>+100</td>
@@ -1473,7 +1476,7 @@ Happens With vs. Without Exploration: Full Comparison</h4>
 <col style="width: 23%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Aspect</th>
 <th>No exploration (greedy)</th>
 <th>Exploring starts</th>
@@ -1481,32 +1484,32 @@ Happens With vs. Without Exploration: Full Comparison</h4>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Visits all (s, a) pairs?</td>
 <td><strong>No</strong> — only visits what the greedy policy
 selects</td>
 <td><strong>Yes</strong> — forced random starts</td>
 <td><strong>Yes</strong> — every action has nonzero probability</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Can get stuck?</td>
 <td><strong>Yes</strong> — locks onto first decent action</td>
 <td>No</td>
 <td>No</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Converges to optimal?</td>
 <td><strong>No</strong> — only among visited pairs</td>
 <td>Yes (among all policies)</td>
 <td>Yes (among ε-soft policies only)</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Practical?</td>
 <td>Easy but broken</td>
 <td>Often impossible (can’t choose start states)</td>
 <td>Easy and practical</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Used in practice?</td>
 <td>Rarely alone</td>
 <td>Theoretical mainly</td>
@@ -1550,37 +1553,37 @@ policies divide the work:</p>
 <col style="width: 50%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th></th>
 <th>On-policy MC</th>
 <th>Off-policy MC</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><strong>Who explores?</strong></td>
 <td>Policy π (the one we’re improving)</td>
 <td>Behavior policy <span class="math inline">\(b\)</span> (a separate,
 exploratory policy)</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Who do we learn about?</strong></td>
 <td>Same policy π</td>
 <td>Target policy π (a separate, greedy policy)</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong>Example</strong></td>
 <td>You learn to cook by trying random recipes yourself</td>
 <td>You watch a YouTube chef (<span class="math inline">\(b\)</span>),
 but figure out what YOU would do differently (π)</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Exploration constraint</strong></td>
 <td>π must be ε-soft (forced to explore)</td>
 <td>Only <span class="math inline">\(b\)</span> needs to explore; π can
 be fully greedy</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong>Optimality</strong></td>
 <td>Best among ε-soft policies only (Q10)</td>
 <td>Can learn the truly optimal policy</td>
@@ -1618,7 +1621,7 @@ class="math inline">\(b\)</span> goes Left 80% and Right 20%, but π
 would go Left 30% and Right 70%.</p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th>Action</th>
 <th><span class="math inline">\(b\)</span> takes it</th>
 <th>π would take it</th>
@@ -1626,13 +1629,13 @@ would go Left 30% and Right 70%.</p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Left</td>
 <td>80%</td>
 <td>30%</td>
 <td>Over-represented in data</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Right</td>
 <td>20%</td>
 <td>70%</td>
@@ -1669,7 +1672,7 @@ multiply all these ratios together.</p>
 <col style="width: 14%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Step</th>
 <th>Action taken by <span class="math inline">\(b\)</span></th>
 <th><span class="math inline">\(b\)</span>’s probability</th>
@@ -1678,21 +1681,21 @@ multiply all these ratios together.</p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>0</td>
 <td>Left</td>
 <td>0.5</td>
 <td>0.9</td>
 <td>0.9 / 0.5 = <strong>1.8</strong></td>
 </tr>
-<tr class="even">
+<tr>
 <td>1</td>
 <td>Right</td>
 <td>0.5</td>
 <td>0.1</td>
 <td>0.1 / 0.5 = <strong>0.2</strong></td>
 </tr>
-<tr class="odd">
+<tr>
 <td>2</td>
 <td>Left</td>
 <td>0.5</td>
@@ -1710,7 +1713,7 @@ have taken these exact actions as often.</p>
 <p>Another example — trajectory that π strongly favors:</p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th>Step</th>
 <th>Action taken</th>
 <th><span class="math inline">\(b\)</span>’s prob</th>
@@ -1719,14 +1722,14 @@ have taken these exact actions as often.</p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>0</td>
 <td>Right</td>
 <td>0.2</td>
 <td>0.9</td>
 <td>4.5</td>
 </tr>
-<tr class="even">
+<tr>
 <td>1</td>
 <td>Right</td>
 <td>0.2</td>
@@ -1769,7 +1772,7 @@ collapse:</p>
 <col style="width: 23%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Scenario</th>
 <th>Per-step ratios</th>
 <th>Product <span class="math inline">\(\rho\)</span></th>
@@ -1777,25 +1780,25 @@ collapse:</p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Policies mostly agree</td>
 <td>1.1, 0.9, 1.0, 1.1</td>
 <td>≈ 1.1</td>
 <td>Fine — small correction</td>
 </tr>
-<tr class="even">
+<tr>
 <td>One big disagreement</td>
 <td>1.1, 0.9, <strong>10.0</strong>, 1.1</td>
 <td>≈ 10.9</td>
 <td>This episode counts 10× — dominates the average</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Long episode, small disagreements</td>
 <td>1.5 × 20 steps</td>
 <td><span class="math inline">\(1.5^{20} \approx 3{,}325\)</span></td>
 <td>One episode counts 3,325× — completely dominates!</td>
 </tr>
-<tr class="even">
+<tr>
 <td>π would never take that action</td>
 <td>1.1, 0.9, <strong>0.0</strong>, 1.1</td>
 <td>0</td>
@@ -1814,7 +1817,7 @@ class="math inline">\(s\)</span>:</p>
 <col style="width: 41%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Episode</th>
 <th>Return <span class="math inline">\(G_i\)</span></th>
 <th>Ratio <span class="math inline">\(\rho_i\)</span></th>
@@ -1822,31 +1825,31 @@ class="math inline">\(s\)</span>:</p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>1</td>
 <td>+10</td>
 <td>1.2</td>
 <td>+12</td>
 </tr>
-<tr class="even">
+<tr>
 <td>2</td>
 <td>+8</td>
 <td>0.8</td>
 <td>+6.4</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>3</td>
 <td>+12</td>
 <td><strong>3{,}325</strong></td>
 <td><strong>+39{,}900</strong></td>
 </tr>
-<tr class="even">
+<tr>
 <td>4</td>
 <td>+9</td>
 <td>1.5</td>
 <td>+13.5</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>5</td>
 <td>+11</td>
 <td>0.3</td>
@@ -1883,7 +1886,7 @@ episodes:</strong></p>
 <col style="width: 47%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Episode</th>
 <th>Return <span class="math inline">\(G\)</span></th>
 <th>Weight <span class="math inline">\(\rho\)</span></th>
@@ -1892,19 +1895,19 @@ G\)</span></th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>1</td>
 <td>+10</td>
 <td>1.0</td>
 <td>10</td>
 </tr>
-<tr class="even">
+<tr>
 <td>2</td>
 <td>+8</td>
 <td>1.0</td>
 <td>8</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>3</td>
 <td>+12</td>
 <td><strong>1000</strong></td>
@@ -1936,7 +1939,7 @@ earlier:</strong></p>
 <col style="width: 41%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Episode</th>
 <th>Return <span class="math inline">\(G_i\)</span></th>
 <th>Ratio <span class="math inline">\(\rho_i\)</span></th>
@@ -1944,31 +1947,31 @@ earlier:</strong></p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>1</td>
 <td>+10</td>
 <td>1.2</td>
 <td>+12</td>
 </tr>
-<tr class="even">
+<tr>
 <td>2</td>
 <td>+8</td>
 <td>0.8</td>
 <td>+6.4</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>3</td>
 <td>+12</td>
 <td>3,325</td>
 <td>+39,900</td>
 </tr>
-<tr class="even">
+<tr>
 <td>4</td>
 <td>+9</td>
 <td>1.5</td>
 <td>+13.5</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>5</td>
 <td>+11</td>
 <td>0.3</td>
@@ -2025,32 +2028,32 @@ distribution, and the estimate converges to the correct value. The bias
 <col style="width: 28%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Number of episodes</th>
 <th>Ordinary IS</th>
 <th>Weighted IS</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>1</td>
 <td>Correct on average (unbiased) but could be 4,006 or 0.001 — wildly
 unstable</td>
 <td>Always returns <span class="math inline">\(G_1\)</span> — biased but
 stable</td>
 </tr>
-<tr class="even">
+<tr>
 <td>10</td>
 <td>Still high variance from occasional extreme <span
 class="math inline">\(\rho\)</span></td>
 <td>Low variance, small bias remaining</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>100</td>
 <td>Variance still a problem with long episodes</td>
 <td>Bias nearly gone, variance low</td>
 </tr>
-<tr class="even">
+<tr>
 <td><span class="math inline">\(\infty\)</span></td>
 <td>Correct</td>
 <td>Correct</td>
@@ -2065,45 +2068,45 @@ class="math inline">\(\rho\)</span></td>
 <col style="width: 46%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th></th>
 <th>Ordinary IS</th>
 <th>Weighted IS</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><strong>Formula</strong></td>
 <td><span class="math inline">\(\frac{1}{N}\sum \rho_i G_i\)</span>
 (divide by count)</td>
 <td><span class="math inline">\(\frac{\sum \rho_i G_i}{\sum
 \rho_i}\)</span> (divide by sum of weights)</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Bias</strong></td>
 <td><strong>Unbiased</strong></td>
 <td><strong>Biased</strong> (but bias → 0 as <span
 class="math inline">\(N \to \infty\)</span>)</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong>Variance</strong></td>
 <td><strong>High</strong> (can be infinite)</td>
 <td><strong>Low</strong> (weights are normalized)</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>One extreme <span
 class="math inline">\(\rho\)</span></strong></td>
 <td>Destroys the estimate</td>
 <td>Gets normalized away</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong>With 1 episode</strong></td>
 <td><span class="math inline">\(\rho \cdot G\)</span> — could be
 anything</td>
 <td><span class="math inline">\(G\)</span> — ignores correction
 entirely</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Preferred in practice?</strong></td>
 <td>Rarely</td>
 <td><strong>Almost always</strong></td>
@@ -2124,19 +2127,19 @@ Picture of MC Methods</h4>
 <col style="width: 50%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>MC Method</th>
 <th>Key Properties</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><strong>On-Policy MC</strong></td>
 <td>Uses same policy for acting and learning; policy must be ε-soft
 (explore); optimal among ε-soft policies only (Q10); needs exploring
 starts or ε-soft for coverage (Q11).</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Off-Policy MC</strong></td>
 <td>Behavior policy <strong>b</strong> (explores) ≠ target policy
 <strong>π</strong> (greedy); can learn truly optimal policy; needs
@@ -2157,7 +2160,7 @@ class="math inline">\(r = -1\)</span>):</p>
 <p><strong>Sweep 0 (initialization):</strong></p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th></th>
 <th>Col 0</th>
 <th>Col 1</th>
@@ -2166,28 +2169,28 @@ class="math inline">\(r = -1\)</span>):</p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><strong>Row 0</strong></td>
 <td>0 (T)</td>
 <td>0</td>
 <td>0</td>
 <td>0</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Row 1</strong></td>
 <td>0</td>
 <td>0</td>
 <td>0</td>
 <td>0</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong>Row 2</strong></td>
 <td>0</td>
 <td>0</td>
 <td>0</td>
 <td>0</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Row 3</strong></td>
 <td>0</td>
 <td>0</td>
@@ -2201,7 +2204,7 @@ class="math inline">\(V(s) = -1 + 0.25 \times [\text{sum of
 neighbors&#39; old values}] = -1\)</span></p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th></th>
 <th>Col 0</th>
 <th>Col 1</th>
@@ -2210,28 +2213,28 @@ neighbors&#39; old values}] = -1\)</span></p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><strong>Row 0</strong></td>
 <td>0 (T)</td>
 <td>−1.0</td>
 <td>−1.0</td>
 <td>−1.0</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Row 1</strong></td>
 <td>−1.0</td>
 <td>−1.0</td>
 <td>−1.0</td>
 <td>−1.0</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong>Row 2</strong></td>
 <td>−1.0</td>
 <td>−1.0</td>
 <td>−1.0</td>
 <td>−1.0</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Row 3</strong></td>
 <td>−1.0</td>
 <td>−1.0</td>
@@ -2244,7 +2247,7 @@ neighbors&#39; old values}] = -1\)</span></p>
 neighbors; interior states see all −1 neighbors.</p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th></th>
 <th>Col 0</th>
 <th>Col 1</th>
@@ -2253,28 +2256,28 @@ neighbors; interior states see all −1 neighbors.</p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><strong>Row 0</strong></td>
 <td>0 (T)</td>
 <td>−1.75</td>
 <td>−2.0</td>
 <td>−2.0</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Row 1</strong></td>
 <td>−1.75</td>
 <td>−2.0</td>
 <td>−2.0</td>
 <td>−2.0</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong>Row 2</strong></td>
 <td>−2.0</td>
 <td>−2.0</td>
 <td>−2.0</td>
 <td>−1.75</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Row 3</strong></td>
 <td>−2.0</td>
 <td>−2.0</td>
@@ -2286,7 +2289,7 @@ neighbors; interior states see all −1 neighbors.</p>
 <p><strong>Sweep 3:</strong></p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th></th>
 <th>Col 0</th>
 <th>Col 1</th>
@@ -2295,28 +2298,28 @@ neighbors; interior states see all −1 neighbors.</p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><strong>Row 0</strong></td>
 <td>0 (T)</td>
 <td>−2.4</td>
 <td>−2.9</td>
 <td>−3.0</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Row 1</strong></td>
 <td>−2.4</td>
 <td>−2.9</td>
 <td>−3.0</td>
 <td>−2.9</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong>Row 2</strong></td>
 <td>−2.9</td>
 <td>−3.0</td>
 <td>−2.9</td>
 <td>−2.4</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Row 3</strong></td>
 <td>−3.0</td>
 <td>−2.9</td>
@@ -2328,7 +2331,7 @@ neighbors; interior states see all −1 neighbors.</p>
 <p><strong>Sweep 10:</strong></p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th></th>
 <th>Col 0</th>
 <th>Col 1</th>
@@ -2337,28 +2340,28 @@ neighbors; interior states see all −1 neighbors.</p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><strong>Row 0</strong></td>
 <td>0 (T)</td>
 <td>−7.3</td>
 <td>−10.2</td>
 <td>−11.3</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Row 1</strong></td>
 <td>−7.3</td>
 <td>−9.6</td>
 <td>−10.6</td>
 <td>−10.4</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong>Row 2</strong></td>
 <td>−10.2</td>
 <td>−10.6</td>
 <td>−9.6</td>
 <td>−7.3</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Row 3</strong></td>
 <td>−11.3</td>
 <td>−10.4</td>
@@ -2370,7 +2373,7 @@ neighbors; interior states see all −1 neighbors.</p>
 <p><strong>Converged (sweep ∞):</strong></p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th></th>
 <th>Col 0</th>
 <th>Col 1</th>
@@ -2379,28 +2382,28 @@ neighbors; interior states see all −1 neighbors.</p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><strong>Row 0</strong></td>
 <td>0 (T)</td>
 <td>−14</td>
 <td>−20</td>
 <td>−22</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Row 1</strong></td>
 <td>−14</td>
 <td>−18</td>
 <td>−20</td>
 <td>−20</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong>Row 2</strong></td>
 <td>−20</td>
 <td>−20</td>
 <td>−18</td>
 <td>−14</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Row 3</strong></td>
 <td>−22</td>
 <td>−20</td>
@@ -2451,7 +2454,7 @@ class="math inline">\(-1\)</span> and the discount factor is <span
 class="math inline">\(\gamma = 1\)</span>.</p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th></th>
 <th>Col 0</th>
 <th>Col 1</th>
@@ -2460,28 +2463,28 @@ class="math inline">\(\gamma = 1\)</span>.</p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><strong>Row 0</strong></td>
 <td>T</td>
 <td>.</td>
 <td>.</td>
 <td>.</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Row 1</strong></td>
 <td>.</td>
 <td>.</td>
 <td>.</td>
 <td>.</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong>Row 2</strong></td>
 <td>.</td>
 <td>.</td>
 <td>.</td>
 <td>.</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Row 3</strong></td>
 <td>.</td>
 <td>.</td>
@@ -2594,25 +2597,25 @@ does not guarantee exact improvement</li>
 <h2 id="answer-key">Answer Key</h2>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th>Q</th>
 <th>Answer</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>1</td>
 <td>(b)</td>
 </tr>
-<tr class="even">
+<tr>
 <td>2</td>
 <td>(b)</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>3</td>
 <td>(b)</td>
 </tr>
-<tr class="even">
+<tr>
 <td>4</td>
 <td>(c)</td>
 </tr>
@@ -2668,7 +2671,7 @@ evaluation or direct matrix solution) yields the converged values:</p>
 <p><strong>Converged value table under the random policy:</strong></p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th></th>
 <th>Col 0</th>
 <th>Col 1</th>
@@ -2677,28 +2680,28 @@ evaluation or direct matrix solution) yields the converged values:</p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><strong>Row 0</strong></td>
 <td><strong>0</strong> (T)</td>
 <td>−14</td>
 <td>−20</td>
 <td>−22</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Row 1</strong></td>
 <td>−14</td>
 <td>−18</td>
 <td>−20</td>
 <td>−20</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong>Row 2</strong></td>
 <td>−20</td>
 <td>−20</td>
 <td>−18</td>
 <td>−14</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Row 3</strong></td>
 <td>−22</td>
 <td>−20</td>
@@ -2732,7 +2735,7 @@ class="math display">\[-18 = -1 + (-17) = -18 \quad
 <col style="width: 39%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Region</th>
 <th>Cells</th>
 <th>Values</th>
@@ -2740,7 +2743,7 @@ class="math display">\[-18 = -1 + (-17) = -18 \quad
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Adjacent to terminals</td>
 <td><span class="math inline">\((0,1)\)</span>, <span
 class="math inline">\((1,0)\)</span>, <span
@@ -2749,7 +2752,7 @@ class="math inline">\((3,2)\)</span></td>
 <td><span class="math inline">\(-14\)</span></td>
 <td>Random walk escapes relatively quickly near an exit</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Center cells</td>
 <td><span class="math inline">\((1,1)\)</span>, <span
 class="math inline">\((1,2)\)</span>, <span
@@ -2760,7 +2763,7 @@ class="math inline">\(-20\)</span></td>
 <td><strong>Most negative interior values</strong> — random walk gets
 trapped bouncing around</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Anti-diagonal corners</td>
 <td><span class="math inline">\((0,3)\)</span>, <span
 class="math inline">\((3,0)\)</span></td>
@@ -2768,7 +2771,7 @@ class="math inline">\((3,0)\)</span></td>
 <td><strong>Most negative overall</strong> — far from both terminals AND
 cornered against walls</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Anti-diagonal mid</td>
 <td><span class="math inline">\((1,2)\)</span>, <span
 class="math inline">\((2,1)\)</span></td>
@@ -2808,7 +2811,7 @@ terminal <span class="math inline">\((3,3)\)</span>.</p>
 <col style="width: 12%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Cell</th>
 <th><span class="math inline">\(d_1\)</span> = dist to <span
 class="math inline">\((0,0)\)</span></th>
@@ -2819,112 +2822,112 @@ class="math inline">\((3,3)\)</span></th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><span class="math inline">\((0,0)\)</span></td>
 <td>0</td>
 <td>6</td>
 <td>0</td>
 <td><strong>0</strong> (T)</td>
 </tr>
-<tr class="even">
+<tr>
 <td><span class="math inline">\((0,1)\)</span></td>
 <td>1</td>
 <td>5</td>
 <td>1</td>
 <td><span class="math inline">\(-1\)</span></td>
 </tr>
-<tr class="odd">
+<tr>
 <td><span class="math inline">\((0,2)\)</span></td>
 <td>2</td>
 <td>4</td>
 <td>2</td>
 <td><span class="math inline">\(-2\)</span></td>
 </tr>
-<tr class="even">
+<tr>
 <td><span class="math inline">\((0,3)\)</span></td>
 <td>3</td>
 <td>3</td>
 <td><strong>3</strong></td>
 <td><span class="math inline">\(\mathbf{-3}\)</span></td>
 </tr>
-<tr class="odd">
+<tr>
 <td><span class="math inline">\((1,0)\)</span></td>
 <td>1</td>
 <td>5</td>
 <td>1</td>
 <td><span class="math inline">\(-1\)</span></td>
 </tr>
-<tr class="even">
+<tr>
 <td><span class="math inline">\((1,1)\)</span></td>
 <td>2</td>
 <td>4</td>
 <td>2</td>
 <td><span class="math inline">\(-2\)</span></td>
 </tr>
-<tr class="odd">
+<tr>
 <td><span class="math inline">\((1,2)\)</span></td>
 <td>3</td>
 <td>3</td>
 <td><strong>3</strong></td>
 <td><span class="math inline">\(\mathbf{-3}\)</span></td>
 </tr>
-<tr class="even">
+<tr>
 <td><span class="math inline">\((1,3)\)</span></td>
 <td>4</td>
 <td>2</td>
 <td>2</td>
 <td><span class="math inline">\(-2\)</span></td>
 </tr>
-<tr class="odd">
+<tr>
 <td><span class="math inline">\((2,0)\)</span></td>
 <td>2</td>
 <td>4</td>
 <td>2</td>
 <td><span class="math inline">\(-2\)</span></td>
 </tr>
-<tr class="even">
+<tr>
 <td><span class="math inline">\((2,1)\)</span></td>
 <td>3</td>
 <td>3</td>
 <td><strong>3</strong></td>
 <td><span class="math inline">\(\mathbf{-3}\)</span></td>
 </tr>
-<tr class="odd">
+<tr>
 <td><span class="math inline">\((2,2)\)</span></td>
 <td>4</td>
 <td>2</td>
 <td>2</td>
 <td><span class="math inline">\(-2\)</span></td>
 </tr>
-<tr class="even">
+<tr>
 <td><span class="math inline">\((2,3)\)</span></td>
 <td>5</td>
 <td>1</td>
 <td>1</td>
 <td><span class="math inline">\(-1\)</span></td>
 </tr>
-<tr class="odd">
+<tr>
 <td><span class="math inline">\((3,0)\)</span></td>
 <td>3</td>
 <td>3</td>
 <td><strong>3</strong></td>
 <td><span class="math inline">\(\mathbf{-3}\)</span></td>
 </tr>
-<tr class="even">
+<tr>
 <td><span class="math inline">\((3,1)\)</span></td>
 <td>4</td>
 <td>2</td>
 <td>2</td>
 <td><span class="math inline">\(-2\)</span></td>
 </tr>
-<tr class="odd">
+<tr>
 <td><span class="math inline">\((3,2)\)</span></td>
 <td>5</td>
 <td>1</td>
 <td>1</td>
 <td><span class="math inline">\(-1\)</span></td>
 </tr>
-<tr class="even">
+<tr>
 <td><span class="math inline">\((3,3)\)</span></td>
 <td>6</td>
 <td>0</td>
@@ -2936,7 +2939,7 @@ class="math inline">\((3,3)\)</span></th>
 <p><strong>Optimal policy value grid:</strong></p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th></th>
 <th>Col 0</th>
 <th>Col 1</th>
@@ -2945,28 +2948,28 @@ class="math inline">\((3,3)\)</span></th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><strong>Row 0</strong></td>
 <td><strong>0</strong> (T)</td>
 <td><span class="math inline">\(-1\)</span></td>
 <td><span class="math inline">\(-2\)</span></td>
 <td><span class="math inline">\(\mathbf{-3}\)</span></td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Row 1</strong></td>
 <td><span class="math inline">\(-1\)</span></td>
 <td><span class="math inline">\(-2\)</span></td>
 <td><span class="math inline">\(\mathbf{-3}\)</span></td>
 <td><span class="math inline">\(-2\)</span></td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong>Row 2</strong></td>
 <td><span class="math inline">\(-2\)</span></td>
 <td><span class="math inline">\(\mathbf{-3}\)</span></td>
 <td><span class="math inline">\(-2\)</span></td>
 <td><span class="math inline">\(-1\)</span></td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Row 3</strong></td>
 <td><span class="math inline">\(\mathbf{-3}\)</span></td>
 <td><span class="math inline">\(-2\)</span></td>
@@ -2991,7 +2994,7 @@ class="math inline">\(2\)</span> steps.</p>
 toward):</strong></p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th></th>
 <th>Col 0</th>
 <th>Col 1</th>
@@ -3000,28 +3003,28 @@ toward):</strong></p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><strong>Row 0</strong></td>
 <td>T</td>
 <td>←</td>
 <td>←</td>
 <td>↓ or ←</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Row 1</strong></td>
 <td>↑</td>
 <td>↑/←</td>
 <td>↓/→</td>
 <td>↓</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong>Row 2</strong></td>
 <td>↑</td>
 <td>↑/←</td>
 <td>↓/→</td>
 <td>↓</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Row 3</strong></td>
 <td>→ or ↑</td>
 <td>→</td>
@@ -3041,14 +3044,14 @@ multiple optimal actions exist (both directions are equally good).</p>
 <col style="width: 42%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Aspect</th>
 <th>Random Policy</th>
 <th>Optimal Policy</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><strong>Most negative cells</strong></td>
 <td><span class="math inline">\((0,3)\)</span>, <span
 class="math inline">\((3,0)\)</span> at <span
@@ -3057,7 +3060,7 @@ class="math inline">\(-18\)</span> to <span
 class="math inline">\(-20\)</span></td>
 <td>Anti-diagonal at <span class="math inline">\(-3\)</span></td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Least negative non-terminal cells</strong></td>
 <td><span class="math inline">\((0,1)\)</span>, <span
 class="math inline">\((1,0)\)</span>, <span
@@ -3070,7 +3073,7 @@ class="math inline">\((2,3)\)</span>, <span
 class="math inline">\((3,2)\)</span> at <span
 class="math inline">\(-1\)</span></td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong>Value range</strong></td>
 <td><span class="math inline">\(-14\)</span> to <span
 class="math inline">\(-22\)</span> (spread of <span
@@ -3079,18 +3082,18 @@ class="math inline">\(8\)</span>)</td>
 class="math inline">\(-3\)</span> (spread of <span
 class="math inline">\(2\)</span>)</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Why center is bad/not bad</strong></td>
 <td>Random walk gets trapped — no directional bias to escape</td>
 <td>Center cells are only <span class="math inline">\(2\)</span> steps
 from nearest terminal</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong>Why anti-diagonal is worst</strong></td>
 <td>Far from both terminals + wall-bouncing wastes steps</td>
 <td>Equidistant from both terminals — no closer exit exists</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong>Key insight</strong></td>
 <td>Movement is undirected → distance from exits + topology matters</td>
 <td>Movement is directed → only shortest-path distance matters</td>
@@ -3178,14 +3181,14 @@ Step-by-Step Walkthrough</h4>
 <col style="width: 30%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Step</th>
 <th>What the proof does</th>
 <th>Inequality</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>At <span class="math inline">\(A\)</span></td>
 <td><span class="math inline">\(\pi&#39;\)</span> picks a better action
 than <span class="math inline">\(\pi\)</span> at <span
@@ -3193,7 +3196,7 @@ class="math inline">\(A\)</span></td>
 <td><span class="math inline">\(v_\pi(A) \leq q_\pi(A,
 \pi&#39;(A))\)</span></td>
 </tr>
-<tr class="even">
+<tr>
 <td>At <span class="math inline">\(B\)</span></td>
 <td><span class="math inline">\(\pi&#39;\)</span> picks a better action
 than <span class="math inline">\(\pi\)</span> at <span
@@ -3201,7 +3204,7 @@ class="math inline">\(B\)</span> too</td>
 <td><span class="math inline">\(v_\pi(B) \leq q_\pi(B,
 \pi&#39;(B))\)</span></td>
 </tr>
-<tr class="odd">
+<tr>
 <td>At <span class="math inline">\(C\)</span></td>
 <td><span class="math inline">\(\pi&#39;\)</span> picks a better action
 than <span class="math inline">\(\pi\)</span> at <span
@@ -3209,7 +3212,7 @@ class="math inline">\(C\)</span> too</td>
 <td><span class="math inline">\(v_\pi(C) \leq q_\pi(C,
 \pi&#39;(C))\)</span></td>
 </tr>
-<tr class="even">
+<tr>
 <td>Combined</td>
 <td>Better at A + better at B + better at C = better overall</td>
 <td><span class="math inline">\(v_\pi(A) \leq
@@ -3283,29 +3286,29 @@ Why One Round Is Not Enough</h4>
 (R):</p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th>Current State</th>
 <th>Action L</th>
 <th>Action R</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Start</td>
 <td>→ A (reward 0)</td>
 <td>→ B (reward 0)</td>
 </tr>
-<tr class="even">
+<tr>
 <td>A</td>
 <td>→ Goal (reward +10)</td>
 <td>→ Goal (reward +2)</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>B</td>
 <td>→ Goal (reward +3)</td>
 <td>→ Goal (reward +8)</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Goal</td>
 <td>(terminal)</td>
 <td>(terminal)</td>
@@ -3426,26 +3429,26 @@ Loop</h4>
 <col style="width: 33%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Iteration</th>
 <th>What happens</th>
 <th>Why needed</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Evaluate <span class="math inline">\(\pi_k\)</span></td>
 <td>Compute true values <span class="math inline">\(v_{\pi_k}\)</span>
 for current policy</td>
 <td>The values from the previous round are stale</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Improve to <span class="math inline">\(\pi_{k+1}\)</span></td>
 <td>Pick greedy actions w.r.t. fresh <span
 class="math inline">\(v_{\pi_k}\)</span></td>
 <td>Greedy w.r.t. accurate values = better decisions</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Repeat</td>
 <td>Until <span class="math inline">\(\pi_{k+1} = \pi_k\)</span></td>
 <td>Only when no action changes is the policy optimal</td>
@@ -3491,4 +3494,3 @@ Each re-route is better, but it takes multiple updates to fully
 propagate the improved information.</p>
 </body>
 </html>
-
