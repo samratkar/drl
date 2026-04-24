@@ -352,25 +352,28 @@ roadmap = [
     ("4", "Convergence", "Analysis",
      "Tracks how V* approaches the true values over 50 iterations. Shows |error|, |DV|, and contraction ratio ~gamma=0.9.",
      "Convergence speed: sync vs in-place"),
-    ("5", "Analytical", "Algebra",
+    ("5", "Comparisons", "Analysis",
+     "Side-by-side comparison: DP-Eval vs DP-VI (expectation vs max), DP-VI vs Q-Learning (model-based vs model-free), and all 5 methods.",
+     "Where P(s'|s,a) appears and why methods differ"),
+    ("6", "Analytical", "Algebra",
      "Solves the Bellman equation EXACTLY by hand: sets up system of equations, shows circular dependency, substitutes, and solves for V*.",
      "Closed-form V*, Q* with step-by-step derivation"),
-    ("6", "Summary", "All Methods",
+    ("7", "Summary", "All Methods",
      "Collects V^pi, V*, Q^pi, Q* for all policies in one place. Demonstrates Policy Iteration: evaluate -> improve -> converge.",
      "Complete V/Q tables + policy iteration demo"),
-    ("7", "MC-Episodes", "Monte Carlo",
+    ("8", "MC-Episodes", "Monte Carlo",
      "Simulates 5 episodes following an epsilon-greedy optimal policy. Computes return G_t backward for each step.",
      "Episode trajectories with discounted returns"),
-    ("8", "MC-VQ", "Monte Carlo",
+    ("9", "MC-VQ", "Monte Carlo",
      "First-visit MC estimation: averages G_t returns across episodes to estimate V^MC(s) and Q^MC(s,a).",
      "V^MC, Q^MC, greedy policy from MC"),
-    ("9", "TD0", "Temporal Difference",
+    ("10", "TD0", "Temporal Difference",
      "TD(0) updates V(s) after EVERY transition using V(s) <- V(s) + alpha*[r + gamma*V(s') - V(s)]. Step-by-step trace.",
      "V^TD(s) after all episodes"),
-    ("10", "SARSA", "Temporal Difference",
+    ("11", "SARSA", "Temporal Difference",
      "On-policy Q-learning: Q(s,a) <- Q(s,a) + alpha*[r + gamma*Q(s',a') - Q(s,a)]. Uses the ACTUAL next action a'.",
      "Q^SARSA(s,a) + greedy policy"),
-    ("11", "QLearning", "Temporal Difference",
+    ("12", "QLearning", "Temporal Difference",
      "Off-policy Q-learning: Q(s,a) <- Q(s,a) + alpha*[r + gamma*max Q(s',.) - Q(s,a)]. Uses the BEST next action.",
      "Q*(s,a) estimate + optimal policy"),
 ]
@@ -871,6 +874,349 @@ for th in [1.0, 0.1, 0.01, 0.001, 0.0001]:
     dat(ws_c, r, 1, 4); r += 1
 
 aw(ws_c)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SHEET: Comparisons — DP-Eval vs DP-VI vs Q-Learning
+# ══════════════════════════════════════════════════════════════════════════════
+ws_cmp = wb.create_sheet("Comparisons")
+CW = "K"
+
+ttl(ws_cmp, 1, "Method Comparisons: DP-Eval vs DP-VI vs Model-Free Methods", CW)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PART 1: DP-Eval vs DP-VI
+# ══════════════════════════════════════════════════════════════════════════════
+r = 3; sec(ws_cmp, r, "Part 1: DP-Eval (Policy Evaluation) vs DP-VI (Value Iteration)", "2F5496")
+r += 1
+nt(ws_cmp, r, "Both are Dynamic Programming methods that sweep over ALL states using the KNOWN model. The difference is the OPERATOR: expectation vs max.", CW)
+r += 2
+
+# Overview table
+cmp1_hdrs = ["Aspect", "DP-Eval (Policy Evaluation)", "DP-VI (Value Iteration)"]
+for j, h in enumerate(cmp1_hdrs): ws_cmp.cell(r, 1+j, value=h)
+ws_cmp.merge_cells(f"B{r}:F{r}"); ws_cmp.merge_cells(f"G{r}:{CW}{r}")
+hdr(ws_cmp, r, 1, 11); r += 1
+
+cmp1_rows = [
+    ("Question it answers",
+     "How good is THIS specific policy pi?",
+     "What is the BEST possible policy?"),
+    ("Bellman equation used",
+     "Expectation: V(s) = SUM P*[R + gamma*V(s')]  under FIXED pi",
+     "Optimality: V(s) = MAX_a SUM P*[R + gamma*V(s')]  over ALL actions"),
+    ("Key operator",
+     "NONE (just follow the given policy)",
+     "MAX over actions (find the best one)"),
+    ("Input required",
+     "A specific policy (e.g. 'always slow')",
+     "No policy needed — finds optimal automatically"),
+    ("Output",
+     "V^pi(s) for that one policy",
+     "V*(s), Q*(s,a), and pi*(s) — all optimal"),
+    ("Columns in the sheet",
+     "V_k(Cool), V_k(Warm), |DV|  (no Q columns)",
+     "Q(s,Slow), Q(s,Fast), V*=MAX(Q), pi*=argmax(Q), |DV|"),
+    ("Number of runs needed",
+     "One per policy (4 policies = 4 blocks)",
+     "One run finds everything"),
+    ("Uses transition probs P?",
+     "YES — embedded in the formula",
+     "YES — embedded in the formula"),
+    ("Convergence target",
+     "Different for each policy (Cautious->10, Optimal->15.5)",
+     "Always V*: V*(Cool)=15.5, V*(Warm)=14.5"),
+]
+for aspect, eval_desc, vi_desc in cmp1_rows:
+    ws_cmp.cell(r, 1, value=aspect); ws_cmp.cell(r, 1).font = Font(bold=True)
+    ws_cmp.cell(r, 2, value=eval_desc); ws_cmp.merge_cells(f"B{r}:F{r}")
+    ws_cmp.cell(r, 2).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    ws_cmp.cell(r, 7, value=vi_desc); ws_cmp.merge_cells(f"G{r}:{CW}{r}")
+    ws_cmp.cell(r, 7).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    dat(ws_cmp, r, 1, 11); r += 1
+
+# Formula comparison
+r += 1; sec(ws_cmp, r, "Formula Comparison — Same (Cool, Slow) transition, different equations:")
+r += 1
+form_hdrs = ["", "Formula", "Explanation"]
+for j, h in enumerate(form_hdrs): ws_cmp.cell(r, 1+j, value=h)
+ws_cmp.merge_cells(f"B{r}:F{r}"); ws_cmp.merge_cells(f"G{r}:{CW}{r}")
+hdr(ws_cmp, r, 1, 11); r += 1
+
+formulas_cmp = [
+    ("DP-Eval\n(Cautious: always Slow)",
+     "V_{k+1}(Cool) = 0.5*(1+0.9*V_k(C)) + 0.5*(1+0.9*V_k(W))",
+     "Policy says Slow, so we ONLY compute the Slow outcome. No choice involved — just evaluate what this policy gives us."),
+    ("DP-Eval\n(Optimal: Fast@Cool)",
+     "V_{k+1}(Cool) = 0.5*(2+0.9*V_k(C)) + 0.5*(2+0.9*V_k(W))",
+     "Policy says Fast at Cool, so we compute the Fast outcome. Still no MAX — policy is fixed."),
+    ("DP-VI",
+     "V_{k+1}(Cool) = MAX( 0.5*(1+0.9*V_k(C))+0.5*(1+0.9*V_k(W)),  0.5*(2+0.9*V_k(C))+0.5*(2+0.9*V_k(W)) )",
+     "Computes BOTH Slow and Fast Q-values, then takes MAX. This IS how it finds the optimal policy — it tries everything."),
+]
+for label, formula, expl in formulas_cmp:
+    ws_cmp.cell(r, 1, value=label); ws_cmp.cell(r, 1).font = Font(bold=True, size=10)
+    ws_cmp.cell(r, 1).alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    ws_cmp.cell(r, 2, value=formula); ws_cmp.merge_cells(f"B{r}:F{r}")
+    ws_cmp.cell(r, 2).font = Font(name="Courier New", size=10)
+    ws_cmp.cell(r, 2).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    ws_cmp.cell(r, 7, value=expl); ws_cmp.merge_cells(f"G{r}:{CW}{r}")
+    ws_cmp.cell(r, 7).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    dat(ws_cmp, r, 1, 11); r += 1
+
+# How they relate
+r += 1; sec(ws_cmp, r, "How DP-Eval and DP-VI relate (Policy Iteration uses BOTH):")
+r += 1
+pi_steps = [
+    "1. START with any policy (e.g. Cautious: always Slow)",
+    "2. EVALUATE it using DP-Eval -> get V^cautious(Cool)=10, V^cautious(Warm)=10",
+    "3. IMPROVE: for each state, compute Q^cautious(s,a) for all actions, pick argmax -> new policy = Fast@Cool, Slow@Warm",
+    "4. EVALUATE the new policy using DP-Eval -> get V^optimal(Cool)=15.5, V^optimal(Warm)=14.5",
+    "5. IMPROVE: argmax Q^optimal -> same policy (Fast@Cool, Slow@Warm) -> CONVERGED!",
+    "",
+    "DP-VI is a shortcut: it combines evaluate+improve into one step by using MAX directly.",
+    "Instead of evaluating a policy fully then improving, it improves greedily at EVERY sweep.",
+]
+for step in pi_steps:
+    ws_cmp.merge_cells(f"A{r}:{CW}{r}")
+    ws_cmp.cell(r, 1, value=step)
+    if step.startswith("DP-VI"):
+        ws_cmp.cell(r, 1).font = Font(bold=True, size=11, color="C00000")
+    else:
+        ws_cmp.cell(r, 1).font = Font(size=11)
+    ws_cmp.cell(r, 1).alignment = Alignment(horizontal="left", vertical="center")
+    r += 1
+
+# Live formula proof: DP-Eval converged values
+r += 1; sec(ws_cmp, r, "Live Proof: DP-Eval converged values vs DP-VI converged values")
+r += 1
+proof_hdrs = ["Value", "DP-Eval (Cautious)", "DP-Eval (Optimal)", "DP-VI", "Eval-Opt = VI?"]
+for j, h in enumerate(proof_hdrs): ws_cmp.cell(r, 1+j, value=h)
+hdr(ws_cmp, r, 1, 5); r += 1
+
+ws_cmp.cell(r, 1, value="V(Cool)"); ws_cmp.cell(r, 1).font = Font(bold=True)
+fm(ws_cmp, r, 2, f"='DP-Eval'!B{pe_caut}")
+fm(ws_cmp, r, 3, f"='DP-Eval'!B{pe_opt}")
+fm(ws_cmp, r, 4, f"='DP-VI'!D{vi_last}")
+fm(ws_cmp, r, 5, f'=IF(ABS(C{r}-D{r})<0.001,"YES — same V*","NO")')
+dat(ws_cmp, r, 1, 1); r += 1
+
+ws_cmp.cell(r, 1, value="V(Warm)"); ws_cmp.cell(r, 1).font = Font(bold=True)
+fm(ws_cmp, r, 2, f"='DP-Eval'!C{pe_caut}")
+fm(ws_cmp, r, 3, f"='DP-Eval'!C{pe_opt}")
+fm(ws_cmp, r, 4, f"='DP-VI'!G{vi_last}")
+fm(ws_cmp, r, 5, f'=IF(ABS(C{r}-D{r})<0.001,"YES — same V*","NO")')
+dat(ws_cmp, r, 1, 1); r += 1
+
+r += 1
+nt(ws_cmp, r, "DP-Eval(Cautious) = 10: the cautious policy is suboptimal.  DP-Eval(Optimal) = DP-VI = 15.5/14.5: evaluating the optimal policy gives V*.", CW)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PART 2: DP-VI (Model-Based) vs Q-Learning (Model-Free)
+# ══════════════════════════════════════════════════════════════════════════════
+r += 3; sec(ws_cmp, r, "Part 2: DP-VI (Model-Based) vs Q-Learning (Model-Free)", "C00000")
+r += 1
+nt(ws_cmp, r, "Both find Q* and pi*. The fundamental difference: DP-VI CALCULATES expectations using known P(s'|s,a). Q-Learning ESTIMATES them from samples.", CW)
+r += 2
+
+# Overview table
+cmp2_hdrs = ["Aspect", "DP-VI (Model-Based)", "Q-Learning (Model-Free)"]
+for j, h in enumerate(cmp2_hdrs): ws_cmp.cell(r, 1+j, value=h)
+ws_cmp.merge_cells(f"B{r}:F{r}"); ws_cmp.merge_cells(f"G{r}:{CW}{r}")
+hdr(ws_cmp, r, 1, 11); r += 1
+
+cmp2_rows = [
+    ("Knows P(s'|s,a)?",
+     "YES — hardcoded in the formula as 0.5, 0.5, 1.0, etc.",
+     "NO — never sees transition probabilities"),
+    ("Knows R(s,a,s')?",
+     "YES — hardcoded as +1, +2, -10",
+     "NO — only observes the reward r after each transition"),
+    ("How it sees next states",
+     "Sums over ALL possible s' simultaneously",
+     "Observes ONE random s' per step (whatever happened)"),
+    ("Update formula",
+     "Q(s,a) = SUM_{s'} P(s'|s,a)*[R + gamma*max Q(s',*)]",
+     "Q(s,a) <- Q(s,a) + alpha*[r + gamma*max Q(s',*) - Q(s,a)]"),
+    ("Learning rate alpha",
+     "alpha = 1 (replace with exact target)",
+     "alpha = 0.1 (inch toward noisy target)"),
+    ("Coverage per step",
+     "One SWEEP updates ALL (state, action) pairs",
+     "One step updates ONE (state, action) pair"),
+    ("Convergence speed",
+     "Fast: ~50 sweeps (deterministic)",
+     "Slow: needs many episodes (stochastic)"),
+    ("When to use",
+     "When you KNOW the model (game rules, physics equations)",
+     "When you DON'T know the model (real world, complex simulations)"),
+]
+for aspect, dp_desc, ql_desc in cmp2_rows:
+    ws_cmp.cell(r, 1, value=aspect); ws_cmp.cell(r, 1).font = Font(bold=True)
+    ws_cmp.cell(r, 2, value=dp_desc); ws_cmp.merge_cells(f"B{r}:F{r}")
+    ws_cmp.cell(r, 2).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    ws_cmp.cell(r, 7, value=ql_desc); ws_cmp.merge_cells(f"G{r}:{CW}{r}")
+    ws_cmp.cell(r, 7).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    dat(ws_cmp, r, 1, 11); r += 1
+
+# The key formula comparison — where P appears
+r += 1; sec(ws_cmp, r, "WHERE the transition probability P appears (and doesn't):", "C00000")
+r += 1
+nt(ws_cmp, r, "This is THE critical difference. Look at Q(Cool, Fast) computed both ways:", CW)
+r += 2
+
+ws_cmp.cell(r, 1, value="DP-VI formula:"); ws_cmp.cell(r, 1).font = Font(bold=True, size=12, color="2F5496")
+ws_cmp.merge_cells(f"B{r}:{CW}{r}")
+ws_cmp.cell(r, 2, value="Q(Cool,Fast) = 0.5 * (2 + 0.9*V(C))  +  0.5 * (2 + 0.9*V(W))")
+ws_cmp.cell(r, 2).font = Font(name="Courier New", size=12)
+ws_cmp.cell(r, 2).alignment = Alignment(horizontal="left", vertical="center")
+dat(ws_cmp, r, 1, 11); r += 1
+
+ws_cmp.merge_cells(f"B{r}:{CW}{r}")
+ws_cmp.cell(r, 2, value="                 ^^^                     ^^^")
+ws_cmp.cell(r, 2).font = Font(name="Courier New", size=12, color="C00000")
+ws_cmp.cell(r, 2).alignment = Alignment(horizontal="left", vertical="center")
+r += 1
+
+ws_cmp.merge_cells(f"B{r}:{CW}{r}")
+ws_cmp.cell(r, 2, value="            P(Cool|Cool,Fast)=0.5    P(Warm|Cool,Fast)=0.5")
+ws_cmp.cell(r, 2).font = Font(name="Courier New", size=11, color="C00000")
+ws_cmp.cell(r, 2).alignment = Alignment(horizontal="left", vertical="center")
+r += 2
+
+ws_cmp.cell(r, 1, value="Q-Learning step:"); ws_cmp.cell(r, 1).font = Font(bold=True, size=12, color="00B050")
+ws_cmp.merge_cells(f"B{r}:{CW}{r}")
+ws_cmp.cell(r, 2, value="Agent picks Fast in Cool -> lands in Warm (random), gets r=2")
+ws_cmp.cell(r, 2).font = Font(name="Courier New", size=11)
+ws_cmp.cell(r, 2).alignment = Alignment(horizontal="left", vertical="center")
+dat(ws_cmp, r, 1, 11); r += 1
+
+ws_cmp.merge_cells(f"B{r}:{CW}{r}")
+ws_cmp.cell(r, 2, value="target = 2 + 0.9 * max(Q(Warm,Slow), Q(Warm,Fast))")
+ws_cmp.cell(r, 2).font = Font(name="Courier New", size=11)
+ws_cmp.cell(r, 2).alignment = Alignment(horizontal="left", vertical="center")
+r += 1
+
+ws_cmp.merge_cells(f"B{r}:{CW}{r}")
+ws_cmp.cell(r, 2, value="Q(Cool,Fast) <- Q(Cool,Fast) + 0.1 * (target - Q(Cool,Fast))")
+ws_cmp.cell(r, 2).font = Font(name="Courier New", size=11)
+ws_cmp.cell(r, 2).alignment = Alignment(horizontal="left", vertical="center")
+r += 1
+
+ws_cmp.merge_cells(f"B{r}:{CW}{r}")
+ws_cmp.cell(r, 2, value="   ^^^ NO 0.5 anywhere! Only saw ONE outcome (Warm). Next time might be Cool.")
+ws_cmp.cell(r, 2).font = Font(name="Courier New", size=11, color="C00000")
+ws_cmp.cell(r, 2).alignment = Alignment(horizontal="left", vertical="center")
+r += 2
+
+# How Q-Learning recovers the same answer
+sec(ws_cmp, r, "How Q-Learning recovers P without knowing it:")
+r += 1
+recovery = [
+    "Visit 1: Fast in Cool -> lands in Warm (r=2).   Q updated toward (2 + 0.9*max Q(Warm,.))",
+    "Visit 2: Fast in Cool -> lands in Cool (r=2).   Q updated toward (2 + 0.9*max Q(Cool,.))",
+    "Visit 3: Fast in Cool -> lands in Warm (r=2).   Q updated toward (2 + 0.9*max Q(Warm,.))",
+    "Visit 4: Fast in Cool -> lands in Cool (r=2).   Q updated toward (2 + 0.9*max Q(Cool,.))",
+    "...",
+    "After many visits: ~50% landed in Cool, ~50% landed in Warm.",
+    "The running average of targets CONVERGES to: 0.5*(2+0.9*V(C)) + 0.5*(2+0.9*V(W))",
+    "...which is EXACTLY the DP-VI formula! The probabilities emerge from sampling frequency.",
+]
+for line in recovery:
+    ws_cmp.merge_cells(f"A{r}:{CW}{r}")
+    ws_cmp.cell(r, 1, value=line)
+    if line.startswith("After") or line.startswith("The running") or line.startswith("...which"):
+        ws_cmp.cell(r, 1).font = Font(bold=True, size=11, color="00B050")
+    else:
+        ws_cmp.cell(r, 1).font = Font(name="Courier New", size=10)
+    ws_cmp.cell(r, 1).alignment = Alignment(horizontal="left", vertical="center")
+    r += 1
+
+# Live proof: DP-VI vs Q-Learning converged values
+r += 1; sec(ws_cmp, r, "Live Proof: DP-VI vs Q-Learning converged Q-values")
+r += 1
+nt(ws_cmp, r, "Q-Learning has only 5 episodes (76 steps) so it hasn't fully converged yet. With more episodes it would approach DP-VI exactly.", CW)
+r += 1
+
+ql_qt_ref = 6 + len(all_steps) + 4  # ql_init=6, ql_last=6+len(all_steps), Q-table header+1 row
+proof2_hdrs = ["Q(s,a)", "DP-VI (exact)", "Q-Learning (5 eps)", "Gap", "Converging?"]
+for j, h in enumerate(proof2_hdrs): ws_cmp.cell(r, 1+j, value=h)
+hdr(ws_cmp, r, 1, 5); r += 1
+
+# Q(Cool,Slow): DP-VI sync last row col B vs QLearning final Q(C,S) col L
+ws_cmp.cell(r, 1, value="Q(Cool, Slow)"); ws_cmp.cell(r, 1).font = Font(bold=True)
+fm(ws_cmp, r, 2, f"='DP-VI'!B{vi_last}")
+fm(ws_cmp, r, 3, f"='QLearning'!B{ql_qt_ref}")
+fm(ws_cmp, r, 4, f"=ABS(B{r}-C{r})")
+fm(ws_cmp, r, 5, f'=IF(D{r}<1,"Close","Far")')
+dat(ws_cmp, r, 1, 1); r += 1
+
+ws_cmp.cell(r, 1, value="Q(Cool, Fast)"); ws_cmp.cell(r, 1).font = Font(bold=True)
+fm(ws_cmp, r, 2, f"='DP-VI'!C{vi_last}")
+fm(ws_cmp, r, 3, f"='QLearning'!C{ql_qt_ref}")
+fm(ws_cmp, r, 4, f"=ABS(B{r}-C{r})")
+fm(ws_cmp, r, 5, f'=IF(D{r}<1,"Close","Far")')
+dat(ws_cmp, r, 1, 1); r += 1
+
+ws_cmp.cell(r, 1, value="Q(Warm, Slow)"); ws_cmp.cell(r, 1).font = Font(bold=True)
+fm(ws_cmp, r, 2, f"='DP-VI'!E{vi_last}")
+fm(ws_cmp, r, 3, f"='QLearning'!B{ql_qt_ref+1}")
+fm(ws_cmp, r, 4, f"=ABS(B{r}-C{r})")
+fm(ws_cmp, r, 5, f'=IF(D{r}<1,"Close","Far")')
+dat(ws_cmp, r, 1, 1); r += 1
+
+ws_cmp.cell(r, 1, value="Q(Warm, Fast)"); ws_cmp.cell(r, 1).font = Font(bold=True)
+fm(ws_cmp, r, 2, f"='DP-VI'!F{vi_last}")
+fm(ws_cmp, r, 3, f"='QLearning'!C{ql_qt_ref+1}")
+fm(ws_cmp, r, 4, f"=ABS(B{r}-C{r})")
+fm(ws_cmp, r, 5, f'=IF(D{r}<1,"Close","Far")')
+dat(ws_cmp, r, 1, 1); r += 1
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PART 3: Complete Method Family Comparison
+# ══════════════════════════════════════════════════════════════════════════════
+r += 2; sec(ws_cmp, r, "Part 3: Complete Comparison — All Five Methods in This Workbook", "375623")
+r += 1
+nt(ws_cmp, r, "Every method converges to the same V* and pi*. They differ in what information they need and how they use it.", CW)
+r += 2
+
+all_hdrs = ["", "DP-Eval", "DP-VI", "MC", "SARSA", "Q-Learning"]
+for j, h in enumerate(all_hdrs): ws_cmp.cell(r, 1+j, value=h)
+hdr(ws_cmp, r, 1, 6); r += 1
+
+all_rows = [
+    ("Type",           "Model-based",    "Model-based",    "Model-free",     "Model-free",     "Model-free"),
+    ("Finds V* or V^pi?", "V^pi only",  "V* (optimal)",   "V^pi estimate",  "Q^pi estimate",  "Q* estimate"),
+    ("Uses P(s'|s,a)?","YES",            "YES",            "NO",             "NO",             "NO"),
+    ("Uses R(s,a,s')?","YES",            "YES",            "NO (observes r)","NO (observes r)","NO (observes r)"),
+    ("Policy needed?", "YES (fixed pi)", "NO (finds pi*)", "YES (behavior)", "YES (epsilon-greedy)","NO (off-policy)"),
+    ("Update unit",    "Full sweep",     "Full sweep",     "Full episode",   "Single step",    "Single step"),
+    ("alpha",          "1 (exact)",      "1 (exact)",      "1/N (average)",  "0.1 (small)",    "0.1 (small)"),
+    ("Bellman eq.",    "Expectation",    "Optimality",     "None (returns)", "Expectation",    "Optimality"),
+    ("On/Off-policy",  "N/A",           "N/A",            "On-policy",      "On-policy",      "Off-policy"),
+    ("Sheet",          "DP-Eval",        "DP-VI",          "MC-Episodes/VQ", "SARSA",          "QLearning"),
+]
+for row_data in all_rows:
+    for j, v in enumerate(row_data):
+        ws_cmp.cell(r, 1+j, value=v)
+        if j == 0:
+            ws_cmp.cell(r, 1).font = Font(bold=True)
+    dat(ws_cmp, r, 1, 6); r += 1
+
+r += 1
+summary_lines = [
+    "KEY INSIGHT: The 0.5 in DP-VI's formula IS the transition probability. Q-Learning doesn't have it —",
+    "it recovers the same weighted average by visiting each outcome enough times.",
+    "DP-VI = analytical weighted sum.  Q-Learning = empirical running average.  Same destination, different roads.",
+]
+for line in summary_lines:
+    ws_cmp.merge_cells(f"A{r}:{CW}{r}")
+    ws_cmp.cell(r, 1, value=line)
+    ws_cmp.cell(r, 1).font = Font(bold=True, size=11, color="C00000") if "KEY" in line else Font(italic=True, size=11)
+    ws_cmp.cell(r, 1).alignment = Alignment(horizontal="left", vertical="center")
+    r += 1
+
+aw(ws_cmp)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
