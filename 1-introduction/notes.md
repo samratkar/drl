@@ -7,18 +7,32 @@ status: Published
 
 # A journey into the world of RL by Samrat Kar 
 ## An introduction of the context
-1. RL is a **system** of two entities : **environment** and **agent**. Environment has the ability to present out to the agent its condition which is known as **state**. agent interacts with the environment by observing the state and using this information to select an **action**. The environment accepts the action, and transitions to the next state. it then returns the next state and a reward to the agent. this cycle from state -> action -> reward & new state , is known as a step. Multiple such steps stitched together to form **episode**. An episode defines a series of states. that series of states is known as **trajectory**. the cycle repeats until the environment terminates, for example with the problem is solved. the agent's action producing function is known as **policy**. formally the mapping from state to action is known as policy. An action will change the environment, and affect what an agent observes and does next. **An action changes the environment and what the agent observes and does next.**
+1. Essentially, a reinforcement learning system is a feedback control loop where an agent and an environment interact and exchange signals, while the agent tries to maximize the objective. The signals exchanged are ($s_t$, $a_t$, $r_t$), which stand for state, action, and reward,
+respectively, and t denotes the time step in which these signals occurred. The $(s_t, a_t, r_t)$. tuple is called an **experience**. 
+The control loop can repeat forever or terminate by reaching either a terminal state or a maximum time step t= T . The time horizon from t = 0 to when the environment terminates is called an episode. A trajectory is a sequence of experiences over an episode, $\tau = (s_0, a_0, r_0), (s_1, a_1, r_1), \dots$. An agent typically needs many episodes to learn a good policy, ranging from hundreds to millions depending on the complexity of the problem.
+
+2. Finding the best policy = finding the best state to action mapping for each state in the env that leads to the terminal state : 
+   
+   - Q is not a single number per state. 
+   - The **Bellman Optimality equation for $Q^*$** : Target to reach for the trial and error is **$Q^*$** 
+    $$Q^*(s,a) = \sum_{s',r} P(s',r|s,a) \left[ r + \gamma \cdot \max_{a'} Q^*(s',a') \right]$$
+    (best action at any state $s$ in terms of the best action in the next state $s'$)
+    
+   - The **Q-learning update rule** - a way to nudge towards the target - how we inch towards $Q^*$, one sample at a time 
+   $$Q(s,a) \leftarrow Q(s,a) + \alpha \left[ r + \gamma \cdot \max_{a'} Q(s',a') - Q(s,a) \right]$$ 
+
+RL is a **feedback control loop system** of two entities : **environment** and **agent**. Environment has the ability to present out to the agent its condition which is known as **state**. agent interacts with the environment by observing the state and using this information to select an **action**. The environment accepts the action, and transitions to the next state. it then returns the next state and a reward to the agent. this cycle from state -> action -> reward & new state , is known as a step. Multiple such steps stitched together to form **episode**. An episode defines a series of states. that series of states is known as **trajectory**. the cycle repeats until the environment terminates, for example with the problem is solved. the agent's action producing function is known as **policy**. formally the mapping from state to action is known as policy. An action will change the environment, and affect what an agent observes and does next. **An action changes the environment and what the agent observes and does next.**
 the exchange between agent and environment unfolds in time - therefore it can be thought of a sequential decision making process.
 ![](./assets/rl-system.svg)
-2. RL solves **sequential decision** making problems.
-3. RL is a specialized learning method (closest to nature and the way learning works in the living world), where the following happens - 
+1. RL solves **sequential decision** making problems.
+2. RL is a specialized learning method (closest to nature and the way learning works in the living world), where the following happens - 
    - the agent senses the environment (S)
    - based on the state values sensed by the agent, it takes some action, that changes the environment state again (A)
    - this agent is long term goal directed. it looks for maximizing a goal - which is a numerical value of reward signals being accumulated by the agent as a fallout of its actions (G)
-4. **un-supervised learning and RL** - unlike unsupervised learning, RL does not look for underlying patters in a data set. It's sole job is to maximize rewards. 
-5. **supervised learning and RL** - unlike supervised learning, RL does not need pre-existing supervisor who would prescribe what to be done and what not in terms of training data set or labels. RL agents learn things in run-time using sole interaction with the environment.  
-6. RL problems have an **objective**, which is the sum of rewards received by an agent. **An agent's goal is to maximize the objective by selecting good actions**. i.e - fine tuning the policy.
-7. **policy** - it is a mapping of all states in the states space of the environment to the action (or a probability distribution of the actions). 
+3. **un-supervised learning and RL** - unlike unsupervised learning, RL does not look for underlying patters in a data set. It's sole job is to maximize rewards. 
+4. **supervised learning and RL** - unlike supervised learning, RL does not need pre-existing supervisor who would prescribe what to be done and what not in terms of training data set or labels. RL agents learn things in run-time using sole interaction with the environment.  
+5. RL problems have an **objective**, which is the sum of rewards received by an agent. **An agent's goal is to maximize the objective by selecting good actions**. i.e - fine tuning the policy.
+6. **policy** - it is a mapping of all states in the states space of the environment to the action (or a probability distribution of the actions). 
 Formally:         
   - Deterministic policy: $\pi(s) = a$ -- for every state $s \in \mathcal{S}$, it specifies one action                  
   - Stochastic policy: $\pi(a|s)$ -- for every state $s \in \mathcal{S}$, it gives a probability distribution over all actions.          
@@ -35,6 +49,7 @@ A trajectory/episode is just one realization -- a sequence of states the agent h
 4.  agent : 
    - policy : function that maps state to action : for stochastic cases it would be conditional probability of actions, given a state - $\pi(a|s)$
    - action : the current state is changed, and a reward is received.
+   - objective : sum of all rewards is the objective.
 5.   agent and environment are mutually exclusive
 6.    $(s_t, a_t, r_t)$ control loop : experience.
 7.     the control loop can repeat forever theoretically. However, they terminate after reaching a terminal state or a max number of steps t = T. time horizon from t=0 to t=T is known as an episode.

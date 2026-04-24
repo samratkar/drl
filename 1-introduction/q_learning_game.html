@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Q-Learning Gridworld — Training Visualization</title>
+  <style>
+    :root {
+      --bg: #f0ebe1;
+      --paper: rgba(255, 251, 243, 0.94);
+      --ink: #1e2931;
+      --muted: #5d6b78;
+      --accent: #c2752a;
+      --accent-soft: #fbeadb;
+      --accent-deep: #8b4f12;
+      --accent-glow: rgba(194, 117, 42, 0.35);
+      --goal: #9bcf6f;
+      --bootstrap-glow: rgba(59, 130, 246, 0.25);
+      --update-glow: rgba(194, 117, 42, 0.45);
+    }
+    * { box-sizing: border-box; margin: 0; }
+    body {
+      font-family: "Aptos", "Segoe UI", Inter, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(194, 117, 42, 0.14), transparent 30%),
+        radial-gradient(circle at top right, rgba(59, 130, 246, 0.10), transparent 26%),
+        linear-gradient(180deg, #f8f2e8 0%, var(--bg) 100%);
+    }
+    .shell { max-width: 1500px; margin: 0 auto; min-height: 100vh; padding: 14px; }
+    .hero, .panel {
+      background: var(--paper);
+      border: 1px solid rgba(194, 117, 42, 0.14);
+      border-radius: 24px;
+      box-shadow: 0 20px 40px rgba(30, 41, 49, 0.10);
+      backdrop-filter: blur(10px);
+    }
+    .hero {
+      padding: 20px 22px; display: flex; justify-content: space-between;
+      gap: 16px; align-items: flex-start; margin-bottom: 14px;
+    }
+    h1 { margin: 0 0 6px; font-size: clamp(1.4rem, 2vw, 2rem); line-height: 1.05; color: var(--accent-deep); }
+    .sub { color: var(--muted); max-width: 760px; line-height: 1.45; font-size: 0.92rem; }
+    .nav { display: flex; gap: 8px; flex-wrap: wrap; }
+    .nav a, button {
+      appearance: none; border: 0; border-radius: 999px; padding: 9px 15px;
+      background: linear-gradient(135deg, var(--accent-deep), var(--accent)); color: white;
+      text-decoration: none; cursor: pointer; font: inherit; font-size: 0.88rem;
+      box-shadow: 0 8px 16px rgba(139, 79, 18, 0.18);
+      transition: transform 100ms ease, box-shadow 100ms ease;
+    }
+    button:hover { transform: translateY(-1px); box-shadow: 0 12px 22px rgba(139, 79, 18, 0.22); }
+    button:disabled { opacity: 0.45; cursor: default; transform: none; box-shadow: none; }
+    button.secondary { background: var(--accent-soft); color: var(--accent-deep); box-shadow: none; }
+    .layout { display: grid; gap: 14px; grid-template-columns: minmax(370px, 560px) minmax(700px, 1fr); }
+    .panel { padding: 16px; }
+    .section-title { margin: 0 0 8px; font-size: 0.95rem; color: var(--accent-deep); font-weight: 700; }
+    .controls { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
+    .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+    .stat {
+      border: 1px solid rgba(194, 117, 42, 0.12); border-radius: 14px;
+      padding: 8px 10px; background: rgba(255, 255, 255, 0.6);
+    }
+    .stat-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 2px; }
+    .stat-value { font-size: 0.95rem; font-weight: 700; color: var(--accent-deep); }
+
+    .board { display: grid; grid-template-columns: repeat(3, minmax(90px, 1fr)); gap: 10px; }
+    .cell {
+      min-height: 160px; border-radius: 20px; padding: 10px 11px;
+      background: rgba(255, 255, 255, 0.84); border: 1px solid rgba(30, 41, 49, 0.08);
+      position: relative; overflow: hidden;
+      transition: box-shadow 300ms ease, border-color 300ms ease;
+    }
+    .cell.goal {
+      background: linear-gradient(180deg, rgba(155, 207, 111, 0.35), rgba(255, 255, 255, 0.92));
+      border-color: rgba(101, 145, 62, 0.32);
+    }
+    .cell.agent::after {
+      content: "Q"; position: absolute; top: 8px; right: 8px;
+      font-size: 0.68rem; font-weight: 700; color: var(--accent-deep);
+      background: rgba(255, 255, 255, 0.9); padding: 3px 7px; border-radius: 999px;
+      box-shadow: 0 6px 12px rgba(194, 117, 42, 0.16);
+    }
+    .cell.just-updated {
+      box-shadow: 0 0 0 3px var(--update-glow), 0 8px 20px var(--update-glow);
+      border-color: rgba(194, 117, 42, 0.4);
+    }
+    .cell.bootstrap-source {
+      box-shadow: 0 0 0 3px var(--bootstrap-glow), 0 8px 20px var(--bootstrap-glow);
+      border-color: rgba(59, 130, 246, 0.35);
+    }
+    .cell-top { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; margin-bottom: 6px; }
+    .state-name { font-size: 0.70rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+    .state-score { font-size: 0.95rem; font-weight: 700; color: var(--accent-deep); }
+    .best-arrow { font-size: 0.78rem; color: var(--accent); font-weight: 700; }
+    .action-lines { display: grid; gap: 4px; font-size: 0.76rem; }
+    .action-line {
+      display: grid; grid-template-columns: 14px 1fr 44px; gap: 5px; align-items: center;
+    }
+    .action-line .arrow { font-size: 0.72rem; color: var(--muted); }
+    .action-line .arrow.best { color: var(--accent); font-weight: 700; }
+    .bar { height: 7px; border-radius: 999px; background: rgba(194, 117, 42, 0.08); overflow: hidden; }
+    .bar > span {
+      display: block; height: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), #d4954e);
+      transition: width 200ms ease;
+    }
+    .qval { font-size: 0.72rem; color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; }
+
+    .log-box {
+      border: 1px solid rgba(194, 117, 42, 0.12); border-radius: 16px;
+      background: rgba(255, 255, 255, 0.7); padding: 10px; min-height: 120px;
+      max-height: 210px; overflow-y: auto; font-size: 0.76rem; line-height: 1.45;
+      font-variant-numeric: tabular-nums;
+    }
+    .log-entry { padding: 3px 0; border-bottom: 1px solid rgba(0,0,0,0.04); }
+    .log-entry:last-child { border-bottom: none; }
+    .log-old { color: var(--muted); }
+    .log-new { color: var(--accent-deep); font-weight: 600; }
+    .log-ep { color: var(--accent); font-weight: 600; font-size: 0.70rem; }
+    .log-detail { color: var(--muted); font-size: 0.70rem; }
+
+    .curve-container { position: relative; }
+    .curve {
+      width: 100%; height: 200px; display: block;
+      border: 1px solid rgba(194, 117, 42, 0.12); border-radius: 18px;
+      background: rgba(255, 255, 255, 0.76);
+    }
+    .curve-tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+    .curve-tab {
+      padding: 5px 12px; border-radius: 999px; font-size: 0.78rem; cursor: pointer;
+      background: var(--accent-soft); color: var(--accent-deep); border: none;
+      transition: background 100ms;
+    }
+    .curve-tab.active { background: var(--accent); color: white; }
+
+    .trace-selector {
+      display: flex; gap: 6px; align-items: center; margin-bottom: 8px;
+      font-size: 0.78rem; color: var(--muted);
+    }
+    .trace-selector select {
+      padding: 4px 8px; border-radius: 8px; border: 1px solid rgba(194,117,42,0.2);
+      font: inherit; font-size: 0.78rem; background: white;
+    }
+
+    .speed-control { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--muted); }
+    .speed-control input[type=range] { width: 80px; accent-color: var(--accent); }
+
+    .key-insight {
+      margin-top: 10px; padding: 10px 14px; border-radius: 14px;
+      background: linear-gradient(135deg, rgba(251, 234, 219, 0.7), rgba(255,255,255,0.5));
+      border: 1px solid rgba(194, 117, 42, 0.15);
+      font-size: 0.8rem; color: var(--ink); line-height: 1.5;
+    }
+    .key-insight strong { color: var(--accent-deep); }
+
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <section class="hero">
+    <div>
+      <h1>Q-Learning Gridworld</h1>
+      <div class="sub">
+        Watch a single persistent Q-table learn the optimal policy through sampled experience.
+        One table, many episodes — the same Q(s,a) entries get nudged by different transitions,
+        implicitly reconstructing the environment's probability distribution.
+      </div>
+    </div>
+    <div class="nav">
+      <a href="dynamic-prog/dynamic_programming_game.html" class="secondary" style="background:var(--accent-soft);color:var(--accent-deep);box-shadow:none;">DP Demo</a>
+      <a href="montecarlo/monte_carlo_game.html" class="secondary" style="background:var(--accent-soft);color:var(--accent-deep);box-shadow:none;">MC Demo</a>
+    </div>
+  </section>
+
+  <div class="layout">
+    <section class="panel">
+      <div class="controls">
+        <button id="btn-step">1 Step</button>
+        <button id="btn-episode">1 Episode</button>
+        <button id="btn-100">Train 100</button>
+        <button id="btn-1000">Train 1000</button>
+        <button id="btn-converge">Train to Convergence</button>
+        <button id="btn-reset" class="secondary">Reset Q</button>
+      </div>
+      <div class="controls">
+        <div class="speed-control">
+          <label for="speed">Animation:</label>
+          <input type="range" id="speed" min="0" max="4" value="2">
+          <span id="speed-label">Normal</span>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="stat-label">Episode</div><div class="stat-value" id="stat-episode">0</div></div>
+        <div class="stat"><div class="stat-label">Total Steps</div><div class="stat-value" id="stat-steps">0</div></div>
+        <div class="stat"><div class="stat-label">Epsilon</div><div class="stat-value" id="stat-epsilon">1.000</div></div>
+        <div class="stat"><div class="stat-label">Alpha</div><div class="stat-value" id="stat-alpha">0.100</div></div>
+        <div class="stat"><div class="stat-label">Gamma</div><div class="stat-value" id="stat-gamma">0.900</div></div>
+        <div class="stat"><div class="stat-label">Max |ΔQ|</div><div class="stat-value" id="stat-delta">0.000</div></div>
+      </div>
+      <div id="board" class="board"></div>
+      <div class="key-insight" id="insight">
+        <strong>One Q-table for all episodes.</strong> The table above is initialized to zeros and
+        never reset. Every episode's every step writes into the same table. Watch the Q values
+        get nudged toward their true values as episodes accumulate.
+      </div>
+    </section>
+
+    <section class="panel" style="display:grid; gap:14px; align-content:start;">
+      <div>
+        <h2 class="section-title">Q-Table Update Log</h2>
+        <p style="font-size:0.78rem; color:var(--muted); margin-bottom:8px;">
+          Each entry shows the same persistent Q(s,a) cell being nudged by a new transition.
+          <span style="color:var(--accent);">Orange glow</span> = just updated,
+          <span style="color:rgba(59,130,246,0.8);">blue glow</span> = bootstrap source (the s' whose max Q was used).
+        </p>
+        <div class="log-box" id="update-log">
+          <div style="color:var(--muted); font-style:italic;">No updates yet. Click "1 Step" or "1 Episode" to start training.</div>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="section-title">Convergence</h2>
+        <div class="curve-tabs">
+          <button class="curve-tab active" data-tab="returns">Episode Returns</button>
+          <button class="curve-tab" data-tab="trace">Q-Value Trace</button>
+        </div>
+        <div id="trace-controls" class="trace-selector" style="display:none;">
+          <label>State:</label>
+          <select id="trace-state"></select>
+          <label>Action:</label>
+          <select id="trace-action">
+            <option value="0">↑ UP</option>
+            <option value="1">→ RIGHT</option>
+            <option value="2" selected>↓ DOWN</option>
+            <option value="3">← LEFT</option>
+          </select>
+        </div>
+        <canvas id="curve" class="curve" width="900" height="200"></canvas>
+        <p class="key-insight" style="margin-top:8px;">
+          <strong>Why convergence needs many episodes:</strong> The environment is stochastic
+          (0.8 intended / 0.1 slip each side). Each episode samples one trajectory — it takes
+          hundreds of samples for the averaged Q values to approximate the true probability-weighted expectations.
+        </p>
+      </div>
+
+      <div>
+        <h2 class="section-title">Training Stats</h2>
+        <div class="stats" style="grid-template-columns: repeat(2, 1fr);">
+          <div class="stat"><div class="stat-label">Avg Return (last 50)</div><div class="stat-value" id="stat-avg-return">—</div></div>
+          <div class="stat"><div class="stat-label">Best Episode Return</div><div class="stat-value" id="stat-best-return">—</div></div>
+          <div class="stat"><div class="stat-label">Current State</div><div class="stat-value" id="stat-current-state">s0</div></div>
+          <div class="stat"><div class="stat-label">Episode Done?</div><div class="stat-value" id="stat-done">No</div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function() {
+  const ROWS = 3, COLS = 3, NUM_STATES = 9, NUM_ACTIONS = 4;
+  const GOAL = 8, START = 0;
+  const STEP_REWARD = -1, GOAL_REWARD = 10;
+  const INTENDED_PROB = 0.8, SLIP_L_PROB = 0.1, SLIP_R_PROB = 0.1;
+  const ACTION_NAMES = ["UP", "RIGHT", "DOWN", "LEFT"];
+  const ACTION_ARROWS = ["↑", "→", "↓", "←"];
+  const MAX_STEPS = 200;
+
+  // --- Environment model (matches gridworld_case_study.py) ---
+  function move(state, action) {
+    if (state === GOAL) return state;
+    let row = Math.floor(state / COLS), col = state % COLS;
+    if (action === 0) row = Math.max(0, row - 1);
+    else if (action === 1) col = Math.min(COLS - 1, col + 1);
+    else if (action === 2) row = Math.min(ROWS - 1, row + 1);
+    else if (action === 3) col = Math.max(0, col - 1);
+    return row * COLS + col;
+  }
+
+  function buildTransitionModel() {
+    const P = {};
+    for (let s = 0; s < NUM_STATES; s++) {
+      P[s] = {};
+      for (let a = 0; a < NUM_ACTIONS; a++) {
+        if (s === GOAL) {
+          P[s][a] = [{ prob: 1.0, next: s, reward: 0, done: true }];
+          continue;
+        }
+        const candidates = [
+          { dir: a, prob: INTENDED_PROB },
+          { dir: (a + 3) % 4, prob: SLIP_L_PROB },
+          { dir: (a + 1) % 4, prob: SLIP_R_PROB },
+        ];
+        const agg = {};
+        for (const c of candidates) {
+          const ns = move(s, c.dir);
+          agg[ns] = (agg[ns] || 0) + c.prob;
+        }
+        P[s][a] = Object.entries(agg).map(([ns, prob]) => {
+          const nsi = Number(ns);
+          const done = nsi === GOAL;
+          return { prob, next: nsi, reward: done ? GOAL_REWARD : STEP_REWARD, done };
+        });
+      }
+    }
+    return P;
+  }
+
+  const P = buildTransitionModel();
+
+  function sampleOutcome(state, action) {
+    const outcomes = P[state][action];
+    const r = Math.random();
+    let cum = 0;
+    for (const o of outcomes) {
+      cum += o.prob;
+      if (r <= cum) return o;
+    }
+    return outcomes[outcomes.length - 1];
+  }
+
+  // --- Q-Learning state ---
+  let Q = Array.from({ length: NUM_STATES }, () => new Float64Array(NUM_ACTIONS));
+  let alpha = 0.1;
+  let gamma = 0.9;
+  let epsilon = 1.0;
+  const epsilonDecay = 0.995;
+  const epsilonMin = 0.01;
+  let episodeCount = 0;
+  let totalSteps = 0;
+  let agentState = START;
+  let episodeDone = false;
+  let episodeStepCount = 0;
+  let episodeReturn = 0;
+  let maxDeltaQ = 0;
+  let episodeMaxDelta = 0;
+
+  // History for charts
+  const episodeReturns = [];
+  const qHistory = {};
+  for (let s = 0; s < NUM_STATES; s++) {
+    for (let a = 0; a < NUM_ACTIONS; a++) {
+      qHistory[`${s}_${a}`] = [];
+    }
+  }
+  let bestReturn = -Infinity;
+
+  // Update log ring buffer
+  const updateLog = [];
+  const MAX_LOG = 20;
+
+  // Glow tracking
+  let lastUpdatedState = -1;
+  let lastBootstrapState = -1;
+
+  // Animation
+  let animating = false;
+  const SPEED_MAP = [500, 200, 80, 20, 0];
+  const SPEED_LABELS = ["Slow", "Medium", "Normal", "Fast", "Instant"];
+
+  // --- DOM refs ---
+  const boardEl = document.getElementById("board");
+  const logEl = document.getElementById("update-log");
+  const curveEl = document.getElementById("curve");
+  const ctx = curveEl.getContext("2d");
+
+  function getSpeed() { return SPEED_MAP[document.getElementById("speed").value]; }
+
+  document.getElementById("speed").addEventListener("input", function() {
+    document.getElementById("speed-label").textContent = SPEED_LABELS[this.value];
+  });
+
+  // --- Q-learning core ---
+  function chooseAction(state) {
+    if (Math.random() < epsilon) {
+      return Math.floor(Math.random() * NUM_ACTIONS);
+    }
+    let best = -Infinity, bestA = 0;
+    for (let a = 0; a < NUM_ACTIONS; a++) {
+      if (Q[state][a] > best) { best = Q[state][a]; bestA = a; }
+    }
+    return bestA;
+  }
+
+  function qUpdate(s, a, r, sNext) {
+    let maxQNext = -Infinity;
+    for (let a2 = 0; a2 < NUM_ACTIONS; a2++) {
+      if (Q[sNext][a2] > maxQNext) maxQNext = Q[sNext][a2];
+    }
+    const target = r + gamma * maxQNext;
+    const oldQ = Q[s][a];
+    Q[s][a] += alpha * (target - oldQ);
+    const delta = Math.abs(Q[s][a] - oldQ);
+    if (delta > episodeMaxDelta) episodeMaxDelta = delta;
+    return { oldQ, newQ: Q[s][a], target, maxQNext, delta };
+  }
+
+  function addLogEntry(ep, step, s, a, r, sNext, info) {
+    updateLog.unshift({
+      ep, step, s, a, r, sNext,
+      oldQ: info.oldQ, newQ: info.newQ, target: info.target
+    });
+    if (updateLog.length > MAX_LOG) updateLog.pop();
+  }
+
+  function doOneStep() {
+    if (episodeDone) {
+      agentState = START;
+      episodeDone = false;
+      episodeStepCount = 0;
+      episodeReturn = 0;
+      episodeMaxDelta = 0;
+      episodeCount++;
+      epsilon = Math.max(epsilonMin, epsilon * epsilonDecay);
+    }
+    const s = agentState;
+    const a = chooseAction(s);
+    const outcome = sampleOutcome(s, a);
+    const info = qUpdate(s, a, outcome.reward, outcome.next);
+
+    addLogEntry(episodeCount, episodeStepCount, s, a, outcome.reward, outcome.next, info);
+
+    lastUpdatedState = s;
+    lastBootstrapState = outcome.next;
+
+    agentState = outcome.next;
+    episodeStepCount++;
+    totalSteps++;
+    episodeReturn += outcome.reward;
+
+    if (outcome.done || episodeStepCount >= MAX_STEPS) {
+      episodeDone = true;
+      maxDeltaQ = episodeMaxDelta;
+      episodeReturns.push(episodeReturn);
+      if (episodeReturn > bestReturn) bestReturn = episodeReturn;
+      recordQSnapshot();
+    }
+  }
+
+  function recordQSnapshot() {
+    for (let s = 0; s < NUM_STATES; s++) {
+      for (let a = 0; a < NUM_ACTIONS; a++) {
+        qHistory[`${s}_${a}`].push(Q[s][a]);
+      }
+    }
+  }
+
+  function runEpisodeSilent() {
+    if (!episodeDone) {
+      while (!episodeDone) doOneStep();
+    }
+    agentState = START;
+    episodeDone = false;
+    episodeStepCount = 0;
+    episodeReturn = 0;
+    episodeMaxDelta = 0;
+    episodeCount++;
+    epsilon = Math.max(epsilonMin, epsilon * epsilonDecay);
+
+    let done = false;
+    let steps = 0;
+    while (!done && steps < MAX_STEPS) {
+      const s = agentState;
+      const a = chooseAction(s);
+      const outcome = sampleOutcome(s, a);
+      const info = qUpdate(s, a, outcome.reward, outcome.next);
+      agentState = outcome.next;
+      episodeStepCount++;
+      totalSteps++;
+      episodeReturn += outcome.reward;
+      steps++;
+      if (info.delta > episodeMaxDelta) episodeMaxDelta = info.delta;
+      if (outcome.done || steps >= MAX_STEPS) {
+        done = true;
+        episodeDone = true;
+        maxDeltaQ = episodeMaxDelta;
+        episodeReturns.push(episodeReturn);
+        if (episodeReturn > bestReturn) bestReturn = episodeReturn;
+        recordQSnapshot();
+      }
+    }
+  }
+
+  function resetAll() {
+    Q = Array.from({ length: NUM_STATES }, () => new Float64Array(NUM_ACTIONS));
+    alpha = 0.1;
+    epsilon = 1.0;
+    episodeCount = 0;
+    totalSteps = 0;
+    agentState = START;
+    episodeDone = false;
+    episodeStepCount = 0;
+    episodeReturn = 0;
+    maxDeltaQ = 0;
+    episodeMaxDelta = 0;
+    episodeReturns.length = 0;
+    bestReturn = -Infinity;
+    updateLog.length = 0;
+    lastUpdatedState = -1;
+    lastBootstrapState = -1;
+    for (let s = 0; s < NUM_STATES; s++) {
+      for (let a = 0; a < NUM_ACTIONS; a++) {
+        qHistory[`${s}_${a}`].length = 0;
+      }
+    }
+    render();
+  }
+
+  // --- Rendering ---
+  function bestAction(s) {
+    let best = -Infinity, bestA = 0;
+    for (let a = 0; a < NUM_ACTIONS; a++) {
+      if (Q[s][a] > best) { best = Q[s][a]; bestA = a; }
+    }
+    return bestA;
+  }
+
+  function maxQ(s) {
+    let best = -Infinity;
+    for (let a = 0; a < NUM_ACTIONS; a++) {
+      if (Q[s][a] > best) best = Q[s][a];
+    }
+    return best;
+  }
+
+  function renderBoard() {
+    boardEl.innerHTML = "";
+    const vals = Array.from({ length: NUM_STATES }, (_, i) => maxQ(i));
+    const minV = Math.min(...vals);
+    const maxV = Math.max(...vals);
+    const range = Math.max(1e-9, maxV - minV);
+
+    for (let s = 0; s < NUM_STATES; s++) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      if (s === GOAL) cell.classList.add("goal");
+      if (s === agentState) cell.classList.add("agent");
+      if (s === lastUpdatedState) cell.classList.add("just-updated");
+      if (s === lastBootstrapState && s !== lastUpdatedState) cell.classList.add("bootstrap-source");
+
+      const norm = (vals[s] - minV) / range;
+      if (s !== GOAL) {
+        cell.style.background = `linear-gradient(180deg, rgba(194, 117, 42, ${0.04 + norm * 0.22}), rgba(255,255,255,0.92))`;
+      }
+
+      const ba = bestAction(s);
+      const lines = ACTION_NAMES.map((name, a) => {
+        const qv = Q[s][a];
+        const allEqual = Q[s].every(v => Math.abs(v - Q[s][0]) < 1e-12);
+        const isBest = !allEqual && a === ba;
+        const barW = vals[s] !== 0 ? Math.max(2, Math.abs(qv / Math.max(1e-9, Math.abs(vals[s]))) * 100) : 2;
+        return `<div class="action-line">
+          <span class="arrow${isBest ? " best" : ""}">${ACTION_ARROWS[a]}</span>
+          <div class="bar"><span style="width:${barW.toFixed(1)}%"></span></div>
+          <span class="qval">${qv.toFixed(2)}</span>
+        </div>`;
+      }).join("");
+
+      const allZero = Q[s].every(v => Math.abs(v) < 1e-12);
+      const bestArrow = s === GOAL ? "G" : (allZero ? "?" : ACTION_ARROWS[ba]);
+
+      cell.innerHTML = `
+        <div class="cell-top">
+          <span class="state-name">s${s}</span>
+          <span class="best-arrow">${bestArrow}</span>
+          <span class="state-score">${vals[s].toFixed(2)}</span>
+        </div>
+        <div class="action-lines">${lines}</div>
+      `;
+      boardEl.appendChild(cell);
+    }
+  }
+
+  function renderLog() {
+    if (updateLog.length === 0) {
+      logEl.innerHTML = '<div style="color:var(--muted); font-style:italic;">No updates yet. Click "1 Step" or "1 Episode" to start training.</div>';
+      return;
+    }
+    logEl.innerHTML = updateLog.map(e =>
+      `<div class="log-entry">
+        <span class="log-ep">Ep ${e.ep}</span>
+        <span class="log-detail">step ${e.step}</span>
+        Q(s${e.s}, ${ACTION_ARROWS[e.a]})
+        <span class="log-old">${e.oldQ.toFixed(3)}</span> →
+        <span class="log-new">${e.newQ.toFixed(3)}</span>
+        <span class="log-detail">[r=${e.r.toFixed(0)}, s'=s${e.sNext}, target=${e.target.toFixed(2)}]</span>
+      </div>`
+    ).join("");
+  }
+
+  function renderStats() {
+    document.getElementById("stat-episode").textContent = episodeCount;
+    document.getElementById("stat-steps").textContent = totalSteps;
+    document.getElementById("stat-epsilon").textContent = epsilon.toFixed(3);
+    document.getElementById("stat-alpha").textContent = alpha.toFixed(3);
+    document.getElementById("stat-gamma").textContent = gamma.toFixed(3);
+    document.getElementById("stat-delta").textContent = maxDeltaQ.toFixed(4);
+    document.getElementById("stat-current-state").textContent = `s${agentState}`;
+    document.getElementById("stat-done").textContent = episodeDone ? "Yes" : "No";
+
+    const last50 = episodeReturns.slice(-50);
+    const avg = last50.length > 0 ? (last50.reduce((a, b) => a + b, 0) / last50.length) : NaN;
+    document.getElementById("stat-avg-return").textContent = isNaN(avg) ? "—" : avg.toFixed(1);
+    document.getElementById("stat-best-return").textContent = bestReturn === -Infinity ? "—" : bestReturn.toFixed(1);
+  }
+
+  // --- Chart ---
+  let chartMode = "returns";
+
+  function drawReturnsChart() {
+    const width = curveEl.width, height = curveEl.height;
+    const pad = 28;
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = "rgba(255,255,255,0.88)";
+    ctx.fillRect(0, 0, width, height);
+
+    if (episodeReturns.length < 2) {
+      ctx.fillStyle = "#5d6b78";
+      ctx.font = "13px Aptos, Segoe UI, sans-serif";
+      ctx.fillText("Train at least 2 episodes to see the chart.", pad, height / 2);
+      return;
+    }
+
+    // Moving average
+    const window = Math.min(50, Math.floor(episodeReturns.length / 2)) || 1;
+    const ma = [];
+    let sum = 0;
+    for (let i = 0; i < episodeReturns.length; i++) {
+      sum += episodeReturns[i];
+      if (i >= window) sum -= episodeReturns[i - window];
+      ma.push(sum / Math.min(i + 1, window));
+    }
+
+    const minV = Math.min(...ma);
+    const maxV = Math.max(...ma);
+    const rangeV = Math.max(1e-6, maxV - minV);
+    const scaleY = (height - pad * 2) / rangeV;
+
+    // Grid lines
+    ctx.strokeStyle = "rgba(194,117,42,0.12)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 4; i++) {
+      const y = pad + ((height - pad * 2) / 3) * i;
+      ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(width - pad, y); ctx.stroke();
+    }
+
+    // Raw returns (faint dots)
+    ctx.fillStyle = "rgba(194,117,42,0.15)";
+    const rawRangeV = Math.max(1e-6, Math.max(...episodeReturns) - Math.min(...episodeReturns));
+    const rawMin = Math.min(...episodeReturns);
+    const rawScaleY = (height - pad * 2) / rawRangeV;
+    for (let i = 0; i < episodeReturns.length; i++) {
+      const x = pad + (i / Math.max(1, episodeReturns.length - 1)) * (width - pad * 2);
+      const y = height - pad - (episodeReturns[i] - rawMin) * rawScaleY;
+      ctx.fillRect(x - 1, y - 1, 2, 2);
+    }
+
+    // Moving average line
+    ctx.strokeStyle = "#c2752a";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let i = 0; i < ma.length; i++) {
+      const x = pad + (i / Math.max(1, ma.length - 1)) * (width - pad * 2);
+      const y = height - pad - (ma[i] - minV) * scaleY;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Labels
+    ctx.fillStyle = "#5d6b78";
+    ctx.font = "11px Aptos, Segoe UI, sans-serif";
+    ctx.fillText(`min ${minV.toFixed(1)}`, 4, height - 6);
+    ctx.fillText(`max ${maxV.toFixed(1)}`, 4, 14);
+    ctx.fillText(`Episode returns (${window}-ep moving avg)`, pad + 4, 14);
+  }
+
+  function drawTraceChart() {
+    const width = curveEl.width, height = curveEl.height;
+    const pad = 28;
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = "rgba(255,255,255,0.88)";
+    ctx.fillRect(0, 0, width, height);
+
+    const s = parseInt(document.getElementById("trace-state").value);
+    const a = parseInt(document.getElementById("trace-action").value);
+    const data = qHistory[`${s}_${a}`];
+
+    if (!data || data.length < 2) {
+      ctx.fillStyle = "#5d6b78";
+      ctx.font = "13px Aptos, Segoe UI, sans-serif";
+      ctx.fillText("Train at least 2 episodes to see the trace.", pad, height / 2);
+      return;
+    }
+
+    const minV = Math.min(...data);
+    const maxV = Math.max(...data);
+    const rangeV = Math.max(1e-6, maxV - minV);
+    const scaleY = (height - pad * 2) / rangeV;
+
+    ctx.strokeStyle = "rgba(194,117,42,0.12)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 4; i++) {
+      const y = pad + ((height - pad * 2) / 3) * i;
+      ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(width - pad, y); ctx.stroke();
+    }
+
+    ctx.strokeStyle = "#c2752a";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let i = 0; i < data.length; i++) {
+      const x = pad + (i / Math.max(1, data.length - 1)) * (width - pad * 2);
+      const y = height - pad - (data[i] - minV) * scaleY;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    ctx.fillStyle = "#5d6b78";
+    ctx.font = "11px Aptos, Segoe UI, sans-serif";
+    ctx.fillText(`Q(s${s}, ${ACTION_ARROWS[a]}) over episodes`, pad + 4, 14);
+    ctx.fillText(`${minV.toFixed(2)}`, 4, height - 6);
+    ctx.fillText(`${maxV.toFixed(2)}`, 4, 14);
+    // Final value line
+    const finalY = height - pad - (data[data.length - 1] - minV) * scaleY;
+    ctx.strokeStyle = "rgba(194,117,42,0.4)";
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(pad, finalY); ctx.lineTo(width - pad, finalY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillText(`current: ${data[data.length - 1].toFixed(3)}`, width - 140, finalY - 6);
+  }
+
+  function drawChart() {
+    if (chartMode === "returns") drawReturnsChart();
+    else drawTraceChart();
+  }
+
+  function render() {
+    renderBoard();
+    renderLog();
+    renderStats();
+    drawChart();
+  }
+
+  // --- Populate trace selector ---
+  const traceStateEl = document.getElementById("trace-state");
+  for (let s = 0; s < NUM_STATES; s++) {
+    const opt = document.createElement("option");
+    opt.value = s;
+    opt.textContent = `s${s}`;
+    if (s === 4) opt.selected = true;
+    traceStateEl.appendChild(opt);
+  }
+
+  // --- Chart tabs ---
+  document.querySelectorAll(".curve-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".curve-tab").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      chartMode = tab.dataset.tab;
+      document.getElementById("trace-controls").style.display = chartMode === "trace" ? "flex" : "none";
+      drawChart();
+    });
+  });
+  document.getElementById("trace-state").addEventListener("change", drawChart);
+  document.getElementById("trace-action").addEventListener("change", drawChart);
+
+  // --- Button handlers ---
+  function setButtons(enabled) {
+    document.getElementById("btn-step").disabled = !enabled;
+    document.getElementById("btn-episode").disabled = !enabled;
+    document.getElementById("btn-100").disabled = !enabled;
+    document.getElementById("btn-1000").disabled = !enabled;
+    document.getElementById("btn-converge").disabled = !enabled;
+    document.getElementById("btn-reset").disabled = !enabled;
+    animating = !enabled;
+  }
+
+  document.getElementById("btn-step").addEventListener("click", () => {
+    doOneStep();
+    render();
+    setTimeout(() => {
+      lastUpdatedState = -1;
+      lastBootstrapState = -1;
+      renderBoard();
+    }, 400);
+  });
+
+  document.getElementById("btn-episode").addEventListener("click", async () => {
+    const speed = getSpeed();
+    if (speed === 0) {
+      // finish any partial episode
+      if (!episodeDone) { while (!episodeDone) doOneStep(); }
+      runEpisodeSilent();
+      lastUpdatedState = -1;
+      lastBootstrapState = -1;
+      render();
+      return;
+    }
+    setButtons(false);
+    if (episodeDone) {
+      agentState = START;
+      episodeDone = false;
+      episodeStepCount = 0;
+      episodeReturn = 0;
+      episodeMaxDelta = 0;
+      episodeCount++;
+      epsilon = Math.max(epsilonMin, epsilon * epsilonDecay);
+    }
+    let steps = 0;
+    while (!episodeDone && steps < MAX_STEPS && animating) {
+      doOneStep();
+      render();
+      steps++;
+      await new Promise(r => setTimeout(r, speed));
+    }
+    lastUpdatedState = -1;
+    lastBootstrapState = -1;
+    setButtons(true);
+    render();
+  });
+
+  document.getElementById("btn-100").addEventListener("click", () => {
+    for (let i = 0; i < 100; i++) {
+      if (!episodeDone) { while (!episodeDone) doOneStep(); }
+      runEpisodeSilent();
+    }
+    lastUpdatedState = -1;
+    lastBootstrapState = -1;
+    render();
+  });
+
+  document.getElementById("btn-1000").addEventListener("click", () => {
+    for (let i = 0; i < 1000; i++) {
+      if (!episodeDone) { while (!episodeDone) doOneStep(); }
+      runEpisodeSilent();
+    }
+    lastUpdatedState = -1;
+    lastBootstrapState = -1;
+    render();
+  });
+
+  document.getElementById("btn-converge").addEventListener("click", () => {
+    let convergedCount = 0;
+    const threshold = 0.0001;
+    const requiredStreak = 20;
+    const maxEpisodes = 50000;
+    let trained = 0;
+    while (convergedCount < requiredStreak && trained < maxEpisodes) {
+      if (!episodeDone) { while (!episodeDone) doOneStep(); }
+      runEpisodeSilent();
+      trained++;
+      if (maxDeltaQ < threshold) convergedCount++;
+      else convergedCount = 0;
+    }
+    lastUpdatedState = -1;
+    lastBootstrapState = -1;
+    render();
+    const msg = convergedCount >= requiredStreak
+      ? `Converged after ${trained} episodes (max |ΔQ| < ${threshold} for ${requiredStreak} consecutive episodes).`
+      : `Stopped after ${maxEpisodes} episodes. max |ΔQ| = ${maxDeltaQ.toFixed(6)}.`;
+    document.getElementById("insight").innerHTML = `<strong>Training complete.</strong> ${msg} The Q-table now approximates Q* — the optimal action-value function. Compare the best actions to the DP solution: every state should point toward the goal.`;
+  });
+
+  document.getElementById("btn-reset").addEventListener("click", resetAll);
+
+  // --- Init ---
+  render();
+})();
+</script>
+</body>
+</html>
