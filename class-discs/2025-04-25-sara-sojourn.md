@@ -1,0 +1,47 @@
+---
+tags : [drl-class-notes]
+title : "Sara Returns"
+---
+
+### Today's conversations - 4/25/26
+
+Dear Friends,
+
+Today we delved into the world of Sara. 
+
+Sara is a little girl, but a legendary explorer of deep forests. She is into this deep forest, where he goal is to survive and discover the most tastiest and nutritious and brightest berries in the forest. We will continue with her journey in the forest for this entire course, and learn how she smartly creates mathematical formulation to get what she wants in her life in the forest. 
+
+We unravelled following concepts delving into the beautiful mind of Sara today - 
+
+1. RL is a new paradigm of ML where there is an agent (Sara) and there is an environment (forest). They are exclusive to each other. 
+2. Environment can exist in different states. And these states change as a fall out of interaction of the environment with the agent. Agent senses the environment and gets rewards from it. The environment finds rewards and next states to go to, based on the actions the agent does. 
+3. So, we came into two areas - 
+    - state transitions : environment moves to a new state based on what action the agent did. 
+    - actions : agent takes actions, and that lands her to a new state, and a new reward corresponding to that state, that is given by environment. 
+4. These state transitions might be deterministic or stochastic. Like we discussed. The ground in the forest might be slippery. Even if Sara wants to walk right, she might slip towards left, due to the mosses and marshes on the ground of the deep forest. So, there is something in the environment that determines which state she lands into. It is not just her action and intentions. That role played by the environment in determining the next state the agent can land into is known as State Transition Probability or Environment Dynamics. This is a conditional probability - $P(s',r | s, a)$ 
+5. Sara has a big role to chose which action she would take based on her intention. That is represented as another conditional probability Policy pi(a | s). This basically mapping from state to action. 
+6. As happens in real life, the outcome is not in our hands. Inspite of all good intentions and hard work, we might end up getting absolutely opposite outcomes from what we intended for. So, the outcome (Return G) is a joint probability of the above two conditional probabilities. And that Return is given by the formula - 
+$$V^pi(s) = \sum_a pi(a|s) * \sum_{s'} P(s'|s,a) * [R(s,a,s') + \gamma * V^pi(s')]$$  
+7. We discussed that V_pi(s) is a function of state and the policy. Policy is the trail of all actions and states mapping that was taken by the agent (or not taken) and the current state where she is (s).  So, the value that Sara is looking for is long term. It just not depends on the reward of the current state R, but also rewards that she will get if she follows a given trajectory (list of all states she undertakes) following the policy (list of all actions she does in each state), in future. So, she being a lover of maths, she simply multiplies the conditional probabilities of state transitions and policy and determines the value V(s) for every state she is, to know her return in the long term.   
+8. We discussed that this so called "long term" is actually substantial for only next few steps. As we have a discount factor (gamma) multiplied repatedly to exponentially reduce the future rewards. So, Sara's formulation was actually not so called really long term, but she being a pragmatic little girl, and she is hungry and needs to survice with berries, she considers only next few steps, instead of considering the entire large deep forest to take a decision to which path she will go. so return G is given by - 
+
+$$G_t = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \dots = \sum_{k=0}^{\infty} \gamma^k R_{t+k+1}$$
+
+9. We also discussed that V(s) was basically unfolding G_t. In the expression above, G_t has elegantly abstracted out the two conditional probabilities (P and pi) we spoke above. And also the actions that are causing those rewards to come. V(s) is just opening up the abstraction and giving the actual under the hood formulation of G. Otherwise V and G are the same, you see! Another small nuance is G is wrt time 't' and V is wrt state s! So, they have their own separate usage. 
+10. We spoke about what happens when Sara wants to take an action. Is V(s) good enough for her? We said that by high level philosophy, things do not work in life. V(s) was that high level stochastic approximation of the value of that state she is in, taking into consideration the stochastic distribution of Pi and P of the entire forces. But she has to take a decision should she take the next step or not. For that she need to actually take the next step, get the next rewards and then apply the overarching philosophy of V(s). See, the next reward that Sara gets is the most important for her. That would decide she will survive or not. It might be a new state of hidden landmine, as that forest is a war prone forest, or there might be a Tiger in the cave. The rewards associated with next states are relative less valuable (so reduced by gamma factor). So, Sara did not keep sitting with V(s), and instead she formulated a new expression, being pragmatic to focus on her next action - Q(s,a) for a given policy 
+$$Q_\pi(s, a) = \mathbb{E}_\pi [G_t \mid S_t = s, A_t = a]$$   
+Our discussions are scripted at [https://github.com/samratkar/drl/blob/main/1-introduction/drl-101.md](https://github.com/samratkar/drl/blob/main/1-introduction/drl-101.md)
+
+---
+
+### Food for thought 
+
+1. Derive the equation for V(s) from G_t. Understand how both are same. And how they are just old wine in the new bottle. 
+2. Understand the difference between V(s) and Q(s,a) - 
+3. Why first function has only one variable s, and next one has two variables s, a
+4. Why first function V(s) was not good enough for Sara to survive and why she needed Q(s,a) and how it helped her survive. 
+5. How conditional probability and joint probability are in play in the formulation of the long term return Sara is expecting. 
+6. Why Sara's mathematical formulation of her decision making process (Markov Decision Process MDP) is really not long term. And why it is also long term at the same time. Explain. 
+7. Consider the sequence of rewards received 𝑅1= −1,𝑅2=2,𝑅3=6,𝑅4=3,𝑅5=2 ; 𝑇=5 Using the discount factor 𝛾=0.4, compute the values of 𝐺1, 𝐺3 where 𝐺𝑡 is expected discounted return at time step ‘t’
+8. What are the missing pieces in Sara's formulations? Is past considered at all? Is future given its due importance? Is there any role of other agents in the forest? What about the other animals in the forest? Do they have any role to play in Sara's survival and discovery of berries?
+
