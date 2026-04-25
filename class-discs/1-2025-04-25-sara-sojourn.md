@@ -30,9 +30,9 @@ $$G_t = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \dots = \sum_{k=0}^{\infty
 9. We also discussed that V(s) was basically unfolding G_t. In the expression above, G_t has elegantly abstracted out the two conditional probabilities (P and pi) we spoke above. And also the actions that are causing those rewards to come. V(s) is just opening up the abstraction and giving the actual under the hood formulation of G. Otherwise V and G are the same, you see! Another small nuance is G is wrt time 't' and V is wrt state s! So, they have their own separate usage. 
 10. We spoke about what happens when Sara wants to take an action. Is V(s) good enough for her? We said that by high level philosophy, things do not work in life. V(s) was that high level stochastic approximation of the value of that state she is in, taking into consideration the stochastic distribution of Pi and P of the entire forces. But she has to take a decision should she take the next step or not. For that she need to actually take the next step, get the next rewards and then apply the overarching philosophy of V(s). See, the next reward that Sara gets is the most important for her. That would decide she will survive or not. It might be a new state of hidden landmine, as that forest is a war prone forest, or there might be a Tiger in the cave. The rewards associated with next states are relative less valuable (so reduced by gamma factor). So, Sara did not keep sitting with V(s), and instead she formulated a new expression, being pragmatic to focus on her next action - Q(s,a) for a given policy 
 $$Q_\pi(s, a) = \mathbb{E}_\pi [G_t \mid S_t = s, A_t = a]$$   
+
 Our discussions are scripted at [https://github.com/samratkar/drl/blob/main/1-introduction/drl-101.md](https://github.com/samratkar/drl/blob/main/1-introduction/drl-101.md)
 
----
 
 ### Food for thought 
 
