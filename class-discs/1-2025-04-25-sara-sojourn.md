@@ -7,6 +7,9 @@ title : "Sara's sojourn"
 ### Today's conversations - 4/25/26 
 ### Sara's Sojourn in the Deep Forest - A DRL Story
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/l0DmELLMkAc?si=iks9hIgd4HNkGOPm" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
 Dear Friends,
 
 Today we delved into the world of Sara. 
