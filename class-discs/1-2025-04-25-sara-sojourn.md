@@ -1,9 +1,11 @@
 ---
 tags : [drl-class-notes]
-title : "Sara Returns"
+title : "Sara's sojourn"
 ---
 
-### Today's conversations - 4/25/26
+
+### Today's conversations - 4/25/26 
+### Sara's Sojourn in the Deep Forest - A DRL Story
 
 Dear Friends,
 
