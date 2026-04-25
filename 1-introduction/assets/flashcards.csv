@@ -1,0 +1,60 @@
+What are the two most important distinguishing features of reinforcement learning?,Trial-and-error search and delayed reward.
+How does reinforcement learning differ from supervised learning regarding the source of 'correct' actions?,Reinforcement learning discovers effective actions through experience rather than relying on a supervisor's labeled examples.
+"In the context of machine learning paradigms, why is reinforcement learning distinct from unsupervised learning?",It focuses on maximising a reward signal rather than finding hidden structure in unlabeled data.
+The dilemma where an agent must choose between staying with a known good action or trying a new one is the _____.,Exploration-exploitation trade-off
+Concept: Policy,Definition: A mapping from perceived states of the environment to the actions to be taken in those states.
+What is the primary difference between a 'reward signal' and a 'value function'?,"The reward signal indicates immediate desirability, while the value function specifies long-term desirability."
+"In an RL system, what is the optional element that mimics the behaviour of the environment to allow for planning?",Model of the environment.
+What type of reinforcement learning methods do not use an environment model and rely solely on trial-and-error?,Model-free methods.
+"Formula: The true value of an action $a$, denoted $q^*(a)$.",$q^*(a) \doteq E[R_t | A_t = a]$ (the expected reward given action $a$ is selected).
+The method of estimating action values by calculating the average of the rewards received for that action is the _____ method.,Sample-average
+What is the formula for a 'greedy' action selection $A_t$ based on estimated values $Q_t(a)$?,$A_t \doteq \text{argmax}_a Q_t(a)$
+"In $\epsilon$-greedy action selection, what does the parameter $\epsilon$ represent?",The probability with which the agent selects a random action instead of the greedy one.
+What is the general incremental update formula for an estimate using a target and a step-size?,$NewEstimate \leftarrow OldEstimate + StepSize [Target - OldEstimate]$.
+How is the sample-average $Q_{n+1}$ updated incrementally using the $n$-th reward $R_n$ and the previous average $Q_n$?,$Q_{n+1} = Q_n + \frac{1}{n} [R_n - Q_n]$
+Why is a constant step-size parameter $\alpha$ preferred over sample-averages in nonstationary bandit problems?,"It gives more weight to recent rewards than to long-past rewards, allowing the agent to track changes over time."
+"In the constant step-size update $Q_{n+1} = Q_n + \alpha[R_n - Q_n]$, the weight of the $i$-th reward $R_i$ decays _____ as it gets older.",Exponentially
+What are the two conditions required for a sequence of step-size parameters $\alpha_n(a)$ to ensure convergence to true action values?,$\sum_{n=1}^{\infty} \alpha_n(a) = \infty$ and $\sum_{n=1}^{\infty} \alpha_n^2(a) < \infty$.
+How do 'optimistic initial values' encourage exploration in stationary problems?,"By setting initial estimates high, any selected action likely results in 'disappointment', forcing the agent to try all actions."
+What is the primary limitation of 'optimistic initial values' as an exploration strategy?,It is only a temporary drive for exploration and does not help with nonstationary problems.
+"In UCB action selection, what does the term $\sqrt{\frac{\ln t}{N_t(a)}}$ represent?",A measure of uncertainty or variance in the estimate of the value of action $a$.
+Formula: Upper Confidence Bound (UCB) action selection.,$A_t \doteq \text{argmax}_a [Q_t(a) + c \sqrt{\frac{\ln t}{N_t(a)}}]$
+What does the parameter $c$ control in the UCB action selection formula?,The degree of exploration (confidence level).
+"Unlike action-value methods, gradient bandit algorithms learn a numerical _____ for each action.",Preference ($H_t(a)$)
+What probability distribution is used in gradient bandit algorithms to select actions based on preferences?,Soft-max (Gibbs or Boltzmann) distribution.
+Formula: Soft-max action selection probability $\pi_t(a)$ in terms of preferences $H_t(a)$.,$\pi_t(a) \doteq \frac{e^{H_t(a)}}{\sum_{b=1}^k e^{H_t(b)}}$
+"In the gradient bandit update rule, what is the role of the reward baseline $\bar{R}_t$?",It serves as a comparison point to determine if the probability of the selected action should increase or decrease.
+"Mathematically, the gradient bandit algorithm is an instance of _____.",Stochastic gradient ascent
+What effect does a reward baseline have on the expected update of the gradient bandit algorithm?,"It has no effect on the expected update but significantly reduces the variance, speeding up convergence."
+Concept: Associative Search (Contextual Bandits),Definition: Tasks where the agent must associate different actions with different situations (contexts).
+What is the 'Law of Effect' as proposed by Edward Thorndike?,"Actions followed by satisfaction are strengthened, while those followed by discomfort are weakened."
+Who introduced the discrete stochastic version of the optimal control problem known as Markov decision processes (MDPs)?,Richard Bellman.
+What is the 'curse of dimensionality' in the context of dynamic programming?,The exponential growth of computational requirements with the number of state variables.
+Temporal-difference (TD) learning methods are driven by the difference between _____.,Temporally successive estimates of the same quantity.
+"Which architecture, developed in 1981, combined TD learning with trial-and-error learning?",Actor-critic architecture.
+"What specific algorithm, developed by Chris Watkins in 1989, integrated TD learning with the MDP formalism?",Q-learning.
+What biological phenomenon shows an uncanny similarity to the behaviour of TD algorithms?,The activity of dopamine-producing neurons in the brain.
+What defines a 'stationary' bandit problem?,A problem where the reward probability distributions for each action do not change over time.
+"In an RL environment, if the agent can judge progress based on direct sensors, the goal is considered _____.",Explicit
+What is the difference between model-based and model-free reinforcement learning regarding trial-and-error?,"Model-free methods are purely trial-and-error, whereas model-based methods use a model for planning before acting."
+"In the context of RL, 'state' can be informally defined as _____.",Whatever information is available to the agent about its environment at a given time.
+Evolutionary methods for RL problems search directly in the space of _____.,Policies
+Why are evolutionary methods considered less efficient than RL methods for individual interaction?,They ignore the state-action structure and the sequence of interactions occurring within a lifetime.
+What is the outcome of a greedy action selection on a long-term reward in a stochastic task?,It may yield lower total reward because it fails to discover potentially better actions through exploration.
+"In a $k$-armed bandit problem, if the reward variance is zero, which selection method is most likely to perform best?",The greedy method.
+The incremental update rule $Q_{n+1} = Q_n + \alpha [R_n - Q_n]$ is also known as an _____.,Exponential recency-weighted average
+What happens to the weight of the initial estimate $Q_1$ over time in a constant step-size update?,The weight $(1-\alpha)^n$ decreases toward zero as $n$ increases.
+Why does the UCB algorithm typically show a 'spike' in performance after the first $k$ steps?,Because it spends the first $k$ steps trying each action once before beginning to exploit the best-looking ones.
+The standard form of a soft-max distribution for two actions is mathematically equivalent to which common function?,Logistic (or sigmoid) function.
+Which subelement of RL is described as being analogous to 'pleasure and pain' in biological systems?,Reward signal.
+"In the tic-tac-toe RL example, how are values 'backed up'?",The value of a state is moved a fraction of the way toward the value of the succeeding state after a move.
+Which RL subelement alone is sufficient to determine the agent's behavior?,Policy.
+"In the incremental update formula, what does the 'Error' term represent?",The difference between the target (new reward) and the current estimate ($R_n - Q_n$).
+Which component of the gradient bandit algorithm makes it robust to shifts in the absolute level of rewards?,The reward baseline ($\bar{R}_t$).
+What is the primary objective of a reinforcement learning agent?,To maximise the total reward it receives over the long run.
+"In the context of RL, what is 'credit assignment'?",The problem of determining which specific decisions were responsible for a final success or failure.
+What is the main drawback of using UCB in large state spaces or with function approximation?,It becomes impractical to maintain and update counts for each state-action pair.
+"If $\alpha = 1$ in the incremental update $Q_{n+1} = Q_n + \alpha[R_n - Q_n]$, what is the value of $Q_{n+1}$?",$Q_{n+1} = R_n$ (only the most recent reward is considered).
+"In RL, what is the role of an 'afterstate'?",It represents the state of the environment after the agent's move but before the opponent's or environment's response.
+Which historical 'thread' of RL contributed the concept of 'optimal return functions'?,Optimal control and dynamic programming.
+What was the core idea of A. Harry Klopf's 'hedonistic' learning system?,A system that adapts its behaviour to maximise a special reinforcement signal from its environment.
