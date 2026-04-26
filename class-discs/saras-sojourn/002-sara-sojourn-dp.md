@@ -70,6 +70,53 @@ Sara starts with a guess (all zeros) and uses the Bellman Equation to "sweep" th
 
 Each "sweep" (iteration) ripples the truth one step further away from the terminal anchor until the entire map reaches a **Fixed Point**—a state of mathematical harmony where no value needs to change anymore.
 
+### 6. The Algorithm in Python
+
+Here is how Sara’s campfire calculations look in code. Note how the "learning" is simply setting the value to the **Bellman Target**.
+
+```python
+import numpy as np
+
+def policy_evaluation(states, actions, model, policy, gamma=0.9, theta=1e-6):
+    """
+    states: list of states [0, 1, 2, ...]
+    model(s, a): returns list of (prob, next_state, reward)
+    policy(s, a): returns probability of taking action 'a' in state 's'
+    """
+    # 1. Initialize Sara's guess (all zeros)
+    V = np.zeros(len(states))
+    
+    while True:
+        delta = 0
+        # 2. Sweep through every state on the map
+        for s in states:
+            v_old = V[s]
+            
+            # 3. Calculate the Bellman Target
+            # We look at every possible action and every possible outcome
+            target = 0
+            for a in actions:
+                p_action = policy(s, a)
+                for prob, s_next, reward in model(s, a):
+                    target += p_action * prob * (reward + gamma * V[s_next])
+            
+            # 4. Learning happens here!
+            # Because we have a perfect map, we don't need to 'smooth' our learning.
+            # Effectively: V[s] = V[s] + 1.0 * (target - V[s])
+            V[s] = target
+            
+            delta = max(delta, abs(v_old - V[s]))
+            
+        # 5. Stop when the truth has rippled through the whole map (convergence)
+        if delta < theta:
+            break
+            
+    return V
+```
+
+**Why this isn't "Machine Learning" in the traditional sense:**
+In this code, there are no "samples" and no "experience." Sara is simply performing **numerical optimization** to solve her system of equations. The "learning" is the convergence of her guesses toward the fixed point.
+
 **Key Insights:**
 *   **Full Backup:** Unlike interacting where she sees one path, here she looks at *every* possible future state the map says is possible.
-*   **Synchronous vs. Asynchronous:** Sara can update all states at once (synchronous) or update them one by one as she thinks about them (asynchronous). Regardless, as long as she keeps visiting every state, she will find the truth.
+*   **Synchronous vs. Asynchronous:** Sara can update all states at once (as in the code above with `V[s] = target`) or update them in-place. Both will eventually find the truth.
