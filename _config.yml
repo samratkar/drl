@@ -7,7 +7,7 @@ url: "https://samratkar.github.io"
 github_username: samratkar
 
 # Build settings
-theme: minima
+theme: jekyll-theme-hacker
 plugins:
   - jekyll-feed
   - jekyll-seo-tag
@@ -15,6 +15,10 @@ plugins:
   - jekyll-optional-front-matter
   - jekyll-default-layout
   - jekyll-titles-from-headings
+
+kramdown:
+  math_engine: mathjax
+  syntax_highlighter: rouge
 
 # Plugin configurations
 optional_front_matter:

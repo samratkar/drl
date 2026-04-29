@@ -46,6 +46,9 @@ GEM
       jekyll (>= 3.8, < 5.0)
     jekyll-sitemap (1.4.0)
       jekyll (>= 3.7, < 5.0)
+    jekyll-theme-hacker (0.2.0)
+      jekyll (> 3.5, < 5.0)
+      jekyll-seo-tag (~> 2.0)
     jekyll-titles-from-headings (0.5.3)
       jekyll (>= 3.3, < 5.0)
     jekyll-watch (2.2.1)
@@ -61,10 +64,6 @@ GEM
       rb-inotify (~> 0.9, >= 0.9.10)
     logger (1.7.0)
     mercenary (0.4.0)
-    minima (2.5.2)
-      jekyll (>= 3.5, < 5.0)
-      jekyll-feed (~> 0.9)
-      jekyll-seo-tag (~> 2.1)
     pathutil (0.16.2)
       forwardable-extended (~> 2.6)
     public_suffix (7.0.5)
@@ -92,8 +91,8 @@ DEPENDENCIES
   jekyll-optional-front-matter
   jekyll-seo-tag
   jekyll-sitemap
+  jekyll-theme-hacker
   jekyll-titles-from-headings
-  minima (~> 2.5)
 
 BUNDLED WITH
    2.5.21
