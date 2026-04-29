@@ -29,147 +29,140 @@ title: DRL Course Index
     top: 2rem;
     background: white;
     border-radius: 1rem;
-    padding: 1.5rem;
+    padding: 1.25rem;
     border: 1px solid #f3f4f6;
-    shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   }
   .section-title {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    color: #4b5563;
+    color: #9ca3af;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.1em;
     margin-bottom: 1rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
   }
+  /* Ensure the main container uses more horizontal space */
+  .wide-container {
+    max-width: 100% !important;
+    width: 100%;
+  }
 </style>
 
-<div class="flex flex-col lg:flex-row gap-6 items-start">
-  
-  <!-- LEFT PANEL: Search & Tags -->
-  <aside class="w-full lg:w-72 flex-shrink-0">
-    <div class="side-panel shadow-sm">
-      
-      <!-- Search -->
-      <div class="mb-8">
-        <h3 class="section-title">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-          Search
-        </h3>
-        <input type="text" id="artSearch" placeholder="Filter by title..." 
-               class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition-all"
-               onkeyup="filterByText()">
-      </div>
-
-      <!-- Tags -->
-      <div>
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="section-title mb-0">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
-            Tags
-          </h3>
-          <button onclick="clearFilters()" class="text-[10px] text-purple-600 hover:text-purple-800 font-bold uppercase tracking-tighter">
-            Clear All
-          </button>
+<div class="wide-container px-4">
+  <div class="flex flex-col xl:flex-row gap-4 items-start">
+    
+    <!-- LEFT PANEL: Search & Tags (Narrower) -->
+    <aside class="w-full xl:w-56 flex-shrink-0">
+      <div class="side-panel shadow-sm">
+        <!-- Search -->
+        <div class="mb-6">
+          <h3 class="section-title">Search</h3>
+          <input type="text" id="artSearch" placeholder="Filter titles..." 
+                 class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                 onkeyup="filterByText()">
         </div>
-        
-        <div id="tagsList" class="flex flex-wrap gap-2">
-          {% assign tags = "" | split: "," %}
-          {% for p in site.pages %}
-            {% if p.tags %}
-              {% for tag in p.tags %}
-                {% unless tags contains tag %}
-                  {% assign tags = tags | push: tag %}
-                {% endunless %}
-              {% endfor %}
-            {% endif %}
-          {% endfor %}
-          {% assign tags = tags | sort %}
-          {% for tag in tags %}
-            <span class="tag-item px-2 py-1 bg-gray-50 text-gray-600 rounded text-[11px] border border-gray-100" onclick="filterByTag('{{ tag }}', this)">
-              {{ tag }}
-            </span>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-  </aside>
 
-  <!-- MIDDLE PANEL: Table -->
-  <div class="flex-1 min-w-0 w-full">
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-gray-50 border-b border-gray-100">
-              <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Article Details</th>
-              <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Category</th>
-              <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Tags</th>
-            </tr>
-          </thead>
-          <tbody id="articleBody">
-            {% assign sorted_pages = site.pages | sort: "path" %}
-            {% for p in sorted_pages %}
-              {% if p.title and p.url != "/" and p.path contains ".md" and p.path != "index.md" and p.path != "README.md" %}
-                <tr class="article-row border-b border-gray-50 hover:bg-purple-50/50 transition-colors" 
-                    data-category="{{ p.category | default: 'General' }}" 
-                    data-tags="{{ p.tags | join: ',' }}">
-                  <td class="px-6 py-5">
-                    <a href="{{ p.url | relative_url }}" class="text-gray-900 font-semibold hover:text-purple-600 transition-colors block">{{ p.title }}</a>
-                    <span class="text-[10px] text-gray-400 font-mono mt-1 block">{{ p.path }}</span>
-                  </td>
-                  <td class="px-6 py-5">
-                    <span class="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">{{ p.category | default: "General" }}</span>
-                  </td>
-                  <td class="px-6 py-5">
-                    <div class="flex flex-wrap gap-1">
-                      {% for tag in p.tags %}
-                        <span class="px-2 py-0.5 bg-purple-50 text-purple-500 rounded text-[10px] font-medium border border-purple-100/50">{{ tag }}</span>
-                      {% endfor %}
-                    </div>
-                  </td>
-                </tr>
+        <!-- Tags -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="section-title mb-0">Tags</h3>
+            <button onclick="clearFilters()" class="text-[9px] text-purple-600 font-bold uppercase">Clear</button>
+          </div>
+          <div id="tagsList" class="flex flex-wrap gap-1">
+            {% assign tags = "" | split: "," %}
+            {% for p in site.pages %}
+              {% if p.tags %}
+                {% for tag in p.tags %}
+                  {% unless tags contains tag %}
+                    {% assign tags = tags | push: tag %}
+                  {% endunless %}
+                {% endfor %}
               {% endif %}
             {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- RIGHT PANEL: Categories -->
-  <aside class="w-full lg:w-64 flex-shrink-0">
-    <div class="side-panel shadow-sm">
-      <h3 class="section-title">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-        Categories
-      </h3>
-      <div id="categoryList" class="space-y-1">
-        {% assign categories = "" | split: "," %}
-        {% for p in site.pages %}
-          {% if p.category %}
-            {% unless categories contains p.category %}
-              {% assign categories = categories | push: p.category %}
-            {% endunless %}
-          {% endif %}
-        {% endfor %}
-        {% assign categories = categories | sort %}
-        
-        <div class="category-item px-3 py-2 rounded-lg text-sm font-medium text-purple-600 bg-purple-50 active" onclick="clearFilters()">
-          All Articles
-        </div>
-        
-        {% for cat in categories %}
-          <div class="category-item px-3 py-2 rounded-lg text-sm font-medium text-gray-600" onclick="filterByCategory('{{ cat }}', this)">
-            {{ cat }}
+            {% assign tags = tags | sort %}
+            {% for tag in tags %}
+              <span class="tag-item px-2 py-0.5 bg-gray-50 text-gray-500 rounded text-[10px] border border-gray-100" onclick="filterByTag('{{ tag }}', this)">
+                {{ tag }}
+              </span>
+            {% endfor %}
           </div>
-        {% endfor %}
+        </div>
+      </div>
+    </aside>
+
+    <!-- MIDDLE PANEL: Table (Maximum Expansion) -->
+    <div class="flex-1 min-w-0 w-full">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse table-auto">
+            <thead>
+              <tr class="bg-gray-50 border-b border-gray-100">
+                <th class="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-1/2">Article</th>
+                <th class="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-1/6">Category</th>
+                <th class="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-1/3">Tags</th>
+              </tr>
+            </thead>
+            <tbody id="articleBody">
+              {% assign sorted_pages = site.pages | sort: "path" %}
+              {% for p in sorted_pages %}
+                {% if p.title and p.url != "/" and p.path contains ".md" and p.path != "index.md" and p.path != "README.md" %}
+                  <tr class="article-row border-b border-gray-50 hover:bg-purple-50/30 transition-colors" 
+                      data-category="{{ p.category | default: 'General' }}" 
+                      data-tags="{{ p.tags | join: ',' }}">
+                    <td class="px-4 py-4">
+                      <a href="{{ p.url | relative_url }}" class="text-sm font-semibold text-gray-800 hover:text-purple-600 block truncate" title="{{ p.title }}">{{ p.title }}</a>
+                      <span class="text-[9px] text-gray-400 font-mono block mt-0.5">{{ p.path }}</span>
+                    </td>
+                    <td class="px-4 py-4">
+                      <span class="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">{{ p.category | default: "General" }}</span>
+                    </td>
+                    <td class="px-4 py-4">
+                      <div class="flex flex-wrap gap-1">
+                        {% for tag in p.tags %}
+                          <span class="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[9px] font-medium">{{ tag }}</span>
+                        {% endfor %}
+                      </div>
+                    </td>
+                  </tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
-  </aside>
 
+    <!-- RIGHT PANEL: Categories (Narrower) -->
+    <aside class="w-full xl:w-48 flex-shrink-0">
+      <div class="side-panel shadow-sm">
+        <h3 class="section-title">Categories</h3>
+        <div id="categoryList" class="space-y-0.5">
+          {% assign categories = "" | split: "," %}
+          {% for p in site.pages %}
+            {% if p.category %}
+              {% unless categories contains p.category %}
+                {% assign categories = categories | push: p.category %}
+              {% endunless %}
+            {% endif %}
+          {% endfor %}
+          {% assign categories = categories | sort %}
+          
+          <div class="category-item px-3 py-1.5 rounded-md text-xs font-medium text-purple-600 bg-purple-50 active" onclick="clearFilters()">
+            All Articles
+          </div>
+          
+          {% for cat in categories %}
+            <div class="category-item px-3 py-1.5 rounded-md text-xs font-medium text-gray-500" onclick="filterByCategory('{{ cat }}', this)">
+              {{ cat }}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </aside>
+
+  </div>
 </div>
 
 <script>
