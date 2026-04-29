@@ -2,3 +2,7 @@ gymnasium
 torch
 swig
 gymnasium[box2d]
+numpy
+matplotlib
+seaborn
+tqdm
