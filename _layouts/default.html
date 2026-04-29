@@ -1,58 +1,133 @@
 <!DOCTYPE html>
-<html lang="{{ site.lang | default: "en-US" }}">
-  <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.title | default: site.title }}</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  
+  {% seo %}
 
-{% seo %}
-    <link rel="stylesheet" href="{{ "/assets/css/style.css?v=" | append: site.github.build_revision | relative_url }}">
-    <!--[if lt IE 9]>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
-    <![endif]-->
-    {% include custom-head.html %}
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9fafb;
+    }
+    
+    .full-width-header {
+      width: 100%;
+      background: linear-gradient(135deg, #9b87f5 0%, #c4b5fd 100%) !important;
+    }
+    
+    .nav-link {
+      color: white;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 0.6rem 1.5rem;
+      border-radius: 0.5rem;
+      transition: all 0.3s ease;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .nav-link:hover {
+      background: white;
+      color: #9b87f5;
+      border-color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+    }
 
-    <!-- MathJax for LaTeX -->
-    <script>
-      MathJax = {
-        tex: {
-          inlineMath: [['$', '$'], ['\\(', '\\)']],
-          displayMath: [['$$', '$$'], ['\\[', '\\]']],
-          processEscapes: true,
-          processEnvironments: true
-        },
-        options: {
-          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
-        }
-      };
-    </script>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    /* Markdown Content Styling */
+    .markdown-content {
+      line-height: 1.6;
+      color: #374151;
+    }
+    .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+      color: #111827;
+      font-weight: 700;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+    }
+    .markdown-content h1 { font-size: 2.25rem; }
+    .markdown-content h2 { font-size: 1.875rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
+    .markdown-content h3 { font-size: 1.5rem; }
+    
+    .markdown-content p { margin-bottom: 1.25rem; }
+    .markdown-content ul, .markdown-content ol { margin-bottom: 1.25rem; padding-left: 1.5rem; }
+    .markdown-content li { margin-bottom: 0.5rem; }
+    .markdown-content code {
+      background-color: #f3f4f6;
+      padding: 0.2rem 0.4rem;
+      border-radius: 0.25rem;
+      font-size: 0.875em;
+    }
+    .markdown-content pre {
+      background-color: #1f2937;
+      color: #f9fafb;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      overflow-x: auto;
+      margin-bottom: 1.25rem;
+    }
 
-    <!-- Mermaid for diagrams -->
-    <script type="module">
-      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-      mermaid.initialize({ startOnLoad: true, theme: 'dark' });
-    </script>
-    <style>
-      .mermaid { background: transparent !important; }
-    </style>
-  </head>
-  <body>
-    <div class="container-lg px-3 my-5 markdown-body">
-      {% if site.title %}
-        <h1><a href="{{ "/" | relative_url }}">{{ site.title }}</a></h1>
-      {% endif %}
+    /* Mermaid and MathJax */
+    .mermaid { background: white !important; margin: 2rem 0; display: flex; justify-content: center; }
+  </style>
 
-      {{ content }}
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
-      {% if site.github.is_project_page %}
-        <div class="footer border-top border-gray-light mt-5 pt-3 text-gray">
-          This project is maintained by <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a>.
+  <!-- Mermaid -->
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'default' });
+  </script>
+</head>
+<body>
+  <header class="full-width-header shadow-lg">
+    <div class="max-w-screen-xl mx-auto px-6 py-8">
+      <div class="flex items-center justify-between flex-wrap gap-6">
+        <div class="flex-1">
+          <h1 class="text-3xl font-bold text-white" style="font-family: 'Crimson Text', serif; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <a href="{{ "/" | relative_url }}">📚 {{ site.title }}</a>
+          </h1>
+          <p class="mt-2 text-purple-100 text-sm">{{ site.description }}</p>
         </div>
-      {% endif %}
+        <nav class="flex gap-4">
+          <a href="https://samratkar.github.io/" class="nav-link">🏠 Main Site</a>
+          <a href="{{ "/" | relative_url }}" class="nav-link">📖 DRL Index</a>
+        </nav>
+      </div>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.1.0/anchor.min.js" integrity="sha256-lZaRhKri35AyJSypXXs4o6OPFTb7h1uDhLzsbjJIDsk=" crossorigin="anonymous"></script>
-    <script>anchors.add();</script>
-  </body>
+  </header>
+
+  <main class="max-w-screen-xl mx-auto px-6 py-12">
+    <article class="markdown-content bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-100">
+      {{ content }}
+    </article>
+  </main>
+
+  <footer class="max-w-screen-xl mx-auto px-6 py-8 text-center text-gray-500 text-sm border-t border-gray-200">
+    &copy; {{ "now" | date: "%Y" }} {{ site.github_username }} | Built with Jekyll
+  </footer>
+</body>
 </html>
