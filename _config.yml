@@ -1,0 +1,42 @@
+title: Deep Reinforcement Learning (DRL)
+email: samratkar@example.com
+description: >-
+  A collection of notes, assignments, and case studies on Deep Reinforcement Learning.
+baseurl: "/drl"
+url: "https://samratkar.github.io"
+github_username: samratkar
+
+# Build settings
+theme: minima
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-optional-front-matter
+  - jekyll-default-layout
+  - jekyll-titles-from-headings
+
+# Plugin configurations
+optional_front_matter:
+  remove_surrounding_whitespace: true
+
+titles_from_headings:
+  strip_title: true
+  collections: true
+
+# Exclude these files from Jekyll build
+exclude:
+  - .venv
+  - .python-version
+  - pyproject.toml
+  - uv.lock
+  - requirements.txt
+  - .DS_Store
+  - .git
+  - .github
+  - node_modules
+  - vendor
+  - README.md # index.md will be used instead
+  - Gemfile
+  - Gemfile.lock
+  - CLAUDE.md
