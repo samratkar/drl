@@ -9,7 +9,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   
   <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono&display=swap" rel="stylesheet">
   
   {% seo %}
 
@@ -18,81 +18,89 @@
       font-family: 'Inter', sans-serif;
       margin: 0;
       padding: 0;
-      background-color: #f9fafb;
+      background-color: #f8fafc; /* Lighter slate background */
+      color: #1e293b;
     }
     
     .full-width-header {
       width: 100%;
-      background: linear-gradient(135deg, #9b87f5 0%, #c4b5fd 100%) !important;
+      background: #0f172a !important; /* Professional Dark Slate/Blue */
+      border-bottom: 4px solid #3b82f6; /* Accent blue line */
     }
     
     .nav-link {
-      color: white;
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(10px);
+      color: #cbd5e1;
       text-decoration: none;
-      font-weight: 600;
-      font-size: 0.9rem;
-      padding: 0.6rem 1.5rem;
-      border-radius: 0.5rem;
-      transition: all 0.3s ease;
-      border: 2px solid rgba(255, 255, 255, 0.3);
+      font-weight: 500;
+      font-size: 0.85rem;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
     }
     
     .nav-link:hover {
-      background: white;
-      color: #9b87f5;
-      border-color: white;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+      color: white;
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.1);
     }
 
-    /* Markdown Content Styling */
+    /* Professional Markdown Content Styling */
     .markdown-content {
-      line-height: 1.6;
-      color: #374151;
+      line-height: 1.7;
+      color: #334155;
     }
     .markdown-content h1, .markdown-content h2, .markdown-content h3 {
-      color: #111827;
+      color: #0f172a;
       font-weight: 700;
-      margin-top: 2rem;
-      margin-bottom: 1rem;
+      margin-top: 2.5rem;
+      margin-bottom: 1.25rem;
+      letter-spacing: -0.025em;
     }
-    .markdown-content h1 { font-size: 2.25rem; }
-    .markdown-content h2 { font-size: 1.875rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
-    .markdown-content h3 { font-size: 1.5rem; }
+    .markdown-content h1 { font-size: 2.5rem; }
+    .markdown-content h2 { font-size: 1.75rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
+    .markdown-content h3 { font-size: 1.35rem; }
     
-    .markdown-content p { margin-bottom: 1.25rem; }
-    .markdown-content ul { margin-bottom: 1.25rem; padding-left: 1.5rem; list-style-type: disc !important; }
-    .markdown-content ol { margin-bottom: 1.25rem; padding-left: 1.5rem; list-style-type: decimal !important; }
-    .markdown-content li { margin-bottom: 0.5rem; }
-    .markdown-content li::marker { color: #9b87f5; }
+    .markdown-content p { margin-bottom: 1.5rem; }
+    .markdown-content ul { margin-bottom: 1.5rem; padding-left: 1.5rem; list-style-type: disc !important; }
+    .markdown-content ol { margin-bottom: 1.5rem; padding-left: 1.5rem; list-style-type: decimal !important; }
+    .markdown-content li { margin-bottom: 0.65rem; }
+    .markdown-content li::marker { color: #3b82f6; } /* Professional blue bullets */
     
     .markdown-content a {
-      color: #7c3aed;
-      text-decoration: underline !important;
+      color: #2563eb;
+      text-decoration: underline;
+      text-underline-offset: 4px;
       font-weight: 500;
+      transition: color 0.2s;
     }
     .markdown-content a:hover {
-      color: #6d28d9;
+      color: #1d4ed8;
+      text-decoration-thickness: 2px;
     }
+    
     .markdown-content code {
-      background-color: #f3f4f6;
+      font-family: 'JetBrains Mono', monospace;
+      background-color: #f1f5f9;
+      color: #e11d48;
       padding: 0.2rem 0.4rem;
-      border-radius: 0.25rem;
+      border-radius: 0.375rem;
       font-size: 0.875em;
     }
+    
     .markdown-content pre {
-      background-color: #1f2937;
-      color: #f9fafb;
-      padding: 1rem;
-      border-radius: 0.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      background-color: #0f172a;
+      color: #f8fafc;
+      padding: 1.5rem;
+      border-radius: 0.75rem;
       overflow-x: auto;
-      margin-bottom: 1.25rem;
+      margin: 2rem 0;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
-    /* Mermaid and MathJax */
-    .mermaid { background: white !important; margin: 2rem 0; display: flex; justify-content: center; }
+    /* Mermaid */
+    .mermaid { background: white !important; margin: 2.5rem 0; padding: 1.5rem; border: 1px solid #e2e8f0; border-radius: 0.75rem; display: flex; justify-content: center; }
   </style>
 
   <!-- MathJax -->
@@ -110,35 +118,35 @@
   <!-- Mermaid -->
   <script type="module">
     import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-    mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
   </script>
 </head>
 <body>
-  <header class="full-width-header shadow-lg">
-    <div class="max-w-screen-xl mx-auto px-6 py-8">
-      <div class="flex items-center justify-between flex-wrap gap-6">
+  <header class="full-width-header shadow-xl">
+    <div class="w-full max-w-[1600px] mx-auto px-8 py-6">
+      <div class="flex items-center justify-between flex-wrap gap-8">
         <div class="flex-1">
-          <h1 class="text-3xl font-bold text-white" style="font-family: 'Crimson Text', serif; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <a href="{{ "/" | relative_url }}">📚 {{ site.title }}</a>
+          <h1 class="text-2xl font-bold text-white tracking-tight" style="font-family: 'Inter', sans-serif;">
+            <a href="{{ "/" | relative_url }}" class="hover:text-blue-400 transition-colors">DRL / {{ site.title }}</a>
           </h1>
-          <p class="mt-2 text-purple-100 text-sm">{{ site.description }}</p>
+          <p class="mt-1 text-slate-400 text-xs font-medium uppercase tracking-widest">{{ site.description }}</p>
         </div>
-        <nav class="flex gap-4">
-          <a href="https://samratkar.github.io/" class="nav-link">🏠 Main Site</a>
-          <a href="{{ "/" | relative_url }}" class="nav-link">📖 DRL Index</a>
+        <nav class="flex gap-2">
+          <a href="https://samratkar.github.io/" class="nav-link">PORTFOLIO</a>
+          <a href="{{ "/" | relative_url }}" class="nav-link">COURSE INDEX</a>
         </nav>
       </div>
     </div>
   </header>
 
-  <main class="w-full mx-auto px-4 py-8">
-    <article class="markdown-content bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
+  <main class="w-full max-w-[1600px] mx-auto px-8 py-10">
+    <article class="markdown-content bg-white p-10 rounded-xl shadow-sm border border-slate-200">
       {{ content }}
     </article>
   </main>
 
-  <footer class="max-w-screen-xl mx-auto px-6 py-8 text-center text-gray-500 text-sm border-t border-gray-200">
-    &copy; {{ "now" | date: "%Y" }} {{ site.github_username }} | Built with Jekyll
+  <footer class="w-full max-w-[1600px] mx-auto px-8 py-12 text-center text-slate-400 text-xs font-medium border-t border-slate-100 uppercase tracking-widest">
+    &copy; {{ "now" | date: "%Y" }} {{ site.github_username }} &middot; RESEARCH & EDUCATION
   </footer>
 </body>
 </html>
