@@ -1,9 +1,9 @@
-author: Samrat Kar
-summary: Introduction to Reinforcement Learning
-id: drl-1-intro
-categories: drl
-environments: Web
-status: Published
+---
+tags : [drl, rl]
+title: "DRL - An introduction"
+category: "drl"
+subcategory: "mdp"
+---
 
 # A journey into the world of RL by Samrat Kar 
 ## An introduction of the context
