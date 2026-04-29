@@ -8,6 +8,7 @@ github_username: samratkar
 
 # Site settings
 markdown: kramdown
+permalink: /:year/:month/:day/:title.html
 kramdown:
   math_engine: mathjax
   syntax_highlighter: rouge
