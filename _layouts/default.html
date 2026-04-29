@@ -63,8 +63,19 @@
     .markdown-content h3 { font-size: 1.5rem; }
     
     .markdown-content p { margin-bottom: 1.25rem; }
-    .markdown-content ul, .markdown-content ol { margin-bottom: 1.25rem; padding-left: 1.5rem; }
+    .markdown-content ul { margin-bottom: 1.25rem; padding-left: 1.5rem; list-style-type: disc !important; }
+    .markdown-content ol { margin-bottom: 1.25rem; padding-left: 1.5rem; list-style-type: decimal !important; }
     .markdown-content li { margin-bottom: 0.5rem; }
+    .markdown-content li::marker { color: #9b87f5; }
+    
+    .markdown-content a {
+      color: #7c3aed;
+      text-decoration: underline !important;
+      font-weight: 500;
+    }
+    .markdown-content a:hover {
+      color: #6d28d9;
+    }
     .markdown-content code {
       background-color: #f3f4f6;
       padding: 0.2rem 0.4rem;
