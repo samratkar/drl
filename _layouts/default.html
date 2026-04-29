@@ -110,6 +110,36 @@
     .highlight .nb { color: #005cc5; } /* Built-ins */
     .highlight .p { color: #24292e; } /* Punctuation */
 
+    /* Tables Styling */
+    .markdown-content table {
+      width: 100%;
+      margin: 2rem 0;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+    .markdown-content th {
+      background-color: #f8fafc;
+      color: #0f172a;
+      font-weight: 700;
+      padding: 0.75rem 1rem;
+      border-bottom: 2px solid #e2e8f0;
+      text-align: left;
+    }
+    .markdown-content td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: top;
+    }
+    .markdown-content tr:nth-child(even) {
+      background-color: #fcfcfd;
+    }
+    .markdown-content tr:hover {
+      background-color: #f1f5f9;
+    }
+
     /* Mermaid */
     .mermaid { background: white !important; margin: 2.5rem 0; padding: 1.5rem; border: 1px solid #e2e8f0; border-radius: 0.75rem; display: flex; justify-content: center; }
   </style>
