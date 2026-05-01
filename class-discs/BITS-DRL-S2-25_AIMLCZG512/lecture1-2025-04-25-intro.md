@@ -1,7 +1,7 @@
 ---
-tags : [drl-class-notes]
+tags : [lectures, introduction]
 title : "DRL - Class 1 - Introduction"
-category : DRL-classes
+category : Lectures
 subcategory : Introduction
 ---
 
