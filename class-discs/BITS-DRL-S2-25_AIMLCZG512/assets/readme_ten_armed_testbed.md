@@ -44,7 +44,7 @@ In the code, the `Bandit` class models one instance of this problem:
 
 The violin plot below (Figure 2.1) shows one such randomly generated problem. Each violin represents the reward distribution for one of the 10 actions. The center of each violin sits at `q*(a)`, and the spread reflects the unit-variance noise added to every reward.
 
-![Figure 2.1 -- Reward distributions for a single randomly generated 10-armed bandit problem. Each violin shows the distribution of rewards for one action. The true value q*(a) is the mean of each distribution.](../images/figure_2_1.png)
+![Figure 2.1 -- Reward distributions for a single randomly generated 10-armed bandit problem. Each violin shows the distribution of rewards for one action. The true value q*(a) is the mean of each distribution.](./images/figure_2_1.png)
 
 **Key takeaway:** The agent does not see these distributions. It must estimate them from sampled rewards, which is inherently noisy. The overlap between distributions means that a single reward sample can be misleading -- an inferior arm can occasionally return a higher reward than the best arm.
 

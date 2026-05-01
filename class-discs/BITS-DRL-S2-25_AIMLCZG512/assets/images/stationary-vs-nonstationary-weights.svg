@@ -1,0 +1,206 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" font-family="'Segoe UI', Arial, sans-serif">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8f9fa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e9ecef;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="blueBar" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#4dabf7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1971c2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="orangeBar" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffa94d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e8590c;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-2%" y="-2%" width="104%" height="104%">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="520" rx="12" fill="url(#bgGrad)" stroke="#dee2e6" stroke-width="1"/>
+
+  <!-- Title -->
+  <text x="450" y="35" text-anchor="middle" font-size="18" font-weight="bold" fill="#212529">Reward Weighting: Stationary (1/n) vs Non-stationary (constant α)</text>
+  <text x="450" y="55" text-anchor="middle" font-size="12" fill="#868e96">How much influence does each past reward have on the current estimate Q₁₀?  (n=10 rewards observed)</text>
+
+  <!-- ============ LEFT CHART: Stationary ============ -->
+  <g transform="translate(50, 80)">
+    <!-- Panel background -->
+    <rect x="-10" y="-10" width="390" height="400" rx="8" fill="white" filter="url(#shadow)"/>
+
+    <!-- Title -->
+    <text x="185" y="15" text-anchor="middle" font-size="15" font-weight="bold" fill="#1971c2">Stationary: α = 1/n</text>
+    <text x="185" y="33" text-anchor="middle" font-size="11" fill="#495057">All rewards weighted equally at 1/n = 0.10</text>
+
+    <!-- Axes -->
+    <line x1="50" y1="310" x2="360" y2="310" stroke="#495057" stroke-width="1.5"/>
+    <line x1="50" y1="60" x2="50" y2="310" stroke="#495057" stroke-width="1.5"/>
+
+    <!-- Y-axis label -->
+    <text x="15" y="185" text-anchor="middle" font-size="11" fill="#495057" transform="rotate(-90, 15, 185)">Weight on reward</text>
+
+    <!-- Y-axis ticks -->
+    <text x="45" y="314" text-anchor="end" font-size="10" fill="#868e96">0</text>
+    <line x1="47" y1="260" x2="50" y2="260" stroke="#868e96" stroke-width="1"/>
+    <text x="45" y="264" text-anchor="end" font-size="10" fill="#868e96">0.10</text>
+    <line x1="47" y1="210" x2="50" y2="210" stroke="#868e96" stroke-width="1"/>
+    <text x="45" y="214" text-anchor="end" font-size="10" fill="#868e96">0.20</text>
+    <line x1="47" y1="160" x2="50" y2="160" stroke="#868e96" stroke-width="1"/>
+    <text x="45" y="164" text-anchor="end" font-size="10" fill="#868e96">0.30</text>
+    <line x1="47" y1="110" x2="50" y2="110" stroke="#868e96" stroke-width="1"/>
+    <text x="45" y="114" text-anchor="end" font-size="10" fill="#868e96">0.40</text>
+
+    <!-- Grid lines -->
+    <line x1="50" y1="260" x2="360" y2="260" stroke="#e9ecef" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="50" y1="210" x2="360" y2="210" stroke="#e9ecef" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="50" y1="160" x2="360" y2="160" stroke="#e9ecef" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="50" y1="110" x2="360" y2="110" stroke="#e9ecef" stroke-width="1" stroke-dasharray="4,3"/>
+
+    <!-- Bars: all equal at 0.10 = 50px height (from 310 to 260) -->
+    <!-- R1 (oldest) -->
+    <rect x="65" y="260" width="25" height="50" rx="3" fill="url(#blueBar)" opacity="0.5"/>
+    <text x="77" y="325" text-anchor="middle" font-size="9" fill="#495057">R₁</text>
+    <text x="77" y="337" text-anchor="middle" font-size="8" fill="#868e96">oldest</text>
+
+    <!-- R2 -->
+    <rect x="95" y="260" width="25" height="50" rx="3" fill="url(#blueBar)" opacity="0.55"/>
+    <text x="107" y="325" text-anchor="middle" font-size="9" fill="#495057">R₂</text>
+
+    <!-- R3 -->
+    <rect x="125" y="260" width="25" height="50" rx="3" fill="url(#blueBar)" opacity="0.6"/>
+    <text x="137" y="325" text-anchor="middle" font-size="9" fill="#495057">R₃</text>
+
+    <!-- R4 -->
+    <rect x="155" y="260" width="25" height="50" rx="3" fill="url(#blueBar)" opacity="0.65"/>
+    <text x="167" y="325" text-anchor="middle" font-size="9" fill="#495057">R₄</text>
+
+    <!-- R5 -->
+    <rect x="185" y="260" width="25" height="50" rx="3" fill="url(#blueBar)" opacity="0.7"/>
+    <text x="197" y="325" text-anchor="middle" font-size="9" fill="#495057">R₅</text>
+
+    <!-- R6 -->
+    <rect x="215" y="260" width="25" height="50" rx="3" fill="url(#blueBar)" opacity="0.75"/>
+    <text x="227" y="325" text-anchor="middle" font-size="9" fill="#495057">R₆</text>
+
+    <!-- R7 -->
+    <rect x="245" y="260" width="25" height="50" rx="3" fill="url(#blueBar)" opacity="0.8"/>
+    <text x="257" y="325" text-anchor="middle" font-size="9" fill="#495057">R₇</text>
+
+    <!-- R8 -->
+    <rect x="275" y="260" width="25" height="50" rx="3" fill="url(#blueBar)" opacity="0.85"/>
+    <text x="287" y="325" text-anchor="middle" font-size="9" fill="#495057">R₈</text>
+
+    <!-- R9 -->
+    <rect x="305" y="260" width="25" height="50" rx="3" fill="url(#blueBar)" opacity="0.9"/>
+    <text x="317" y="325" text-anchor="middle" font-size="9" fill="#495057">R₉</text>
+
+    <!-- R10 (newest) -->
+    <rect x="335" y="260" width="25" height="50" rx="3" fill="url(#blueBar)" opacity="1.0"/>
+    <text x="347" y="325" text-anchor="middle" font-size="9" fill="#495057">R₁₀</text>
+    <text x="347" y="337" text-anchor="middle" font-size="8" fill="#868e96">newest</text>
+
+    <!-- Equal weight line -->
+    <line x1="60" y1="260" x2="365" y2="260" stroke="#1971c2" stroke-width="1.5" stroke-dasharray="6,3"/>
+    <text x="365" y="256" font-size="10" fill="#1971c2" font-weight="bold">= 1/n</text>
+
+    <!-- Annotation -->
+    <text x="185" y="370" text-anchor="middle" font-size="11" fill="#495057" font-style="italic">Every reward contributes equally.</text>
+    <text x="185" y="384" text-anchor="middle" font-size="11" fill="#1971c2" font-weight="bold">Converges to true q*(a).</text>
+  </g>
+
+  <!-- ============ RIGHT CHART: Non-stationary ============ -->
+  <g transform="translate(480, 80)">
+    <!-- Panel background -->
+    <rect x="-10" y="-10" width="390" height="400" rx="8" fill="white" filter="url(#shadow)"/>
+
+    <!-- Title -->
+    <text x="185" y="15" text-anchor="middle" font-size="15" font-weight="bold" fill="#e8590c">Non-stationary: α = 0.4</text>
+    <text x="185" y="33" text-anchor="middle" font-size="11" fill="#495057">Recent rewards weighted exponentially more</text>
+
+    <!-- Axes -->
+    <line x1="50" y1="310" x2="360" y2="310" stroke="#495057" stroke-width="1.5"/>
+    <line x1="50" y1="60" x2="50" y2="310" stroke="#495057" stroke-width="1.5"/>
+
+    <!-- Y-axis label -->
+    <text x="15" y="185" text-anchor="middle" font-size="11" fill="#495057" transform="rotate(-90, 15, 185)">Weight on reward</text>
+
+    <!-- Y-axis ticks -->
+    <text x="45" y="314" text-anchor="end" font-size="10" fill="#868e96">0</text>
+    <line x1="47" y1="260" x2="50" y2="260" stroke="#868e96" stroke-width="1"/>
+    <text x="45" y="264" text-anchor="end" font-size="10" fill="#868e96">0.10</text>
+    <line x1="47" y1="210" x2="50" y2="210" stroke="#868e96" stroke-width="1"/>
+    <text x="45" y="214" text-anchor="end" font-size="10" fill="#868e96">0.20</text>
+    <line x1="47" y1="160" x2="50" y2="160" stroke="#868e96" stroke-width="1"/>
+    <text x="45" y="164" text-anchor="end" font-size="10" fill="#868e96">0.30</text>
+    <line x1="47" y1="110" x2="50" y2="110" stroke="#868e96" stroke-width="1"/>
+    <text x="45" y="114" text-anchor="end" font-size="10" fill="#868e96">0.40</text>
+
+    <!-- Grid lines -->
+    <line x1="50" y1="260" x2="360" y2="260" stroke="#e9ecef" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="50" y1="210" x2="360" y2="210" stroke="#e9ecef" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="50" y1="160" x2="360" y2="160" stroke="#e9ecef" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="50" y1="110" x2="360" y2="110" stroke="#e9ecef" stroke-width="1" stroke-dasharray="4,3"/>
+
+    <!-- Bars: alpha=0.4, weight_i = 0.4 * 0.6^(n-i), n=10 -->
+    <!-- R1: 0.4 * 0.6^9 = 0.4 * 0.01008 = 0.00403 -> ~2px -->
+    <rect x="65" y="308" width="25" height="2" rx="1" fill="url(#orangeBar)" opacity="0.4"/>
+    <text x="77" y="325" text-anchor="middle" font-size="9" fill="#495057">R₁</text>
+    <text x="77" y="337" text-anchor="middle" font-size="8" fill="#868e96">oldest</text>
+
+    <!-- R2: 0.4 * 0.6^8 = 0.4 * 0.01680 = 0.00672 -> ~3px -->
+    <rect x="95" y="307" width="25" height="3" rx="1" fill="url(#orangeBar)" opacity="0.45"/>
+    <text x="107" y="325" text-anchor="middle" font-size="9" fill="#495057">R₂</text>
+
+    <!-- R3: 0.4 * 0.6^7 = 0.4 * 0.02799 = 0.01120 -> ~6px -->
+    <rect x="125" y="304" width="25" height="6" rx="1" fill="url(#orangeBar)" opacity="0.5"/>
+    <text x="137" y="325" text-anchor="middle" font-size="9" fill="#495057">R₃</text>
+
+    <!-- R4: 0.4 * 0.6^6 = 0.4 * 0.04666 = 0.01866 -> ~9px -->
+    <rect x="155" y="301" width="25" height="9" rx="2" fill="url(#orangeBar)" opacity="0.55"/>
+    <text x="167" y="325" text-anchor="middle" font-size="9" fill="#495057">R₄</text>
+
+    <!-- R5: 0.4 * 0.6^5 = 0.4 * 0.07776 = 0.03110 -> ~16px -->
+    <rect x="185" y="294" width="25" height="16" rx="2" fill="url(#orangeBar)" opacity="0.6"/>
+    <text x="197" y="325" text-anchor="middle" font-size="9" fill="#495057">R₅</text>
+
+    <!-- R6: 0.4 * 0.6^4 = 0.4 * 0.1296 = 0.05184 -> ~26px -->
+    <rect x="215" y="284" width="25" height="26" rx="2" fill="url(#orangeBar)" opacity="0.65"/>
+    <text x="227" y="325" text-anchor="middle" font-size="9" fill="#495057">R₆</text>
+
+    <!-- R7: 0.4 * 0.6^3 = 0.4 * 0.216 = 0.0864 -> ~43px -->
+    <rect x="245" y="267" width="25" height="43" rx="2" fill="url(#orangeBar)" opacity="0.75"/>
+    <text x="257" y="325" text-anchor="middle" font-size="9" fill="#495057">R₇</text>
+
+    <!-- R8: 0.4 * 0.6^2 = 0.4 * 0.36 = 0.144 -> ~72px -->
+    <rect x="275" y="238" width="25" height="72" rx="3" fill="url(#orangeBar)" opacity="0.85"/>
+    <text x="287" y="325" text-anchor="middle" font-size="9" fill="#495057">R₈</text>
+
+    <!-- R9: 0.4 * 0.6^1 = 0.4 * 0.6 = 0.24 -> ~120px -->
+    <rect x="305" y="190" width="25" height="120" rx="3" fill="url(#orangeBar)" opacity="0.92"/>
+    <text x="317" y="325" text-anchor="middle" font-size="9" fill="#495057">R₉</text>
+
+    <!-- R10: 0.4 * 0.6^0 = 0.4 -> ~200px -->
+    <rect x="335" y="110" width="25" height="200" rx="3" fill="url(#orangeBar)" opacity="1.0"/>
+    <text x="347" y="325" text-anchor="middle" font-size="9" fill="#495057">R₁₀</text>
+    <text x="347" y="337" text-anchor="middle" font-size="8" fill="#868e96">newest</text>
+
+    <!-- Weight label on tallest bar -->
+    <text x="347" y="105" text-anchor="middle" font-size="10" fill="#e8590c" font-weight="bold">0.40</text>
+
+    <!-- Exponential decay curve (approximate) -->
+    <path d="M 77 308 Q 150 305 197 294 Q 240 280 257 267 Q 280 245 287 238 Q 310 200 317 190 Q 340 140 347 110"
+          fill="none" stroke="#e8590c" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.6"/>
+
+    <!-- Annotation -->
+    <text x="185" y="370" text-anchor="middle" font-size="11" fill="#495057" font-style="italic">Recent rewards dominate the estimate.</text>
+    <text x="185" y="384" text-anchor="middle" font-size="11" fill="#e8590c" font-weight="bold">Tracks changing distributions.</text>
+  </g>
+
+  <!-- Bottom formula comparison -->
+  <g transform="translate(0, 488)">
+    <text x="235" y="0" text-anchor="middle" font-size="12" fill="#1971c2" font-weight="bold">Q = (1/n) R₁ + (1/n) R₂ + ... + (1/n) Rₙ</text>
+    <text x="665" y="0" text-anchor="middle" font-size="12" fill="#e8590c" font-weight="bold">Q = α(1-α)⁹R₁ + ... + α(1-α)¹R₉ + αR₁₀</text>
+    <text x="450" y="22" text-anchor="middle" font-size="11" fill="#495057">time flows left → right (R₁ = oldest, R₁₀ = most recent)</text>
+  </g>
+</svg>
