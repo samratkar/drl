@@ -49,6 +49,49 @@ title: Course Curriculum Index
 </style>
 
 <div class="w-full">
+
+  <!-- Lectures Section -->
+  <div class="mb-8 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div class="px-6 py-4 bg-slate-50/50 border-b border-slate-200">
+      <h2 class="text-sm font-extrabold text-slate-700 uppercase tracking-widest m-0">Lectures</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse table-auto">
+        <thead>
+          <tr class="bg-slate-50/30 border-b border-slate-200">
+            <th class="px-6 py-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest w-16">#</th>
+            <th class="px-6 py-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Date</th>
+            <th class="px-6 py-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Title</th>
+            <th class="px-6 py-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Tags</th>
+          </tr>
+        </thead>
+        <tbody id="lectureBody">
+          {% assign lectures = site.pages | where: "category", "Lectures" %}
+          {% for p in lectures %}
+            {% assign filename = p.path | split: "/" | last | remove: ".md" %}
+            {% assign parts = filename | split: "-" %}
+            {% assign lecture_num = parts[0] | remove: "lecture" %}
+            {% assign lecture_date = parts[1] | append: "-" | append: parts[2] | append: "-" | append: parts[3] %}
+            <tr class="border-b border-slate-100 hover:bg-blue-50/20 transition-colors" data-date="{{ lecture_date }}">
+              <td class="px-6 py-4 text-sm font-bold text-slate-600">{{ lecture_num }}</td>
+              <td class="px-6 py-4 text-sm text-slate-500 font-mono">{{ lecture_date }}</td>
+              <td class="px-6 py-4">
+                <a href="{{ p.url | relative_url }}" class="text-sm font-bold text-slate-800 hover:text-blue-600 transition-colors">{{ p.title }}</a>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex flex-wrap gap-1.5">
+                  {% for tag in p.tags %}
+                    <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[9px] font-bold border border-slate-200/50">{{ tag }}</span>
+                  {% endfor %}
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <div class="flex flex-col xl:flex-row gap-6 items-start">
     
     <!-- LEFT PANEL: Navigation & Tags -->
@@ -236,4 +279,12 @@ title: Course Curriculum Index
     
     document.querySelectorAll('.article-row').forEach(row => row.classList.remove('hidden-row'));
   }
+
+  (function sortLectures() {
+    const tbody = document.getElementById('lectureBody');
+    if (!tbody) return;
+    const rows = Array.from(tbody.querySelectorAll('tr[data-date]'));
+    rows.sort((a, b) => b.dataset.date.localeCompare(a.dataset.date));
+    rows.forEach(row => tbody.appendChild(row));
+  })();
 </script>
