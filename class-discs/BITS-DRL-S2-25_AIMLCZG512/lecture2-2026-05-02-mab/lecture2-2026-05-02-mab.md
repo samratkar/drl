@@ -310,86 +310,6 @@ Tested with true reward shifted to $+4$ to make the baseline critical:
 
 **Results**: Without a baseline, all rewards are positive (true means ~4), so the algorithm treats *every* outcome as positive reinforcement and fails to differentiate good from bad. The baseline is not optional — it is essential for the algorithm to work.
 
-#### Figure 2.6: Parameter Study — Comparing All Methods (Section 2.10)
-
-*Code: [parameter_study.py](./assets/parameter_study.py) — parameter sweep + head-to-head comparison at best parameters*
-
-**The question**: Each method has a key hyperparameter. How do we fairly compare them? We sweep each method's parameter over a range ($2^x$), run 1000 steps × 2000 independent runs for each setting, and plot the average reward over the entire run.
-
-| Method | Parameter swept | What it controls | Range ($2^x$) |
-|--------|----------------|-----------------|---------------|
-| $\epsilon$-greedy | $\epsilon$ | Fraction of random exploration | $2^{-7}$ to $2^{-2}$ |
-| Gradient bandit | $\alpha$ | Step-size for preference updates | $2^{-5}$ to $2^{1}$ |
-| UCB | $c$ | Exploration bonus strength | $2^{-4}$ to $2^{2}$ |
-| Optimistic greedy | $Q_1$ | Initial value (drives early exploration) | $2^{-2}$ to $2^{2}$ |
-
-![Figure 2.6 — Parameter study. Each method's average reward across parameter sweep.](./assets/images/figure_2_6_parameter_study.png)
-
-**Reading the parameter study curve:**
-
-Every method shows an **inverted-U** shape. This reflects the universal exploration-exploitation tradeoff:
-- **Left side** (parameter too small): too little exploration → agent locks onto a suboptimal arm early
-- **Peak**: sweet spot — enough exploration to find the best arm, not so much that it wastes time
-- **Right side** (parameter too large): too much exploration → agent keeps trying bad arms it already knows are bad
-
-**Best parameter for each method:**
-
-| Method | Best parameter | Best avg reward | Exploration mechanism |
-|--------|---------------|----------------|----------------------|
-| $\epsilon$-greedy | $\epsilon = 2^{-4} = 0.0625$ | 1.34 | Random coin flip |
-| Gradient bandit | $\alpha = 2^{-2} = 0.25$ | 1.42 | Preference-based softmax |
-| UCB | $c = 2^{-1} = 0.5$ | 1.51 | Uncertainty bonus |
-| Optimistic greedy | $Q_1 = 2^0 = 1.0$ | 1.46 | Disappointment from inflated starts |
-
-#### Head-to-Head: All Methods at Their Best Parameters
-
-The parameter study tells us which parameter is best for each method. Now we run all four methods at their best settings on the **same** testbed and compare their learning curves directly.
-
-![Head-to-head comparison at best parameters. Top: average reward. Bottom: % optimal action.](./assets/images/figure_2_6_head_to_head.png)
-
-**Performance summary (2000 runs × 1000 steps):**
-
-| Method | Avg Reward (all 1000 steps) | Avg Reward (last 100 steps) | % Optimal (all) | % Optimal (last 100) |
-|--------|----------------------------|-----------------------------|-----------------|---------------------|
-| $\epsilon$-greedy ($\epsilon = 0.0625$) | 1.341 | 1.421 | 69.3% | 79.5% |
-| Gradient bandit ($\alpha = 0.25$) | 1.391 | 1.466 | 72.2% | 77.9% |
-| UCB ($c = 0.5$) | **1.461** | 1.492 | **81.8%** | **85.9%** |
-| Optimistic greedy ($Q_1 = 1.0$) | 1.492 | **1.536** | 80.1% | 85.5% |
-
-#### Detailed Analysis of Each Method
-
-**1. $\epsilon$-greedy — simplest, but weakest ceiling**
-
-The most basic approach: flip a coin, explore randomly $\epsilon$% of the time. Its strength is simplicity — easy to implement and understand, works for both stationary and non-stationary problems (with constant $\alpha$). Its weakness is that exploration is **blind**: when it explores, it picks any arm uniformly at random, including arms it already knows are terrible. This wastes exploration budget. At its best parameter ($\epsilon = 0.0625$), it still only reaches ~80% optimal action by step 1000 — the worst of all four methods. The permanent random exploration also means it **never stops** pulling suboptimal arms.
-
-**2. Gradient bandit — different paradigm, moderate performance**
-
-The only method that doesn't estimate action values at all — it learns preferences and converts them to probabilities via softmax. This is a fundamentally different approach (policy-based rather than value-based). It performs better than $\epsilon$-greedy in average reward, but its % optimal action at the end (~78%) is lower than UCB and optimistic. The softmax never puts 100% probability on any arm, so there's always some residual exploration happening. Its real advantage shows up in problems where action **probabilities** matter more than a hard argmax — and it's the precursor to policy gradient methods used in full RL (Chapter 13).
-
-**3. UCB — strongest overall on stationary bandits**
-
-Achieves the highest % optimal action (85.9% in the last 100 steps) and the best average reward across the full 1000 steps. Its directed exploration (targeting uncertain arms) is far more efficient than random exploration. The uncertainty bonus naturally decays as arms are sampled, so it automatically transitions from exploration to exploitation without any parameter scheduling. **Weakness**: designed strictly for stationary problems. The confidence term assumes more samples = better estimates, which breaks down if reward distributions shift.
-
-**4. Optimistic greedy — fastest convergence, best late-game reward**
-
-Achieves the highest average reward in the last 100 steps (1.536), meaning it **converges the most tightly** onto the best arm. Once the initial bias decays and the agent has tried all arms, it becomes pure greedy with no wasted exploration. This gives it the highest asymptotic performance. **Weakness**: exploration is front-loaded — it's a one-shot trick that only works at the start. If the environment changes later, the agent has no mechanism to re-explore. Also sensitive to the choice of $Q_1$: too low and it doesn't explore; too high and it wastes too many steps cycling through all arms.
-
-#### Summary: Which method to use?
-
-| Scenario | Best method | Why |
-|----------|------------|-----|
-| **Stationary, need overall best** | UCB | Directed exploration, strong across full run |
-| **Stationary, care about final performance** | Optimistic greedy | Tightest convergence after exploration phase |
-| **Non-stationary** | $\epsilon$-greedy (with constant $\alpha$) | Only method that continuously explores and can use recency-weighted updates |
-| **Want probability-based policy** | Gradient bandit | Learns a distribution over actions, precursor to policy gradient |
-| **Need simplicity** | $\epsilon$-greedy | One parameter, easy to understand, works everywhere |
-
-No single method dominates in all settings — the right choice depends on the problem structure.
-
----
-
-[exercise 2.1](./assets/exercises/chap2/2.2-bandit-example.xlsx)
-
 ### What happens when the Bandits are non-stationary. 
 
 #### First, the stationary case: Sample-Average with step-size $1/n$ (Section 2.4)
@@ -510,6 +430,84 @@ The figure below reproduces **Figure 2.3** from Sutton & Barto (p. 34), comparin
 
 *Source: [optimistic_initial_values.py](./assets/optimistic_initial_values.py) — 2000 runs × 1000 steps, constant $\alpha = 0.1$*
 
+#### Figure 2.6: Parameter Study — Comparing All Methods (Section 2.10)
 
+*Code: [parameter_study.py](./assets/parameter_study.py) — parameter sweep + head-to-head comparison at best parameters*
+
+**The question**: Each method has a key hyperparameter. How do we fairly compare them? We sweep each method's parameter over a range ($2^x$), run 1000 steps × 2000 independent runs for each setting, and plot the average reward over the entire run.
+
+| Method | Parameter swept | What it controls | Range ($2^x$) |
+|--------|----------------|-----------------|---------------|
+| $\epsilon$-greedy | $\epsilon$ | Fraction of random exploration | $2^{-7}$ to $2^{-2}$ |
+| Gradient bandit | $\alpha$ | Step-size for preference updates | $2^{-5}$ to $2^{1}$ |
+| UCB | $c$ | Exploration bonus strength | $2^{-4}$ to $2^{2}$ |
+| Optimistic greedy | $Q_1$ | Initial value (drives early exploration) | $2^{-2}$ to $2^{2}$ |
+
+![Figure 2.6 — Parameter study. Each method's average reward across parameter sweep.](./assets/images/figure_2_6_parameter_study.png)
+
+**Reading the parameter study curve:**
+
+Every method shows an **inverted-U** shape. This reflects the universal exploration-exploitation tradeoff:
+- **Left side** (parameter too small): too little exploration → agent locks onto a suboptimal arm early
+- **Peak**: sweet spot — enough exploration to find the best arm, not so much that it wastes time
+- **Right side** (parameter too large): too much exploration → agent keeps trying bad arms it already knows are bad
+
+**Best parameter for each method:**
+
+| Method | Best parameter | Best avg reward | Exploration mechanism |
+|--------|---------------|----------------|----------------------|
+| $\epsilon$-greedy | $\epsilon = 2^{-4} = 0.0625$ | 1.34 | Random coin flip |
+| Gradient bandit | $\alpha = 2^{-2} = 0.25$ | 1.42 | Preference-based softmax |
+| UCB | $c = 2^{-1} = 0.5$ | 1.51 | Uncertainty bonus |
+| Optimistic greedy | $Q_1 = 2^0 = 1.0$ | 1.46 | Disappointment from inflated starts |
+
+#### Head-to-Head: All Methods at Their Best Parameters
+
+The parameter study tells us which parameter is best for each method. Now we run all four methods at their best settings on the **same** testbed and compare their learning curves directly.
+
+![Head-to-head comparison at best parameters. Top: average reward. Bottom: % optimal action.](./assets/images/figure_2_6_head_to_head.png)
+
+**Performance summary (2000 runs × 1000 steps):**
+
+| Method | Avg Reward (all 1000 steps) | Avg Reward (last 100 steps) | % Optimal (all) | % Optimal (last 100) |
+|--------|----------------------------|-----------------------------|-----------------|---------------------|
+| $\epsilon$-greedy ($\epsilon = 0.0625$) | 1.341 | 1.421 | 69.3% | 79.5% |
+| Gradient bandit ($\alpha = 0.25$) | 1.391 | 1.466 | 72.2% | 77.9% |
+| UCB ($c = 0.5$) | **1.461** | 1.492 | **81.8%** | **85.9%** |
+| Optimistic greedy ($Q_1 = 1.0$) | 1.492 | **1.536** | 80.1% | 85.5% |
+
+#### Detailed Analysis of Each Method
+
+**1. $\epsilon$-greedy — simplest, but weakest ceiling**
+
+The most basic approach: flip a coin, explore randomly $\epsilon$% of the time. Its strength is simplicity — easy to implement and understand, works for both stationary and non-stationary problems (with constant $\alpha$). Its weakness is that exploration is **blind**: when it explores, it picks any arm uniformly at random, including arms it already knows are terrible. This wastes exploration budget. At its best parameter ($\epsilon = 0.0625$), it still only reaches ~80% optimal action by step 1000 — the worst of all four methods. The permanent random exploration also means it **never stops** pulling suboptimal arms.
+
+**2. Gradient bandit — different paradigm, moderate performance**
+
+The only method that doesn't estimate action values at all — it learns preferences and converts them to probabilities via softmax. This is a fundamentally different approach (policy-based rather than value-based). It performs better than $\epsilon$-greedy in average reward, but its % optimal action at the end (~78%) is lower than UCB and optimistic. The softmax never puts 100% probability on any arm, so there's always some residual exploration happening. Its real advantage shows up in problems where action **probabilities** matter more than a hard argmax — and it's the precursor to policy gradient methods used in full RL (Chapter 13).
+
+**3. UCB — strongest overall on stationary bandits**
+
+Achieves the highest % optimal action (85.9% in the last 100 steps) and the best average reward across the full 1000 steps. Its directed exploration (targeting uncertain arms) is far more efficient than random exploration. The uncertainty bonus naturally decays as arms are sampled, so it automatically transitions from exploration to exploitation without any parameter scheduling. **Weakness**: designed strictly for stationary problems. The confidence term assumes more samples = better estimates, which breaks down if reward distributions shift.
+
+**4. Optimistic greedy — fastest convergence, best late-game reward**
+
+Achieves the highest average reward in the last 100 steps (1.536), meaning it **converges the most tightly** onto the best arm. Once the initial bias decays and the agent has tried all arms, it becomes pure greedy with no wasted exploration. This gives it the highest asymptotic performance. **Weakness**: exploration is front-loaded — it's a one-shot trick that only works at the start. If the environment changes later, the agent has no mechanism to re-explore. Also sensitive to the choice of $Q_1$: too low and it doesn't explore; too high and it wastes too many steps cycling through all arms.
+
+#### Summary: Which method to use?
+
+| Scenario | Best method | Why |
+|----------|------------|-----|
+| **Stationary, need overall best** | UCB | Directed exploration, strong across full run |
+| **Stationary, care about final performance** | Optimistic greedy | Tightest convergence after exploration phase |
+| **Non-stationary** | $\epsilon$-greedy (with constant $\alpha$) | Only method that continuously explores and can use recency-weighted updates |
+| **Want probability-based policy** | Gradient bandit | Learns a distribution over actions, precursor to policy gradient |
+| **Need simplicity** | $\epsilon$-greedy | One parameter, easy to understand, works everywhere |
+
+No single method dominates in all settings — the right choice depends on the problem structure.
+
+---
+
+[exercise 2.1](./assets/exercises/chap2/2.2-bandit-example.xlsx)
 
 
