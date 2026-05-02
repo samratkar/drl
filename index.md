@@ -305,7 +305,7 @@ title: Course Curriculum Index
     const tbody = document.getElementById('lectureBody');
     if (!tbody) return;
     const rows = Array.from(tbody.querySelectorAll('tr[data-date]'));
-    rows.sort((a, b) => b.dataset.date.localeCompare(a.dataset.date));
+    rows.sort((a, b) => a.dataset.date.localeCompare(b.dataset.date));
     rows.forEach(row => tbody.appendChild(row));
   })();
 </script>
