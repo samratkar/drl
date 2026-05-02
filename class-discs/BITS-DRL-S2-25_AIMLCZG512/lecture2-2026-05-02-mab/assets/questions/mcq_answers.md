@@ -21,7 +21,7 @@ The agent tries to maximize the total expected reward over a time period.
 ### Q3. True Value vs Estimated Value
 **Answer**: (b)
 
-$Q_t(a)$ is the agent's estimate of $q_*(a)$ at time $t$, based on observed rewards.
+$Q_t(a)$ is the agent's estimate of $q_{\ast}(a)$ at time $t$, based on observed rewards.
 
 ---
 
@@ -42,14 +42,14 @@ With probability $\epsilon = 0.1$ a random arm is chosen uniformly from all 10, 
 ### Q6. When to Increase Exploration
 **Answer**: (b)
 
-$\epsilon$ should be larger when the rewards have high variance or $q_*(a)$ changes over time.
+$\epsilon$ should be larger when the rewards have high variance or $q_{\ast}(a)$ changes over time.
 
 ---
 
 ### Q7. Sample-Average Method
 **Answer**: (b)
 
-It converges to $q_*(a)$ by the law of large numbers.
+It converges to $q_{\ast}(a)$ by the law of large numbers.
 
 ---
 

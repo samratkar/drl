@@ -93,12 +93,12 @@ Using preferences $H_t = [0, 0, 0]$ (so $\pi_t = [1/3, 1/3, 1/3]$) and true rewa
 ---
 
 ### N16. Expected Reward Computation
-An agent's current policy is $\pi_t = [0.5, 0.3, 0.2]$ and true values are $q_* = [1.0, 3.0, 2.0]$. Compute $\mathbb{E}[R_t]$. What would the optimal expected reward be? How much reward per step is the current policy losing?
+An agent's current policy is $\pi_t = [0.5, 0.3, 0.2]$ and true values are $q_{\ast} = [1.0, 3.0, 2.0]$. Compute $\mathbb{E}[R_t]$. What would the optimal expected reward be? How much reward per step is the current policy losing?
 
 ---
 
 ### N17. Optimistic Greedy — First Few Steps
-A 3-armed bandit with $Q_1 = [5, 5, 5]$, $\alpha = 0.1$, true values $q_* = [1, 2, 1.5]$. The greedy agent selects arm 1 (all tied, random tiebreak), receives $R_1 = 1.2$. Compute new estimates for all arms and predict which arm is selected next. Explain why.
+A 3-armed bandit with $Q_1 = [5, 5, 5]$, $\alpha = 0.1$, true values $q_{\ast} = [1, 2, 1.5]$. The greedy agent selects arm 1 (all tied, random tiebreak), receives $R_1 = 1.2$. Compute new estimates for all arms and predict which arm is selected next. Explain why.
 
 ---
 

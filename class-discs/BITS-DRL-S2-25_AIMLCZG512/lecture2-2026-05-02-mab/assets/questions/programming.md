@@ -66,7 +66,7 @@ Run with $\alpha = 0.1$ and compare against sample-average ($\alpha = 1/n$) on a
 ### P5. Non-Stationary Bandit
 Create a non-stationary bandit where each `q_star[a]` takes an independent random walk after each step:
 
-$$q_*(a) \leftarrow q_*(a) + \mathcal{N}(0, 0.01)$$
+$$q_{\ast}(a) \leftarrow q_{\ast}(a) + \mathcal{N}(0, 0.01)$$
 
 Compare sample-average vs constant $\alpha = 0.1$ over 10,000 steps (2000 runs). Show that constant $\alpha$ significantly outperforms sample-average in the non-stationary case.
 

@@ -25,10 +25,10 @@ In the k-armed bandit problem, what does the agent try to maximize?
 ---
 
 ### Q3. True Value vs Estimated Value
-$q_*(a)$ represents the true value of action $a$. What is $Q_t(a)$?
+$q_{\ast}(a)$ represents the true value of action $a$. What is $Q_t(a)$?
 
 (a) The true value of action $a$ at time $t$  
-(b) The agent's estimate of $q_*(a)$ at time $t$, based on observed rewards  
+(b) The agent's estimate of $q_{\ast}(a)$ at time $t$, based on observed rewards  
 (c) The maximum possible reward from action $a$  
 (d) The reward received at time $t$ from action $a$  
 
@@ -40,7 +40,7 @@ The greedy action at time $t$ is defined as $A_t = \argmax_a Q_t(a)$. What is th
 (a) It requires too much computation  
 (b) It always selects the worst arm  
 (c) It may lock onto a suboptimal arm and never discover better alternatives  
-(d) It requires knowledge of $q_*(a)$  
+(d) It requires knowledge of $q_{\ast}(a)$  
 
 ---
 
@@ -57,8 +57,8 @@ In an $\epsilon$-greedy method with $\epsilon = 0.1$ and $k = 10$ arms, what is 
 ### Q6. When to Increase Exploration
 Under which conditions should $\epsilon$ be larger (more exploration)?
 
-(a) When the rewards have low variance and $q_*(a)$ is fixed  
-(b) When the rewards have high variance or $q_*(a)$ changes over time  
+(a) When the rewards have low variance and $q_{\ast}(a)$ is fixed  
+(b) When the rewards have high variance or $q_{\ast}(a)$ changes over time  
 (c) When the agent has already found the optimal arm  
 (d) When $k$ is very small (e.g., $k = 2$)  
 
@@ -68,8 +68,8 @@ Under which conditions should $\epsilon$ be larger (more exploration)?
 The sample-average method estimates $Q_t(a) = \frac{\sum_{i=1}^{t-1} R_i \cdot \mathbb{1}_{A_i=a}}{\sum_{i=1}^{t-1} \mathbb{1}_{A_i=a}}$. What happens to this estimate as the number of selections of arm $a$ goes to infinity?
 
 (a) It diverges  
-(b) It converges to $q_*(a)$ by the law of large numbers  
-(c) It oscillates between 0 and $q_*(a)$  
+(b) It converges to $q_{\ast}(a)$ by the law of large numbers  
+(c) It oscillates between 0 and $q_{\ast}(a)$  
 (d) It converges to 0  
 
 ---
@@ -100,12 +100,12 @@ Why is the sample-average method ($\alpha_n = 1/n$) unsuitable for non-stationar
 (a) It gives too much weight to recent rewards  
 (b) It gives equal weight to all past rewards, including stale ones from a distribution that no longer applies  
 (c) It doesn't converge  
-(d) It requires knowing $q_*(a)$ in advance  
+(d) It requires knowing $q_{\ast}(a)$ in advance  
 
 ---
 
 ### Q11. Convergence Conditions
-The convergence conditions for $Q_n \to q_*(a)$ are $\sum \alpha_n = \infty$ and $\sum \alpha_n^2 < \infty$. Which step-size satisfies both?
+The convergence conditions for $Q_n \to q_{\ast}(a)$ are $\sum \alpha_n = \infty$ and $\sum \alpha_n^2 < \infty$. Which step-size satisfies both?
 
 (a) $\alpha_n = \alpha$ (constant)  
 (b) $\alpha_n = 1/n$  
@@ -139,7 +139,7 @@ With constant $\alpha = 0.1$ and $Q_1 = 5$, after 10 observations, the weight re
 
 (a) $Q_1$ has been completely forgotten  
 (b) $Q_1$ still contributes $5 \times 0.35 = 1.74$ to the current estimate  
-(c) The estimate has converged to $q_*(a)$  
+(c) The estimate has converged to $q_{\ast}(a)$  
 (d) The estimate equals $0.35$  
 
 ---

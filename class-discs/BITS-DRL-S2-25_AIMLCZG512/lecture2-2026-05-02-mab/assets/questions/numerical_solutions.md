@@ -181,7 +181,7 @@ $R_t - \bar{R}_t = 3.8 - 0 = 3.8$ (positive, even though arm 1 might be bad!)
 - Arm 2: $H_{t+1}(2) = 0 + 0.4 \times 3.8 \times (0 - 1/3) = -0.507$
 - Arm 3: $H_{t+1}(3) = 0 + 0.4 \times 3.8 \times (0 - 1/3) = -0.507$
 
-Arm 1's preference increased massively — but $R_t = 3.8$ might be below the true mean of arm 1 ($q_*(1) = 3.5$)! Without a baseline, the algorithm can't tell.
+Arm 1's preference increased massively — but $R_t = 3.8$ might be below the true mean of arm 1 ($q_{\ast}(1) = 3.5$)! Without a baseline, the algorithm can't tell.
 
 ---
 
