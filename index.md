@@ -63,6 +63,7 @@ title: Course Curriculum Index
             <th class="px-6 py-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Date</th>
             <th class="px-6 py-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Title</th>
             <th class="px-6 py-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Problems</th>
+            <th class="px-6 py-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Solutions</th>
             <th class="px-6 py-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Tags</th>
           </tr>
         </thead>
@@ -76,6 +77,7 @@ title: Course Curriculum Index
             {% assign lecture_file = p.path | split: "/" | last %}
             {% assign lecture_dir = p.path | remove: lecture_file %}
             {% assign q_prefix = lecture_dir | append: "assets/questions/" %}
+            {% assign s_prefix = lecture_dir | append: "assets/questions/solutions/" %}
             <tr class="border-b border-slate-100 hover:bg-blue-50/20 transition-colors" data-date="{{ lecture_date }}">
               <td class="px-6 py-4 text-sm font-bold text-slate-600">{{ lecture_num }}</td>
               <td class="px-6 py-4 text-sm text-slate-500 font-mono">{{ lecture_date }}</td>
@@ -86,15 +88,36 @@ title: Course Curriculum Index
                 <div class="flex flex-wrap gap-1.5">
                   {% assign found_questions = false %}
                   {% for q in site.pages %}
-                    {% assign q_name = q.path | split: "/" | last %}
                     {% if q.path contains q_prefix %}
-                      {% if q_name == "mcq.md" or q_name == "numerical.md" or q_name == "programming.md" %}
-                        {% assign found_questions = true %}
-                        <a href="{{ q.url | relative_url }}" class="text-sm font-bold text-emerald-700 hover:text-emerald-900 transition-colors no-underline">{{ q_name | remove: ".md" }}</a>
-                      {% endif %}
+                      {% unless q.path contains s_prefix %}
+                        {% assign q_ext = q.path | split: "." | last %}
+                        {% if q_ext == "md" %}
+                          {% assign found_questions = true %}
+                          {% assign q_name = q.path | split: "/" | last | remove: ".md" %}
+                          <a href="{{ q.url | relative_url }}" class="text-sm font-bold text-emerald-700 hover:text-emerald-900 transition-colors no-underline">{{ q_name }}</a>
+                        {% endif %}
+                      {% endunless %}
                     {% endif %}
                   {% endfor %}
                   {% unless found_questions %}
+                    <span class="text-slate-300 text-sm">—</span>
+                  {% endunless %}
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex flex-wrap gap-1.5">
+                  {% assign found_solutions = false %}
+                  {% for s in site.pages %}
+                    {% if s.path contains s_prefix %}
+                      {% assign s_ext = s.path | split: "." | last %}
+                      {% if s_ext == "md" %}
+                        {% assign found_solutions = true %}
+                        {% assign s_name = s.path | split: "/" | last | remove: ".md" %}
+                        <a href="{{ s.url | relative_url }}" class="text-sm font-bold text-amber-700 hover:text-amber-900 transition-colors no-underline">{{ s_name }}</a>
+                      {% endif %}
+                    {% endif %}
+                  {% endfor %}
+                  {% unless found_solutions %}
                     <span class="text-slate-300 text-sm">—</span>
                   {% endunless %}
                 </div>
