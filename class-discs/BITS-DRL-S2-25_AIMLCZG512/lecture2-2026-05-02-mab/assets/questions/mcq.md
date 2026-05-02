@@ -71,7 +71,7 @@ Under which conditions should $\epsilon$ be larger (more exploration)?
 ---
 
 ### Q7. Sample-Average Method
-The sample-average method estimates $Q_t(a) = \frac{\sum_{i=1}^{t-1} R_i \cdot \mathbb{1}_{A_i=a}}{\sum_{i=1}^{t-1} \mathbb{1}_{A_i=a}}$. What happens to this estimate as the number of selections of arm $a$ goes to infinity?
+The sample-average method estimates $Q\_t(a) = \frac{\sum\_{i=1}^{t-1} R\_i \cdot \mathbb{1}\_{A\_i=a}}{\sum\_{i=1}^{t-1} \mathbb{1}\_{A\_i=a}}$. What happens to this estimate as the number of selections of arm $a$ goes to infinity?
 
 (a) It diverges  
 (b) It converges to $q_{\ast}(a)$ by the law of large numbers  
@@ -191,7 +191,7 @@ In the gradient bandit algorithm, $H_t(a)$ represents the preference for action 
 ---
 
 ### Q19. Gradient Bandit — Baseline Purpose
-In the gradient bandit update $H_{t+1}(a) = H_t(a) + \alpha(R_t - \bar{R}_t)(\mathbb{1}_{A_t=a} - \pi_t(a))$, what is the role of the baseline $\bar{R}_t$?
+In the gradient bandit update $H\_{t+1}(a) = H\_t(a) + \alpha(R\_t - \bar{R}\_t)(\mathbb{1}\_{A\_t=a} - \pi\_t(a))$, what is the role of the baseline $\bar{R}\_t$?
 
 (a) It changes the expected gradient direction  
 (b) It doesn't affect the expected gradient, but dramatically reduces variance by asking "was this reward better than average?" instead of "was this reward positive?"  
