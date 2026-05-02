@@ -3,6 +3,7 @@ tags : [lectures, mab]
 title : "DRL - Class 2 - Multi Armed Bandit"
 category : Lectures
 subcategory : MAB
+textbook : [chapter2]
 ---
 
 ## Today's conversations - 5/2/26 
