@@ -1,3 +1,9 @@
+---
+tags : [chapter2, problems]
+categories : drl-problems
+subcategories : mab
+---
+
 # Chapter 2: Multi-Armed Bandits — MCQ Answer Key
 
 *Based on Sutton & Barto, Reinforcement Learning: An Introduction (2nd Ed.), Chapter 2*
