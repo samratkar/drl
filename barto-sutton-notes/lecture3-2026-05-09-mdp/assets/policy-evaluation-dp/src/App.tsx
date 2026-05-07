@@ -8,7 +8,7 @@ const ACTIONS: Action[] = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
 
 const CONFIG: MDPConfig = {
   gridSize: GRID_SIZE,
-  gamma: 1.0,
+  gamma: 0.9,
   rewardGoal: 10,
   rewardStep: 0,
 };
