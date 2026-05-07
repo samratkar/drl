@@ -6,6 +6,9 @@ import './index.css';
 const GRID_SIZE = 4;
 const ACTIONS: Action[] = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
 
+const DANGER_STATES = new Set([5, 9]);
+const REWARD_DANGER = -5;
+
 const CONFIG: MDPConfig = {
   gridSize: GRID_SIZE,
   gamma: 0.9,
@@ -25,9 +28,9 @@ for (let s = 0; s < GRID_SIZE * GRID_SIZE; s++) {
 }
 
 const POLICIES = [
-  { id: 1, name: 'Policy 1: Uniform Random', policy: uniformPolicy },
-  { id: 2, name: 'Policy 2: Optimistic (Down/Right)', policy: optimisticPolicy },
-  { id: 3, name: 'Policy 3: Suboptimal (Up/Left)', policy: suboptimalPolicy },
+  { id: 1, label: 'Policy 1', name: 'Uniform Random', policy: uniformPolicy },
+  { id: 2, label: 'Policy 2', name: 'Optimistic (Down/Right)', policy: optimisticPolicy },
+  { id: 3, label: 'Policy 3', name: 'Suboptimal (Up/Left)', policy: suboptimalPolicy },
 ];
 
 const App: React.FC = () => {
@@ -58,7 +61,9 @@ const App: React.FC = () => {
 
   const getQValue = (s: number, a: Action, values: number[]): number => {
     const nextS = getNextState(s, a);
-    const reward = nextS === GRID_SIZE * GRID_SIZE - 1 ? CONFIG.rewardGoal : CONFIG.rewardStep;
+    let reward = CONFIG.rewardStep;
+    if (nextS === GRID_SIZE * GRID_SIZE - 1) reward = CONFIG.rewardGoal;
+    else if (DANGER_STATES.has(nextS)) reward = REWARD_DANGER;
     return reward + CONFIG.gamma * values[nextS];
   };
 
@@ -133,17 +138,89 @@ const App: React.FC = () => {
     setShowImprovement(false);
   };
 
+  const actionArrow = (a: Action) => {
+    switch (a) {
+      case 'UP': return '↑';
+      case 'DOWN': return '↓';
+      case 'LEFT': return '←';
+      case 'RIGHT': return '→';
+    }
+  };
+
   return (
     <div className="container">
       <header style={{textAlign: 'center', marginBottom: '2rem'}}>
         <h1>Policy Evaluation vs. Policy Improvement</h1>
-        <div className="equation">
-          Step 1: Evaluation → V<sub>π</sub>(s) = Σ<sub>a</sub> π(a|s) [r + γ V<sub>π</sub>(s')]
-        </div>
       </header>
+
+      <section className="phase-container" style={{border: '2px solid #2196f3', padding: '20px', borderRadius: '12px'}}>
+        <h2 style={{color: '#2196f3'}}>The MDP Environment</h2>
+
+        <div style={{display: 'flex', gap: '2.5rem', alignItems: 'center', flexWrap: 'wrap'}}>
+          <div className="grid-container grid-large" style={{borderColor: '#2196f3'}}>
+            {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, sIdx) => {
+              const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
+              const isDanger = DANGER_STATES.has(sIdx);
+              return (
+                <div
+                  key={sIdx}
+                  className={`cell ${isTerminal ? 'terminal' : ''} ${isDanger ? 'danger' : ''}`}
+                  style={{
+                    backgroundColor: isTerminal ? '#1a4d2e' : isDanger ? '#4d1a1a' : '#2a2a3a',
+                    position: 'relative',
+                  }}
+                >
+                  <span className="cell-id">{sIdx}</span>
+                  {isTerminal ? (
+                    <div style={{textAlign: 'center'}}>
+                      <div style={{fontSize: '1.2rem'}}>🏁</div>
+                      <div style={{fontSize: '0.6rem', color: '#4caf50'}}>R={CONFIG.rewardGoal}</div>
+                    </div>
+                  ) : isDanger ? (
+                    <div style={{textAlign: 'center'}}>
+                      <div style={{fontSize: '1.2rem'}}>💀</div>
+                      <div style={{fontSize: '0.6rem', color: '#f44336'}}>R={REWARD_DANGER}</div>
+                    </div>
+                  ) : (
+                    <div className="action-arrows">
+                      <span className="arrow arrow-up">↑</span>
+                      <span className="arrow arrow-left">←</span>
+                      <span className="arrow arrow-right">→</span>
+                      <span className="arrow arrow-down">↓</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={{display: 'flex', flexDirection: 'column', gap: '0.5rem'}}>
+            <p style={{margin: '0 0 0.5rem 0', fontSize: '0.85rem', maxWidth: '220px'}}>4×4 gridworld. Reach the 🏁 Goal while avoiding 💀 danger zones.</p>
+
+            <div style={{background: '#1a1a2e', padding: '6px 12px', borderRadius: '6px', border: '1px solid #2196f3', fontSize: '0.8rem'}}>
+              <strong>S:</strong> {'{'} 0 .. 15 {'}'}
+            </div>
+            <div style={{background: '#1a1a2e', padding: '6px 12px', borderRadius: '6px', border: '1px solid #2196f3', fontSize: '0.8rem'}}>
+              <strong>A:</strong> {'{'} ↑ ↓ ← → {'}'}
+            </div>
+            <div style={{background: '#1a1a2e', padding: '6px 12px', borderRadius: '6px', border: '1px solid #2196f3', fontSize: '0.8rem'}}>
+              <strong>R:</strong> +{CONFIG.rewardGoal} goal, {REWARD_DANGER} danger, {CONFIG.rewardStep} step
+            </div>
+            <div style={{background: '#1a1a2e', padding: '6px 12px', borderRadius: '6px', border: '1px solid #2196f3', fontSize: '0.8rem'}}>
+              <strong>γ:</strong> {CONFIG.gamma}
+            </div>
+            <div style={{background: '#1a1a2e', padding: '6px 12px', borderRadius: '6px', border: '1px solid #2196f3', fontSize: '0.8rem'}}>
+              <strong>Dynamics:</strong> Deterministic
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section className="phase-container" style={{border: '2px solid #333', padding: '20px', borderRadius: '12px'}}>
         <h2 style={{color: '#ffa500'}}>STEP 1: Policy Evaluation</h2>
+        <div className="equation">
+          V<sub>π</sub>(s) = Σ<sub>a</sub> π(a|s) [r + γ V<sub>π</sub>(s')]
+        </div>
         <p>Iteratively update state values until they converge for the given policies.</p>
         
         <div className="controls">
@@ -158,21 +235,28 @@ const App: React.FC = () => {
 
         <div className="dashboard">
           {POLICIES.map((p, pIdx) => (
-            <div key={p.name} className="policy-view">
-              <h3>{p.name}</h3>
+            <div key={p.label} className="policy-view">
+              <h3>{p.label}<br/><span style={{fontSize: '0.8em', opacity: 0.7}}>{p.name}</span></h3>
               <div className="grid-container">
-                {evalValues[pIdx].map((v, sIdx) => (
-                  <div 
-                    key={sIdx} 
-                    className={`cell ${sIdx === GRID_SIZE * GRID_SIZE - 1 ? 'terminal' : ''}`}
-                    style={{
-                      backgroundColor: sIdx === GRID_SIZE * GRID_SIZE - 1 ? undefined : `rgba(255, 165, 0, ${Math.min(v / 10, 1)})`
-                    }}
-                  >
-                    <span className="cell-id">{sIdx}</span>
-                    <span className="cell-value">{v.toFixed(2)}</span>
-                  </div>
-                ))}
+                {evalValues[pIdx].map((v, sIdx) => {
+                  const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
+                  const isDanger = DANGER_STATES.has(sIdx);
+                  let bgColor: string | undefined;
+                  if (!isTerminal) {
+                    if (v >= 0) bgColor = `rgba(255, 165, 0, ${Math.min(v / 10, 1)})`;
+                    else bgColor = `rgba(244, 67, 54, ${Math.min(Math.abs(v) / 5, 0.8)})`;
+                  }
+                  return (
+                    <div
+                      key={sIdx}
+                      className={`cell ${isTerminal ? 'terminal' : ''} ${isDanger ? 'danger' : ''}`}
+                      style={{ backgroundColor: bgColor }}
+                    >
+                      <span className="cell-id">{isDanger ? '💀' : sIdx}</span>
+                      <span className="cell-value">{v.toFixed(2)}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -180,8 +264,8 @@ const App: React.FC = () => {
 
         <div className="policy-tables">
           {POLICIES.map((p, pIdx) => (
-            <div key={p.name}>
-              <h4>{p.name} Analysis</h4>
+            <div key={p.label + '_table'}>
+              <h4>{p.label}<br/><span style={{fontSize: '0.8em', opacity: 0.7}}>{p.name}</span></h4>
               <table>
                 <thead>
                   <tr>
@@ -248,26 +332,33 @@ const App: React.FC = () => {
 
           <div className="dashboard">
             {POLICIES.map((p, pIdx) => (
-              <div key={p.name + '_improved'} className="policy-view">
-                <h3>{p.name} (Result)</h3>
+              <div key={p.label + '_improved'} className="policy-view">
+                <h3>{p.label}<br/><span style={{fontSize: '0.8em', opacity: 0.7}}>{p.name} (Result)</span></h3>
                 <div className="grid-container" style={{borderColor: '#4caf50'}}>
-                  {frozenEvalValues![pIdx].map((v, sIdx) => (
-                    <div 
-                      key={sIdx} 
-                      className={`cell ${sIdx === GRID_SIZE * GRID_SIZE - 1 ? 'terminal' : ''}`}
-                      style={{
-                        backgroundColor: sIdx === GRID_SIZE * GRID_SIZE - 1 ? undefined : `rgba(76, 175, 80, ${Math.min(v / 10, 0.4)})`
-                      }}
-                    >
-                      <span className="cell-id">{sIdx}</span>
-                      <span className="cell-value" style={{opacity: 0.6}}>{v.toFixed(2)}</span>
-                      {improvedPolicies && sIdx !== GRID_SIZE * GRID_SIZE - 1 && (
-                        <div style={{color: '#fff', fontWeight: 'bold', fontSize: '0.9rem', backgroundColor: '#2e7d32', padding: '2px 4px', borderRadius: '4px'}}>
-                          {improvedPolicies[pIdx][sIdx]}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  {frozenEvalValues![pIdx].map((v, sIdx) => {
+                    const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
+                    const isDanger = DANGER_STATES.has(sIdx);
+                    let bgColor: string | undefined;
+                    if (!isTerminal) {
+                      if (v >= 0) bgColor = `rgba(76, 175, 80, ${Math.min(v / 10, 0.4)})`;
+                      else bgColor = `rgba(244, 67, 54, ${Math.min(Math.abs(v) / 5, 0.6)})`;
+                    }
+                    return (
+                      <div
+                        key={sIdx}
+                        className={`cell ${isTerminal ? 'terminal' : ''} ${isDanger ? 'danger' : ''}`}
+                        style={{ backgroundColor: bgColor }}
+                      >
+                        <span className="cell-id">{isDanger ? '💀' : sIdx}</span>
+                        <span className="cell-value" style={{opacity: 0.6}}>{v.toFixed(2)}</span>
+                        {improvedPolicies && !isTerminal && (
+                          <div style={{color: '#fff', fontWeight: 'bold', fontSize: '0.9rem', backgroundColor: '#2e7d32', padding: '2px 4px', borderRadius: '4px'}}>
+                            {improvedPolicies[pIdx][sIdx]}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ))}
@@ -275,8 +366,8 @@ const App: React.FC = () => {
 
           <div className="policy-tables">
             {POLICIES.map((p, pIdx) => (
-              <div key={p.name + '_table_improved'}>
-                <h4>{p.name} New Improved π'</h4>
+              <div key={p.label + '_table_improved'}>
+                <h4>{p.label}<br/><span style={{fontSize: '0.8em', opacity: 0.7}}>{p.name} — Improved π'</span></h4>
                 <table>
                   <thead>
                     <tr>

@@ -37,9 +37,9 @@ body {
 
 .dashboard {
   display: flex;
-  gap: 2rem;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: space-evenly;
+  gap: 1.5rem;
 }
 
 .grid-container {
@@ -50,6 +50,11 @@ body {
   background-color: #444;
   padding: 4px;
   border-radius: 8px;
+}
+
+.grid-container.grid-large {
+  grid-template-columns: repeat(4, 100px);
+  grid-template-rows: repeat(4, 100px);
 }
 
 .cell {
@@ -65,6 +70,11 @@ body {
 
 .cell.terminal {
   background-color: #1a4d2e;
+}
+
+.cell.danger {
+  background-color: #4d1a1a;
+  border: 1px solid #f44336;
 }
 
 .cell-value {
@@ -85,6 +95,7 @@ body {
   overflow-x: auto;
   max-width: 90vw;
   padding-bottom: 1rem;
+  justify-content: center;
 }
 
 table {
@@ -118,3 +129,28 @@ button {
   border-radius: 8px;
   margin-bottom: 2rem;
 }
+
+.action-arrows {
+  display: grid;
+  grid-template-areas:
+    ". up ."
+    "left . right"
+    ". down .";
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-items: center;
+}
+
+.arrow {
+  font-size: 0.9rem;
+  color: #64b5f6;
+  opacity: 0.8;
+}
+
+.arrow-up { grid-area: up; }
+.arrow-down { grid-area: down; }
+.arrow-left { grid-area: left; }
+.arrow-right { grid-area: right; }
