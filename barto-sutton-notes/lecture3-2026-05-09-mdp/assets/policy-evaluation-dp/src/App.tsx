@@ -46,6 +46,17 @@ const App: React.FC = () => {
   const [qValues, setQValues] = useState<Record<string, number>[][] | null>(null);
   const [showImprovement, setShowImprovement] = useState(false);
 
+  // Value Iteration State
+  const [viValues, setViValues] = useState<number[]>(new Array(GRID_SIZE * GRID_SIZE).fill(0));
+  const [viIteration, setViIteration] = useState(0);
+  const [viDone, setViDone] = useState(false);
+  const [viPlaying, setViPlaying] = useState(false);
+  const [viPolicy, setViPolicy] = useState<(Action | 'NONE')[] | null>(null);
+  const [viQValues, setViQValues] = useState<Record<string, number>[]>(
+    Array.from({ length: GRID_SIZE * GRID_SIZE }, () => ({ UP: 0, DOWN: 0, LEFT: 0, RIGHT: 0 }))
+  );
+  const [viHistory, setViHistory] = useState<{iter: number; maxDelta: number}[]>([]);
+
   const getNextState = (s: number, a: Action): number => {
     const row = Math.floor(s / GRID_SIZE);
     const col = s % GRID_SIZE;
@@ -141,6 +152,62 @@ const App: React.FC = () => {
     setQValues(newQValues);
   };
 
+  // Value Iteration: V(s) = max_a [r + γ V(s')]
+  const runViStep = useCallback(() => {
+    let maxDelta = 0;
+    const nextValues = [...viValues];
+    const nextQValues: Record<string, number>[] = [...viQValues];
+
+    for (let s = 0; s < GRID_SIZE * GRID_SIZE - 1; s++) {
+      let bestQ = -Infinity;
+      const stateQ: Record<string, number> = {};
+      for (const a of ACTIONS) {
+        const q = getQValue(s, a, viValues);
+        stateQ[a] = q;
+        if (q > bestQ) bestQ = q;
+      }
+      maxDelta = Math.max(maxDelta, Math.abs(bestQ - viValues[s]));
+      nextValues[s] = bestQ;
+      nextQValues[s] = stateQ;
+    }
+
+    setViValues(nextValues);
+    setViQValues(nextQValues);
+    setViIteration(prev => prev + 1);
+    setViHistory(prev => [...prev, { iter: viIteration + 1, maxDelta }]);
+
+    if (maxDelta < 0.001 && viIteration > 0) {
+      setViDone(true);
+      setViPlaying(false);
+    }
+  }, [viValues, viIteration, viQValues]);
+
+  useEffect(() => {
+    let interval: number;
+    if (viPlaying && !viDone) {
+      interval = setInterval(runViStep, 100);
+    }
+    return () => clearInterval(interval);
+  }, [viPlaying, viDone, runViStep]);
+
+  const extractViPolicy = () => {
+    const policy: (Action | 'NONE')[] = [];
+    for (let s = 0; s < GRID_SIZE * GRID_SIZE - 1; s++) {
+      let bestQ = -Infinity;
+      let bestA: Action = 'UP';
+      for (const a of ACTIONS) {
+        const q = getQValue(s, a, viValues);
+        if (q > bestQ) {
+          bestQ = q;
+          bestA = a;
+        }
+      }
+      policy[s] = bestA;
+    }
+    policy[GRID_SIZE * GRID_SIZE - 1] = 'NONE';
+    setViPolicy(policy);
+  };
+
   const resetAll = () => {
     setIteration(0);
     setEvalValues(POLICIES.map(() => new Array(GRID_SIZE * GRID_SIZE).fill(0)));
@@ -150,6 +217,13 @@ const App: React.FC = () => {
     setImprovedPolicies(null);
     setQValues(null);
     setShowImprovement(false);
+    setViValues(new Array(GRID_SIZE * GRID_SIZE).fill(0));
+    setViQValues(Array.from({ length: GRID_SIZE * GRID_SIZE }, () => ({ UP: 0, DOWN: 0, LEFT: 0, RIGHT: 0 })));
+    setViIteration(0);
+    setViDone(false);
+    setViPlaying(false);
+    setViPolicy(null);
+    setViHistory([]);
   };
 
   const actionArrow = (a: Action) => {
@@ -164,7 +238,7 @@ const App: React.FC = () => {
   return (
     <div className="container">
       <header style={{textAlign: 'center', marginBottom: '2rem'}}>
-        <h1>Policy Evaluation vs. Policy Improvement</h1>
+        <h1>Dynamic Programming: Policy Iteration vs. Value Iteration</h1>
       </header>
 
       <section className="phase-container" style={{border: '2px solid #2196f3', padding: '20px', borderRadius: '12px'}}>
@@ -229,6 +303,11 @@ const App: React.FC = () => {
           </div>
         </div>
       </section>
+
+      <div style={{width: '100%', textAlign: 'center', padding: '10px', background: 'linear-gradient(90deg, #ffa500, #4caf50)', borderRadius: '8px'}}>
+        <h2 style={{margin: 0, color: '#000'}}>METHOD 1: Policy Iteration</h2>
+        <p style={{margin: '4px 0 0', color: '#222', fontSize: '0.85rem'}}>Evaluate fully, then improve. Repeat until optimal.</p>
+      </div>
 
       <section className="phase-container" style={{border: '2px solid #333', padding: '20px', borderRadius: '12px'}}>
         <h2 style={{color: '#ffa500'}}>STEP 1: Policy Evaluation</h2>
@@ -323,7 +402,7 @@ const App: React.FC = () => {
       </section>
 
       {showImprovement && (
-        <section className="phase-container" style={{border: '2px solid #4caf50', padding: '20px', borderRadius: '12px', marginTop: '40px', background: '#111'}}>
+        <section className="phase-container" style={{border: '2px solid #4caf50', padding: '20px', borderRadius: '12px', background: '#111'}}>
           <h2 style={{color: '#4caf50'}}>STEP 2: Policy Improvement (Manual)</h2>
           <p>
             The values below are <strong>FROZEN</strong> from the evaluation above. 
@@ -431,6 +510,192 @@ const App: React.FC = () => {
                 </table>
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* VALUE ITERATION */}
+      <div style={{width: '100%', textAlign: 'center', padding: '10px', background: 'linear-gradient(90deg, #9c27b0, #e91e63)', borderRadius: '8px', marginTop: '2rem'}}>
+        <h2 style={{margin: 0, color: '#fff'}}>METHOD 2: Value Iteration</h2>
+        <p style={{margin: '4px 0 0', color: '#eee', fontSize: '0.85rem'}}>Combine evaluation + improvement in every sweep. No separate policy needed.</p>
+      </div>
+
+      <section className="phase-container" style={{border: '2px solid #9c27b0', padding: '20px', borderRadius: '12px'}}>
+        <h2 style={{color: '#ce93d8'}}>Value Iteration</h2>
+        <div className="equation" style={{border: '1px solid #9c27b0'}}>
+          V(s) = max<sub>a</sub> [r + γ V(s')]
+        </div>
+        <p>At each sweep, every state takes the <strong>max</strong> over all actions — evaluation and improvement happen simultaneously.</p>
+
+        <div className="controls">
+          <button onClick={() => setViPlaying(!viPlaying)} disabled={viDone} style={{borderColor: '#9c27b0'}}>
+            {viPlaying ? 'Pause' : 'Start Value Iteration'}
+          </button>
+          <button onClick={runViStep} disabled={viDone || viPlaying}>Single Step</button>
+          <button onClick={resetAll}>Reset All</button>
+          <span style={{marginLeft: '10px'}}>Iteration: {viIteration}</span>
+          {viDone && <span style={{ color: '#ce93d8', fontWeight: 'bold' }}> - CONVERGED!</span>}
+        </div>
+
+        <div style={{display: 'flex', gap: '2rem', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'flex-start'}}>
+          <div>
+            <h3 style={{textAlign: 'center'}}>V*(s)</h3>
+            <div className="grid-container" style={{borderColor: '#9c27b0'}}>
+              {viValues.map((v, sIdx) => {
+                const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
+                const isDanger = DANGER_STATES.has(sIdx);
+                let bgColor: string | undefined;
+                if (!isTerminal) {
+                  if (v >= 0) bgColor = `rgba(206, 147, 216, ${Math.min(v / 10, 1)})`;
+                  else bgColor = `rgba(244, 67, 54, ${Math.min(Math.abs(v) / 5, 0.8)})`;
+                }
+                return (
+                  <div
+                    key={sIdx}
+                    className={`cell ${isTerminal ? 'terminal' : ''} ${isDanger ? 'danger' : ''}`}
+                    style={{ backgroundColor: bgColor }}
+                  >
+                    <span className="cell-id">{isDanger ? '💀' : sIdx}</span>
+                    <span className="cell-value">{v.toFixed(2)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {viDone && (
+            <div>
+              <h3 style={{textAlign: 'center'}}>π*(s) — Extracted Policy</h3>
+              {!viPolicy && (
+                <div style={{textAlign: 'center', marginBottom: '1rem'}}>
+                  <button onClick={extractViPolicy} style={{backgroundColor: '#9c27b0', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '6px'}}>
+                    Extract Policy from V*
+                  </button>
+                </div>
+              )}
+              <div className="grid-container" style={{borderColor: '#e91e63'}}>
+                {viValues.map((v, sIdx) => {
+                  const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
+                  const isDanger = DANGER_STATES.has(sIdx);
+                  let bgColor: string | undefined;
+                  if (!isTerminal) {
+                    if (v >= 0) bgColor = `rgba(206, 147, 216, ${Math.min(v / 10, 0.4)})`;
+                    else bgColor = `rgba(244, 67, 54, ${Math.min(Math.abs(v) / 5, 0.4)})`;
+                  }
+                  return (
+                    <div
+                      key={sIdx}
+                      className={`cell ${isTerminal ? 'terminal' : ''} ${isDanger ? 'danger' : ''}`}
+                      style={{ backgroundColor: bgColor }}
+                    >
+                      <span className="cell-id">{isDanger ? '💀' : sIdx}</span>
+                      {viPolicy && !isTerminal ? (
+                        <div style={{color: '#fff', fontWeight: 'bold', fontSize: '1.1rem'}}>
+                          {actionArrow(viPolicy[sIdx] as Action)}
+                        </div>
+                      ) : isTerminal ? (
+                        <span style={{fontSize: '1rem'}}>🏁</span>
+                      ) : (
+                        <span className="cell-value" style={{opacity: 0.5}}>?</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {viIteration > 0 && (
+          <div className="policy-tables" style={{marginTop: '1.5rem'}}>
+            <div>
+              <h4>Value Iteration<br/><span style={{fontSize: '0.8em', opacity: 0.7}}>Q(s,a) → max → V(s) | Iteration {viIteration}</span></h4>
+              <table>
+                <thead>
+                  <tr>
+                    <th rowSpan={2}>State</th>
+                    <th colSpan={4}>Q(s,a) &amp; π(a|s)</th>
+                    <th rowSpan={2} style={{backgroundColor: '#2a1a3a'}}>V(s) = max Q</th>
+                  </tr>
+                  <tr>
+                    <th>UP</th>
+                    <th>DOWN</th>
+                    <th>LEFT</th>
+                    <th>RIGHT</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, sIdx) => {
+                    const stateQ = viQValues[sIdx];
+                    const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
+                    const bestA = ACTIONS.find(a => stateQ[a] === maxQ) || 'UP';
+                    const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
+                    return (
+                      <tr key={sIdx}>
+                        <td>{sIdx}</td>
+                        {ACTIONS.map(a => {
+                          const isBest = !isTerminal && stateQ[a] === maxQ;
+                          return (
+                            <td key={a} style={{color: isBest ? '#ce93d8' : '#888', fontWeight: isBest ? 'bold' : 'normal'}}>
+                              <div style={{fontSize: '0.7rem', color: isBest ? '#ce93d8' : '#666'}}>
+                                Q={stateQ[a].toFixed(2)}
+                              </div>
+                              <div>
+                                {isTerminal ? '-' : isBest ? '1.00' : '0.00'}
+                              </div>
+                            </td>
+                          );
+                        })}
+                        <td style={{background: '#1a0a2a', fontWeight: 'bold', color: '#ce93d8'}}>
+                          {viValues[sIdx].toFixed(2)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* COMPARISON */}
+      {(isEvalDone || viDone) && (
+        <section className="phase-container" style={{border: '2px solid #ffeb3b', padding: '20px', borderRadius: '12px', background: '#1a1a0a'}}>
+          <h2 style={{color: '#ffeb3b'}}>Comparison: Policy Iteration vs. Value Iteration</h2>
+
+          <div style={{display: 'flex', gap: '2rem', justifyContent: 'center', flexWrap: 'wrap'}}>
+            <div style={{background: '#111', border: '1px solid #ffa500', borderRadius: '8px', padding: '16px', minWidth: '280px'}}>
+              <h3 style={{color: '#ffa500', marginTop: 0}}>Policy Iteration</h3>
+              <table style={{width: '100%'}}>
+                <tbody>
+                  <tr><td>Eval Iterations</td><td style={{fontWeight: 'bold', color: '#ffa500'}}>{iteration}</td></tr>
+                  <tr><td>Improvement Steps</td><td style={{fontWeight: 'bold', color: '#4caf50'}}>1</td></tr>
+                  <tr><td>Total Sweeps</td><td style={{fontWeight: 'bold'}}>{iteration + 1}</td></tr>
+                  <tr><td style={{paddingTop: '8px'}}>Update Rule</td><td style={{paddingTop: '8px', fontSize: '0.75rem'}}>V = Σ π(a|s) · Q(s,a)</td></tr>
+                  <tr><td>Needs Policy?</td><td style={{color: '#ffa500'}}>Yes (π given)</td></tr>
+                  <tr><td>When to use</td><td style={{fontSize: '0.75rem'}}>Few iterations to converge each eval</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style={{background: '#111', border: '1px solid #9c27b0', borderRadius: '8px', padding: '16px', minWidth: '280px'}}>
+              <h3 style={{color: '#ce93d8', marginTop: 0}}>Value Iteration</h3>
+              <table style={{width: '100%'}}>
+                <tbody>
+                  <tr><td>Iterations</td><td style={{fontWeight: 'bold', color: '#ce93d8'}}>{viIteration}</td></tr>
+                  <tr><td>Improvement Steps</td><td style={{fontWeight: 'bold', color: '#4caf50'}}>Every sweep</td></tr>
+                  <tr><td>Total Sweeps</td><td style={{fontWeight: 'bold'}}>{viIteration}</td></tr>
+                  <tr><td style={{paddingTop: '8px'}}>Update Rule</td><td style={{paddingTop: '8px', fontSize: '0.75rem'}}>V = max_a Q(s,a)</td></tr>
+                  <tr><td>Needs Policy?</td><td style={{color: '#ce93d8'}}>No (implicit max)</td></tr>
+                  <tr><td>When to use</td><td style={{fontSize: '0.75rem'}}>Direct path to V*, no policy overhead</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div style={{marginTop: '1.5rem', textAlign: 'center', fontSize: '0.9rem', color: '#ccc', maxWidth: '700px', margin: '1.5rem auto 0'}}>
+            <strong style={{color: '#ffeb3b'}}>Key Insight:</strong> Both converge to the same V* and π*. Policy Iteration separates "evaluate" and "improve" cleanly. Value Iteration merges them — each Bellman update already takes the max, so it's both evaluating and improving at once. Value Iteration typically needs fewer total sweeps but each sweep does more work (max instead of weighted sum).
           </div>
         </section>
       )}
