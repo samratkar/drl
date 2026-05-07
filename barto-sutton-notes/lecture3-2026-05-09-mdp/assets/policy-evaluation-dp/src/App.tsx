@@ -291,21 +291,33 @@ const App: React.FC = () => {
                   <tbody>
                     {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, sIdx) => {
                       const bestAction = improvedPolicies ? improvedPolicies[pIdx][sIdx] : null;
+                      const origPolicy = p.policy[sIdx];
                       return (
                         <tr key={sIdx}>
                           <td>{sIdx}</td>
-                          <td style={{color: bestAction === 'UP' ? '#4caf50' : '#888', fontWeight: bestAction === 'UP' ? 'bold' : 'normal'}}>
-                            {bestAction === 'UP' ? '1.00' : '0.00'}
-                          </td>
-                          <td style={{color: bestAction === 'DOWN' ? '#4caf50' : '#888', fontWeight: bestAction === 'DOWN' ? 'bold' : 'normal'}}>
-                            {bestAction === 'DOWN' ? '1.00' : '0.00'}
-                          </td>
-                          <td style={{color: bestAction === 'LEFT' ? '#4caf50' : '#888', fontWeight: bestAction === 'LEFT' ? 'bold' : 'normal'}}>
-                            {bestAction === 'LEFT' ? '1.00' : '0.00'}
-                          </td>
-                          <td style={{color: bestAction === 'RIGHT' ? '#4caf50' : '#888', fontWeight: bestAction === 'RIGHT' ? 'bold' : 'normal'}}>
-                            {bestAction === 'RIGHT' ? '1.00' : '0.00'}
-                          </td>
+                          {bestAction ? (
+                            <>
+                              <td style={{color: bestAction === 'UP' ? '#4caf50' : '#888', fontWeight: bestAction === 'UP' ? 'bold' : 'normal'}}>
+                                {bestAction === 'UP' ? '1.00' : '0.00'}
+                              </td>
+                              <td style={{color: bestAction === 'DOWN' ? '#4caf50' : '#888', fontWeight: bestAction === 'DOWN' ? 'bold' : 'normal'}}>
+                                {bestAction === 'DOWN' ? '1.00' : '0.00'}
+                              </td>
+                              <td style={{color: bestAction === 'LEFT' ? '#4caf50' : '#888', fontWeight: bestAction === 'LEFT' ? 'bold' : 'normal'}}>
+                                {bestAction === 'LEFT' ? '1.00' : '0.00'}
+                              </td>
+                              <td style={{color: bestAction === 'RIGHT' ? '#4caf50' : '#888', fontWeight: bestAction === 'RIGHT' ? 'bold' : 'normal'}}>
+                                {bestAction === 'RIGHT' ? '1.00' : '0.00'}
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              <td>{origPolicy.UP.toFixed(2)}</td>
+                              <td>{origPolicy.DOWN.toFixed(2)}</td>
+                              <td>{origPolicy.LEFT.toFixed(2)}</td>
+                              <td>{origPolicy.RIGHT.toFixed(2)}</td>
+                            </>
+                          )}
                           <td style={{background: '#0a0a0a'}}>{frozenEvalValues![pIdx][sIdx].toFixed(2)}</td>
                         </tr>
                       );
