@@ -63,6 +63,24 @@ jupyter notebook 1-introduction/env.ipynb
 - **State Management**: Tabular methods use a dictionary or numpy array for value functions/policies. Deep methods use PyTorch `nn.Module`.
 - **Reproducibility**: No central test suite exists. Validation is performed by running scripts and observing convergence in rewards or visualization dashboards.
 
+### Interactive Web Visualization: Policy Iteration vs. Value Iteration
+Located at `barto-sutton-notes/lecture3-2026-05-09-mdp/assets/policy-evaluation-dp/` — a React + Vite + TypeScript app demonstrating DP methods on a 4×4 gridworld with danger zones.
+
+**Sections:**
+- **MDP Environment**: Grid with states, action arrows, goal (🏁, R=+10), danger cells (💀, R=-5)
+- **Policy Iteration (Method 1)**: Step 1 Policy Evaluation (3 policies: uniform, optimistic, suboptimal) → Step 2 Policy Improvement (argmax over Q-values with Q-value overlay)
+- **Value Iteration (Method 2)**: Combined update V(s) = max_a Q(s,a), live Q-value table showing how max Q overwrites V and implicit greedy policy at each step
+- **Comparison**: Side-by-side stats showing iteration counts, update rules, and tradeoffs
+
+**Running:**
+```bash
+cd barto-sutton-notes/lecture3-2026-05-09-mdp/assets/policy-evaluation-dp
+npm install
+npm run dev
+```
+
+**Config:** `GRID_SIZE=4`, `gamma=0.9`, `rewardGoal=10`, `rewardStep=0`, `DANGER_STATES={5,9}`, `REWARD_DANGER=-5`
+
 ## Key Implementation Patterns
 - **Exploration**: Most agents use epsilon-greedy exploration with linear or exponential decay.
 - **Buffers**: Deep RL implementations use a `ReplayBuffer` (found in `cases/1-gym_atari_lunar_lander/replay_buffer.py`).
