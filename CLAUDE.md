@@ -56,6 +56,25 @@ Each algorithm implementation contains: core function (e.g., `policy_iteration()
 
 DQN variants use a consistent 3-layer fully-connected architecture (state_dim → 64 → 64 → action_dim) with `QNetwork(nn.Module)`. Shared components (`q_network.py`, `replay_buffer.py`) live alongside the lunar lander implementations.
 
+### Interactive Web Visualizations
+
+`barto-sutton-notes/lecture3-2026-05-09-mdp/assets/policy-evaluation-dp/` — React + Vite + TypeScript app demonstrating Dynamic Programming methods on a 4×4 gridworld with danger zones.
+
+**Structure:**
+- MDP Environment section: grid visualization with states, actions (arrows), goal (🏁), danger cells (💀, R=-5)
+- Policy Iteration (Method 1): Step 1 Policy Evaluation (3 policies: uniform, optimistic, suboptimal) → Step 2 Policy Improvement (argmax over Q-values)
+- Value Iteration (Method 2): Single combined update V(s) = max_a Q(s,a), with live Q-value table showing how max Q overwrites V
+- Comparison section: side-by-side stats for both methods
+
+**Running:**
+```bash
+cd barto-sutton-notes/lecture3-2026-05-09-mdp/assets/policy-evaluation-dp
+npm install
+npm run dev
+```
+
+**Config:** `GRID_SIZE=4`, `gamma=0.9`, `rewardGoal=10`, `rewardStep=0`, `DANGER_STATES={5,9}`, `REWARD_DANGER=-5`
+
 ### Dependencies
 
 PyTorch for neural networks, Gymnasium (with Box2D) for environments, numpy/matplotlib/seaborn for computation and visualization.
