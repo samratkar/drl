@@ -1,5 +1,5 @@
 ---
-tags : [lectures, introduction]
+tags : [introduction]
 title : "Introduction"
 category : Lectures
 subcategory : Introduction

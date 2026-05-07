@@ -1,5 +1,5 @@
 ---
-tags : [lectures, mab]
+tags : [mab]
 title : "Multi Armed Bandit"
 category : Lectures
 subcategory : MAB
