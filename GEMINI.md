@@ -13,9 +13,23 @@ The repository is organized into sequential modules:
     - `assets/`: Custom environment definitions.
 - **`3-sarsa/`**: Temporal Difference learning implementations (Sarsa, Q-Learning).
 - **`cases/1-gym_atari_lunar_lander/`**: Progressive DQN implementation chain (Basic -> Replay Buffer -> Fixed Q -> DDQN -> Prioritized Replay).
+- **`class-discs/BITS-DRL-S2-25_AIMLCZG512/lecture3-2026-05-09-mdp/assets/race-car/`**: Comprehensive RL comparison using the Race Car problem (DP, MC, TD, Q-Learning).
 - **`class-discs/sara-sojourn/`**: Comparative dashboards and visualizations of different algorithms.
 - **`books/memory/`**: Comprehensive notes on foundational texts like Sutton & Barto.
 - **`assignments/`**: Course-related tasks and quizzes.
+
+## Current Progress & Technical Context
+### Race Car MDP Case Study
+A specialized case study has been implemented at `.../assets/race-car/dp_race_car_demonstration.ipynb`.
+- **States**: Cool, Warm, Overheated (Terminal).
+- **Planning (DP)**: Implemented Policy Evaluation, Policy Iteration, and Value Iteration with full visibility into $\pi$ probabilities and $V$ estimates.
+- **Learning (Model-Free)**: Implemented Monte Carlo, TD(0), and Q-Learning treating the transition model as a 'Black Box'.
+- **Key Outcome**: The agent learns to drive FAST when Cool (higher reward, 0% risk) but SLOW when Warm (to avoid the -10 penalty from a 100% overheat risk).
+
+### Implementation Logic
+- **Policy Iteration**: Measure ($V_\pi$) -> Improve ($Q_\pi$ scorecard + `argmax`).
+- **Value Iteration**: Greedy shortcut using `max()` directly on the Bellman Optimality Equation.
+- **Q-Learning**: 'Actual' environment interaction using sample updates and a learning rate ($\alpha$) to average out noise without a model.
 
 ## Development Setup
 ### Prerequisites
