@@ -10,7 +10,6 @@ textbook : [chapter1]
 ### Today's conversations - 4/25/26 
 ### Sara's Sojourn in the Deep Forest - A DRL Story
 
-[The video for today's class](https://www.youtube.com/watch?v=l0DmELLMkAc)
 
 Dear Friends,
 
