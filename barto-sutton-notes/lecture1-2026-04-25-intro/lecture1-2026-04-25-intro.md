@@ -1,6 +1,6 @@
 ---
 tags : [lectures, introduction]
-title : "DRL - Class 1 - Introduction"
+title : "Introduction"
 category : Lectures
 subcategory : Introduction
 textbook : [chapter1]
