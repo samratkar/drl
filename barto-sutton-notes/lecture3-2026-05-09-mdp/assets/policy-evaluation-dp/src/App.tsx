@@ -43,6 +43,7 @@ const App: React.FC = () => {
   // Improvement State (Frozen Copy of Eval results)
   const [frozenEvalValues, setFrozenEvalValues] = useState<number[][] | null>(null);
   const [improvedPolicies, setImprovedPolicies] = useState<(Action | 'NONE')[][] | null>(null);
+  const [qValues, setQValues] = useState<Record<string, number>[][] | null>(null);
   const [showImprovement, setShowImprovement] = useState(false);
 
   const getNextState = (s: number, a: Action): number => {
@@ -108,24 +109,36 @@ const App: React.FC = () => {
 
   const runPolicyImprovement = () => {
     if (!frozenEvalValues) return;
-    const newImproved = frozenEvalValues.map((policyValues) => {
+    const newImproved: (Action | 'NONE')[][] = [];
+    const newQValues: Record<string, number>[][] = [];
+
+    frozenEvalValues.forEach((policyValues) => {
       const bestActions: (Action | 'NONE')[] = [];
+      const policyQValues: Record<string, number>[] = [];
+
       for (let s = 0; s < GRID_SIZE * GRID_SIZE - 1; s++) {
         let bestQ = -Infinity;
         let bestA: Action = 'UP';
+        const stateQ: Record<string, number> = {};
         for (const a of ACTIONS) {
           const q = getQValue(s, a, policyValues);
+          stateQ[a] = q;
           if (q > bestQ) {
             bestQ = q;
             bestA = a;
           }
         }
         bestActions[s] = bestA;
+        policyQValues[s] = stateQ;
       }
       bestActions[GRID_SIZE * GRID_SIZE - 1] = 'NONE';
-      return bestActions;
+      policyQValues[GRID_SIZE * GRID_SIZE - 1] = { UP: 0, DOWN: 0, LEFT: 0, RIGHT: 0 };
+      newImproved.push(bestActions);
+      newQValues.push(policyQValues);
     });
+
     setImprovedPolicies(newImproved);
+    setQValues(newQValues);
   };
 
   const resetAll = () => {
@@ -135,6 +148,7 @@ const App: React.FC = () => {
     setIsEvalPlaying(false);
     setFrozenEvalValues(null);
     setImprovedPolicies(null);
+    setQValues(null);
     setShowImprovement(false);
   };
 
@@ -371,35 +385,35 @@ const App: React.FC = () => {
                 <table>
                   <thead>
                     <tr>
-                      <th>State</th>
+                      <th rowSpan={2}>State</th>
+                      <th colSpan={4}>π'(a|s) / Q(s,a)</th>
+                      <th rowSpan={2} style={{backgroundColor: '#1a3a3a'}}>V<sub>π</sub></th>
+                    </tr>
+                    <tr>
                       <th>UP</th>
                       <th>DOWN</th>
                       <th>LEFT</th>
                       <th>RIGHT</th>
-                      <th style={{backgroundColor: '#1a3a3a'}}>Basis (V<sub>π</sub>)</th>
                     </tr>
                   </thead>
                   <tbody>
                     {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, sIdx) => {
                       const bestAction = improvedPolicies ? improvedPolicies[pIdx][sIdx] : null;
                       const origPolicy = p.policy[sIdx];
+                      const stateQ = qValues ? qValues[pIdx][sIdx] : null;
                       return (
                         <tr key={sIdx}>
                           <td>{sIdx}</td>
-                          {bestAction ? (
+                          {bestAction && stateQ ? (
                             <>
-                              <td style={{color: bestAction === 'UP' ? '#4caf50' : '#888', fontWeight: bestAction === 'UP' ? 'bold' : 'normal'}}>
-                                {bestAction === 'UP' ? '1.00' : '0.00'}
-                              </td>
-                              <td style={{color: bestAction === 'DOWN' ? '#4caf50' : '#888', fontWeight: bestAction === 'DOWN' ? 'bold' : 'normal'}}>
-                                {bestAction === 'DOWN' ? '1.00' : '0.00'}
-                              </td>
-                              <td style={{color: bestAction === 'LEFT' ? '#4caf50' : '#888', fontWeight: bestAction === 'LEFT' ? 'bold' : 'normal'}}>
-                                {bestAction === 'LEFT' ? '1.00' : '0.00'}
-                              </td>
-                              <td style={{color: bestAction === 'RIGHT' ? '#4caf50' : '#888', fontWeight: bestAction === 'RIGHT' ? 'bold' : 'normal'}}>
-                                {bestAction === 'RIGHT' ? '1.00' : '0.00'}
-                              </td>
+                              {ACTIONS.map(a => (
+                                <td key={a} style={{color: bestAction === a ? '#4caf50' : '#888', fontWeight: bestAction === a ? 'bold' : 'normal'}}>
+                                  <div>{bestAction === a ? '1.00' : '0.00'}</div>
+                                  <div style={{fontSize: '0.65rem', color: bestAction === a ? '#81c784' : '#666', marginTop: '2px'}}>
+                                    Q={stateQ[a].toFixed(2)}
+                                  </div>
+                                </td>
+                              ))}
                             </>
                           ) : (
                             <>
