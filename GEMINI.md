@@ -57,6 +57,8 @@ jupyter notebook 1-introduction/env.ipynb
 ```
 
 ## Development Conventions
+- **Diagrams**: Mermaid is used for backup diagrams and flowcharts in markdown files. To ensure visibility in the portal, use standard GFM code blocks (```mermaid). The layout is configured to automatically convert these into renderable diagrams.
+
 - **Environment API**: Custom environments follow the [Gymnasium API](https://gymnasium.farama.org/).
 - **Neural Networks**: DQN implementations typically use a 3-layer fully-connected architecture (64 -> 64 hidden units) with `ReLU` activations.
 - **Visualization**: Implementations often generate HTML dashboards with embedded plots for performance analysis.
