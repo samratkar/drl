@@ -55,7 +55,43 @@ const App: React.FC = () => {
   const [viQValues, setViQValues] = useState<Record<string, number>[]>(
     Array.from({ length: GRID_SIZE * GRID_SIZE }, () => ({ UP: 0, DOWN: 0, LEFT: 0, RIGHT: 0 }))
   );
-  const [viHistory, setViHistory] = useState<{iter: number; maxDelta: number}[]>([]);
+
+  // Monte Carlo State
+  const [mcQTable, setMcQTable] = useState<Record<string, number>[]>(
+    Array.from({ length: GRID_SIZE * GRID_SIZE }, () => ({ UP: 0, DOWN: 0, LEFT: 0, RIGHT: 0 }))
+  );
+  const [mcReturns, setMcReturns] = useState<Record<string, number[]>[]>(
+    Array.from({ length: GRID_SIZE * GRID_SIZE }, () => ({ UP: [], DOWN: [], LEFT: [], RIGHT: [] }))
+  );
+  const [mcEpisode, setMcEpisode] = useState(0);
+  const [mcPlaying, setMcPlaying] = useState(false);
+  const [mcDone, setMcDone] = useState(false);
+  const [mcLastPath, setMcLastPath] = useState<number[]>([]);
+  const [mcTotalReward, setMcTotalReward] = useState(0);
+
+  // SARSA State
+  const [sarsaQTable, setSarsaQTable] = useState<Record<string, number>[]>(
+    Array.from({ length: GRID_SIZE * GRID_SIZE }, () => ({ UP: 0, DOWN: 0, LEFT: 0, RIGHT: 0 }))
+  );
+  const [sarsaEpisode, setSarsaEpisode] = useState(0);
+  const [sarsaPlaying, setSarsaPlaying] = useState(false);
+  const [sarsaDone, setSarsaDone] = useState(false);
+  const [sarsaLastPath, setSarsaLastPath] = useState<number[]>([]);
+  const [sarsaTotalReward, setSarsaTotalReward] = useState(0);
+
+  // Q-Learning State
+  const [qlQTable, setQlQTable] = useState<Record<string, number>[]>(
+    Array.from({ length: GRID_SIZE * GRID_SIZE }, () => ({ UP: 0, DOWN: 0, LEFT: 0, RIGHT: 0 }))
+  );
+  const [qlEpisode, setQlEpisode] = useState(0);
+  const [qlPlaying, setQlPlaying] = useState(false);
+  const [qlDone, setQlDone] = useState(false);
+  const [qlLastPath, setQlLastPath] = useState<number[]>([]);
+  const [qlTotalReward, setQlTotalReward] = useState(0);
+
+  // Shared hyperparameters for model-free methods
+  const ALPHA = 0.1;
+  const EPSILON = 0.2;
 
   const getNextState = (s: number, a: Action): number => {
     const row = Math.floor(s / GRID_SIZE);
@@ -174,7 +210,6 @@ const App: React.FC = () => {
     setViValues(nextValues);
     setViQValues(nextQValues);
     setViIteration(prev => prev + 1);
-    setViHistory(prev => [...prev, { iter: viIteration + 1, maxDelta }]);
 
     if (maxDelta < 0.001 && viIteration > 0) {
       setViDone(true);
@@ -208,6 +243,189 @@ const App: React.FC = () => {
     setViPolicy(policy);
   };
 
+  // Check if Q-table has converged (max delta below threshold)
+  const qTableMaxDelta = (oldQ: Record<string, number>[], newQ: Record<string, number>[]): number => {
+    let maxDelta = 0;
+    for (let s = 0; s < GRID_SIZE * GRID_SIZE - 1; s++) {
+      for (const a of ACTIONS) {
+        maxDelta = Math.max(maxDelta, Math.abs(newQ[s][a] - oldQ[s][a]));
+      }
+    }
+    return maxDelta;
+  };
+
+  // Epsilon-greedy action selection from a Q-table
+  const epsilonGreedyAction = (qTable: Record<string, number>[], s: number, eps: number): Action => {
+    if (Math.random() < eps) {
+      return ACTIONS[Math.floor(Math.random() * ACTIONS.length)];
+    }
+    const stateQ = qTable[s];
+    let bestA: Action = 'UP';
+    let bestQ = -Infinity;
+    for (const a of ACTIONS) {
+      if (stateQ[a] > bestQ) { bestQ = stateQ[a]; bestA = a; }
+    }
+    return bestA;
+  };
+
+  // Get reward for transitioning to nextS
+  const getReward = (nextS: number): number => {
+    if (nextS === GRID_SIZE * GRID_SIZE - 1) return CONFIG.rewardGoal;
+    if (DANGER_STATES.has(nextS)) return REWARD_DANGER;
+    return CONFIG.rewardStep;
+  };
+
+  // Generate a full episode (for Monte Carlo)
+  const generateEpisode = (qTable: Record<string, number>[], eps: number): { states: number[]; actions: Action[]; rewards: number[] } => {
+    const states: number[] = [];
+    const actions: Action[] = [];
+    const rewards: number[] = [];
+    let s = Math.floor(Math.random() * (GRID_SIZE * GRID_SIZE - 1));
+    let steps = 0;
+    const maxSteps = 200;
+
+    while (s !== GRID_SIZE * GRID_SIZE - 1 && steps < maxSteps) {
+      states.push(s);
+      const a = epsilonGreedyAction(qTable, s, eps);
+      actions.push(a);
+      const nextS = getNextState(s, a);
+      const r = getReward(nextS);
+      rewards.push(r);
+      s = nextS;
+      steps++;
+    }
+    states.push(s);
+    return { states, actions, rewards };
+  };
+
+  // Monte Carlo: First-visit MC with epsilon-greedy
+  const runMcEpisode = useCallback(() => {
+    const { states, actions, rewards } = generateEpisode(mcQTable, EPSILON);
+    const newQTable = mcQTable.map(q => ({ ...q }));
+    const newReturns = mcReturns.map(r => ({ UP: [...r.UP], DOWN: [...r.DOWN], LEFT: [...r.LEFT], RIGHT: [...r.RIGHT] }));
+
+    let G = 0;
+    const visited = new Set<string>();
+
+    for (let t = states.length - 2; t >= 0; t--) {
+      G = CONFIG.gamma * G + rewards[t];
+      const key = `${states[t]}-${actions[t]}`;
+      if (!visited.has(key)) {
+        visited.add(key);
+        newReturns[states[t]][actions[t]].push(G);
+        const returns = newReturns[states[t]][actions[t]];
+        newQTable[states[t]][actions[t]] = returns.reduce((a, b) => a + b, 0) / returns.length;
+      }
+    }
+
+    const delta = qTableMaxDelta(mcQTable, newQTable);
+    setMcQTable(newQTable);
+    setMcReturns(newReturns);
+    setMcEpisode(prev => prev + 1);
+    setMcLastPath(states);
+    setMcTotalReward(rewards.reduce((a, b) => a + b, 0));
+
+    if (delta < 0.01 && mcEpisode > 50) {
+      setMcDone(true);
+      setMcPlaying(false);
+    }
+  }, [mcQTable, mcReturns, mcEpisode]);
+
+  useEffect(() => {
+    let interval: number;
+    if (mcPlaying && !mcDone) {
+      interval = setInterval(runMcEpisode, 150);
+    }
+    return () => clearInterval(interval);
+  }, [mcPlaying, mcDone, runMcEpisode]);
+
+  // SARSA: On-policy TD control
+  const runSarsaEpisode = useCallback(() => {
+    const newQTable = sarsaQTable.map(q => ({ ...q }));
+    let s = Math.floor(Math.random() * (GRID_SIZE * GRID_SIZE - 1));
+    let a = epsilonGreedyAction(newQTable, s, EPSILON);
+    const path: number[] = [s];
+    let totalR = 0;
+    let steps = 0;
+
+    while (s !== GRID_SIZE * GRID_SIZE - 1 && steps < 200) {
+      const nextS = getNextState(s, a);
+      const r = getReward(nextS);
+      totalR += r;
+      const nextA = epsilonGreedyAction(newQTable, nextS, EPSILON);
+
+      // SARSA update: Q(s,a) += α[r + γQ(s',a') - Q(s,a)]
+      newQTable[s][a] += ALPHA * (r + CONFIG.gamma * newQTable[nextS][nextA] - newQTable[s][a]);
+
+      s = nextS;
+      a = nextA;
+      path.push(s);
+      steps++;
+    }
+
+    const delta = qTableMaxDelta(sarsaQTable, newQTable);
+    setSarsaQTable(newQTable);
+    setSarsaEpisode(prev => prev + 1);
+    setSarsaLastPath(path);
+    setSarsaTotalReward(totalR);
+
+    if (delta < 0.01 && sarsaEpisode > 50) {
+      setSarsaDone(true);
+      setSarsaPlaying(false);
+    }
+  }, [sarsaQTable, sarsaEpisode]);
+
+  useEffect(() => {
+    let interval: number;
+    if (sarsaPlaying && !sarsaDone) {
+      interval = setInterval(runSarsaEpisode, 150);
+    }
+    return () => clearInterval(interval);
+  }, [sarsaPlaying, sarsaDone, runSarsaEpisode]);
+
+  // Q-Learning: Off-policy TD control
+  const runQlEpisode = useCallback(() => {
+    const newQTable = qlQTable.map(q => ({ ...q }));
+    let s = Math.floor(Math.random() * (GRID_SIZE * GRID_SIZE - 1));
+    const path: number[] = [s];
+    let totalR = 0;
+    let steps = 0;
+
+    while (s !== GRID_SIZE * GRID_SIZE - 1 && steps < 200) {
+      const a = epsilonGreedyAction(newQTable, s, EPSILON);
+      const nextS = getNextState(s, a);
+      const r = getReward(nextS);
+      totalR += r;
+
+      // Q-Learning update: Q(s,a) += α[r + γ max_a' Q(s',a') - Q(s,a)]
+      const maxNextQ = Math.max(...ACTIONS.map(na => newQTable[nextS][na]));
+      newQTable[s][a] += ALPHA * (r + CONFIG.gamma * maxNextQ - newQTable[s][a]);
+
+      s = nextS;
+      path.push(s);
+      steps++;
+    }
+
+    const delta = qTableMaxDelta(qlQTable, newQTable);
+    setQlQTable(newQTable);
+    setQlEpisode(prev => prev + 1);
+    setQlLastPath(path);
+    setQlTotalReward(totalR);
+
+    if (delta < 0.01 && qlEpisode > 50) {
+      setQlDone(true);
+      setQlPlaying(false);
+    }
+  }, [qlQTable, qlEpisode]);
+
+  useEffect(() => {
+    let interval: number;
+    if (qlPlaying && !qlDone) {
+      interval = setInterval(runQlEpisode, 150);
+    }
+    return () => clearInterval(interval);
+  }, [qlPlaying, qlDone, runQlEpisode]);
+
   const resetAll = () => {
     setIteration(0);
     setEvalValues(POLICIES.map(() => new Array(GRID_SIZE * GRID_SIZE).fill(0)));
@@ -223,7 +441,25 @@ const App: React.FC = () => {
     setViDone(false);
     setViPlaying(false);
     setViPolicy(null);
-    setViHistory([]);
+    setMcQTable(Array.from({ length: GRID_SIZE * GRID_SIZE }, () => ({ UP: 0, DOWN: 0, LEFT: 0, RIGHT: 0 })));
+    setMcReturns(Array.from({ length: GRID_SIZE * GRID_SIZE }, () => ({ UP: [], DOWN: [], LEFT: [], RIGHT: [] })));
+    setMcEpisode(0);
+    setMcPlaying(false);
+    setMcDone(false);
+    setMcLastPath([]);
+    setMcTotalReward(0);
+    setSarsaQTable(Array.from({ length: GRID_SIZE * GRID_SIZE }, () => ({ UP: 0, DOWN: 0, LEFT: 0, RIGHT: 0 })));
+    setSarsaEpisode(0);
+    setSarsaPlaying(false);
+    setSarsaDone(false);
+    setSarsaLastPath([]);
+    setSarsaTotalReward(0);
+    setQlQTable(Array.from({ length: GRID_SIZE * GRID_SIZE }, () => ({ UP: 0, DOWN: 0, LEFT: 0, RIGHT: 0 })));
+    setQlEpisode(0);
+    setQlPlaying(false);
+    setQlDone(false);
+    setQlLastPath([]);
+    setQlTotalReward(0);
   };
 
   const actionArrow = (a: Action) => {
@@ -314,7 +550,7 @@ const App: React.FC = () => {
         <div className="equation">
           V<sub>π</sub>(s) = Σ<sub>a</sub> π(a|s) [r + γ V<sub>π</sub>(s')]
         </div>
-        <p>Iteratively update state values until they converge for the given policies.</p>
+        <p>Iteratively update state values until they converge for the given policies. <span style={{color: '#888', fontSize: '0.8rem'}}>Convergence: max|ΔV| &lt; 0.001</span></p>
         
         <div className="controls">
           <button onClick={() => setIsEvalPlaying(!isEvalPlaying)} disabled={isEvalDone}>
@@ -413,11 +649,11 @@ const App: React.FC = () => {
             π'(s) = argmax<sub>a</sub> [r + γ V<sub>π</sub>(s')]
           </div>
 
-          <div className="controls">
-            <button 
+          <div style={{textAlign: 'center', marginBottom: '1rem'}}>
+            <button
               onClick={runPolicyImprovement}
               disabled={!!improvedPolicies}
-              style={{backgroundColor: improvedPolicies ? '#333' : '#4caf50'}}
+              style={{backgroundColor: improvedPolicies ? '#333' : '#4caf50', padding: '10px 24px', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '1rem'}}
             >
               {improvedPolicies ? 'Policy Improved!' : 'Improve Policy (Run argmax)'}
             </button>
@@ -525,7 +761,7 @@ const App: React.FC = () => {
         <div className="equation" style={{border: '1px solid #9c27b0'}}>
           V(s) = max<sub>a</sub> [r + γ V(s')]
         </div>
-        <p>At each sweep, every state takes the <strong>max</strong> over all actions — evaluation and improvement happen simultaneously.</p>
+        <p>At each sweep, every state takes the <strong>max</strong> over all actions — evaluation and improvement happen simultaneously. <span style={{color: '#888', fontSize: '0.8rem'}}>Convergence: max|ΔV| &lt; 0.001</span></p>
 
         <div className="controls">
           <button onClick={() => setViPlaying(!viPlaying)} disabled={viDone} style={{borderColor: '#9c27b0'}}>
@@ -628,7 +864,6 @@ const App: React.FC = () => {
                   {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, sIdx) => {
                     const stateQ = viQValues[sIdx];
                     const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
-                    const bestA = ACTIONS.find(a => stateQ[a] === maxQ) || 'UP';
                     const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
                     return (
                       <tr key={sIdx}>
@@ -696,6 +931,445 @@ const App: React.FC = () => {
 
           <div style={{marginTop: '1.5rem', textAlign: 'center', fontSize: '0.9rem', color: '#ccc', maxWidth: '700px', margin: '1.5rem auto 0'}}>
             <strong style={{color: '#ffeb3b'}}>Key Insight:</strong> Both converge to the same V* and π*. Policy Iteration separates "evaluate" and "improve" cleanly. Value Iteration merges them — each Bellman update already takes the max, so it's both evaluating and improving at once. Value Iteration typically needs fewer total sweeps but each sweep does more work (max instead of weighted sum).
+          </div>
+        </section>
+      )}
+
+      {/* MONTE CARLO */}
+      <div style={{width: '100%', textAlign: 'center', padding: '10px', background: 'linear-gradient(90deg, #00bcd4, #009688)', borderRadius: '8px', marginTop: '2rem'}}>
+        <h2 style={{margin: 0, color: '#fff'}}>METHOD 3: Monte Carlo (Model-Free)</h2>
+        <p style={{margin: '4px 0 0', color: '#eee', fontSize: '0.85rem'}}>Learn from complete episodes. No model needed — just experience.</p>
+      </div>
+
+      <section className="phase-container" style={{border: '2px solid #00bcd4', padding: '20px', borderRadius: '12px'}}>
+        <h2 style={{color: '#4dd0e1'}}>Monte Carlo — First-Visit</h2>
+        <div className="equation" style={{border: '1px solid #00bcd4'}}>
+          Q(s,a) = average(Returns(s,a))
+        </div>
+        <p>Generate full episodes using ε-greedy policy, then update Q-values with the <strong>average return</strong> from first visit to each (s, a) pair. <span style={{color: '#888', fontSize: '0.8rem'}}>Convergence: max|ΔQ| &lt; 0.01 after 50+ episodes</span></p>
+
+        <div className="controls">
+          <button onClick={() => setMcPlaying(!mcPlaying)} disabled={mcDone} style={{borderColor: '#00bcd4'}}>
+            {mcPlaying ? 'Pause' : 'Start MC'}
+          </button>
+          <button onClick={runMcEpisode} disabled={mcPlaying || mcDone}>Run Episode</button>
+          <button onClick={resetAll}>Reset All</button>
+          <span style={{marginLeft: '10px'}}>Episodes: {mcEpisode}</span>
+          <span style={{marginLeft: '10px', color: '#4dd0e1'}}>Last reward: {mcTotalReward.toFixed(1)}</span>
+          {mcDone && <span style={{ color: '#4caf50', fontWeight: 'bold' }}> - CONVERGED!</span>}
+        </div>
+
+        <div style={{display: 'flex', gap: '2rem', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'flex-start'}}>
+          <div>
+            <h3 style={{textAlign: 'center'}}>Greedy Policy from Q</h3>
+            <div className="grid-container" style={{borderColor: '#00bcd4'}}>
+              {mcQTable.map((stateQ, sIdx) => {
+                const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
+                const isDanger = DANGER_STATES.has(sIdx);
+                const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
+                const bestA = ACTIONS.find(a => stateQ[a] === maxQ) || 'UP';
+                const onPath = mcLastPath.includes(sIdx);
+                let bgColor: string | undefined;
+                if (!isTerminal) {
+                  if (maxQ >= 0) bgColor = `rgba(0, 188, 212, ${Math.min(maxQ / 10, 0.8)})`;
+                  else bgColor = `rgba(244, 67, 54, ${Math.min(Math.abs(maxQ) / 5, 0.6)})`;
+                }
+                return (
+                  <div
+                    key={sIdx}
+                    className={`cell ${isTerminal ? 'terminal' : ''} ${isDanger ? 'danger' : ''}`}
+                    style={{ backgroundColor: bgColor, border: onPath ? '2px solid #fff' : undefined }}
+                  >
+                    <span className="cell-id">{isDanger ? '💀' : sIdx}</span>
+                    {isTerminal ? (
+                      <span style={{fontSize: '1rem'}}>🏁</span>
+                    ) : mcEpisode > 0 ? (
+                      <div style={{color: '#fff', fontWeight: 'bold', fontSize: '1rem'}}>
+                        {actionArrow(bestA)}
+                      </div>
+                    ) : (
+                      <span className="cell-value" style={{opacity: 0.5}}>?</span>
+                    )}
+                    {!isTerminal && <span style={{fontSize: '0.55rem', position: 'absolute', bottom: 2, color: '#aaa'}}>{maxQ.toFixed(1)}</span>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {mcLastPath.length > 0 && (
+            <div>
+              <h3 style={{textAlign: 'center'}}>Last Episode Path<br/><span style={{fontSize: '0.7em', opacity: 0.7}}>{mcLastPath.length - 1} steps</span></h3>
+              <div className="grid-container" style={{borderColor: '#009688'}}>
+                {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, sIdx) => {
+                  const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
+                  const isDanger = DANGER_STATES.has(sIdx);
+                  const pathIdx = mcLastPath.indexOf(sIdx);
+                  const onPath = pathIdx !== -1;
+                  const stateQ = mcQTable[sIdx];
+                  const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
+                  return (
+                    <div
+                      key={sIdx}
+                      className={`cell ${isTerminal ? 'terminal' : ''} ${isDanger ? 'danger' : ''}`}
+                      style={{ backgroundColor: onPath ? 'rgba(0, 188, 212, 0.4)' : undefined }}
+                    >
+                      <span className="cell-id">{isDanger ? '💀' : sIdx}</span>
+                      {onPath && <span style={{fontWeight: 'bold', color: '#4dd0e1'}}>{pathIdx === 0 ? 'S' : pathIdx === mcLastPath.length - 1 ? 'E' : pathIdx}</span>}
+                      {!isTerminal && <span style={{fontSize: '0.5rem', position: 'absolute', bottom: 2, color: '#aaa'}}>{maxQ.toFixed(1)}</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {mcEpisode > 0 && (
+          <div className="policy-tables" style={{marginTop: '1.5rem'}}>
+            <div>
+              <h4>Monte Carlo Q-Table<br/><span style={{fontSize: '0.8em', opacity: 0.7}}>Episode {mcEpisode} | ε={EPSILON} | γ={CONFIG.gamma}</span></h4>
+              <table>
+                <thead>
+                  <tr>
+                    <th>State</th>
+                    <th>Q(s,↑)</th>
+                    <th>Q(s,↓)</th>
+                    <th>Q(s,←)</th>
+                    <th>Q(s,→)</th>
+                    <th style={{backgroundColor: '#0a2a2a'}}>Best</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mcQTable.map((stateQ, sIdx) => {
+                    const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
+                    return (
+                      <tr key={sIdx}>
+                        <td>{sIdx}</td>
+                        {ACTIONS.map(a => (
+                          <td key={a} style={{color: stateQ[a] === maxQ && (maxQ !== 0 || ACTIONS.some(act => stateQ[act] !== 0)) ? '#4dd0e1' : '#888', fontWeight: stateQ[a] === maxQ && (maxQ !== 0 || ACTIONS.some(act => stateQ[act] !== 0)) ? 'bold' : 'normal'}}>
+                            {stateQ[a].toFixed(2)}
+                          </td>
+                        ))}
+                        <td style={{color: '#4dd0e1', fontWeight: 'bold'}}>
+                          {(maxQ !== 0 || ACTIONS.some(a => stateQ[a] !== 0)) ? actionArrow(ACTIONS.find(a => stateQ[a] === maxQ) as Action) : '-'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* TD METHODS: SARSA & Q-LEARNING */}
+      <div style={{width: '100%', textAlign: 'center', padding: '10px', background: 'linear-gradient(90deg, #ff5722, #ff9800)', borderRadius: '8px', marginTop: '2rem'}}>
+        <h2 style={{margin: 0, color: '#fff'}}>METHOD 4: Temporal Difference (Model-Free)</h2>
+        <p style={{margin: '4px 0 0', color: '#eee', fontSize: '0.85rem'}}>Learn from incomplete episodes. Bootstrap from current estimates — no need to wait for episode end.</p>
+      </div>
+
+      <section className="phase-container" style={{border: '2px solid #ff5722', padding: '20px', borderRadius: '12px'}}>
+        <div style={{display: 'flex', gap: '2rem', flexWrap: 'wrap', justifyContent: 'center'}}>
+
+          {/* SARSA */}
+          <div style={{flex: 1, minWidth: '400px'}}>
+            <h2 style={{color: '#ff8a65'}}>SARSA (On-Policy)</h2>
+            <div className="equation" style={{border: '1px solid #ff5722', fontSize: '1rem'}}>
+              Q(s,a) ← Q(s,a) + α[r + γQ(s',a') - Q(s,a)]
+            </div>
+            <p style={{fontSize: '0.85rem'}}>Updates Q using the <strong>action actually taken</strong> (a') in the next state. Learns the value of the policy it follows. <span style={{color: '#888', fontSize: '0.75rem'}}>Convergence: max|ΔQ| &lt; 0.01 after 50+ episodes</span></p>
+
+            <div className="controls" style={{flexWrap: 'wrap'}}>
+              <button onClick={() => setSarsaPlaying(!sarsaPlaying)} disabled={sarsaDone} style={{borderColor: '#ff5722'}}>
+                {sarsaPlaying ? 'Pause' : 'Start SARSA'}
+              </button>
+              <button onClick={runSarsaEpisode} disabled={sarsaPlaying || sarsaDone}>Run Episode</button>
+              <span style={{fontSize: '0.8rem'}}>Ep: {sarsaEpisode} | R: {sarsaTotalReward.toFixed(1)}</span>
+              {sarsaDone && <span style={{ color: '#4caf50', fontWeight: 'bold', fontSize: '0.8rem' }}> CONVERGED!</span>}
+            </div>
+
+            <div style={{display: 'flex', justifyContent: 'center'}}>
+              <div className="grid-container" style={{borderColor: '#ff5722'}}>
+                {sarsaQTable.map((stateQ, sIdx) => {
+                  const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
+                  const isDanger = DANGER_STATES.has(sIdx);
+                  const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
+                  const bestA = ACTIONS.find(a => stateQ[a] === maxQ) || 'UP';
+                  const onPath = sarsaLastPath.includes(sIdx);
+                  let bgColor: string | undefined;
+                  if (!isTerminal) {
+                    if (maxQ >= 0) bgColor = `rgba(255, 138, 101, ${Math.min(maxQ / 10, 0.8)})`;
+                    else bgColor = `rgba(244, 67, 54, ${Math.min(Math.abs(maxQ) / 5, 0.6)})`;
+                  }
+                  return (
+                    <div
+                      key={sIdx}
+                      className={`cell ${isTerminal ? 'terminal' : ''} ${isDanger ? 'danger' : ''}`}
+                      style={{ backgroundColor: bgColor, border: onPath ? '2px solid #fff' : undefined }}
+                    >
+                      <span className="cell-id">{isDanger ? '💀' : sIdx}</span>
+                      {isTerminal ? (
+                        <span style={{fontSize: '0.9rem'}}>🏁</span>
+                      ) : sarsaEpisode > 0 ? (
+                        <div style={{color: '#fff', fontWeight: 'bold', fontSize: '1rem'}}>
+                          {actionArrow(bestA)}
+                        </div>
+                      ) : (
+                        <span className="cell-value" style={{opacity: 0.5}}>?</span>
+                      )}
+                      {!isTerminal && <span style={{fontSize: '0.5rem', position: 'absolute', bottom: 2, color: '#aaa'}}>{maxQ.toFixed(1)}</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Q-LEARNING */}
+          <div style={{flex: 1, minWidth: '400px'}}>
+            <h2 style={{color: '#ffb74d'}}>Q-Learning (Off-Policy)</h2>
+            <div className="equation" style={{border: '1px solid #ff9800', fontSize: '1rem'}}>
+              Q(s,a) ← Q(s,a) + α[r + γ max<sub>a'</sub> Q(s',a') - Q(s,a)]
+            </div>
+            <p style={{fontSize: '0.85rem'}}>Updates Q using the <strong>best possible action</strong> (max) in the next state. Learns optimal policy regardless of behavior. <span style={{color: '#888', fontSize: '0.75rem'}}>Convergence: max|ΔQ| &lt; 0.01 after 50+ episodes</span></p>
+
+            <div className="controls" style={{flexWrap: 'wrap'}}>
+              <button onClick={() => setQlPlaying(!qlPlaying)} disabled={qlDone} style={{borderColor: '#ff9800'}}>
+                {qlPlaying ? 'Pause' : 'Start Q-Learning'}
+              </button>
+              <button onClick={runQlEpisode} disabled={qlPlaying || qlDone}>Run Episode</button>
+              <span style={{fontSize: '0.8rem'}}>Ep: {qlEpisode} | R: {qlTotalReward.toFixed(1)}</span>
+              {qlDone && <span style={{ color: '#4caf50', fontWeight: 'bold', fontSize: '0.8rem' }}> CONVERGED!</span>}
+            </div>
+
+            <div style={{display: 'flex', justifyContent: 'center'}}>
+              <div className="grid-container" style={{borderColor: '#ff9800'}}>
+                {qlQTable.map((stateQ, sIdx) => {
+                  const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
+                  const isDanger = DANGER_STATES.has(sIdx);
+                  const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
+                  const bestA = ACTIONS.find(a => stateQ[a] === maxQ) || 'UP';
+                  const onPath = qlLastPath.includes(sIdx);
+                  let bgColor: string | undefined;
+                  if (!isTerminal) {
+                    if (maxQ >= 0) bgColor = `rgba(255, 183, 77, ${Math.min(maxQ / 10, 0.8)})`;
+                    else bgColor = `rgba(244, 67, 54, ${Math.min(Math.abs(maxQ) / 5, 0.6)})`;
+                  }
+                  return (
+                    <div
+                      key={sIdx}
+                      className={`cell ${isTerminal ? 'terminal' : ''} ${isDanger ? 'danger' : ''}`}
+                      style={{ backgroundColor: bgColor, border: onPath ? '2px solid #fff' : undefined }}
+                    >
+                      <span className="cell-id">{isDanger ? '💀' : sIdx}</span>
+                      {isTerminal ? (
+                        <span style={{fontSize: '0.9rem'}}>🏁</span>
+                      ) : qlEpisode > 0 ? (
+                        <div style={{color: '#fff', fontWeight: 'bold', fontSize: '1rem'}}>
+                          {actionArrow(bestA)}
+                        </div>
+                      ) : (
+                        <span className="cell-value" style={{opacity: 0.5}}>?</span>
+                      )}
+                      {!isTerminal && <span style={{fontSize: '0.5rem', position: 'absolute', bottom: 2, color: '#aaa'}}>{maxQ.toFixed(1)}</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* TD Q-Tables side by side */}
+        {(sarsaEpisode > 0 || qlEpisode > 0) && (
+          <div className="policy-tables" style={{marginTop: '1.5rem'}}>
+            {sarsaEpisode > 0 && (
+              <div>
+                <h4>SARSA Q-Table<br/><span style={{fontSize: '0.8em', opacity: 0.7}}>α={ALPHA} | ε={EPSILON} | γ={CONFIG.gamma}</span></h4>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>State</th>
+                      <th>Q(s,↑)</th>
+                      <th>Q(s,↓)</th>
+                      <th>Q(s,←)</th>
+                      <th>Q(s,→)</th>
+                      <th style={{backgroundColor: '#2a1a0a'}}>Best</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sarsaQTable.map((stateQ, sIdx) => {
+                      const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
+                      return (
+                        <tr key={sIdx}>
+                          <td>{sIdx}</td>
+                          {ACTIONS.map(a => (
+                            <td key={a} style={{color: stateQ[a] === maxQ && (maxQ !== 0 || ACTIONS.some(act => stateQ[act] !== 0)) ? '#ff8a65' : '#888', fontWeight: stateQ[a] === maxQ && (maxQ !== 0 || ACTIONS.some(act => stateQ[act] !== 0)) ? 'bold' : 'normal'}}>
+                              {stateQ[a].toFixed(2)}
+                            </td>
+                          ))}
+                          <td style={{color: '#ff8a65', fontWeight: 'bold'}}>
+                            {(maxQ !== 0 || ACTIONS.some(a => stateQ[a] !== 0)) ? actionArrow(ACTIONS.find(a => stateQ[a] === maxQ) as Action) : '-'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {qlEpisode > 0 && (
+              <div>
+                <h4>Q-Learning Q-Table<br/><span style={{fontSize: '0.8em', opacity: 0.7}}>α={ALPHA} | ε={EPSILON} | γ={CONFIG.gamma}</span></h4>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>State</th>
+                      <th>Q(s,↑)</th>
+                      <th>Q(s,↓)</th>
+                      <th>Q(s,←)</th>
+                      <th>Q(s,→)</th>
+                      <th style={{backgroundColor: '#2a1a0a'}}>Best</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {qlQTable.map((stateQ, sIdx) => {
+                      const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
+                      return (
+                        <tr key={sIdx}>
+                          <td>{sIdx}</td>
+                          {ACTIONS.map(a => (
+                            <td key={a} style={{color: stateQ[a] === maxQ && (maxQ !== 0 || ACTIONS.some(act => stateQ[act] !== 0)) ? '#ffb74d' : '#888', fontWeight: stateQ[a] === maxQ && (maxQ !== 0 || ACTIONS.some(act => stateQ[act] !== 0)) ? 'bold' : 'normal'}}>
+                              {stateQ[a].toFixed(2)}
+                            </td>
+                          ))}
+                          <td style={{color: '#ffb74d', fontWeight: 'bold'}}>
+                            {(maxQ !== 0 || ACTIONS.some(a => stateQ[a] !== 0)) ? actionArrow(ACTIONS.find(a => stateQ[a] === maxQ) as Action) : '-'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div style={{marginTop: '1.5rem', textAlign: 'center', fontSize: '0.85rem', color: '#ccc', maxWidth: '700px', margin: '1.5rem auto 0'}}>
+          <strong style={{color: '#ff9800'}}>SARSA vs Q-Learning:</strong> SARSA uses the actual next action (a') — it learns the value of the ε-greedy policy it follows (safer, avoids danger). Q-Learning uses max — it learns the optimal policy regardless of exploration (bolder, may get closer to danger during learning).
+        </div>
+      </section>
+
+      {/* ALL METHODS COMPARISON */}
+      {(mcEpisode > 20 || sarsaEpisode > 20 || qlEpisode > 20) && (
+        <section className="phase-container" style={{border: '2px solid #fff', padding: '20px', borderRadius: '12px', background: '#0a0a0a'}}>
+          <h2 style={{color: '#fff'}}>All Methods — Final Policies Compared</h2>
+          <p style={{fontSize: '0.85rem', color: '#aaa'}}>After sufficient learning, all methods should converge to similar optimal policies for this deterministic environment.</p>
+
+          <div className="dashboard">
+            <div className="policy-view">
+              <h3 style={{color: '#ce93d8'}}>Value Iteration<br/><span style={{fontSize: '0.7em', opacity: 0.7}}>(DP, model-based)</span></h3>
+              <div className="grid-container" style={{borderColor: '#9c27b0'}}>
+                {viValues.map((_, sIdx) => {
+                  const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
+                  const isDanger = DANGER_STATES.has(sIdx);
+                  const bestA = viPolicy ? viPolicy[sIdx] : null;
+                  return (
+                    <div key={sIdx} className={`cell ${isTerminal ? 'terminal' : ''} ${isDanger ? 'danger' : ''}`}>
+                      <span className="cell-id">{isDanger ? '💀' : sIdx}</span>
+                      {isTerminal ? <span>🏁</span> : bestA && bestA !== 'NONE' ? (
+                        <span style={{fontWeight: 'bold', fontSize: '1rem'}}>{actionArrow(bestA as Action)}</span>
+                      ) : <span style={{opacity: 0.5}}>?</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="policy-view">
+              <h3 style={{color: '#4dd0e1'}}>Monte Carlo<br/><span style={{fontSize: '0.7em', opacity: 0.7}}>(model-free, ep {mcEpisode})</span></h3>
+              <div className="grid-container" style={{borderColor: '#00bcd4'}}>
+                {mcQTable.map((stateQ, sIdx) => {
+                  const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
+                  const isDanger = DANGER_STATES.has(sIdx);
+                  const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
+                  const bestA = ACTIONS.find(a => stateQ[a] === maxQ) || 'UP';
+                  return (
+                    <div key={sIdx} className={`cell ${isTerminal ? 'terminal' : ''} ${isDanger ? 'danger' : ''}`}>
+                      <span className="cell-id">{isDanger ? '💀' : sIdx}</span>
+                      {isTerminal ? <span>🏁</span> : mcEpisode > 0 ? (
+                        <span style={{fontWeight: 'bold', fontSize: '1rem'}}>{actionArrow(bestA)}</span>
+                      ) : <span style={{opacity: 0.5}}>?</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="policy-view">
+              <h3 style={{color: '#ff8a65'}}>SARSA<br/><span style={{fontSize: '0.7em', opacity: 0.7}}>(on-policy TD, ep {sarsaEpisode})</span></h3>
+              <div className="grid-container" style={{borderColor: '#ff5722'}}>
+                {sarsaQTable.map((stateQ, sIdx) => {
+                  const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
+                  const isDanger = DANGER_STATES.has(sIdx);
+                  const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
+                  const bestA = ACTIONS.find(a => stateQ[a] === maxQ) || 'UP';
+                  return (
+                    <div key={sIdx} className={`cell ${isTerminal ? 'terminal' : ''} ${isDanger ? 'danger' : ''}`}>
+                      <span className="cell-id">{isDanger ? '💀' : sIdx}</span>
+                      {isTerminal ? <span>🏁</span> : sarsaEpisode > 0 ? (
+                        <span style={{fontWeight: 'bold', fontSize: '1rem'}}>{actionArrow(bestA)}</span>
+                      ) : <span style={{opacity: 0.5}}>?</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="policy-view">
+              <h3 style={{color: '#ffb74d'}}>Q-Learning<br/><span style={{fontSize: '0.7em', opacity: 0.7}}>(off-policy TD, ep {qlEpisode})</span></h3>
+              <div className="grid-container" style={{borderColor: '#ff9800'}}>
+                {qlQTable.map((stateQ, sIdx) => {
+                  const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
+                  const isDanger = DANGER_STATES.has(sIdx);
+                  const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
+                  const bestA = ACTIONS.find(a => stateQ[a] === maxQ) || 'UP';
+                  return (
+                    <div key={sIdx} className={`cell ${isTerminal ? 'terminal' : ''} ${isDanger ? 'danger' : ''}`}>
+                      <span className="cell-id">{isDanger ? '💀' : sIdx}</span>
+                      {isTerminal ? <span>🏁</span> : qlEpisode > 0 ? (
+                        <span style={{fontWeight: 'bold', fontSize: '1rem'}}>{actionArrow(bestA)}</span>
+                      ) : <span style={{opacity: 0.5}}>?</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div style={{marginTop: '1.5rem'}}>
+            <table style={{margin: '0 auto', fontSize: '0.8rem'}}>
+              <thead>
+                <tr>
+                  <th>Property</th>
+                  <th style={{color: '#ce93d8'}}>DP (Value Iter)</th>
+                  <th style={{color: '#4dd0e1'}}>Monte Carlo</th>
+                  <th style={{color: '#ff8a65'}}>SARSA</th>
+                  <th style={{color: '#ffb74d'}}>Q-Learning</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Needs model?</td><td>Yes</td><td>No</td><td>No</td><td>No</td></tr>
+                <tr><td>Update timing</td><td>Every sweep</td><td>End of episode</td><td>Every step</td><td>Every step</td></tr>
+                <tr><td>Bootstrap?</td><td>Yes</td><td>No</td><td>Yes</td><td>Yes</td></tr>
+                <tr><td>On/Off policy</td><td>N/A</td><td>On-policy</td><td>On-policy</td><td>Off-policy</td></tr>
+                <tr><td>Update target</td><td>max Q</td><td>G (full return)</td><td>Q(s',a')</td><td>max Q(s',a')</td></tr>
+                <tr><td>Convergence</td><td>Fast (exact)</td><td>Slow (variance)</td><td>Medium</td><td>Medium</td></tr>
+              </tbody>
+            </table>
           </div>
         </section>
       )}
