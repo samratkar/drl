@@ -64,7 +64,13 @@ DQN variants use a consistent 3-layer fully-connected architecture (state_dim �
 - MDP Environment section: grid visualization with states, actions (arrows), goal (🏁), danger cells (💀, R=-5)
 - Policy Iteration (Method 1): Step 1 Policy Evaluation (3 policies: uniform, optimistic, suboptimal) → Step 2 Policy Improvement (argmax over Q-values)
 - Value Iteration (Method 2): Single combined update V(s) = max_a Q(s,a), with live Q-value table showing how max Q overwrites V
-- Comparison section: side-by-side stats for both methods
+- Monte Carlo (Method 3): First-visit MC with ε-greedy exploration, episode path visualization, Q-table with average returns
+- TD Methods (Method 4): SARSA (on-policy) and Q-Learning (off-policy) side-by-side, live Q-tables with best action indicators
+- Comparison sections: DP methods comparison + all-methods final policy comparison table
+
+**Convergence criteria:**
+- DP methods (Policy Eval, Value Iter): max|ΔV| < 0.001
+- Model-free methods (MC, SARSA, Q-Learning): max|ΔQ| < 0.01 after 50+ episodes
 
 **Running:**
 ```bash
@@ -73,7 +79,7 @@ npm install
 npm run dev
 ```
 
-**Config:** `GRID_SIZE=4`, `gamma=0.9`, `rewardGoal=10`, `rewardStep=0`, `DANGER_STATES={5,9}`, `REWARD_DANGER=-5`
+**Config:** `GRID_SIZE=4`, `gamma=0.9`, `rewardGoal=10`, `rewardStep=0`, `DANGER_STATES={5,9}`, `REWARD_DANGER=-5`, `ALPHA=0.1`, `EPSILON=0.2`
 
 ### Dependencies
 

@@ -63,14 +63,20 @@ jupyter notebook 1-introduction/env.ipynb
 - **State Management**: Tabular methods use a dictionary or numpy array for value functions/policies. Deep methods use PyTorch `nn.Module`.
 - **Reproducibility**: No central test suite exists. Validation is performed by running scripts and observing convergence in rewards or visualization dashboards.
 
-### Interactive Web Visualization: Policy Iteration vs. Value Iteration
-Located at `barto-sutton-notes/lecture3-2026-05-09-mdp/assets/policy-evaluation-dp/` — a React + Vite + TypeScript app demonstrating DP methods on a 4×4 gridworld with danger zones.
+### Interactive Web Visualization: RL Methods Comparison
+Located at `barto-sutton-notes/lecture3-2026-05-09-mdp/assets/policy-evaluation-dp/` — a React + Vite + TypeScript app demonstrating DP and model-free methods on a 4×4 gridworld with danger zones.
 
 **Sections:**
 - **MDP Environment**: Grid with states, action arrows, goal (🏁, R=+10), danger cells (💀, R=-5)
 - **Policy Iteration (Method 1)**: Step 1 Policy Evaluation (3 policies: uniform, optimistic, suboptimal) → Step 2 Policy Improvement (argmax over Q-values with Q-value overlay)
 - **Value Iteration (Method 2)**: Combined update V(s) = max_a Q(s,a), live Q-value table showing how max Q overwrites V and implicit greedy policy at each step
-- **Comparison**: Side-by-side stats showing iteration counts, update rules, and tradeoffs
+- **Monte Carlo (Method 3)**: First-visit MC with ε-greedy exploration, episode path visualization, Q-table with average returns
+- **TD Methods (Method 4)**: SARSA (on-policy) and Q-Learning (off-policy) side-by-side, live Q-tables with best action indicators
+- **Comparisons**: DP methods comparison + all-methods final policy comparison table
+
+**Convergence criteria:**
+- DP methods (Policy Eval, Value Iter): max|ΔV| < 0.001
+- Model-free methods (MC, SARSA, Q-Learning): max|ΔQ| < 0.01 after 50+ episodes
 
 **Running:**
 ```bash
@@ -79,7 +85,7 @@ npm install
 npm run dev
 ```
 
-**Config:** `GRID_SIZE=4`, `gamma=0.9`, `rewardGoal=10`, `rewardStep=0`, `DANGER_STATES={5,9}`, `REWARD_DANGER=-5`
+**Config:** `GRID_SIZE=4`, `gamma=0.9`, `rewardGoal=10`, `rewardStep=0`, `DANGER_STATES={5,9}`, `REWARD_DANGER=-5`, `ALPHA=0.1`, `EPSILON=0.2`
 
 ## Key Implementation Patterns
 - **Exploration**: Most agents use epsilon-greedy exploration with linear or exponential decay.
