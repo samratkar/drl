@@ -13,7 +13,7 @@ kramdown:
   math_engine: mathjax
   syntax_highlighter: rouge
   input: GFM
-  hard_wrap: false
+  hard_wrap: true
 
 # Plugin configurations
 optional_front_matter:
