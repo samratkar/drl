@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Subjective Question Solutions - Lecture 4
 
 1. **MC vs. TD:**

@@ -1,10 +1,14 @@
+---
+layout: post
+---
+
 # Subjective Questions - MDPs & Dynamic Programming
 
 1. **Agent-Environment Boundary**: Explain the concept of the boundary between the agent and the environment. Provide an example where something typically considered part of the agent's body is actually part of the environment.
 
 2. **Markov Property**: Formally define the Markov property. Why is this property fundamental to the formulation of Reinforcement Learning problems as MDPs?
 
-3. **Dynamics Function**: Describe the dynamics function $p(s', r | s, a)$. How does it encapsulate all the physics/rules of the environment?
+3. **Dynamics Function**: Describe the dynamics function $p(s', r \mid s, a)$. How does it encapsulate all the physics/rules of the environment?
 
 4. **Returns & Discounting**: Define the return $G_t$ for a continuing task. Explain how the discount factor $\gamma$ prevents the return from becoming infinite and how it adjusts the agent's time horizon.
 

@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Programming Question Solutions - Lecture 4
 
 ### 1. MC Policy Evaluation

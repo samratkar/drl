@@ -24,6 +24,7 @@ titles_from_headings:
   collections: true
 
 # Exclude these files from Jekyll build
+# Only files with layout: post are intended for publishing in the main portal lists.
 exclude:
   - .venv
   - .python-version

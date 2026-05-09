@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Multiple Choice Questions - Lecture 5 (n-step Bootstrapping & Planning)
 
 1. Which value of $n$ makes n-step TD prediction equivalent to the Monte Carlo method (for an episode of length $T$)?
@@ -81,7 +85,7 @@
 14. Monte Carlo Tree Search (MCTS) is typically used for:
     A. Background planning in simple gridworlds.
     B. Decision-time planning in complex games.
-    C. Estimating the model dynamics $p(s', r | s, a)$.
+    C. Estimating the model dynamics $p(s', r \mid s, a)$.
     D. Eliminating bootstrapping from TD learning.
 
 15. In MCTS, the "Simulation" step involves:

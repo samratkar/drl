@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Lecture 5: n-step Bootstrapping & Planning with Tabular Methods
 **Date:** 2026-05-23  
 **Reference:** Sutton & Barto, Chapters 7 & 8 (2nd Edition)
@@ -66,7 +70,7 @@ graph TD
 
 ### 7.3 n-step Off-policy Learning
 To learn about a target policy $\pi$ from behavior policy $b$, we use the importance sampling ratio for the $n$ steps:
-$$\rho_{t:t+n-1} \doteq \prod_{k=t}^{\min(t+n-1, T-1)} \frac{\pi(A_k|S_k)}{b(A_k|S_k)}$$
+$$\rho_{t:t+n-1} \doteq \prod_{k=t}^{\min(t+n-1, T-1)} \frac{\pi(A_k\mid S_k)}{b(A_k\mid S_k)}$$
 
 ### 7.4 *Per-decision Methods with Control Variates
 A more sophisticated way to handle off-policy n-step learning that reduces variance by applying importance sampling to individual rewards rather than the whole return.
@@ -84,7 +88,7 @@ Unifies Sarsa (full sample), Expected Sarsa (full expectation), and Tree Backup 
 This chapter integrates **learning** (from real experience) and **planning** (from simulated experience using a model).
 
 ### 8.1 Models and Planning
-- **Distribution Model:** Provides the full probability distribution $p(s', r | s, a)$.
+- **Distribution Model:** Provides the full probability distribution $p(s', r \mid s, a)$.
 - **Sample Model:** Provides a single sample $(s', r)$ following the distribution.
 - **Planning:** Any process that takes a model as input and produces or improves a policy.
 

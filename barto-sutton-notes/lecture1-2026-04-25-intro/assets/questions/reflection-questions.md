@@ -2,9 +2,8 @@
 tags : [chapter1, problems]
 categories : drl-problems
 subcategories : introduction
+layout: post
 ---
-
-
 ## Reflection questions 
 1. Derive the equation for V(s) from G_t. Understand how both are same. And how they are just old wine in the new bottle. 
 2. Understand the difference between V(s) and Q(s,a) - 

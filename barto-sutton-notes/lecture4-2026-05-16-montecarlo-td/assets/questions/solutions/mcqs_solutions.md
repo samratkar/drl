@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # MCQ Solutions - Lecture 4
 
 1. **Answer: C.** Learning from complete episodes. MC methods wait for the episode to end before updating estimates.

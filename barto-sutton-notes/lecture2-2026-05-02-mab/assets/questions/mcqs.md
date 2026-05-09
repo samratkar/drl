@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Multiple Choice Questions - Lecture 2 (Multi-Armed Bandits)
 
 1. The Multi-Armed Bandit problem is "non-associative" because:

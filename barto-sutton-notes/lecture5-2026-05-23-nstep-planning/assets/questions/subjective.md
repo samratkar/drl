@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Subjective Questions - Lecture 5 (n-step Bootstrapping & Planning)
 
 1. **The Spectrum of RL:** Explain how n-step methods unify Monte Carlo and Temporal-Difference methods. Draw or describe the backup diagrams for $n=1$, $n=3$, and $n=\infty$.

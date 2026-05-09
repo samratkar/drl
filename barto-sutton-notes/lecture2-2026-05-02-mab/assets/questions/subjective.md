@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Subjective Questions - Lecture 2 (Multi-Armed Bandits)
 
 1. **Exploration-Exploitation Trade-off:** Explain the conflict between exploration and exploitation in the context of the k-armed bandit problem. Why can't we just do one or the other?

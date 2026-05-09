@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Numerical Questions - Lecture 5 (n-step Bootstrapping & Planning)
 
 1. **Calculating n-step Returns:**
@@ -11,8 +15,8 @@
 
 2. **Importance Sampling Ratio:**
    Consider an off-policy n-step task.
-   Target policy $\pi(a|s)$: $\pi(left|s) = 0.8, \pi(right|s) = 0.2$.
-   Behavior policy $b(a|s)$: $b(left|s) = 0.5, b(right|s) = 0.5$.
+   Target policy $\pi(a \mid s)$: $\pi(left \mid s) = 0.8, \pi(right \mid s) = 0.2$.
+   Behavior policy $b(a \mid s)$: $b(left \mid s) = 0.5, b(right \mid s) = 0.5$.
    In an episode, the agent takes the following actions: $A_0=left, A_1=left, A_2=right$.
    Calculate the 3-step importance sampling ratio $\rho_{0:2}$.
 
@@ -23,7 +27,7 @@
 4. **Tree Backup Returns:**
    In a 2-step Tree Backup update, we visit state $S_t$, take action $A_t$, reach $S_{t+1}$, then take $A_{t+1}$ and reach $S_{t+2}$.
    Assume $\gamma=1.0$, $R_{t+1}=2, R_{t+2}=3$.
-   Policy $\pi(a|S_{t+1})$: $A_{t+1}$ has prob 0.6, other action $a'$ has prob 0.4.
+   Policy $\pi(a \mid S_{t+1})$: $A_{t+1}$ has prob 0.6, other action $a'$ has prob 0.4.
    Estimates: $Q(S_{t+1}, a') = 10, Q(S_{t+2}, a) = 5$ for all $a$ in $S_{t+2}$.
    Calculate the 2-step Tree Backup return $G_{t:t+2}$.
 

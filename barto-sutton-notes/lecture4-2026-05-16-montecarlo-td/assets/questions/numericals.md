@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Numerical Questions - Lecture 4 (Monte Carlo & TD Learning)
 
 1. **MC Return Calculation:**
@@ -12,8 +16,8 @@
    Using $\alpha = 0.1$ and $\gamma = 0.9$, calculate the updated value $V(S_t)$.
 
 3. **Importance Sampling Ratio:**
-   Target policy $\pi(a|s) = 0.8$ for action 'Hit', $0.2$ for 'Stick'.
-   Behavior policy $b(a|s) = 0.5$ for action 'Hit', $0.5$ for 'Stick'.
+   Target policy $\pi(a \mid s) = 0.8$ for action 'Hit', $0.2$ for 'Stick'.
+   Behavior policy $b(a \mid s) = 0.5$ for action 'Hit', $0.5$ for 'Stick'.
    An episode follows the sequence: $Hit, Hit, Stick$.
    Calculate the importance sampling ratio $\rho_{0:2}$ for this episode.
 

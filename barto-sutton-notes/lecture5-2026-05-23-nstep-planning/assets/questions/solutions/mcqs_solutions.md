@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # MCQ Solutions - Lecture 5
 
 1. **Answer: C.** $n \ge T - t$. When $n$ is large enough to reach the end of the episode, the bootstrap term $\gamma^n V(S_{t+n})$ vanishes (as $S_T$ is terminal), leaving only the discounted rewards, which is the Monte Carlo return.

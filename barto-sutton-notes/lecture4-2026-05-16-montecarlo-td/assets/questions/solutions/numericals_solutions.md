@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Numerical Question Solutions - Lecture 4
 
 1. **MC Return Calculation:**

@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Programming Questions - Lecture 5 (n-step Bootstrapping & Planning)
 
 1. **n-step TD Prediction:**
@@ -15,7 +19,7 @@
 
 3. **Prioritized Sweeping Queue Update:**
    Implement the logic to update a priority queue in Prioritized Sweeping. Given a transition $(s, a, s', r)$, the magnitude of the TD error $\delta$, and a threshold $\theta$:
-   - If $|\delta| > \theta$, add $(s, a)$ to the priority queue with priority $|\delta|$.
+   - If $\mid \delta \mid > \theta$, add $(s, a)$ to the priority queue with priority $\mid \delta \mid$.
    - For all predecessors $(\bar{s}, \bar{a})$ of $s$, calculate the potential change in their values and add them to the queue if it exceeds $\theta$.
    
 ---

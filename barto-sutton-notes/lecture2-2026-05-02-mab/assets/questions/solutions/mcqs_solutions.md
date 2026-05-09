@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # MCQ Solutions - Lecture 2
 
 1. **Answer: B.** Actions do not depend on states. Non-associative means the agent doesn't need to associate actions with different state signals.

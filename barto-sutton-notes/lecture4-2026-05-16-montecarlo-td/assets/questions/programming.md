@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Programming Questions - Lecture 4 (Monte Carlo & TD Learning)
 
 1. **MC Policy Evaluation:**

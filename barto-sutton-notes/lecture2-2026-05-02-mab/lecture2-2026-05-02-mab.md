@@ -4,8 +4,8 @@ title : "Multi Armed Bandit"
 category : Lectures
 subcategory : MAB
 textbook : [chapter2]
+layout: post
 ---
-
 ## Table of Contents
 1. [Today's Conversations](#todays-conversations---5226)
 2. [MAB - Multi-Armed Bandit Problem](#mab---multi-arm-bandit---k-armed-bandit-problem)
@@ -53,7 +53,7 @@ It is a non-associative, evaluative feedback problem. You are faced repeatedly w
 
 ### $q_*(a,s)$ vs $Q(a,s)$ 
 Each of the k-actions has an expected or mean reward given that that action is selected; this is called **value** of the action - **$q_*(a)$**. This is the true value of the action, which is unknown to the agent.  
-$$\mathbb{E}[R_t | A_t = a] = q_*(a)$$
+$$\mathbb{E}[R_t \mid A_t = a] = q_*(a)$$
 The agent estimates the value of each action based on the rewards received when that action was selected. This estimate is denoted as **$Q_t(a)$**, which is the estimated value of action a at time t. The agent updates this estimate based on the rewards received after selecting action a.
 
 ### Greedy actions / exploitation / exploration

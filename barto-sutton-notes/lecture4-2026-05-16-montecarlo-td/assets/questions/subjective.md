@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Subjective Questions - Lecture 4 (Monte Carlo & TD Learning)
 
 1. **MC vs. TD:** Discuss the fundamental differences between Monte Carlo and Temporal-Difference methods. Consider aspects like bootstrapping, update frequency, and bias-variance trade-offs.

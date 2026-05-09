@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Subjective Question Solutions - Lecture 5
 
 1. **The Spectrum of RL:**

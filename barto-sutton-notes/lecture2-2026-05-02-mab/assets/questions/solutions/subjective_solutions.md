@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Subjective Question Solutions - Lecture 2
 
 1. **Exploration-Exploitation Trade-off:**

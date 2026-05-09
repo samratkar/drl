@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Multiple Choice Questions - Set 1 (MDPs & Dynamic Programming)
 
 1. In a finite MDP, which of the following best describes the sequence of random variables starting at time $t=0$?
@@ -13,15 +17,15 @@
    D. The agent's chosen action $A_t$.
 
 3. A state signal $S_t$ possesses the Markov property if and only if:
-   A. $Pr\{S_{t+1} = s' | S_t = s\} = Pr\{S_{t+1} = s' | S_t = s, A_t = a\}$
-   B. $Pr\{S_{t+1} = s', R_{t+1} = r | S_t, A_t\} = Pr\{S_{t+1} = s', R_{t+1} = r | S_t, A_t, S_{t-1}, A_{t-1}, ..., S_0, A_0\}$
+   A. $Pr\{S_{t+1} = s' \mid S_t = s\} = Pr\{S_{t+1} = s' \mid S_t = s, A_t = a\}$
+   B. $Pr\{S_{t+1} = s', R_{t+1} = r \mid S_t, A_t\} = Pr\{S_{t+1} = s', R_{t+1} = r \mid S_t, A_t, S_{t-1}, A_{t-1}, \ldots, S_0, A_0\}$
    C. The future is independent of the present given the past.
    D. The transitions are deterministic.
 
-4. The dynamics function $p(s', r | s, a)$ defines a probability distribution over $s'$ and $r$ such that:
-   A. $\sum_{s' \in \mathcal{S}} \sum_{r \in \mathcal{R}} p(s', r | s, a) = 1$ for all $s, a$.
-   B. $\sum_{s \in \mathcal{S}} \sum_{a \in \mathcal{A}} p(s', r | s, a) = 1$ for all $s', r$.
-   C. $p(s', r | s, a) = p(s' | s, a) + p(r | s, a)$.
+4. The dynamics function $p(s', r \mid s, a)$ defines a probability distribution over $s'$ and $r$ such that:
+   A. $\sum_{s' \in \mathcal{S}} \sum_{r \in \mathcal{R}} p(s', r \mid s, a) = 1$ for all $s, a$.
+   B. $\sum_{s \in \mathcal{S}} \sum_{a \in \mathcal{A}} p(s', r \mid s, a) = 1$ for all $s', r$.
+   C. $p(s', r \mid s, a) = p(s' \mid s, a) + p(r \mid s, a)$.
    D. It represents the probability of action $a$ being taken in state $s$.
 
 5. How is the state-transition probability $p(s' \mid s, a)$ derived from the dynamics function $p(s', r \mid s, a)$?
@@ -55,10 +59,10 @@
    D. Two different policies $\pi$ and $\pi'$.
 
 10. Which equation correctly represents the Bellman equation for $v_\pi(s)$?
-    A. $v_\pi(s) = \sum_a \pi(a|s) \sum_{s', r} p(s', r | s, a) [r + \gamma v_\pi(s')]$
-    B. $v_\pi(s) = \max_a \sum_{s', r} p(s', r | s, a) [r + \gamma v_\pi(s')]$
-    C. $v_\pi(s) = \sum_a \pi(a|s) [R_{t+1} + \gamma v_\pi(S_{t+1})]$
-    D. $v_\pi(s) = \mathbb{E}[G_t | S_t = s, A_t = a]$
+    A. $v_\pi(s) = \sum_a \pi(a \mid s) \sum_{s', r} p(s', r \mid s, a) [r + \gamma v_\pi(s')]$
+    B. $v_\pi(s) = \max_a \sum_{s', r} p(s', r \mid s, a) [r + \gamma v_\pi(s')]$
+    C. $v_\pi(s) = \sum_a \pi(a \mid s) [R_{t+1} + \gamma v_\pi(S_{t+1})]$
+    D. $v_\pi(s) = \mathbb{E}[G_t \mid S_t = s, A_t = a]$
 
 11. The optimal action-value function $q^*(s, a)$ is defined as:
     A. $\max_\pi q_\pi(s, a)$ for all $s \in \mathcal{S}, a \in \mathcal{A}(s)$.

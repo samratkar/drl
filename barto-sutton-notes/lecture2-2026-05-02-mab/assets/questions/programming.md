@@ -2,8 +2,8 @@
 tags : [chapter2, problems]
 categories : drl-problems
 subcategories : mab
+layout: post
 ---
-
 # Chapter 2: Multi-Armed Bandits — Programming Questions
 
 *Based on Sutton & Barto, Reinforcement Learning: An Introduction (2nd Ed.), Chapter 2*
