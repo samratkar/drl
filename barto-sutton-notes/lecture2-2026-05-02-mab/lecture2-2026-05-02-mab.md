@@ -6,6 +6,26 @@ subcategory : MAB
 textbook : [chapter2]
 ---
 
+## Table of Contents
+1. [Today's Conversations](#todays-conversations---5226)
+2. [MAB - Multi-Armed Bandit Problem](#mab---multi-arm-bandit---k-armed-bandit-problem)
+3. [Today's Anthem](#todays-anthem)
+4. [Evaluative Approach](#evaluative-approach)
+5. [K-armed Bandit Problem](#k-armed-bandit-problem-or-multi-armed-bandit-problem)
+6. [$q_*(a,s)$ vs $Q(a,s)$](#q_as-vs-qas)
+7. [Greedy actions / exploitation / exploration](#greedy-actions--exploitation--exploration)
+8. [Action Value Methods](#action-value-methods)
+9. [Greedy action](#greedy-action)
+10. [$\epsilon$-greedy method](#epsilon-greedy-method---exploration-vs-exploitation)
+11. [10-Armed Testbed](#10-armed-testbed-section-23)
+12. [Upper-Confidence-Bound (UCB) Action Selection](#figure-24-upper-confidence-bound-ucb-action-selection-section-27)
+13. [Gradient Bandit Algorithms](#figure-25-gradient-bandit-algorithms-section-28)
+14. [Non-stationary Bandits](#what-happens-when-the-bandits-are-non-stationary)
+15. [Optimistic Initial Values](#optimistic-initial-values-section-26)
+16. [Parameter Study](#figure-26-parameter-study--comparing-all-methods-section-210)
+
+---
+
 ## Today's conversations - 5/2/26 
 ## MAB - multi arm bandit - K armed bandit problem
 
