@@ -97,7 +97,7 @@ s = random.choice(states)
 update_value(s)
 ```
 
-13. **Model-Based vs. Model-Free**: DP requires the full transition model $P(s', r | s, a)$ as input. Model-free algorithms require an environment `step(action)` function that returns $(s', r, \text{done})$.
+13. **Model-Based vs. Model-Free**: DP requires the full transition model $P(s', r \mid s, a)$ as input. Model-free algorithms require an environment `step(action)` function that returns $(s', r, \text{done})$.
 
 14. **Efficiency in Summation**: Use a list of non-zero transitions for each $(s, a)$ instead of iterating over the entire state space $S$.
 

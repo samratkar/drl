@@ -5,7 +5,7 @@
 3. **B**. This is the formal definition of the Markov property, where the current state and action are sufficient to predict the next state and reward.
 4. **A**. It is a probability distribution over the next state and reward given the current state and action.
 5. **A**. By summing over all possible rewards, we get the marginal probability of the next state.
-6. **A**. The expected reward is the sum of rewards weighted by their probabilities $p(s', r | s, a)$.
+6. **A**. The expected reward is the sum of rewards weighted by their probabilities $p(s', r \mid s, a)$.
 7. **B**. With $\gamma = 0$, $G_t = R_{t+1}$, so only the immediate reward matters.
 8. **A**. $G_t = \sum_{k=0}^{\infty} \gamma^k (1) = 1/(1-\gamma)$ (geometric series).
 9. **A**. It relates the value of a state to the expected values of its possible successor states.
@@ -19,4 +19,4 @@
 17. **A**. The "sawtooth" occurs because for certain capital amounts, a large bet can reach the goal in one step, while for others, multiple steps are needed.
 18. **A**. Asynchronous DP does not require a systematic sweep of the entire state space.
 19. **A**. RL methods bootstrap when they use estimates to update other estimates (like $V(s')$ to update $V(s)$).
-20. **B**. DP is polynomial in $|S|$ and $|A|$, which is much better than the exponential complexity of exhaustive search.
+20. **B**. DP is polynomial in $\mid S \mid$ and $\mid A \mid$, which is much better than the exponential complexity of exhaustive search.

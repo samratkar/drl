@@ -27,13 +27,13 @@ Prioritized Sweeping improves efficiency by only performing planning updates tha
 
 **Key Logic:**
 1. Calculate the TD error $\delta$ for the current transition.
-2. If $|\delta| > \theta$, add the current state-action pair to the priority queue with priority $|\delta|$.
+2. If $\mid \delta \mid > \theta$, add the current state-action pair to the priority queue with priority $\mid \delta \mid$.
 3. While the queue is not empty and we have a computation budget:
     - Pop the highest priority $(s, a)$.
     - Update $Q(s, a)$.
     - For all predecessors $(\bar{s}, \bar{a})$ that lead to $s$ with reward $\bar{r}$:
         - Calculate potential error $\bar{\delta} = \bar{r} + \gamma V(s) - Q(\bar{s}, \bar{a})$.
-        - If $|\bar{\delta}| > \theta$, add $(\bar{s}, \bar{a})$ to the queue with priority $|\bar{\delta}|$.
+        - If $\mid \bar{\delta} \mid > \theta$, add $(\bar{s}, \bar{a})$ to the queue with priority $\mid \bar{\delta} \mid$.
 
 ---
 *Implementation code can be found in `solutions/programs/programming_implementations.py`.*

@@ -25,8 +25,8 @@
    D. Multiple target policies simultaneously.
 
 5. Off-policy learning via Importance Sampling requires "Coverage," which means:
-   A. $\pi(a|s) > 0 \implies b(a|s) > 0$.
-   B. $b(a|s) > 0 \implies \pi(a|s) > 0$.
+   A. $\pi(a\mid s) > 0 \implies b(a\mid s) > 0$.
+   B. $b(a\mid s) > 0 \implies \pi(a\mid s) > 0$.
    C. The behavior policy must be deterministic.
    D. The target policy must be $\epsilon$-greedy.
 

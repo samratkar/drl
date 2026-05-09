@@ -19,7 +19,7 @@
    d) $G_{0:4} = R_1 + 0.9 R_2 + 0.81 R_3 + 0.729 R_4 + 0.9^4 V(S_4) = 2 - 0.9 + 3.24 + 0.729(10) + 0.6561(5.0) = 4.34 + 7.29 + 3.2805 = 14.9105$
 
 2. **Importance Sampling Ratio:**
-   $\rho_{0:2} = \frac{\pi(A_0|S_0)}{b(A_0|S_0)} \cdot \frac{\pi(A_1|S_1)}{b(A_1|S_1)} \cdot \frac{\pi(A_2|S_2)}{b(A_2|S_2)}$
+   $\rho_{0:2} = \frac{\pi(A_0 \mid S_0)}{b(A_0 \mid S_0)} \cdot \frac{\pi(A_1 \mid S_1)}{b(A_1 \mid S_1)} \cdot \frac{\pi(A_2 \mid S_2)}{b(A_2 \mid S_2)}$
    $\rho_{0:2} = \frac{0.8}{0.5} \cdot \frac{0.8}{0.5} \cdot \frac{0.2}{0.5} = 1.6 \cdot 1.6 \cdot 0.4 = 2.56 \cdot 0.4 = 1.024$.
 
 3. **Dyna-Q+ Exploration Bonus:**
@@ -27,7 +27,7 @@
    The simulated reward used in planning becomes $r + 0.3162$.
 
 4. **Tree Backup Returns:**
-   $G_{t:t+2} = R_{t+1} + \gamma \sum_{a \neq A_{t+1}} \pi(a|S_{t+1}) Q(S_{t+1}, a) + \gamma \pi(A_{t+1}|S_{t+1}) [R_{t+2} + \gamma V(S_{t+2})]$
+   $G_{t:t+2} = R_{t+1} + \gamma \sum_{a \neq A_{t+1}} \pi(a \mid S_{t+1}) Q(S_{t+1}, a) + \gamma \pi(A_{t+1} \mid S_{t+1}) [R_{t+2} + \gamma V(S_{t+2})]$
    Given $\gamma=1.0$:
    $G_{t:t+2} = 2 + (0.4 \cdot 10) + 0.6 \cdot [3 + 1.0 \cdot 5]$
    $G_{t:t+2} = 2 + 4 + 0.6 \cdot [8] = 6 + 4.8 = 10.8$.

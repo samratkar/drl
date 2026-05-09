@@ -6,15 +6,15 @@
 
 3. **Infinite Horizon Return**: A continuing task yields a constant reward $R_t = 10$ for all $t$. If $\gamma = 0.9$, what is the total return $G_t$?
 
-4. **Expected Reward**: Given the dynamics $p(s_1, 5 | s, a) = 0.3$ and $p(s_2, -2 | s, a) = 0.7$, calculate the expected reward $r(s, a)$.
+4. **Expected Reward**: Given the dynamics $p(s_1, 5 \mid s, a) = 0.3$ and $p(s_2, -2 \mid s, a) = 0.7$, calculate the expected reward $r(s, a)$.
 
-5. **State-Transition Probability**: Using the dynamics from question 4, what is the state-transition probability $p(s_1 | s, a)$?
+5. **State-Transition Probability**: Using the dynamics from question 4, what is the state-transition probability $p(s_1 \mid s, a)$?
 
 6. **Bellman Equation (State Value)**: In a gridworld, state $S$ has four possible successor states with values $V(S_{up})=10, V(S_{down})=2, V(S_{left})=0, V(S_{right})=5$. If the policy $\pi$ is uniform random and $\gamma = 0.9$ (with $R=0$ for all moves), calculate $V(S)$.
 
-7. **Bellman Equation (Action Value)**: Given $p(s', 10 | s, a) = 1.0$ and $V(s') = 20$, calculate $q_\pi(s, a)$ with $\gamma = 0.9$.
+7. **Bellman Equation (Action Value)**: Given $p(s', 10 \mid s, a) = 1.0$ and $V(s') = 20$, calculate $q_\pi(s, a)$ with $\gamma = 0.9$.
 
-8. **Policy Evaluation Update**: A state $s$ has only one action $a$. $p(s, 1 | s, a) = 0.2$ and $p(s', 10 | s, a) = 0.8$. If current estimates are $V(s)=0$ and $V(s')=5$, what is the new estimate $V(s)$ after one update with $\gamma=1$?
+8. **Policy Evaluation Update**: A state $s$ has only one action $a$. $p(s, 1 \mid s, a) = 0.2$ and $p(s', 10 \mid s, a) = 0.8$. If current estimates are $V(s)=0$ and $V(s')=5$, what is the new estimate $V(s)$ after one update with $\gamma=1$?
 
 9. **Value Iteration Update**: State $s$ has two actions, $A$ and $B$.
    - Action $A$: Leads to $s_1$ (value 10) with reward 0.
@@ -26,7 +26,7 @@
 11. **Gridworld Boundary Reward**: Moving north from $(0, 3)$ hits the boundary. The rule is: stay in $(0, 3)$ and receive $R=-1$. If $\gamma=0.9$ and $V(0,3)=5$, calculate the contribution of the "north" action to the Bellman equation for $V(0,3)$.
 
 12. **Recycling Robot**: A robot is in state "high" ($s$).
-    - Action "search": $p(\text{high, } 3 | \text{high, search}) = 0.6$, $p(\text{low, } 3 | \text{high, search}) = 0.4$.
+    - Action "search": $p(\text{high, } 3 \mid \text{high, search}) = 0.6$, $p(\text{low, } 3 \mid \text{high, search}) = 0.4$.
     - Current values: $V(\text{high})=10, V(\text{low})=5$.
     Calculate $q(\text{high, search})$ with $\gamma = 0.8$.
 
@@ -41,7 +41,7 @@
 
 16. **Effective Horizon**: If $\gamma = 0.9$, at what step $k$ does the reward $R_{t+k+1}$ contribute less than $10\%$ of its original value to the return $G_t$?
 
-17. **Probability Derivation**: $p(s', r | s, a)$ is given for $r \in \{0, 10\}$. If $\sum_{s'} p(s', 10 | s, a) = 0.2$ and $\sum_{s'} p(s', 0 | s, a) = 0.8$, calculate $r(s, a)$.
+17. **Probability Derivation**: $p(s', r \mid s, a)$ is given for $r \in \{0, 10\}$. If $\sum_{s'} p(s', 10 \mid s, a) = 0.2$ and $\sum_{s'} p(s', 0 \mid s, a) = 0.8$, calculate $r(s, a)$.
 
 18. **Policy Improvement**: Policy $\pi$ gives $V_\pi(s) = 10$. A new action $a'$ in state $s$ has $q_\pi(s, a') = 12$. If we change $\pi(s)$ to $a'$, what is the lower bound for the new value $V_{\pi'}(s)$ according to the Policy Improvement Theorem?
 

@@ -2,9 +2,9 @@
 
 1. **Agent-Environment Boundary**: The boundary is not physical but functional. It separates everything the agent can change arbitrarily (the agent) from everything it cannot (the environment). Example: A robot's motor or its battery level. While they are part of the "robot," the agent (the decision logic) cannot arbitrarily set the battery level or the motor torque without interacting with the physics of the world.
 
-2. **Markov Property**: Defined as $Pr\{S_{t+1}, R_{t+1} | S_t, A_t\} = Pr\{S_{t+1}, R_{t+1} | S_t, A_t, S_{t-1}, ..., S_0\}$. It means the current state and action provide all the necessary information to predict the future. It's important because it allows the state to be the sole basis for making decisions, ignoring the history.
+2. **Markov Property**: Defined as $Pr\{S_{t+1}, R_{t+1} \mid S_t, A_t\} = Pr\{S_{t+1}, R_{t+1} \mid S_t, A_t, S_{t-1}, \ldots, S_0\}$. It means the current state and action provide all the necessary information to predict the future. It's important because it allows the state to be the sole basis for making decisions, ignoring the history.
 
-3. **Dynamics Function**: $p(s', r | s, a) = Pr\{S_{t+1}=s', R_{t+1}=r | S_t=s, A_t=a\}$. It defines the probability of every possible next state and reward for every state-action pair. It describes the "rules of the game" (e.g., transition probabilities in a gridworld).
+3. **Dynamics Function**: $p(s', r \mid s, a) = Pr\{S_{t+1}=s', R_{t+1}=r \mid S_t=s, A_t=a\}$. It defines the probability of every possible next state and reward for every state-action pair. It describes the "rules of the game" (e.g., transition probabilities in a gridworld).
 
 4. **Returns & Discounting**: $G_t = \sum_{k=0}^{\infty} \gamma^k R_{t+k+1}$. If $R_t$ is bounded and $\gamma < 1$, the sum is a convergent geometric series. $\gamma$ determines the "effective horizon": $\gamma \approx 0$ makes the agent "myopic" (short-term), while $\gamma \approx 1$ makes it "farsighted."
 
@@ -14,16 +14,16 @@
 
 7. **Optimal Value Functions**: $v^*(s) = \max_\pi v_\pi(s)$ and $q^*(s,a) = \max_\pi q_\pi(s,a)$. The relationship is $v^*(s) = \max_a q^*(s,a)$.
 
-8. **Bellman Optimality Equation**: $v^*(s) = \max_a \sum_{s', r} p(s', r | s, a) [r + \gamma v^*(s')]$. It's non-linear because of the $\max$ operator, which makes it harder to solve than the linear Bellman equation for a fixed policy.
+8. **Bellman Optimality Equation**: $v^*(s) = \max_a \sum_{s', r} p(s', r \mid s, a) [r + \gamma v^*(s')]$. It's non-linear because of the $\max$ operator, which makes it harder to solve than the linear Bellman equation for a fixed policy.
 
 9. **Policy Improvement Theorem**: It states that if $q_\pi(s, \pi'(s)) \ge v_\pi(s)$ for all $s$, then policy $\pi'$ is at least as good as $\pi$. This justifies the greedy improvement step in DP.
 
 10. **Policy Iteration Workflow**:
     - **Initialization**: Random $V(s)$ and $\pi(s)$.
-    - **Evaluation**: Iterate $V(s) \leftarrow \sum_{s',r} p(s',r|s,\pi(s))[r + \gamma V(s')]$ until convergence.
-    - **Improvement**: For each $s$, set $\pi(s) \leftarrow \arg\max_a \sum_{s',r} p(s',r|s,a)[r + \gamma V(s')]$.
+    - **Evaluation**: Iterate $V(s) \leftarrow \sum_{s',r} p(s',r \mid s, \pi(s))[r + \gamma V(s')]$ until convergence.
+    - **Improvement**: For each $s$, set $\pi(s) \leftarrow \arg\max_a \sum_{s',r} p(s',r \mid s, a)[r + \gamma V(s')]$.
 
-11. **Value Iteration Mechanics**: It collapses evaluation and improvement: $V(s) \leftarrow \max_a \sum_{s', r} p(s', r | s, a) [r + \gamma V(s')]$. It only does one sweep of evaluation per "improvement" step, whereas PI does full evaluation.
+11. **Value Iteration Mechanics**: It collapses evaluation and improvement: $V(s) \leftarrow \max_a \sum_{s', r} p(s', r \mid s, a) [r + \gamma V(s')]$. It only does one sweep of evaluation per "improvement" step, whereas PI does full evaluation.
 
 12. **Generalized Policy Iteration (GPI)**: Evaluation makes the value function consistent with the current policy. Improvement makes the policy greedy with respect to the value function. They compete because changing one invalidates the other, but they cooperate to move both toward optimality ($v^*$ and $\pi^*$).
 
@@ -45,4 +45,5 @@
 
 19. **Policy vs. Value**: No, an optimal policy MUST be greedy with respect to $v^*$. If it weren't, there would be a better action (higher $q^*(s,a)$), contradicting the optimality of the policy.
 
-20. **Complexity of DP**: DP is polynomial in $|S|$ and $|A|$. However, the number of states $|S|$ often grows exponentially with the number of state variables (e.g., a grid of $10\times10$ is 100 states, but two such grids is $100^2$ states). This is the "curse of dimensionality."
+20. **Complexity of DP**: DP is polynomial in $\mid S \mid$ and $\mid A \mid$. However, the number of states $\mid S \mid$ often grows exponentially with the number of state variables (e.g., a grid of $10\times10$ is 100 states, but two such grids is $100^2$ states). This is the "curse of dimensionality."
+of dimensionality."

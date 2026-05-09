@@ -1,6 +1,6 @@
 # Programming Questions - MDPs & Dynamic Programming
 
-1. **Dynamics Representation**: How would you represent the dynamics $p(s', r | s, a)$ in a Python dictionary for a small MDP?
+1. **Dynamics Representation**: How would you represent the dynamics $p(s', r \mid s, a)$ in a Python dictionary for a small MDP?
 
 2. **Policy Definition**: Write a Python function `get_action(policy, state)` that handles both deterministic policies (dictionary mapping `state -> action`) and stochastic policies (dictionary mapping `state -> {action: probability}`).
 
@@ -26,7 +26,7 @@
 
 13. **Model-Based vs. Model-Free**: In code, how does the input to a DP algorithm (like Value Iteration) differ from the input to a model-free algorithm (like Q-Learning)?
 
-14. **Efficiency in Summation**: When computing $\sum_{s', r} p(s', r | s, a) [r + \gamma V(s')]$, how can you optimize the code if most transitions have a probability of zero?
+14. **Efficiency in Summation**: When computing $\sum_{s', r} p(s', r \mid s, a) [r + \gamma V(s')]$, how can you optimize the code if most transitions have a probability of zero?
 
 15. **Discount Factor Handling**: In a function `calculate_q_value(s, a, V, P, gamma)`, where should `gamma` be applied?
 

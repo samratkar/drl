@@ -71,10 +71,10 @@ To avoid the impractical assumption of exploring starts, we use **$\epsilon$-sof
 ### 5.5 Off-policy Prediction via Importance Sampling
 How can we learn about a **target policy** $\pi$ while following a different **behavior policy** $b$? This is **off-policy learning**.
 
-- **Requirement (Coverage):** $\pi(a|s) > 0 \implies b(a|s) > 0$.
+- **Requirement (Coverage):** $\pi(a\mid s) > 0 \implies b(a\mid s) > 0$.
 - **Importance-sampling ratio:** 
-  $$\rho_{t:T-1} \doteq \prod_{k=t}^{T-1} \frac{\pi(A_k|S_k)}{b(A_k|S_k)}$$
-- **Ordinary Importance Sampling:** $V(s) \doteq \frac{\sum_{t \in \mathcal{T}(s)} \rho_{t:T(t)-1} G_t}{|\mathcal{T}(s)|}$ (Unbiased, high variance).
+  $$\rho_{t:T-1} \doteq \prod_{k=t}^{T-1} \frac{\pi(A_k\mid S_k)}{b(A_k\mid S_k)}$$
+- **Ordinary Importance Sampling:** $V(s) \doteq \frac{\sum_{t \in \mathcal{T}(s)} \rho_{t:T(t)-1} G_t}{\mid\mathcal{T}(s)\mid}$ (Unbiased, high variance).
 - **Weighted Importance Sampling:** $V(s) \doteq \frac{\sum_{t \in \mathcal{T}(s)} \rho_{t:T(t)-1} G_t}{\sum_{t \in \mathcal{T}(s)} \rho_{t:T(t)-1}}$ (Biased, lower variance).
 
 #### Example 5.5: Infinite Variance
@@ -145,7 +145,7 @@ Contrasts Sarsa (safe path) vs Q-learning (optimal but risky path). Sarsa accoun
 
 ### 6.6 Expected Sarsa
 Instead of using a sample action $A_{t+1}$, it uses the expected value over all actions under the current policy:
-$$Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha [R_{t+1} + \gamma \sum_a \pi(a|S_{t+1}) Q(S_{t+1}, a) - Q(S_t, A_t)]$$
+$$Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha [R_{t+1} + \gamma \sum_a \pi(a\mid S_{t+1}) Q(S_{t+1}, a) - Q(S_t, A_t)]$$
 
 ### 6.7 Maximization Bias and Double Learning
 Algorithms that use a $\max$ (like Q-learning) or a greedy policy (like Sarsa) are subject to **Maximization Bias**—overestimating values due to taking the maximum over noisy estimates.
