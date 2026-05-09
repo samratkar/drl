@@ -24,17 +24,17 @@
    C. $p(s', r | s, a) = p(s' | s, a) + p(r | s, a)$.
    D. It represents the probability of action $a$ being taken in state $s$.
 
-5. How is the state-transition probability $p(s' | s, a)$ derived from the dynamics function $p(s', r | s, a)$?
-   A. $\sum_{r \in \mathcal{R}} p(s', r | s, a)$
-   B. $\max_{r \in \mathcal{R}} p(s', r | s, a)$
-   C. $\prod_{r \in \mathcal{R}} p(s', r | s, a)$
-   D. $p(s', r | s, a) / r$
+5. How is the state-transition probability $p(s' \mid s, a)$ derived from the dynamics function $p(s', r \mid s, a)$?
+   A. $\sum_{r \in \mathcal{R}} p(s', r \mid s, a)$
+   B. $\max_{r \in \mathcal{R}} p(s', r \mid s, a)$
+   C. $\prod_{r \in \mathcal{R}} p(s', r \mid s, a)$
+   D. $p(s', r \mid s, a) / r$
 
 6. The expected reward for state-action pair $(s, a)$, denoted $r(s, a)$, is calculated as:
-   A. $\sum_{s', r} r \cdot p(s', r | s, a)$
-   B. $\sum_{s'} p(s' | s, a)$
+   A. $\sum_{s', r} r \cdot p(s', r \mid s, a)$
+   B. $\sum_{s'} p(s' \mid s, a)$
    C. $\max_{s', r} r$
-   D. $\sum_{r} p(r | s, a)$
+   D. $\sum_{r} p(r \mid s, a)$
 
 7. In the context of returns, if $\gamma = 0$, the agent is:
    A. Far-sighted, caring about all future rewards equally.
