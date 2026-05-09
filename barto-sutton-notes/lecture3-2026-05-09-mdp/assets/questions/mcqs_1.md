@@ -1,0 +1,121 @@
+# Multiple Choice Questions - Set 1 (MDPs & Dynamic Programming)
+
+1. In a finite MDP, which of the following best describes the sequence of random variables starting at time $t=0$?
+   A. $S_0, R_1, A_0, S_1, R_2, A_1, ...$
+   B. $S_0, A_0, R_1, S_1, A_1, R_2, ...$
+   C. $A_0, S_0, R_1, A_1, S_1, R_2, ...$
+   D. $R_1, S_0, A_0, R_2, S_1, A_1, ...$
+
+2. According to the "Agent-Environment Boundary," which of the following is considered part of the environment?
+   A. The agent's decision-making policy.
+   B. The internal reward signal generation process.
+   C. The specific algorithm used for value estimation.
+   D. The agent's chosen action $A_t$.
+
+3. A state signal $S_t$ possesses the Markov property if and only if:
+   A. $Pr\{S_{t+1} = s' | S_t = s\} = Pr\{S_{t+1} = s' | S_t = s, A_t = a\}$
+   B. $Pr\{S_{t+1} = s', R_{t+1} = r | S_t, A_t\} = Pr\{S_{t+1} = s', R_{t+1} = r | S_t, A_t, S_{t-1}, A_{t-1}, ..., S_0, A_0\}$
+   C. The future is independent of the present given the past.
+   D. The transitions are deterministic.
+
+4. The dynamics function $p(s', r | s, a)$ defines a probability distribution over $s'$ and $r$ such that:
+   A. $\sum_{s' \in \mathcal{S}} \sum_{r \in \mathcal{R}} p(s', r | s, a) = 1$ for all $s, a$.
+   B. $\sum_{s \in \mathcal{S}} \sum_{a \in \mathcal{A}} p(s', r | s, a) = 1$ for all $s', r$.
+   C. $p(s', r | s, a) = p(s' | s, a) + p(r | s, a)$.
+   D. It represents the probability of action $a$ being taken in state $s$.
+
+5. How is the state-transition probability $p(s' | s, a)$ derived from the dynamics function $p(s', r | s, a)$?
+   A. $\sum_{r \in \mathcal{R}} p(s', r | s, a)$
+   B. $\max_{r \in \mathcal{R}} p(s', r | s, a)$
+   C. $\prod_{r \in \mathcal{R}} p(s', r | s, a)$
+   D. $p(s', r | s, a) / r$
+
+6. The expected reward for state-action pair $(s, a)$, denoted $r(s, a)$, is calculated as:
+   A. $\sum_{s', r} r \cdot p(s', r | s, a)$
+   B. $\sum_{s'} p(s' | s, a)$
+   C. $\max_{s', r} r$
+   D. $\sum_{r} p(r | s, a)$
+
+7. In the context of returns, if $\gamma = 0$, the agent is:
+   A. Far-sighted, caring about all future rewards equally.
+   B. Only interested in maximizing the immediate reward $R_{t+1}$.
+   C. Ignoring all rewards, including the immediate one.
+   D. Following a random policy.
+
+8. For a continuing task with constant reward $R_t = 1$ for all $t$, what is the return $G_t$ if $0 < \gamma < 1$?
+   A. $1 / (1 - \gamma)$
+   B. $1 / \gamma$
+   C. $\gamma / (1 - \gamma)$
+   D. $\infty$
+
+9. The Bellman equation for $v_\pi(s)$ expresses a relationship between:
+   A. The value of a state and the value of its successor states.
+   B. The value of a state and the optimal value $v^*(s)$.
+   C. The reward $R_{t+1}$ and the action $A_t$.
+   D. Two different policies $\pi$ and $\pi'$.
+
+10. Which equation correctly represents the Bellman equation for $v_\pi(s)$?
+    A. $v_\pi(s) = \sum_a \pi(a|s) \sum_{s', r} p(s', r | s, a) [r + \gamma v_\pi(s')]$
+    B. $v_\pi(s) = \max_a \sum_{s', r} p(s', r | s, a) [r + \gamma v_\pi(s')]$
+    C. $v_\pi(s) = \sum_a \pi(a|s) [R_{t+1} + \gamma v_\pi(S_{t+1})]$
+    D. $v_\pi(s) = \mathbb{E}[G_t | S_t = s, A_t = a]$
+
+11. The optimal action-value function $q^*(s, a)$ is defined as:
+    A. $\max_\pi q_\pi(s, a)$ for all $s \in \mathcal{S}, a \in \mathcal{A}(s)$.
+    B. $\sum_\pi q_\pi(s, a)$.
+    C. $q_\pi(s, a)$ where $\pi$ is the uniform random policy.
+    D. The average of all possible action-values.
+
+12. The Bellman optimality equation for $v^*(s)$ uses which operator to select actions?
+    A. Summation ($\sum$)
+    B. Expectation ($\mathbb{E}$)
+    C. Maximum ($\max$)
+    D. Minimum ($\min$)
+
+13. Policy Iteration consists of two alternating phases. What are they?
+    A. Policy Evaluation and Policy Improvement.
+    B. Value Iteration and Reward Maximization.
+    C. Exploration and Exploitation.
+    D. Action Selection and State Transition.
+
+14. During Policy Evaluation, the value function $V$ is updated until:
+    A. $V$ matches $v^*$ exactly.
+    B. The policy $\pi$ changes.
+    C. The maximum change across all states is less than a small threshold $\theta$.
+    D. 100 iterations are completed.
+
+15. Value Iteration can be seen as a special case of Policy Evaluation where:
+    A. Evaluation is stopped after just one sweep.
+    B. The policy is always random.
+    C. There is no discounting ($\gamma = 1$).
+    D. Rewards are always positive.
+
+16. Generalized Policy Iteration (GPI) refers to:
+    A. The general idea of letting evaluation and improvement processes interact.
+    B. A specific algorithm that combines SARSA and Q-Learning.
+    C. Using neural networks for policy approximation.
+    D. The process of converting a continuing task to an episodic one.
+
+17. In the Gambler's Problem, the state is the gambler's capital. What makes the optimal policy "sawtooth" in shape?
+    A. The discrete nature of the bets and the goal.
+    B. The use of a linear reward function.
+    C. The assumption that $p=0.5$.
+    D. The inclusion of a transaction fee for every bet.
+
+18. Asynchronous Dynamic Programming algorithms are characterized by:
+    A. Updating state values in any order, using whatever values are available.
+    B. Requiring a full sweep of the state set before any value is updated.
+    C. Running on multiple CPUs simultaneously.
+    D. Only being applicable to episodic tasks.
+
+19. Bootstrapping in RL refers to:
+    A. Updating a value estimate based on other value estimates.
+    B. Starting the agent with a random policy.
+    C. Using a replay buffer to store experiences.
+    D. Normalizing rewards to a [0, 1] range.
+
+20. The computational complexity of DP methods is:
+    A. Exponential in the number of states and actions.
+    B. Polynomial in the number of states and actions.
+    C. Independent of the number of states.
+    D. Logarithmic in the number of actions.
