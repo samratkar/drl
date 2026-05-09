@@ -55,3 +55,14 @@ $$Q_\pi(s, a) = \mathbb{E}_\pi [G_t \mid S_t = s, A_t = a]$$   
 7. Consider the sequence of rewards received 𝑅1= −1,𝑅2=2,𝑅3=6,𝑅4=3,𝑅5=2 ; 𝑇=5 Using the discount factor 𝛾=0.4, compute the values of 𝐺1, 𝐺3 where 𝐺𝑡 is expected discounted return at time step ‘t’
 8. What are the missing pieces in Sara's formulations? Is past considered at all? Is future given its due importance? Is there any role of other agents in the forest? What about the other animals in the forest? Do they have any role to play in Sara's survival and discovery of berries?
 
+---
+
+## Practice Exercises
+
+Test your understanding of the fundamentals with these exercises:
+
+- [Reflection Questions](./assets/questions/reflection-questions.md)
+
+---
+*Created for the DRL Curriculum.*
+

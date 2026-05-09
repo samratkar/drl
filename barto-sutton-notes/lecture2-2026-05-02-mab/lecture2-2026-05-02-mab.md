@@ -529,6 +529,16 @@ No single method dominates in all settings — the right choice depends on the p
 
 ---
 
-[exercise 2.1](./assets/exercises/chap2/2.2-bandit-example.xlsx)
+## Practice Exercises
+
+Test your understanding of Multi-Armed Bandits with these exercises:
+
+- [Numerical Questions](./assets/questions/numerical.md)
+- [Programming Questions](./assets/questions/programming.md)
+
+*Solutions can be found in the [assets/questions/solutions/](./assets/questions/solutions/) folder.*
+
+---
+*Created for the DRL Curriculum.*
 
 
