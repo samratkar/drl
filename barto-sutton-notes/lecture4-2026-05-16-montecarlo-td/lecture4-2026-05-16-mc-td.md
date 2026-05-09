@@ -160,4 +160,17 @@ Algorithms that use a $\max$ (like Q-learning) or a greedy policy (like Sarsa) a
 In many games (like Tic-Tac-Toe), many state-action pairs lead to the same result (the same board position). These are called **Afterstates**. Learning values for afterstates is more efficient because it generalizes across different actions that lead to the same configuration.
 
 ---
+
+## Practice Exercises
+
+Test your understanding of Monte Carlo and TD methods with these exercises:
+
+- [Multiple Choice Questions (MCQs)](./assets/questions/mcqs.md)
+- [Subjective Questions](./assets/questions/subjective.md)
+- [Numerical Questions](./assets/questions/numericals.md)
+- [Programming Questions](./assets/questions/programming.md)
+
+*Solutions can be found in the [assets/questions/solutions/](./assets/questions/solutions/) folder.*
+
+---
 *Reference: Sutton, R. S., & Barto, A. G. (2018). Reinforcement Learning: An Introduction. MIT Press.*

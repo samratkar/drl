@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Course Curriculum Index
+title: Deep Reinforcement Learning - A course on Barto Sutton's book
 ---
 
 <style>
