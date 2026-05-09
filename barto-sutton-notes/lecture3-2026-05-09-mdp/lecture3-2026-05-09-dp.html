@@ -1765,22 +1765,96 @@ class="sourceCode python"><code class="sourceCode python"><span id="cb13-1"><a h
 </tr>
 </tbody>
 </table>
-<h3 id="example-gamblers-problem">Example: Gambler’s Problem</h3>
+<h3 id="example-gamblers-problem-sutton-barto-example-4.3">Example:
+Gambler’s Problem (Sutton &amp; Barto, Example 4.3)</h3>
 <p>A gambler bets on coin flips. If heads (<span
 class="math inline">\(p_h = 0.4\)</span>), she wins her stake; if tails,
 she loses it. The goal is to reach $100 starting from some initial
 capital.</p>
+<h4 id="problem-formulation-1">Problem Formulation</h4>
 <ul>
 <li><strong>States</strong>: Capital <span class="math inline">\(s \in
-\{1, 2, \ldots, 99\}\)</span> (0 and 100 are terminal)</li>
+\{1, 2, \ldots, 99\}\)</span>. The states 0 and 100 are
+<strong>terminal</strong> (loss and win).</li>
 <li><strong>Actions</strong>: Stake <span class="math inline">\(a \in
-\{0, 1, \ldots, \min(s, 100-s)\}\)</span></li>
-<li><strong>Reward</strong>: +1 on reaching 100, 0 otherwise</li>
+\{1, 2, \ldots, \min(s, 100-s)\}\)</span>. You can’t bet more than you
+have, and you can’t bet more than needed to reach 100.</li>
+<li><strong>Reward</strong>: <span class="math inline">\(+1\)</span> if
+capital reaches 100, <span class="math inline">\(0\)</span> for all
+other transitions.</li>
+<li><strong>Dynamics</strong>:
+<ul>
+<li><span class="math inline">\(p(s+a, 0 \mid s, a) = p_h\)</span></li>
+<li><span class="math inline">\(p(s-a, 0 \mid s, a) = 1 -
+p_h\)</span></li>
+<li>(Exception: if <span class="math inline">\(s+a=100\)</span>, the
+reward is 1).</li>
+</ul></li>
 </ul>
-<p>Value iteration reveals an interesting optimal policy: the gambler
-should bet aggressively when the coin is biased against her,
-concentrating stakes to maximize the probability of a lucky streak to
-100.</p>
+<h4 id="value-iteration-in-action-the-gamblers-problem">Value Iteration
+in Action: The Gambler’s Problem</h4>
+<p><a href="assets/gambler/gambler_problem.py">View Python Script:
+gambler_problem.py</a><br />
+<a href="assets/gambler/gambler_interactive.py">View Interactive Script
+(VS Code): gambler_interactive.py</a><br />
+<a href="assets/gambler/gambler_case_study.ipynb">View Interactive
+Notebook: gambler_case_study.ipynb</a><br />
+<a href="assets/gambler/gambler_case_study.html">View Static HTML:
+gambler_case_study.html</a></p>
+<figure>
+<img src="assets/gambler/gambler_results.png"
+alt="Gambler’s Problem Results" />
+<figcaption aria-hidden="true">Gambler’s Problem Results</figcaption>
+</figure>
+<h4 id="insights-and-concepts">Insights and Concepts</h4>
+<p>The Gambler’s Problem is a definitive showcase for <strong>Value
+Iteration</strong> because it highlights how the algorithm handles
+<strong>non-linear decision boundaries</strong> and
+<strong>probabilistic risk</strong>.</p>
+<p><strong>1. The Value Function (Left Graph)</strong> -
+<strong>Curvature and Non-linearity</strong>: The value function (the
+probability of winning starting from capital <span
+class="math inline">\(s\)</span>) is not a straight line. If it were a
+fair coin (<span class="math inline">\(p_h=0.5\)</span>), the value
+function would be exactly <span class="math inline">\(V(s) =
+s/100\)</span>. - <strong>The “Sawtooth” Nature</strong>: For an unfair
+coin (<span class="math inline">\(p_h=0.4\)</span>), the curve is
+generally concave but contains small “kinks.” These represent capital
+milestones (like 25, 50, 75) where the win probability jumps
+significantly because a single lucky “bold” bet can reach the next safe
+harbor. - <strong>Value Iteration’s Role</strong>: The graph shows <span
+class="math inline">\(V(s)\)</span> after convergence. Each iteration of
+Value Iteration applied the <strong>Bellman Optimality Equation</strong>
+(<span class="math inline">\(V \leftarrow \max_a \sum p \dots\)</span>),
+effectively “scanning” all possible stakes and keeping only the one that
+maximized the win probability.</p>
+<p><strong>2. The Optimal Policy (Right Graph)</strong> - <strong>Bold
+Play Strategy</strong>: The most striking feature is the
+<strong>sawtooth pattern</strong> of the stakes. - <strong>Concept of
+Milestones</strong>: At capital <span
+class="math inline">\(s=25\)</span>, the optimal stake is 25. Why?
+Because the goal is 100, and <span class="math inline">\(25\)</span> is
+a divisor of <span class="math inline">\(100\)</span>. Winning that bet
+takes you to <span class="math inline">\(50\)</span> (halfway), from
+which another bold bet takes you to <span
+class="math inline">\(100\)</span>. - <strong>Minimizing
+Exposure</strong>: In a game with a negative expected value (<span
+class="math inline">\(p_h &lt; 0.5\)</span>), every bet you make is a
+“loss” in expectation. Therefore, the optimal policy is to
+<strong>minimize the number of bets</strong>. Making many small $1 bets
+gives the house edge more time to “grind” your capital to zero. One big
+bet gives you a single <span class="math inline">\(40\%\)</span> chance
+to double up.</p>
+<p><strong>3. How the Graphs Describe Value Iteration</strong> -
+<strong>Implicit Max</strong>: Unlike Policy Iteration, which would
+evaluate a “safe” policy and then improve it, Value Iteration directly
+updates the win probability by assuming the agent will <em>always</em>
+take the best stake. - <strong>Convergence to Optimality</strong>: The
+graphs represent the stable point where no further change in <span
+class="math inline">\(V(s)\)</span> can be found by changing the stake.
+The “spiky” policy is the mathematical proof that in certain RL
+environments, the optimal behavior is not “smooth” or “conservative,”
+but rather highly aggressive and state-dependent.</p>
 <h2 id="generalized-policy-iteration-gpi">Generalized Policy Iteration
 (GPI)</h2>
 <p>The term <strong>Generalized Policy Iteration</strong> refers to the
