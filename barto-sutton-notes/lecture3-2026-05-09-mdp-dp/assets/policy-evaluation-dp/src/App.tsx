@@ -34,6 +34,11 @@ const POLICIES = [
 ];
 
 const App: React.FC = () => {
+  // Hyperparameters
+  const [gamma, setGamma] = useState(0.9);
+  const [alpha, setAlpha] = useState(0.1);
+  const [epsilon, setEpsilon] = useState(0.2);
+
   // Evaluation State
   const [iteration, setIteration] = useState(0);
   const [evalValues, setEvalValues] = useState<number[][]>(POLICIES.map(() => new Array(GRID_SIZE * GRID_SIZE).fill(0)));
@@ -89,9 +94,7 @@ const App: React.FC = () => {
   const [qlLastPath, setQlLastPath] = useState<number[]>([]);
   const [qlTotalReward, setQlTotalReward] = useState(0);
 
-  // Shared hyperparameters for model-free methods
-  const ALPHA = 0.1;
-  const EPSILON = 0.2;
+  // Shared hyperparameters for model-free methods are now handled by state: gamma, alpha, epsilon
 
   const getNextState = (s: number, a: Action): number => {
     const row = Math.floor(s / GRID_SIZE);
@@ -112,7 +115,7 @@ const App: React.FC = () => {
     let reward = CONFIG.rewardStep;
     if (nextS === GRID_SIZE * GRID_SIZE - 1) reward = CONFIG.rewardGoal;
     else if (DANGER_STATES.has(nextS)) reward = REWARD_DANGER;
-    return reward + CONFIG.gamma * values[nextS];
+    return reward + gamma * values[nextS];
   };
 
   const runEvaluationStep = useCallback(() => {
@@ -139,7 +142,7 @@ const App: React.FC = () => {
       setIsEvalDone(true);
       setIsEvalPlaying(false);
     }
-  }, [evalValues, iteration]);
+  }, [evalValues, iteration, gamma]);
 
   useEffect(() => {
     let interval: number;
@@ -188,7 +191,6 @@ const App: React.FC = () => {
     setQValues(newQValues);
   };
 
-  // Value Iteration: V(s) = max_a [r + γ V(s')]
   const runViStep = useCallback(() => {
     let maxDelta = 0;
     const nextValues = [...viValues];
@@ -215,7 +217,7 @@ const App: React.FC = () => {
       setViDone(true);
       setViPlaying(false);
     }
-  }, [viValues, viIteration, viQValues]);
+  }, [viValues, viIteration, viQValues, gamma]);
 
   useEffect(() => {
     let interval: number;
@@ -243,7 +245,6 @@ const App: React.FC = () => {
     setViPolicy(policy);
   };
 
-  // Check if Q-table has converged (max delta below threshold)
   const qTableMaxDelta = (oldQ: Record<string, number>[], newQ: Record<string, number>[]): number => {
     let maxDelta = 0;
     for (let s = 0; s < GRID_SIZE * GRID_SIZE - 1; s++) {
@@ -254,7 +255,6 @@ const App: React.FC = () => {
     return maxDelta;
   };
 
-  // Epsilon-greedy action selection from a Q-table
   const epsilonGreedyAction = (qTable: Record<string, number>[], s: number, eps: number): Action => {
     if (Math.random() < eps) {
       return ACTIONS[Math.floor(Math.random() * ACTIONS.length)];
@@ -268,14 +268,12 @@ const App: React.FC = () => {
     return bestA;
   };
 
-  // Get reward for transitioning to nextS
   const getReward = (nextS: number): number => {
     if (nextS === GRID_SIZE * GRID_SIZE - 1) return CONFIG.rewardGoal;
     if (DANGER_STATES.has(nextS)) return REWARD_DANGER;
     return CONFIG.rewardStep;
   };
 
-  // Generate a full episode (for Monte Carlo)
   const generateEpisode = (qTable: Record<string, number>[], eps: number): { states: number[]; actions: Action[]; rewards: number[] } => {
     const states: number[] = [];
     const actions: Action[] = [];
@@ -298,9 +296,8 @@ const App: React.FC = () => {
     return { states, actions, rewards };
   };
 
-  // Monte Carlo: First-visit MC with epsilon-greedy
   const runMcEpisode = useCallback(() => {
-    const { states, actions, rewards } = generateEpisode(mcQTable, EPSILON);
+    const { states, actions, rewards } = generateEpisode(mcQTable, epsilon);
     const newQTable = mcQTable.map(q => ({ ...q }));
     const newReturns = mcReturns.map(r => ({ UP: [...r.UP], DOWN: [...r.DOWN], LEFT: [...r.LEFT], RIGHT: [...r.RIGHT] }));
 
@@ -308,7 +305,7 @@ const App: React.FC = () => {
     const visited = new Set<string>();
 
     for (let t = states.length - 2; t >= 0; t--) {
-      G = CONFIG.gamma * G + rewards[t];
+      G = gamma * G + rewards[t];
       const key = `${states[t]}-${actions[t]}`;
       if (!visited.has(key)) {
         visited.add(key);
@@ -329,7 +326,7 @@ const App: React.FC = () => {
       setMcDone(true);
       setMcPlaying(false);
     }
-  }, [mcQTable, mcReturns, mcEpisode]);
+  }, [mcQTable, mcReturns, mcEpisode, gamma, epsilon]);
 
   useEffect(() => {
     let interval: number;
@@ -339,11 +336,10 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, [mcPlaying, mcDone, runMcEpisode]);
 
-  // SARSA: On-policy TD control
   const runSarsaEpisode = useCallback(() => {
     const newQTable = sarsaQTable.map(q => ({ ...q }));
     let s = Math.floor(Math.random() * (GRID_SIZE * GRID_SIZE - 1));
-    let a = epsilonGreedyAction(newQTable, s, EPSILON);
+    let a = epsilonGreedyAction(newQTable, s, epsilon);
     const path: number[] = [s];
     let totalR = 0;
     let steps = 0;
@@ -352,10 +348,9 @@ const App: React.FC = () => {
       const nextS = getNextState(s, a);
       const r = getReward(nextS);
       totalR += r;
-      const nextA = epsilonGreedyAction(newQTable, nextS, EPSILON);
+      const nextA = epsilonGreedyAction(newQTable, nextS, epsilon);
 
-      // SARSA update: Q(s,a) += α[r + γQ(s',a') - Q(s,a)]
-      newQTable[s][a] += ALPHA * (r + CONFIG.gamma * newQTable[nextS][nextA] - newQTable[s][a]);
+      newQTable[s][a] += alpha * (r + gamma * newQTable[nextS][nextA] - newQTable[s][a]);
 
       s = nextS;
       a = nextA;
@@ -373,7 +368,7 @@ const App: React.FC = () => {
       setSarsaDone(true);
       setSarsaPlaying(false);
     }
-  }, [sarsaQTable, sarsaEpisode]);
+  }, [sarsaQTable, sarsaEpisode, alpha, epsilon, gamma]);
 
   useEffect(() => {
     let interval: number;
@@ -383,7 +378,6 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, [sarsaPlaying, sarsaDone, runSarsaEpisode]);
 
-  // Q-Learning: Off-policy TD control
   const runQlEpisode = useCallback(() => {
     const newQTable = qlQTable.map(q => ({ ...q }));
     let s = Math.floor(Math.random() * (GRID_SIZE * GRID_SIZE - 1));
@@ -392,14 +386,13 @@ const App: React.FC = () => {
     let steps = 0;
 
     while (s !== GRID_SIZE * GRID_SIZE - 1 && steps < 200) {
-      const a = epsilonGreedyAction(newQTable, s, EPSILON);
+      const a = epsilonGreedyAction(newQTable, s, epsilon);
       const nextS = getNextState(s, a);
       const r = getReward(nextS);
       totalR += r;
 
-      // Q-Learning update: Q(s,a) += α[r + γ max_a' Q(s',a') - Q(s,a)]
       const maxNextQ = Math.max(...ACTIONS.map(na => newQTable[nextS][na]));
-      newQTable[s][a] += ALPHA * (r + CONFIG.gamma * maxNextQ - newQTable[s][a]);
+      newQTable[s][a] += alpha * (r + gamma * maxNextQ - newQTable[s][a]);
 
       s = nextS;
       path.push(s);
@@ -416,7 +409,7 @@ const App: React.FC = () => {
       setQlDone(true);
       setQlPlaying(false);
     }
-  }, [qlQTable, qlEpisode]);
+  }, [qlQTable, qlEpisode, alpha, epsilon, gamma]);
 
   useEffect(() => {
     let interval: number;
@@ -462,6 +455,24 @@ const App: React.FC = () => {
     setQlTotalReward(0);
   };
 
+  const [activeSection, setActiveSection] = useState('env');
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = ['env', 'pi', 'vi', 'mc', 'td', 'compare'];
+      const scrollPos = window.scrollY + 100;
+      for (const section of sections) {
+        const el = document.getElementById(section);
+        if (el && el.offsetTop <= scrollPos && el.offsetTop + el.offsetHeight > scrollPos) {
+          setActiveSection(section);
+          break;
+        }
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const actionArrow = (a: Action) => {
     switch (a) {
       case 'UP': return '↑';
@@ -471,14 +482,94 @@ const App: React.FC = () => {
     }
   };
 
+  const NavItem = ({ id, label, active, color }: { id: string, label: string, active: boolean, color: string }) => (
+    <a 
+      href={`#${id}`} 
+      style={{
+        color: active ? '#fff' : '#888',
+        textDecoration: 'none',
+        padding: '8px 16px',
+        borderRadius: '20px',
+        background: active ? color : 'transparent',
+        fontSize: '0.8rem',
+        fontWeight: 'bold',
+        transition: 'all 0.3s ease',
+        border: `1px solid ${active ? color : '#333'}`
+      }}
+    >
+      {label}
+    </a>
+  );
+
+  const ConvergenceBadge = ({ done }: { done: boolean }) => (
+    <span style={{ 
+      display: 'inline-flex', 
+      alignItems: 'center', 
+      gap: '4px',
+      color: done ? '#4caf50' : '#ffa500', 
+      fontWeight: 'bold',
+      fontSize: '0.75rem',
+      padding: '2px 8px',
+      borderRadius: '12px',
+      background: done ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 165, 0, 0.1)',
+      border: `1px solid ${done ? '#4caf50' : '#ffa500'}`
+    }}>
+      {done ? '✓ CONVERGED' : '○ LEARNING'}
+    </span>
+  );
+
   return (
-    <div className="container">
-      <header style={{textAlign: 'center', marginBottom: '2rem'}}>
-        <h1>Dynamic Programming: Policy Iteration vs. Value Iteration</h1>
+    <div className="container" style={{ paddingTop: '80px' }}>
+      <nav style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        background: 'rgba(20, 20, 30, 0.95)',
+        backdropFilter: 'blur(10px)',
+        zIndex: 1000,
+        display: 'flex',
+        justifyContent: 'center',
+        padding: '12px',
+        gap: '10px',
+        borderBottom: '1px solid #333'
+      }}>
+        <NavItem id="env" label="1. Environment" active={activeSection === 'env'} color="#2196f3" />
+        <NavItem id="pi" label="2. Policy Iteration" active={activeSection === 'pi'} color="#ffa500" />
+        <NavItem id="vi" label="3. Value Iteration" active={activeSection === 'vi'} color="#9c27b0" />
+        <NavItem id="mc" label="4. Monte Carlo" active={activeSection === 'mc'} color="#00bcd4" />
+        <NavItem id="td" label="5. TD Learning" active={activeSection === 'td'} color="#ff5722" />
+        <NavItem id="compare" label="6. Comparison" active={activeSection === 'compare'} color="#fff" />
+      </nav>
+
+      <header style={{textAlign: 'center', marginBottom: '1rem'}}>
+        <h1 style={{ marginBottom: '0.5rem' }}>RL Methods Exploration Portal</h1>
+        <p style={{ color: '#aaa', maxWidth: '800px', margin: '0 auto' }}>
+          Interactive visualization of Reinforcement Learning algorithms. From exact Dynamic Programming to model-free Temporal Difference learning.
+        </p>
       </header>
 
-      <section className="phase-container" style={{border: '2px solid #2196f3', padding: '20px', borderRadius: '12px'}}>
-        <h2 style={{color: '#2196f3'}}>The MDP Environment</h2>
+      {/* GLOBAL HYPERPARAMETERS */}
+      <section className="phase-container" style={{ border: '1px solid #444', background: '#1a1a25', padding: '15px', borderRadius: '12px', marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '2rem', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#aaa' }}>Discount Factor (γ): {gamma.toFixed(2)}</label>
+          <input type="range" min="0" max="1" step="0.01" value={gamma} onChange={(e) => setGamma(parseFloat(e.target.value))} style={{ width: '150px' }} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#aaa' }}>Learning Rate (α): {alpha.toFixed(2)}</label>
+          <input type="range" min="0.01" max="1" step="0.01" value={alpha} onChange={(e) => setAlpha(parseFloat(e.target.value))} style={{ width: '150px' }} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#aaa' }}>Exploration (ε): {epsilon.toFixed(2)}</label>
+          <input type="range" min="0" max="0.5" step="0.01" value={epsilon} onChange={(e) => setEpsilon(parseFloat(e.target.value))} style={{ width: '150px' }} />
+        </div>
+        <button onClick={resetAll} style={{ padding: '8px 16px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
+          Reset All Progress
+        </button>
+      </section>
+
+      <section id="env" className="phase-container" style={{border: '2px solid #2196f3', padding: '20px', borderRadius: '12px'}}>
+        <h2 style={{color: '#2196f3', marginTop: 0}}>The MDP Environment</h2>
 
         <div style={{display: 'flex', gap: '2.5rem', alignItems: 'center', flexWrap: 'wrap'}}>
           <div className="grid-container grid-large" style={{borderColor: '#2196f3'}}>
@@ -531,7 +622,7 @@ const App: React.FC = () => {
               <strong>R:</strong> +{CONFIG.rewardGoal} goal, {REWARD_DANGER} danger, {CONFIG.rewardStep} step
             </div>
             <div style={{background: '#1a1a2e', padding: '6px 12px', borderRadius: '6px', border: '1px solid #2196f3', fontSize: '0.8rem'}}>
-              <strong>γ:</strong> {CONFIG.gamma}
+              <strong>γ:</strong> {gamma.toFixed(2)}
             </div>
             <div style={{background: '#1a1a2e', padding: '6px 12px', borderRadius: '6px', border: '1px solid #2196f3', fontSize: '0.8rem'}}>
               <strong>Dynamics:</strong> Deterministic
@@ -540,7 +631,7 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      <div style={{width: '100%', textAlign: 'center', padding: '10px', background: 'linear-gradient(90deg, #ffa500, #4caf50)', borderRadius: '8px'}}>
+      <div id="pi" style={{width: '100%', textAlign: 'center', padding: '10px', background: 'linear-gradient(90deg, #ffa500, #4caf50)', borderRadius: '8px', marginTop: '2rem'}}>
         <h2 style={{margin: 0, color: '#000'}}>METHOD 1: Policy Iteration</h2>
         <p style={{margin: '4px 0 0', color: '#222', fontSize: '0.85rem'}}>Evaluate fully, then improve. Repeat until optimal.</p>
       </div>
@@ -557,9 +648,8 @@ const App: React.FC = () => {
             {isEvalPlaying ? 'Pause Evaluation' : 'Start Evaluation'}
           </button>
           <button onClick={runEvaluationStep} disabled={isEvalDone || isEvalPlaying}>Single Step</button>
-          <button onClick={resetAll}>Reset All</button>
           <span style={{marginLeft: '10px'}}>Iteration: {iteration}</span>
-          {isEvalDone && <span style={{ color: '#4caf50', fontWeight: 'bold' }}> - CONVERGED!</span>}
+          <span style={{ marginLeft: '10px' }}><ConvergenceBadge done={isEvalDone} /></span>
         </div>
 
         <div className="dashboard">
@@ -682,7 +772,7 @@ const App: React.FC = () => {
                         <span className="cell-value" style={{opacity: 0.6}}>{v.toFixed(2)}</span>
                         {improvedPolicies && !isTerminal && (
                           <div style={{color: '#fff', fontWeight: 'bold', fontSize: '0.9rem', backgroundColor: '#2e7d32', padding: '2px 4px', borderRadius: '4px'}}>
-                            {improvedPolicies[pIdx][sIdx]}
+                            {actionArrow(improvedPolicies[pIdx][sIdx] as Action)}
                           </div>
                         )}
                       </div>
@@ -751,7 +841,7 @@ const App: React.FC = () => {
       )}
 
       {/* VALUE ITERATION */}
-      <div style={{width: '100%', textAlign: 'center', padding: '10px', background: 'linear-gradient(90deg, #9c27b0, #e91e63)', borderRadius: '8px', marginTop: '2rem'}}>
+      <div id="vi" style={{width: '100%', textAlign: 'center', padding: '10px', background: 'linear-gradient(90deg, #9c27b0, #e91e63)', borderRadius: '8px', marginTop: '2rem'}}>
         <h2 style={{margin: 0, color: '#fff'}}>METHOD 2: Value Iteration</h2>
         <p style={{margin: '4px 0 0', color: '#eee', fontSize: '0.85rem'}}>Combine evaluation + improvement in every sweep. No separate policy needed.</p>
       </div>
@@ -768,9 +858,8 @@ const App: React.FC = () => {
             {viPlaying ? 'Pause' : 'Start Value Iteration'}
           </button>
           <button onClick={runViStep} disabled={viDone || viPlaying}>Single Step</button>
-          <button onClick={resetAll}>Reset All</button>
           <span style={{marginLeft: '10px'}}>Iteration: {viIteration}</span>
-          {viDone && <span style={{ color: '#ce93d8', fontWeight: 'bold' }}> - CONVERGED!</span>}
+          <span style={{ marginLeft: '10px' }}><ConvergenceBadge done={viDone} /></span>
         </div>
 
         <div style={{display: 'flex', gap: '2rem', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'flex-start'}}>
@@ -896,7 +985,7 @@ const App: React.FC = () => {
 
       {/* COMPARISON */}
       {(isEvalDone || viDone) && (
-        <section className="phase-container" style={{border: '2px solid #ffeb3b', padding: '20px', borderRadius: '12px', background: '#1a1a0a'}}>
+        <section id="compare" className="phase-container" style={{border: '2px solid #ffeb3b', padding: '20px', borderRadius: '12px', background: '#1a1a0a'}}>
           <h2 style={{color: '#ffeb3b'}}>Comparison: Policy Iteration vs. Value Iteration</h2>
 
           <div style={{display: 'flex', gap: '2rem', justifyContent: 'center', flexWrap: 'wrap'}}>
@@ -936,7 +1025,7 @@ const App: React.FC = () => {
       )}
 
       {/* MONTE CARLO */}
-      <div style={{width: '100%', textAlign: 'center', padding: '10px', background: 'linear-gradient(90deg, #00bcd4, #009688)', borderRadius: '8px', marginTop: '2rem'}}>
+      <div id="mc" style={{width: '100%', textAlign: 'center', padding: '10px', background: 'linear-gradient(90deg, #00bcd4, #009688)', borderRadius: '8px', marginTop: '2rem'}}>
         <h2 style={{margin: 0, color: '#fff'}}>METHOD 3: Monte Carlo (Model-Free)</h2>
         <p style={{margin: '4px 0 0', color: '#eee', fontSize: '0.85rem'}}>Learn from complete episodes. No model needed — just experience.</p>
       </div>
@@ -953,10 +1042,9 @@ const App: React.FC = () => {
             {mcPlaying ? 'Pause' : 'Start MC'}
           </button>
           <button onClick={runMcEpisode} disabled={mcPlaying || mcDone}>Run Episode</button>
-          <button onClick={resetAll}>Reset All</button>
           <span style={{marginLeft: '10px'}}>Episodes: {mcEpisode}</span>
           <span style={{marginLeft: '10px', color: '#4dd0e1'}}>Last reward: {mcTotalReward.toFixed(1)}</span>
-          {mcDone && <span style={{ color: '#4caf50', fontWeight: 'bold' }}> - CONVERGED!</span>}
+          <span style={{ marginLeft: '10px' }}><ConvergenceBadge done={mcDone} /></span>
         </div>
 
         <div style={{display: 'flex', gap: '2rem', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'flex-start'}}>
@@ -1028,7 +1116,7 @@ const App: React.FC = () => {
         {mcEpisode > 0 && (
           <div className="policy-tables" style={{marginTop: '1.5rem'}}>
             <div>
-              <h4>Monte Carlo Q-Table<br/><span style={{fontSize: '0.8em', opacity: 0.7}}>Episode {mcEpisode} | ε={EPSILON} | γ={CONFIG.gamma}</span></h4>
+              <h4>Monte Carlo Q-Table<br/><span style={{fontSize: '0.8em', opacity: 0.7}}>Episode {mcEpisode} | ε={epsilon} | γ={gamma}</span></h4>
               <table>
                 <thead>
                   <tr>
@@ -1065,7 +1153,7 @@ const App: React.FC = () => {
       </section>
 
       {/* TD METHODS: SARSA & Q-LEARNING */}
-      <div style={{width: '100%', textAlign: 'center', padding: '10px', background: 'linear-gradient(90deg, #ff5722, #ff9800)', borderRadius: '8px', marginTop: '2rem'}}>
+      <div id="td" style={{width: '100%', textAlign: 'center', padding: '10px', background: 'linear-gradient(90deg, #ff5722, #ff9800)', borderRadius: '8px', marginTop: '2rem'}}>
         <h2 style={{margin: 0, color: '#fff'}}>METHOD 4: Temporal Difference (Model-Free)</h2>
         <p style={{margin: '4px 0 0', color: '#eee', fontSize: '0.85rem'}}>Learn from incomplete episodes. Bootstrap from current estimates — no need to wait for episode end.</p>
       </div>
@@ -1087,7 +1175,7 @@ const App: React.FC = () => {
               </button>
               <button onClick={runSarsaEpisode} disabled={sarsaPlaying || sarsaDone}>Run Episode</button>
               <span style={{fontSize: '0.8rem'}}>Ep: {sarsaEpisode} | R: {sarsaTotalReward.toFixed(1)}</span>
-              {sarsaDone && <span style={{ color: '#4caf50', fontWeight: 'bold', fontSize: '0.8rem' }}> CONVERGED!</span>}
+              <span style={{ marginLeft: '10px' }}><ConvergenceBadge done={sarsaDone} /></span>
             </div>
 
             <div style={{display: 'flex', justifyContent: 'center'}}>
@@ -1141,7 +1229,7 @@ const App: React.FC = () => {
               </button>
               <button onClick={runQlEpisode} disabled={qlPlaying || qlDone}>Run Episode</button>
               <span style={{fontSize: '0.8rem'}}>Ep: {qlEpisode} | R: {qlTotalReward.toFixed(1)}</span>
-              {qlDone && <span style={{ color: '#4caf50', fontWeight: 'bold', fontSize: '0.8rem' }}> CONVERGED!</span>}
+              <span style={{ marginLeft: '10px' }}><ConvergenceBadge done={qlDone} /></span>
             </div>
 
             <div style={{display: 'flex', justifyContent: 'center'}}>
@@ -1187,7 +1275,7 @@ const App: React.FC = () => {
           <div className="policy-tables" style={{marginTop: '1.5rem'}}>
             {sarsaEpisode > 0 && (
               <div>
-                <h4>SARSA Q-Table<br/><span style={{fontSize: '0.8em', opacity: 0.7}}>α={ALPHA} | ε={EPSILON} | γ={CONFIG.gamma}</span></h4>
+                <h4>SARSA Q-Table<br/><span style={{fontSize: '0.8em', opacity: 0.7}}>α={alpha} | ε={epsilon} | γ={gamma}</span></h4>
                 <table>
                   <thead>
                     <tr>
@@ -1222,7 +1310,7 @@ const App: React.FC = () => {
             )}
             {qlEpisode > 0 && (
               <div>
-                <h4>Q-Learning Q-Table<br/><span style={{fontSize: '0.8em', opacity: 0.7}}>α={ALPHA} | ε={EPSILON} | γ={CONFIG.gamma}</span></h4>
+                <h4>Q-Learning Q-Table<br/><span style={{fontSize: '0.8em', opacity: 0.7}}>α={alpha} | ε={epsilon} | γ={gamma}</span></h4>
                 <table>
                   <thead>
                     <tr>
