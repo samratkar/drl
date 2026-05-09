@@ -459,12 +459,12 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      const sections = ['env', 'pi', 'vi', 'mc', 'td', 'compare'];
+      const sections = ['env', 'pi', 'vi', 'dp-compare', 'mc', 'td', 'compare'];
       const scrollPos = window.scrollY + 100;
       for (const section of sections) {
         const el = document.getElementById(section);
         if (el && el.offsetTop <= scrollPos && el.offsetTop + el.offsetHeight > scrollPos) {
-          setActiveSection(section);
+          setActiveSection(section === 'dp-compare' ? 'compare' : section);
           break;
         }
       }
@@ -485,16 +485,25 @@ const App: React.FC = () => {
   const NavItem = ({ id, label, active, color }: { id: string, label: string, active: boolean, color: string }) => (
     <a 
       href={`#${id}`} 
+      onClick={(e) => {
+        e.preventDefault();
+        const el = document.getElementById(id);
+        if (el) {
+          window.scrollTo({ top: el.offsetTop - 80, behavior: 'smooth' });
+          setActiveSection(id);
+        }
+      }}
       style={{
-        color: active ? '#fff' : '#888',
+        color: active ? '#fff' : '#ccc',
         textDecoration: 'none',
         padding: '8px 16px',
         borderRadius: '20px',
-        background: active ? color : 'transparent',
+        background: active ? color : 'rgba(255, 255, 255, 0.05)',
         fontSize: '0.8rem',
         fontWeight: 'bold',
-        transition: 'all 0.3s ease',
-        border: `1px solid ${active ? color : '#333'}`
+        transition: 'all 0.2s ease',
+        border: `1px solid ${active ? color : '#444'}`,
+        boxShadow: active ? `0 0 10px ${color}44` : 'none'
       }}
     >
       {label}
@@ -525,21 +534,22 @@ const App: React.FC = () => {
         top: 0,
         left: 0,
         right: 0,
-        background: 'rgba(20, 20, 30, 0.95)',
+        background: 'rgba(15, 15, 25, 0.98)',
         backdropFilter: 'blur(10px)',
         zIndex: 1000,
         display: 'flex',
         justifyContent: 'center',
         padding: '12px',
-        gap: '10px',
-        borderBottom: '1px solid #333'
+        gap: '8px',
+        borderBottom: '1px solid #333',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
       }}>
         <NavItem id="env" label="1. Environment" active={activeSection === 'env'} color="#2196f3" />
         <NavItem id="pi" label="2. Policy Iteration" active={activeSection === 'pi'} color="#ffa500" />
         <NavItem id="vi" label="3. Value Iteration" active={activeSection === 'vi'} color="#9c27b0" />
         <NavItem id="mc" label="4. Monte Carlo" active={activeSection === 'mc'} color="#00bcd4" />
         <NavItem id="td" label="5. TD Learning" active={activeSection === 'td'} color="#ff5722" />
-        <NavItem id="compare" label="6. Comparison" active={activeSection === 'compare'} color="#fff" />
+        <NavItem id="compare" label="6. Comparison" active={activeSection === 'compare'} color="#607d8b" />
       </nav>
 
       <header style={{textAlign: 'center', marginBottom: '1rem'}}>
@@ -631,12 +641,7 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      <div id="pi" style={{width: '100%', textAlign: 'center', padding: '10px', background: 'linear-gradient(90deg, #ffa500, #4caf50)', borderRadius: '8px', marginTop: '2rem'}}>
-        <h2 style={{margin: 0, color: '#000'}}>METHOD 1: Policy Iteration</h2>
-        <p style={{margin: '4px 0 0', color: '#222', fontSize: '0.85rem'}}>Evaluate fully, then improve. Repeat until optimal.</p>
-      </div>
-
-      <section className="phase-container" style={{border: '2px solid #333', padding: '20px', borderRadius: '12px'}}>
+      <section id="pi" className="phase-container" style={{border: '2px solid #333', padding: '20px', borderRadius: '12px'}}>
         <h2 style={{color: '#ffa500'}}>STEP 1: Policy Evaluation</h2>
         <div className="equation">
           V<sub>π</sub>(s) = Σ<sub>a</sub> π(a|s) [r + γ V<sub>π</sub>(s')]
@@ -840,13 +845,7 @@ const App: React.FC = () => {
         </section>
       )}
 
-      {/* VALUE ITERATION */}
-      <div id="vi" style={{width: '100%', textAlign: 'center', padding: '10px', background: 'linear-gradient(90deg, #9c27b0, #e91e63)', borderRadius: '8px', marginTop: '2rem'}}>
-        <h2 style={{margin: 0, color: '#fff'}}>METHOD 2: Value Iteration</h2>
-        <p style={{margin: '4px 0 0', color: '#eee', fontSize: '0.85rem'}}>Combine evaluation + improvement in every sweep. No separate policy needed.</p>
-      </div>
-
-      <section className="phase-container" style={{border: '2px solid #9c27b0', padding: '20px', borderRadius: '12px'}}>
+      <section id="vi" className="phase-container" style={{border: '2px solid #9c27b0', padding: '20px', borderRadius: '12px'}}>
         <h2 style={{color: '#ce93d8'}}>Value Iteration</h2>
         <div className="equation" style={{border: '1px solid #9c27b0'}}>
           V(s) = max<sub>a</sub> [r + γ V(s')]
@@ -985,7 +984,7 @@ const App: React.FC = () => {
 
       {/* COMPARISON */}
       {(isEvalDone || viDone) && (
-        <section id="compare" className="phase-container" style={{border: '2px solid #ffeb3b', padding: '20px', borderRadius: '12px', background: '#1a1a0a'}}>
+        <section id="dp-compare" className="phase-container" style={{border: '2px solid #ffeb3b', padding: '20px', borderRadius: '12px', background: '#1a1a0a'}}>
           <h2 style={{color: '#ffeb3b'}}>Comparison: Policy Iteration vs. Value Iteration</h2>
 
           <div style={{display: 'flex', gap: '2rem', justifyContent: 'center', flexWrap: 'wrap'}}>
@@ -1024,13 +1023,7 @@ const App: React.FC = () => {
         </section>
       )}
 
-      {/* MONTE CARLO */}
-      <div id="mc" style={{width: '100%', textAlign: 'center', padding: '10px', background: 'linear-gradient(90deg, #00bcd4, #009688)', borderRadius: '8px', marginTop: '2rem'}}>
-        <h2 style={{margin: 0, color: '#fff'}}>METHOD 3: Monte Carlo (Model-Free)</h2>
-        <p style={{margin: '4px 0 0', color: '#eee', fontSize: '0.85rem'}}>Learn from complete episodes. No model needed — just experience.</p>
-      </div>
-
-      <section className="phase-container" style={{border: '2px solid #00bcd4', padding: '20px', borderRadius: '12px'}}>
+      <section id="mc" className="phase-container" style={{border: '2px solid #00bcd4', padding: '20px', borderRadius: '12px'}}>
         <h2 style={{color: '#4dd0e1'}}>Monte Carlo — First-Visit</h2>
         <div className="equation" style={{border: '1px solid #00bcd4'}}>
           Q(s,a) = average(Returns(s,a))
@@ -1152,13 +1145,7 @@ const App: React.FC = () => {
         )}
       </section>
 
-      {/* TD METHODS: SARSA & Q-LEARNING */}
-      <div id="td" style={{width: '100%', textAlign: 'center', padding: '10px', background: 'linear-gradient(90deg, #ff5722, #ff9800)', borderRadius: '8px', marginTop: '2rem'}}>
-        <h2 style={{margin: 0, color: '#fff'}}>METHOD 4: Temporal Difference (Model-Free)</h2>
-        <p style={{margin: '4px 0 0', color: '#eee', fontSize: '0.85rem'}}>Learn from incomplete episodes. Bootstrap from current estimates — no need to wait for episode end.</p>
-      </div>
-
-      <section className="phase-container" style={{border: '2px solid #ff5722', padding: '20px', borderRadius: '12px'}}>
+      <section id="td" className="phase-container" style={{border: '2px solid #ff5722', padding: '20px', borderRadius: '12px'}}>
         <div style={{display: 'flex', gap: '2rem', flexWrap: 'wrap', justifyContent: 'center'}}>
 
           {/* SARSA */}
@@ -1352,115 +1339,123 @@ const App: React.FC = () => {
       </section>
 
       {/* ALL METHODS COMPARISON */}
-      {(mcEpisode > 20 || sarsaEpisode > 20 || qlEpisode > 20) && (
-        <section className="phase-container" style={{border: '2px solid #fff', padding: '20px', borderRadius: '12px', background: '#0a0a0a'}}>
-          <h2 style={{color: '#fff'}}>All Methods — Final Policies Compared</h2>
-          <p style={{fontSize: '0.85rem', color: '#aaa'}}>After sufficient learning, all methods should converge to similar optimal policies for this deterministic environment.</p>
+      <section id="compare" className="phase-container" style={{border: '2px solid #fff', padding: '20px', borderRadius: '12px', background: '#0a0a0a', marginTop: '2rem'}}>
+        <h2 style={{color: '#fff'}}>All Methods — Final Policies Compared</h2>
+        
+        {(mcEpisode > 20 || sarsaEpisode > 20 || qlEpisode > 20) ? (
+          <>
+            <p style={{fontSize: '0.85rem', color: '#aaa'}}>After sufficient learning, all methods should converge to similar optimal policies for this deterministic environment.</p>
 
-          <div className="dashboard">
-            <div className="policy-view">
-              <h3 style={{color: '#ce93d8'}}>Value Iteration<br/><span style={{fontSize: '0.7em', opacity: 0.7}}>(DP, model-based)</span></h3>
-              <div className="grid-container" style={{borderColor: '#9c27b0'}}>
-                {viValues.map((_, sIdx) => {
-                  const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
-                  const isDanger = DANGER_STATES.has(sIdx);
-                  const bestA = viPolicy ? viPolicy[sIdx] : null;
-                  return (
-                    <div key={sIdx} className={`cell ${isTerminal ? 'terminal' : ''} ${isDanger ? 'danger' : ''}`}>
-                      <span className="cell-id">{isDanger ? '💀' : sIdx}</span>
-                      {isTerminal ? <span>🏁</span> : bestA && bestA !== 'NONE' ? (
-                        <span style={{fontWeight: 'bold', fontSize: '1rem'}}>{actionArrow(bestA as Action)}</span>
-                      ) : <span style={{opacity: 0.5}}>?</span>}
-                    </div>
-                  );
-                })}
+            <div className="dashboard">
+              <div className="policy-view">
+                <h3 style={{color: '#ce93d8'}}>Value Iteration<br/><span style={{fontSize: '0.7em', opacity: 0.7}}>(DP, model-based)</span></h3>
+                <div className="grid-container" style={{borderColor: '#9c27b0'}}>
+                  {viValues.map((_, sIdx) => {
+                    const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
+                    const isDanger = DANGER_STATES.has(sIdx);
+                    const bestA = viPolicy ? viPolicy[sIdx] : null;
+                    return (
+                      <div key={sIdx} className={`cell ${isTerminal ? 'terminal' : ''} ${isDanger ? 'danger' : ''}`}>
+                        <span className="cell-id">{isDanger ? '💀' : sIdx}</span>
+                        {isTerminal ? <span>🏁</span> : bestA && bestA !== 'NONE' ? (
+                          <span style={{fontWeight: 'bold', fontSize: '1rem'}}>{actionArrow(bestA as Action)}</span>
+                        ) : <span style={{opacity: 0.5}}>?</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="policy-view">
+                <h3 style={{color: '#4dd0e1'}}>Monte Carlo<br/><span style={{fontSize: '0.7em', opacity: 0.7}}>(model-free, ep {mcEpisode})</span></h3>
+                <div className="grid-container" style={{borderColor: '#00bcd4'}}>
+                  {mcQTable.map((stateQ, sIdx) => {
+                    const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
+                    const isDanger = DANGER_STATES.has(sIdx);
+                    const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
+                    const bestA = ACTIONS.find(a => stateQ[a] === maxQ) || 'UP';
+                    return (
+                      <div key={sIdx} className={`cell ${isTerminal ? 'terminal' : ''} ${isDanger ? 'danger' : ''}`}>
+                        <span className="cell-id">{isDanger ? '💀' : sIdx}</span>
+                        {isTerminal ? <span>🏁</span> : mcEpisode > 0 ? (
+                          <span style={{fontWeight: 'bold', fontSize: '1rem'}}>{actionArrow(bestA)}</span>
+                        ) : <span style={{opacity: 0.5}}>?</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="policy-view">
+                <h3 style={{color: '#ff8a65'}}>SARSA<br/><span style={{fontSize: '0.7em', opacity: 0.7}}>(on-policy TD, ep {sarsaEpisode})</span></h3>
+                <div className="grid-container" style={{borderColor: '#ff5722'}}>
+                  {sarsaQTable.map((stateQ, sIdx) => {
+                    const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
+                    const isDanger = DANGER_STATES.has(sIdx);
+                    const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
+                    const bestA = ACTIONS.find(a => stateQ[a] === maxQ) || 'UP';
+                    return (
+                      <div key={sIdx} className={`cell ${isTerminal ? 'terminal' : ''} ${isDanger ? 'danger' : ''}`}>
+                        <span className="cell-id">{isDanger ? '💀' : sIdx}</span>
+                        {isTerminal ? <span>🏁</span> : sarsaEpisode > 0 ? (
+                          <span style={{fontWeight: 'bold', fontSize: '1rem'}}>{actionArrow(bestA)}</span>
+                        ) : <span style={{opacity: 0.5}}>?</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="policy-view">
+                <h3 style={{color: '#ffb74d'}}>Q-Learning<br/><span style={{fontSize: '0.7em', opacity: 0.7}}>(off-policy TD, ep {qlEpisode})</span></h3>
+                <div className="grid-container" style={{borderColor: '#ff9800'}}>
+                  {qlQTable.map((stateQ, sIdx) => {
+                    const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
+                    const isDanger = DANGER_STATES.has(sIdx);
+                    const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
+                    const bestA = ACTIONS.find(a => stateQ[a] === maxQ) || 'UP';
+                    return (
+                      <div key={sIdx} className={`cell ${isTerminal ? 'terminal' : ''} ${isDanger ? 'danger' : ''}`}>
+                        <span className="cell-id">{isDanger ? '💀' : sIdx}</span>
+                        {isTerminal ? <span>🏁</span> : qlEpisode > 0 ? (
+                          <span style={{fontWeight: 'bold', fontSize: '1rem'}}>{actionArrow(bestA)}</span>
+                        ) : <span style={{opacity: 0.5}}>?</span>}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
-            <div className="policy-view">
-              <h3 style={{color: '#4dd0e1'}}>Monte Carlo<br/><span style={{fontSize: '0.7em', opacity: 0.7}}>(model-free, ep {mcEpisode})</span></h3>
-              <div className="grid-container" style={{borderColor: '#00bcd4'}}>
-                {mcQTable.map((stateQ, sIdx) => {
-                  const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
-                  const isDanger = DANGER_STATES.has(sIdx);
-                  const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
-                  const bestA = ACTIONS.find(a => stateQ[a] === maxQ) || 'UP';
-                  return (
-                    <div key={sIdx} className={`cell ${isTerminal ? 'terminal' : ''} ${isDanger ? 'danger' : ''}`}>
-                      <span className="cell-id">{isDanger ? '💀' : sIdx}</span>
-                      {isTerminal ? <span>🏁</span> : mcEpisode > 0 ? (
-                        <span style={{fontWeight: 'bold', fontSize: '1rem'}}>{actionArrow(bestA)}</span>
-                      ) : <span style={{opacity: 0.5}}>?</span>}
-                    </div>
-                  );
-                })}
-              </div>
+            <div style={{marginTop: '1.5rem'}}>
+              <table style={{margin: '0 auto', fontSize: '0.8rem'}}>
+                <thead>
+                  <tr>
+                    <th>Property</th>
+                    <th style={{color: '#ce93d8'}}>DP (Value Iter)</th>
+                    <th style={{color: '#4dd0e1'}}>Monte Carlo</th>
+                    <th style={{color: '#ff8a65'}}>SARSA</th>
+                    <th style={{color: '#ffb74d'}}>Q-Learning</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>Needs model?</td><td>Yes</td><td>No</td><td>No</td><td>No</td></tr>
+                  <tr><td>Update timing</td><td>Every sweep</td><td>End of episode</td><td>Every step</td><td>Every step</td></tr>
+                  <tr><td>Bootstrap?</td><td>Yes</td><td>No</td><td>Yes</td><td>Yes</td></tr>
+                  <tr><td>On/Off policy</td><td>N/A</td><td>On-policy</td><td>On-policy</td><td>Off-policy</td></tr>
+                  <tr><td>Update target</td><td>max Q</td><td>G (full return)</td><td>Q(s',a')</td><td>max Q(s',a')</td></tr>
+                  <tr><td>Convergence</td><td>Fast (exact)</td><td>Slow (variance)</td><td>Medium</td><td>Medium</td></tr>
+                </tbody>
+              </table>
             </div>
-
-            <div className="policy-view">
-              <h3 style={{color: '#ff8a65'}}>SARSA<br/><span style={{fontSize: '0.7em', opacity: 0.7}}>(on-policy TD, ep {sarsaEpisode})</span></h3>
-              <div className="grid-container" style={{borderColor: '#ff5722'}}>
-                {sarsaQTable.map((stateQ, sIdx) => {
-                  const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
-                  const isDanger = DANGER_STATES.has(sIdx);
-                  const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
-                  const bestA = ACTIONS.find(a => stateQ[a] === maxQ) || 'UP';
-                  return (
-                    <div key={sIdx} className={`cell ${isTerminal ? 'terminal' : ''} ${isDanger ? 'danger' : ''}`}>
-                      <span className="cell-id">{isDanger ? '💀' : sIdx}</span>
-                      {isTerminal ? <span>🏁</span> : sarsaEpisode > 0 ? (
-                        <span style={{fontWeight: 'bold', fontSize: '1rem'}}>{actionArrow(bestA)}</span>
-                      ) : <span style={{opacity: 0.5}}>?</span>}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="policy-view">
-              <h3 style={{color: '#ffb74d'}}>Q-Learning<br/><span style={{fontSize: '0.7em', opacity: 0.7}}>(off-policy TD, ep {qlEpisode})</span></h3>
-              <div className="grid-container" style={{borderColor: '#ff9800'}}>
-                {qlQTable.map((stateQ, sIdx) => {
-                  const isTerminal = sIdx === GRID_SIZE * GRID_SIZE - 1;
-                  const isDanger = DANGER_STATES.has(sIdx);
-                  const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
-                  const bestA = ACTIONS.find(a => stateQ[a] === maxQ) || 'UP';
-                  return (
-                    <div key={sIdx} className={`cell ${isTerminal ? 'terminal' : ''} ${isDanger ? 'danger' : ''}`}>
-                      <span className="cell-id">{isDanger ? '💀' : sIdx}</span>
-                      {isTerminal ? <span>🏁</span> : qlEpisode > 0 ? (
-                        <span style={{fontWeight: 'bold', fontSize: '1rem'}}>{actionArrow(bestA)}</span>
-                      ) : <span style={{opacity: 0.5}}>?</span>}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+          </>
+        ) : (
+          <div style={{textAlign: 'center', padding: '40px', color: '#666', border: '1px dashed #333', borderRadius: '8px'}}>
+            <p>Comparative analytics will appear here once algorithms have run at least 20 episodes.</p>
+            <p style={{fontSize: '0.8rem'}}>Current progress: MC({mcEpisode}), SARSA({sarsaEpisode}), QL({qlEpisode})</p>
           </div>
-
-          <div style={{marginTop: '1.5rem'}}>
-            <table style={{margin: '0 auto', fontSize: '0.8rem'}}>
-              <thead>
-                <tr>
-                  <th>Property</th>
-                  <th style={{color: '#ce93d8'}}>DP (Value Iter)</th>
-                  <th style={{color: '#4dd0e1'}}>Monte Carlo</th>
-                  <th style={{color: '#ff8a65'}}>SARSA</th>
-                  <th style={{color: '#ffb74d'}}>Q-Learning</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td>Needs model?</td><td>Yes</td><td>No</td><td>No</td><td>No</td></tr>
-                <tr><td>Update timing</td><td>Every sweep</td><td>End of episode</td><td>Every step</td><td>Every step</td></tr>
-                <tr><td>Bootstrap?</td><td>Yes</td><td>No</td><td>Yes</td><td>Yes</td></tr>
-                <tr><td>On/Off policy</td><td>N/A</td><td>On-policy</td><td>On-policy</td><td>Off-policy</td></tr>
-                <tr><td>Update target</td><td>max Q</td><td>G (full return)</td><td>Q(s',a')</td><td>max Q(s',a')</td></tr>
-                <tr><td>Convergence</td><td>Fast (exact)</td><td>Slow (variance)</td><td>Medium</td><td>Medium</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+        )}
+      </section>
     </div>
   );
 };
