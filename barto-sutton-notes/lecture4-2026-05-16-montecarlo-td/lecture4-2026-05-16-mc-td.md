@@ -11,6 +11,7 @@ layout: post
 ## Table of Contents
 - [Lecture 4: Monte Carlo Methods \& Temporal-Difference Learning](#lecture-4-monte-carlo-methods--temporal-difference-learning)
   - [Table of Contents](#table-of-contents)
+- [Lecture Map](#lecture-map)
 - [Chapter 5: Monte Carlo Methods](#chapter-5-monte-carlo-methods)
   - [5.0 Deep Dive: Monte Carlo vs. Dynamic Programming](#50-deep-dive-monte-carlo-vs-dynamic-programming)
     - [1. The Model Requirement (Model-Free vs. Model-Based)](#1-the-model-requirement-model-free-vs-model-based)
@@ -18,13 +19,19 @@ layout: post
     - [2. Bootstrapping vs. Sampling](#2-bootstrapping-vs-sampling)
     - [3. The "Lookahead" Logic](#3-the-lookahead-logic)
     - [4. The Exploration Challenge](#4-the-exploration-challenge)
+    - [5. Does MC use the Bellman Equation?](#5-does-mc-use-the-bellman-equation)
     - [Comparison Summary](#comparison-summary)
     - [5.1 Monte Carlo Prediction](#51-monte-carlo-prediction)
+      - [First-visit vs. Every-visit MC](#first-visit-vs-every-visit-mc)
+      - [The Process flow of MC](#the-process-flow-of-mc)
+      - [Two variants of policy evaluation and improvement](#two-variants-of-policy-evaluation-and-improvement)
+      - [Two variants of Q(s,a) updates within an episode](#two-variants-of-qsa-updates-within-an-episode)
       - [Example 5.1: Blackjack](#example-51-blackjack)
     - [5.2 Monte Carlo Estimation of Action Values](#52-monte-carlo-estimation-of-action-values)
     - [5.3 Monte Carlo Control](#53-monte-carlo-control)
       - [Monte Carlo with Exploring Starts (MC ES)](#monte-carlo-with-exploring-starts-mc-es)
     - [5.4 Monte Carlo Control without Exploring Starts](#54-monte-carlo-control-without-exploring-starts)
+      - [Comparing Exploration Strategies](#comparing-exploration-strategies)
     - [5.5 Off-policy Prediction via Importance Sampling](#55-off-policy-prediction-via-importance-sampling)
       - [Example 5.5: Infinite Variance](#example-55-infinite-variance)
     - [5.6 Incremental Implementation](#56-incremental-implementation)
@@ -45,7 +52,11 @@ layout: post
 
 ---
 
+# Lecture Map 
+![](./assets/images/lecture4map.png)
+
 # Chapter 5: Monte Carlo Methods
+
 
 Monte Carlo (MC) methods learn from **experience**—sample sequences of states, actions, and rewards from actual or simulated interaction with an environment. Unlike Dynamic Programming, they require no model ($P$ and $R$).
 
@@ -128,19 +139,50 @@ A common question is: *\"If MC doesn't bootstrap, does the Bellman Equation stil
 ### 5.1 Monte Carlo Prediction
 MC prediction learns the state-value function $v_\pi$ for a given policy $\pi$ by averaging the returns observed after visiting a state.
 
-- **First-visit MC:** Averages returns following the first visit to state $s$ in an episode.
-- **Every-visit MC:** Averages returns following every visit to state $s$ in an episode.
+#### First-visit vs. Every-visit MC
+While both methods use the same basic averaging formula, the **set of returns** they consider is different. We estimate the action-value function $Q(s, a)$ using the count of visits $N(s, a)$:
+
+$$Q(s, a) = \frac{1}{N(s, a)} \sum_{i=1}^{N(s, a)} G_i(s, a)$$
+
+*   **First-visit MC:** $N(s, a)$ increments only the **first time** $(s, a)$ is visited in an episode.
+*   **Every-visit MC:** $N(s, a)$ increments **every single time** $(s, a)$ is visited in an episode.
+
+| Feature | First-visit MC | Every-visit MC |
+| :--- | :--- | :--- |
+| **Statistical Bias** | Unbiased (Purest estimate). | Initially Biased (but converges to unbiased). |
+| **Variance** | Higher (Fewer samples). | Lower (More samples per episode). |
+| **Simplicity** | Requires a "visited" check. | No check needed; simpler to implement. |
+
+#### The Process flow of MC 
+
+![](./assets/images/montecarlo-onpolicy.png)
+
+
+![](./assets/images/mc-process-flow.png)
+
+#### Two variants of policy evaluation and improvement
+1. **Exploration Start (ES)**: Start each episode in a random state-action pair to ensure all pairs are visited.
+2. **Stochastic Policy**: Use an $\epsilon$-greedy policy to ensure continual exploration during learning. But use always first state to begin the episodes. 
+
+#### Two variants of Q(s,a) updates within an episode  
+1. **First-visit MC:** Averages returns following the first visit to state $s$ in an episode.
+2. **Every-visit MC:** Averages returns following every visit to state $s$ in an episode.
+
+![](./assets/images/mc-process-flow-2.png)
+
+
 
 ```python
 import numpy as np
 from collections import defaultdict
 
-def first_visit_mc_prediction(pi, env, num_episodes, gamma=1.0):
+def first_visit_mc_q_prediction(pi, env, num_episodes, gamma=1.0):
     """
-    First-visit MC prediction, for estimating V ≈ v_π
+    First-visit MC prediction, for estimating Q ≈ q_π
     """
-    V = defaultdict(float)
-    returns = defaultdict(list) # Stores returns for each state
+    Q = defaultdict(lambda: np.zeros(env.action_space.n))
+    N = defaultdict(lambda: np.zeros(env.action_space.n)) # Visit counts
+    returns_sum = defaultdict(lambda: np.zeros(env.action_space.n))
     
     for _ in range(num_episodes):
         # 1. Generate an episode following policy pi
@@ -153,30 +195,53 @@ def first_visit_mc_prediction(pi, env, num_episodes, gamma=1.0):
             episode.append((state, action, reward))
             state, done = next_state, term or trunc
             
-        # 2. Process episode backwards to calculate returns
+        # 2. Process episode backwards
         G = 0
-        states_in_episode = [x[0] for x in episode]
+        sa_in_episode = [(x[0], x[1]) for x in episode]
         for t in range(len(episode) - 1, -1, -1):
-            s_t, _, r_tp1 = episode[t]
+            s_t, a_t, r_tp1 = episode[t]
             G = gamma * G + r_tp1
             
-            # Check if this is the first visit to state s_t in this episode
-            if s_t not in states_in_episode[:t]:
-                returns[s_t].append(G)
-                V[s_t] = np.mean(returns[s_t])
-    return V
+            # Check if this is the first visit to (s_t, a_t) in this episode
+            if (s_t, a_t) not in sa_in_episode[:t]:
+                returns_sum[s_t][a_t] += G
+                N[s_t][a_t] += 1
+                Q[s_t][a_t] = returns_sum[s_t][a_t] / N[s_t][a_t]
+    return Q
+
+def every_visit_mc_q_prediction(pi, env, num_episodes, gamma=1.0):
+    """
+    Every-visit MC prediction, for estimating Q ≈ q_π
+    """
+    Q = defaultdict(lambda: np.zeros(env.action_space.n))
+    N = defaultdict(lambda: np.zeros(env.action_space.n))
+    returns_sum = defaultdict(lambda: np.zeros(env.action_space.n))
+    
+    for _ in range(num_episodes):
+        # 1. Generate episode (same logic as above)
+        # 2. Process episode backwards
+        G = 0
+        for t in range(len(episode) - 1, -1, -1):
+            s_t, a_t, r_tp1 = episode[t]
+            G = gamma * G + r_tp1
+            
+            # NO CHECK: Update every time (s_t, a_t) appears
+            returns_sum[s_t][a_t] += G
+            N[s_t][a_t] += 1
+            Q[s_t][a_t] = returns_sum[s_t][a_t] / N[s_t][a_t]
+    return Q
 ```
 
 #### Example 5.1: Blackjack
-In Blackjack, the state is defined by the player's sum (12–21), the dealer's showing card (ace–10), and whether the player has a "usable ace." We evaluate a policy that sticks only on 20 or 21.
+In Blackjack, the state is defined by the player's sum (12–21), the dealer's showing card (ace–10), and whether the player has a \"usable ace.\" We evaluate a policy that sticks only on 20 or 21.
 
 ```python
 # From assets/blackjack_mc.py
-# First-visit MC Prediction update
+# Q-value update for state s and action a
 idx = (p_sum - 12, d_card - 1, int(u_ace))
-returns_sum[idx] += reward
-returns_count[idx] += 1
-V[idx] = returns_sum[idx] / returns_count[idx]
+returns_sum[idx][action] += G
+N[idx][action] += 1
+Q[idx][action] = returns_sum[idx][action] / N[idx][action]
 ```
 
 ### 5.2 Monte Carlo Estimation of Action Values
@@ -209,9 +274,21 @@ To guarantee exploration, we assume that every state-action pair has a non-zero 
 ```
 
 ### 5.4 Monte Carlo Control without Exploring Starts
-To avoid the impractical assumption of exploring starts, we use **$\epsilon$-soft policies**.
+In real-world applications, we cannot always teleport the agent to a random state. To ensure exploration without "Exploring Starts," we must use a **Stochastic Policy**.
+
+#### Comparing Exploration Strategies
+
+| Strategy | **Exploring Starts (ES)** | **$\epsilon$-Greedy (On-Policy)** |
+| :--- | :--- | :--- |
+| **Assumption** | Can start the agent in ANY state/action. | Agent must start from a FIXED state. |
+| **Policy Type** | Deterministic (always picks `argmax`). | Stochastic (usually `argmax`, rarely random). |
+| **Logic** | \"Force\" exploration via the starting point. | \"Force\" exploration via the action selection. |
+| **Practicality** | Low (hard to reset real systems). | High (how real robots/agents learn). |
+
 - **$\epsilon$-greedy policy:** Most of the time, pick the action with the highest $q$-value. With probability $\epsilon$, pick an action at random.
-- This ensures that all actions are tried infinitely often.
+- This ensures that all actions are tried infinitely often even if the agent always starts at the same position.
+
+---
 
 ### 5.5 Off-policy Prediction via Importance Sampling
 How can we learn about a **target policy** $\pi$ while following a different **behavior policy** $b$? This is **off-policy learning**.

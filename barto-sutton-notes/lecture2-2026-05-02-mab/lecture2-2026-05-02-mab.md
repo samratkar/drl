@@ -7,26 +7,38 @@ textbook : [chapter2]
 layout: post
 ---
 ## Table of Contents
-1. [Today's Conversations](#todays-conversations---5226)
-2. [MAB - Multi-Armed Bandit Problem](#mab---multi-arm-bandit---k-armed-bandit-problem)
-3. [Today's Anthem](#todays-anthem)
-4. [Evaluative Approach](#evaluative-approach)
-5. [K-armed Bandit Problem](#k-armed-bandit-problem-or-multi-armed-bandit-problem)
-6. [$q_*(a,s)$ vs $Q(a,s)$](#q_as-vs-qas)
-7. [Greedy actions / exploitation / exploration](#greedy-actions--exploitation--exploration)
-8. [Action Value Methods](#action-value-methods)
-9. [Greedy action](#greedy-action)
-10. [$\epsilon$-greedy method](#epsilon-greedy-method---exploration-vs-exploitation)
-11. [10-Armed Testbed](#10-armed-testbed-section-23)
-12. [Upper-Confidence-Bound (UCB) Action Selection](#figure-24-upper-confidence-bound-ucb-action-selection-section-27)
-13. [Gradient Bandit Algorithms](#figure-25-gradient-bandit-algorithms-section-28)
-14. [Non-stationary Bandits](#what-happens-when-the-bandits-are-non-stationary)
-15. [Optimistic Initial Values](#optimistic-initial-values-section-26)
-16. [Parameter Study](#figure-26-parameter-study--comparing-all-methods-section-210)
+- [Table of Contents](#table-of-contents)
+- [MAB - multi arm bandit - K armed bandit problem](#mab---multi-arm-bandit---k-armed-bandit-problem)
+- [Today's Anthem](#todays-anthem)
+  - [Evaluative Approach](#evaluative-approach)
+  - [K-armed Bandit Problem or Multi Armed Bandit Problem](#k-armed-bandit-problem-or-multi-armed-bandit-problem)
+  - [$q\_\*(a,s)$ vs $Q(a,s)$](#q_as-vs-qas)
+  - [Greedy actions / exploitation / exploration](#greedy-actions--exploitation--exploration)
+  - [Action Value Methods](#action-value-methods)
+  - [Greedy action](#greedy-action)
+  - [$\\epsilon$ greedy method - Exploration Vs Exploitation](#epsilon-greedy-method---exploration-vs-exploitation)
+  - [10-Armed Testbed (Section 2.3)](#10-armed-testbed-section-23)
+    - [How the testbed is constructed](#how-the-testbed-is-constructed)
+    - [Figure 2.2: $\\epsilon$-Greedy Methods Compared](#figure-22-epsilon-greedy-methods-compared)
+    - [Figure 2.4: Upper-Confidence-Bound (UCB) Action Selection (Section 2.7)](#figure-24-upper-confidence-bound-ucb-action-selection-section-27)
+    - [Figure 2.5: Gradient Bandit Algorithms (Section 2.8)](#figure-25-gradient-bandit-algorithms-section-28)
+  - [What happens when the Bandits are non-stationary.](#what-happens-when-the-bandits-are-non-stationary)
+    - [First, the stationary case: Sample-Average with step-size $1/n$ (Section 2.4)](#first-the-stationary-case-sample-average-with-step-size-1n-section-24)
+    - [Now, the non-stationary case: Exponential Recency-Weighted Average (Section 2.5)](#now-the-non-stationary-case-exponential-recency-weighted-average-section-25)
+    - [Exponential Recency-Weighted Average (Section 2.5, Eq 2.5-2.6)](#exponential-recency-weighted-average-section-25-eq-25-26)
+    - [General Step-Size Framework and Convergence Conditions (Eq 2.7)](#general-step-size-framework-and-convergence-conditions-eq-27)
+    - [Conclusion: Step-size and weighting are not independent knobs](#conclusion-step-size-and-weighting-are-not-independent-knobs)
+  - [Optimistic Initial Values (Section 2.6)](#optimistic-initial-values-section-26)
+    - [Why does initial bias disappear in sample-average but persist with constant $\\alpha$?](#why-does-initial-bias-disappear-in-sample-average-but-persist-with-constant-alpha)
+    - [Figure 2.3: Optimistic Greedy vs Realistic $\\epsilon$-Greedy (10-Armed Testbed)](#figure-23-optimistic-greedy-vs-realistic-epsilon-greedy-10-armed-testbed)
+    - [Figure 2.6: Parameter Study — Comparing All Methods (Section 2.10)](#figure-26-parameter-study--comparing-all-methods-section-210)
+    - [Head-to-Head: All Methods at Their Best Parameters](#head-to-head-all-methods-at-their-best-parameters)
+    - [Detailed Analysis of Each Method](#detailed-analysis-of-each-method)
+    - [Summary: Which method to use?](#summary-which-method-to-use)
+- [Practice Exercises](#practice-exercises)
 
 ---
 
-## Today's conversations - 5/2/26 
 ## MAB - multi arm bandit - K armed bandit problem
 
 ## Today's Anthem
