@@ -1,4 +1,9 @@
 ---
+tags : [monte-carlo, temporal-difference]
+title : "Monte Carlo and Temporal-Difference Learning"
+category : Lectures
+subcategory : monte-carlo
+textbook : [chapter5, chapter6]
 layout: post
 ---
 
