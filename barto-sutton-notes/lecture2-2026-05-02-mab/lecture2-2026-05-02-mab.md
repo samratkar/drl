@@ -10,6 +10,7 @@ layout: post
 - [Table of Contents](#table-of-contents)
 - [MAB - multi arm bandit - K armed bandit problem](#mab---multi-arm-bandit---k-armed-bandit-problem)
 - [Today's Anthem](#todays-anthem)
+- [Lecture map](#lecture-map)
   - [Evaluative Approach](#evaluative-approach)
   - [K-armed Bandit Problem or Multi Armed Bandit Problem](#k-armed-bandit-problem-or-multi-armed-bandit-problem)
   - [$q\_\*(a,s)$ vs $Q(a,s)$](#q_as-vs-qas)
@@ -56,6 +57,10 @@ UCB peeks where uncertainty's rife,
 And gradient climbs the slope of life—  
 Each a compass through the bandit's maze,  
 Trading today's gold for tomorrow's praise.   
+
+## Lecture map 
+
+![](./assets/images/lecture2map-mab.png)
 
 ### Evaluative Approach 
 The most important feature distinguishing RL from other types of learning is that it uses training information to evaluate policies (Actions) instead of instructing (supervised learning) what is the correct action. This creates the need for active exploration and explicit search for an specific objective. Purely evaluative feedback indicates how good the action taken was but not whether it was the best and worst action. Note V(s) was stochastic distribution. And a high value of V(s) at any state is basically giving an average value indicator of how good is that state. but it does not give us a way to find the best and worst value V*. Same is the case with Q(s,a) and Q*(s,a).
