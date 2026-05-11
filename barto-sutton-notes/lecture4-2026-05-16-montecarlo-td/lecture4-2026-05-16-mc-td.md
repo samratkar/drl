@@ -9,25 +9,39 @@ layout: post
 ---
 
 ## Table of Contents
-1. [Chapter 5: Monte Carlo Methods](#chapter-5-monte-carlo-methods)
+- [Lecture 4: Monte Carlo Methods \& Temporal-Difference Learning](#lecture-4-monte-carlo-methods--temporal-difference-learning)
+  - [Table of Contents](#table-of-contents)
+- [Chapter 5: Monte Carlo Methods](#chapter-5-monte-carlo-methods)
+  - [5.0 Deep Dive: Monte Carlo vs. Dynamic Programming](#50-deep-dive-monte-carlo-vs-dynamic-programming)
+    - [1. The Model Requirement (Model-Free vs. Model-Based)](#1-the-model-requirement-model-free-vs-model-based)
+      - [Concrete Example: What does a "Model" look like?](#concrete-example-what-does-a-model-look-like)
+    - [2. Bootstrapping vs. Sampling](#2-bootstrapping-vs-sampling)
+    - [3. The "Lookahead" Logic](#3-the-lookahead-logic)
+    - [4. The Exploration Challenge](#4-the-exploration-challenge)
+    - [Comparison Summary](#comparison-summary)
     - [5.1 Monte Carlo Prediction](#51-monte-carlo-prediction)
+      - [Example 5.1: Blackjack](#example-51-blackjack)
     - [5.2 Monte Carlo Estimation of Action Values](#52-monte-carlo-estimation-of-action-values)
     - [5.3 Monte Carlo Control](#53-monte-carlo-control)
+      - [Monte Carlo with Exploring Starts (MC ES)](#monte-carlo-with-exploring-starts-mc-es)
     - [5.4 Monte Carlo Control without Exploring Starts](#54-monte-carlo-control-without-exploring-starts)
     - [5.5 Off-policy Prediction via Importance Sampling](#55-off-policy-prediction-via-importance-sampling)
+      - [Example 5.5: Infinite Variance](#example-55-infinite-variance)
     - [5.6 Incremental Implementation](#56-incremental-implementation)
     - [5.7 Off-policy Monte Carlo Control](#57-off-policy-monte-carlo-control)
-    - [5.8 *Discounting-aware Importance Sampling](#58-discounting-aware-importance-sampling)
-    - [5.9 *Per-decision Importance Sampling](#59-per-decision-importance-sampling)
-2. [Chapter 6: Temporal-Difference Learning](#chapter-6-temporal-difference-learning)
+    - [5.8 \*Discounting-aware Importance Sampling](#58-discounting-aware-importance-sampling)
+    - [5.9 \*Per-decision Importance Sampling](#59-per-decision-importance-sampling)
+- [Chapter 6: Temporal-Difference Learning](#chapter-6-temporal-difference-learning)
     - [6.1 TD Prediction](#61-td-prediction)
     - [6.2 Advantages of TD Prediction Methods](#62-advantages-of-td-prediction-methods)
     - [6.3 Optimality of TD(0)](#63-optimality-of-td0)
     - [6.4 Sarsa: On-policy TD Control](#64-sarsa-on-policy-td-control)
     - [6.5 Q-learning: Off-policy TD Control](#65-q-learning-off-policy-td-control)
+      - [Example 6.6: Cliff Walking](#example-66-cliff-walking)
     - [6.6 Expected Sarsa](#66-expected-sarsa)
     - [6.7 Maximization Bias and Double Learning](#67-maximization-bias-and-double-learning)
     - [6.8 Games, Afterstates, and Other Special Cases](#68-games-afterstates-and-other-special-cases)
+  - [Practice Exercises](#practice-exercises)
 
 ---
 
@@ -35,11 +49,123 @@ layout: post
 
 Monte Carlo (MC) methods learn from **experience**—sample sequences of states, actions, and rewards from actual or simulated interaction with an environment. Unlike Dynamic Programming, they require no model ($P$ and $R$).
 
+## 5.0 Deep Dive: Monte Carlo vs. Dynamic Programming
+To understand Monte Carlo, we must contrast it with the Dynamic Programming (DP) methods from the previous lecture. The transition from DP to MC represents the move from **Planning** (using a model) to **Learning** (using experience).
+
+### 1. The Model Requirement (Model-Free vs. Model-Based)
+*   **DP (Model-Based):** Requires a full environment model ($P(s'|s,a)$ and $R(s,a)$). It \"computes\" the value function by knowing exactly where every action leads.
+*   **MC (Model-Free):** Requires only **experience**. It doesn't know $P$. Instead, it takes an action and \"sees\" what happens. The environment's physics replace the mathematical model.
+
+#### Concrete Example: What does a "Model" look like?
+In DP, the environment is a known **Data Structure**. In MC, the environment is a **Black Box**.
+
+```python
+# --- DYNAMIC PROGRAMMING (Model-Based) ---
+# We have a dictionary telling us exactly what will happen.
+# P[state][action] = [(probability, next_state, reward, is_terminal), ...]
+
+P = {
+    4: { # From State 4 (Center)
+        0: [(1.0, 1, -1, False)], # Action UP leads to State 1 with 100% prob
+        1: [(1.0, 7, -1, False)], # Action DOWN leads to State 7
+        2: [(1.0, 3, -1, False)], # Action LEFT leads to State 3
+        3: [(1.0, 5, -1, False)]  # Action RIGHT leads to State 5
+    }
+}
+
+# DP Update Logic: Uses the internal dictionary
+def dp_update(s, a, V, gamma=0.9):
+    expected_value = 0
+    for prob, next_s, reward, done in P[s][a]:
+        expected_value += prob * (reward + gamma * V[next_s])
+    return expected_value
+
+# --- MONTE CARLO (Model-Free) ---
+# We have NO dictionary. We just interact with an 'env' object.
+
+def mc_experience(s, a, env):
+    # We don't know where we will end up until we call .step()
+    next_s, reward, done = env.step(a) 
+    return next_s, reward, done
+```
+
+### 2. Bootstrapping vs. Sampling
+*   **DP (Bootstrapping):** Updates estimates based on other estimates. It uses the **Bellman Equation** to look one step ahead and \"borrows\" the value of the next state ($V(s')$) to update the current state ($V(s)$): 
+    $$V(s) = \sum_{a, s', r} \pi(a|s) p(s', r|s, a) [r + \gamma V(s')]$$
+*   **MC (No Bootstrapping):** Estimates are independent. The value of a state is not based on the values of other states; it is based on the **actual returns** ($G_t$) observed from that state until the terminal state:
+    $$V(s) \approx \text{average}(G_t)$$
+
+### 3. The \"Lookahead\" Logic
+*   **DP (One-step Lookahead):** While the *value* of a state represents an infinite future, the **update** is one-step. It looks ahead only to the immediate next states ($s'$) and then \"bootstraps\" the rest of the infinite future by using the current estimate $V(s')$. It assumes that $V(s')$ already correctly captures everything that happens after $s'$.
+*   **MC (Multi-step Return):** There is no bootstrapping. The update uses the **entire sequence** of rewards until the end of the episode. It doesn't \"borrow\" from the estimate of the next state; it actually waits to see every single reward that follows.
+
+**Analogy:**
+- **DP** is like asking a traveler: \"What is the total distance to the destination?\" and the traveler answers: \"It is 5 miles to the next town, plus whatever the sign in that town says the remaining distance is.\" (One-step lookahead + Bootstrapping).
+- **MC** is like actually driving the entire way to the destination and then looking at your odometer to see exactly how far you traveled. (Multi-step/Full-episode experience).
+
+### 4. The Exploration Challenge
+*   **DP:** \"Sweeps\" through the entire state space. Because we have a model, we can calculate the value of any state at any time.
+*   **MC:** Can only learn about states it actually visits. If the policy never goes to State 7, State 7 remains a mystery. This necessitates **Exploring Starts** or **Stochastic Policies** ($\\epsilon$-greedy) to ensure the agent \"sees\" the whole world.
+
+### 5. Does MC use the Bellman Equation?
+A common question is: *\"If MC doesn't bootstrap, does the Bellman Equation still matter?\"*
+*   **Theoretically: YES.** The Bellman Equation defines what $V(s)$ is. It is the target we are trying to reach.
+*   **Computationally: NO.** The MC algorithm does not use the recursive property ($V(s) \leftarrow R + V(s')$). Instead, it uses the **Law of Large Numbers**. It treats the total return $G_t$ as a random variable and simply calculates its empirical mean. 
+
+**MC \"validates\" the Bellman Equation through experience rather than \"solving\" it through recursion.**
+
+### Comparison Summary
+| Aspect | Dynamic Programming (DP) | Monte Carlo (MC) |
+| :--- | :--- | :--- |
+| **Model ($P, R$)** | Required (Model-Based) | Not Required (Model-Free) |
+| **Update Rule** | Bellman Equation (Bootstrapping) | Average Returns (No Bootstrapping) |
+| **Temporal Scope** | One-step Lookahead | Full Episode (to Terminal) |
+| **Computation** | Expected Value (Integration) | Sample Means (Averaging) |
+| **Prerequisite** | Knowledge of "Physics" | Interaction with "Physics" |
+
+---
+
 ### 5.1 Monte Carlo Prediction
 MC prediction learns the state-value function $v_\pi$ for a given policy $\pi$ by averaging the returns observed after visiting a state.
 
 - **First-visit MC:** Averages returns following the first visit to state $s$ in an episode.
 - **Every-visit MC:** Averages returns following every visit to state $s$ in an episode.
+
+```python
+import numpy as np
+from collections import defaultdict
+
+def first_visit_mc_prediction(pi, env, num_episodes, gamma=1.0):
+    """
+    First-visit MC prediction, for estimating V ≈ v_π
+    """
+    V = defaultdict(float)
+    returns = defaultdict(list) # Stores returns for each state
+    
+    for _ in range(num_episodes):
+        # 1. Generate an episode following policy pi
+        episode = []
+        state, _ = env.reset()
+        done = False
+        while not done:
+            action = pi(state)
+            next_state, reward, term, trunc, _ = env.step(action)
+            episode.append((state, action, reward))
+            state, done = next_state, term or trunc
+            
+        # 2. Process episode backwards to calculate returns
+        G = 0
+        states_in_episode = [x[0] for x in episode]
+        for t in range(len(episode) - 1, -1, -1):
+            s_t, _, r_tp1 = episode[t]
+            G = gamma * G + r_tp1
+            
+            # Check if this is the first visit to state s_t in this episode
+            if s_t not in states_in_episode[:t]:
+                returns[s_t].append(G)
+                V[s_t] = np.mean(returns[s_t])
+    return V
+```
 
 #### Example 5.1: Blackjack
 In Blackjack, the state is defined by the player's sum (12–21), the dealer's showing card (ace–10), and whether the player has a "usable ace." We evaluate a policy that sticks only on 20 or 21.
@@ -63,9 +189,24 @@ The general pattern of MC control is **Generalized Policy Iteration (GPI)**:
 1. **Evaluation:** Use MC to estimate $q_\pi$.
 2. **Improvement:** Make the policy greedy w.r.t. $q_\pi$.
 
+> **Common Pitfall: Average vs. Max G**
+> Students often mistake MC for a search for the "single best episode." 
+> - **Wrong Logic:** "Run 10 episodes and pick the policy that gave the single highest $G$." (Vulnerable to noise/luck).
+> - **Correct Logic:** "Run many episodes and update $\pi(s)$ to pick the action with the highest **average** $G$." (Robust to noise).
+>
+> We maximize the **Expected Return** ($\mathbb{E}[G]$), not a single sample return ($G_{sample}$).
+
 #### Monte Carlo with Exploring Starts (MC ES)
 To guarantee exploration, we assume that every state-action pair has a non-zero probability of being the start of an episode.
 - **Example 5.3:** Blackjack with Exploring Starts converges to the optimal policy, effectively learning when to hit or stick.
+
+```python
+# From assets/mc_gpi_demonstration.py
+# Pedagogical demonstration of GPI in Monte Carlo ES
+# 1. Generate an episode with Exploring Starts
+# 2. Backtrack to calculate Returns (G)
+# 3. Update Policy: pi(s) = argmax_a Q(s,a)
+```
 
 ### 5.4 Monte Carlo Control without Exploring Starts
 To avoid the impractical assumption of exploring starts, we use **$\epsilon$-soft policies**.
