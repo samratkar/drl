@@ -7,15 +7,20 @@ textbook : [chapter1]
 layout: post
 ---
 ## Table of Contents
-1. [Today's Conversations](#todays-conversations---42526)
-2. [Sara's Sojourn in the Deep Forest - A DRL Story](#saras-sojourn-in-the-deep-forest---a-drl-story)
-3. [Food for Thought](#food-for-thought)
+- [Table of Contents](#table-of-contents)
+  - [Today's conversations - 4/25/26](#todays-conversations---42526)
+  - [Sara's Sojourn in the Deep Forest - A DRL Story](#saras-sojourn-in-the-deep-forest---a-drl-story)
+  - [Lecture 1 Map](#lecture-1-map)
+  - [Food for thought](#food-for-thought)
+- [Practice Exercises](#practice-exercises)
 
 ---
 
 ### Today's conversations - 4/25/26 
 ### Sara's Sojourn in the Deep Forest - A DRL Story
 
+### Lecture 1 Map 
+![](./assets/images/lecture1map.png)
 
 Dear Friends,
 
