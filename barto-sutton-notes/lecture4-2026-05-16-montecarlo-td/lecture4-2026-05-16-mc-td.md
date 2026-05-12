@@ -306,13 +306,40 @@ In real-world applications, we cannot always teleport the agent to a random stat
 ---
 
 ### 5.5 Off-policy Prediction via Importance Sampling
-How can we learn about a **target policy** $\pi$ while following a different **behavior policy** $b$? This is **off-policy learning**.
+How can we learn about a **target policy** $\pi$ while following a different **behavior policy** $b$? This is **off-policy learning**. 
 
-- **Requirement (Coverage):** $\pi(a\mid s) > 0 \implies b(a\mid s) > 0$.
-- **Importance-sampling ratio:** 
-  $$\rho_{t:T-1} \doteq \prod_{k=t}^{T-1} \frac{\pi(A_k\mid S_k)}{b(A_k\mid S_k)}$$
-- **Ordinary Importance Sampling:** $V(s) \doteq \frac{\sum_{t \in \mathcal{T}(s)} \rho_{t:T(t)-1} G_t}{\mid\mathcal{T}(s)\mid}$ (Unbiased, high variance).
-- **Weighted Importance Sampling:** $V(s) \doteq \frac{\sum_{t \in \mathcal{T}(s)} \rho_{t:T(t)-1} G_t}{\sum_{t \in \mathcal{T}(s)} \rho_{t:T(t)-1}}$ (Biased, lower variance).
+Think of it as: You want to know how a Professional ($\pi$) would play, but your only data is from a Beginner ($b$).
+
+> **Pro-Tip: Knowing vs. Estimating $b$**
+> You do **not** estimate the behavior policy $b$ from the episodes. You must **define** it (e.g., as a uniform random policy). To calculate the ratio $\rho$, you need to know the **exact probability** $b(a|s)$ used to generate the data. If you don't know the exact math of the beginner, you cannot accurately estimate the professional.
+
+#### 1. The Importance Sampling Ratio ($\rho$)
+When the beginner ($b$) takes an action, we ask: *"How much more (or less) likely was the professional to take that same action?"*
+$$\rho = \frac{\pi(a|s)}{b(a|s)}$$
+
+For a whole episode (from time $t$ to $T$), we multiply the ratios of every action taken. The Capital Pi ($\Pi$) symbol represents a **product**:
+$$\rho_{t:T-1} \doteq \prod_{k=t}^{T-1} \frac{\pi(A_k|S_k)}{b(A_k|S_k)}$$
+
+**Expanded Series Form:**
+$$\rho_{t:T-1} = \frac{\pi(A_t|S_t)}{b(A_t|S_t)} \times \frac{\pi(A_{t+1}|S_{t+1})}{b(A_{t+1}|S_{t+1})} \times \dots \times \frac{\pi(A_{T-1}|S_{T-1})}{b(A_{T-1}|S_{T-1})}$$
+
+#### 2. Ordinary Importance Sampling (OIS)
+We multiply each observed return ($G_t$) by its ratio ($\rho$) and take the standard average over $n$ episodes:
+$$V(s) = \frac{\sum_{t \in \mathcal{T}(s)} \rho_{t:T(t)-1} G_t}{|\mathcal{T}(s)|}$$
+
+- **Property:** Unbiased, but has **extreme/infinite variance**. A single unlikely action can blow up the ratio and make the estimate unstable.
+
+#### 3. Weighted Importance Sampling (WIS)
+Instead of dividing by the number of episodes, we divide by the **sum of the ratios**:
+$$V(s) = \frac{\sum_{t \in \mathcal{T}(s)} \rho_{t:T(t)-1} G_t}{\sum_{t \in \mathcal{T}(s)} \rho_{t:T(t)-1}}$$
+
+- **Property:** Biased (initially), but has **much lower variance**. It is the practical choice for most RL applications.
+
+| Feature | Ordinary (OIS) | Weighted (WIS) |
+| :--- | :--- | :--- |
+| **Bias** | Unbiased | Biased (converges to zero bias) |
+| **Variance** | High/Infinite | Lower/Stable |
+| **Practicality** | Low | High |
 
 #### Example 5.5: Infinite Variance
 Ordinary importance sampling can have **infinite variance**. If the importance-sampling ratio has a mean greater than 1, its variance can grow without bound.
@@ -330,9 +357,90 @@ Where $C_n$ is the cumulative sum of weights.
 
 ### 5.7 Off-policy Monte Carlo Control
 Uses the behavior policy to generate episodes and the target policy (greedy) for learning.
+
+#### Detailed Process Flow (From Scratch)
+
+The goal is to learn the optimal policy $\pi^*$ while following an exploratory behavior policy $b$. Here is exactly what happens in every iteration:
+
+1.  **Initialize**:
+    *   **Target Policy ($\pi$):** The greedy policy we want to optimize.
+    *   **Behavior Policy ($b$):** A stochastic policy (e.g., uniform random) used to generate data.
+    *   **$Q(s, a)$ & $C(s, a)$**: Action-values and cumulative weights (for weighted averaging).
+
+2.  **Generate Experience**:
+    *   The agent plays a **full episode** using the behavior policy $b$.
+    *   It records the sequence: $S_0, A_0, R_1, S_1, A_1, R_2 \dots S_T$.
+
+3.  **Process Backwards (The Learning Phase)**:
+    *   Start from the end of the episode and move toward the beginning.
+    *   For each step $t$:
+        *   Calculate the **Return ($G$)** from that point forward.
+        *   Calculate the **Importance Sampling Ratio ($\rho$)**: How much more likely was the Target $\pi$ to take action $A_t$ compared to Behavior $b$?
+        *   Update the **Cumulative Weight ($C$)**: $C \leftarrow C + \rho$.
+        *   Update **$Q(s, a)$**: Use the ratio to weight the return. $Q \leftarrow Q + \frac{\rho}{C}[G - Q]$.
+        *   **Policy Improvement**: Update $\pi(s) = \arg\max_a Q(s, a)$.
+        *   **Convergence Check**: If the action taken by the beginner ($A_t$) is **not** the action the professional ($\pi$) would take, stop learning from this episode (the ratio becomes zero).
+
+#### Visual Process Flow: Off-Policy MC
+
+<svg width=\"800\" height=\"450\" viewBox=\"0 0 800 450\" xmlns=\"http://www.w3.org/2000/svg\">
+  <style>
+    .rect { fill: #ffffff; stroke: #343a40; stroke-width: 2; }
+    .label { font-family: sans-serif; font-size: 14px; font-weight: bold; fill: #212529; }
+    .sub { font-family: sans-serif; font-size: 11px; fill: #6c757d; }
+    .arrow { fill: none; stroke: #007bff; stroke-width: 2; marker-end: url(#arrowhead); }
+    .data-flow { stroke: #28a745; stroke-dasharray: 4; }
+    .highlight-blue { fill: #e7f1ff; stroke: #007bff; }
+    .highlight-green { fill: #f1f8e9; stroke: #28a745; }
+  </style>
+  <defs>
+    <marker id=\"arrowhead\" markerWidth=\"10\" markerHeight=\"7\" refX=\"0\" refY=\"3.5\" orient=\"auto\">
+      <polygon points=\"0 0, 10 3.5, 0 7\" fill=\"#007bff\" />\n    </marker>
+    <marker id=\"arrowhead-green\" markerWidth=\"10\" markerHeight=\"7\" refX=\"0\" refY=\"3.5\" orient=\"auto\">\n      <polygon points=\"0 0, 10 3.5, 0 7\" fill=\"#28a745\" />\n    </marker>
+  </defs>
+
+  <!-- Behavior Side -->
+  <rect x=\"50\" y=\"50\" width=\"200\" height=\"80\" class=\"rect highlight-blue\" rx=\"10\" />
+  <text x=\"150\" y=\"80\" class=\"label\" text-anchor=\"middle\">Behavior Policy (b)</text>
+  <text x=\"150\" y=\"100\" class=\"sub\" text-anchor=\"middle\">The \"Beginner\" - Stochastic/Random</text>
+
+  <rect x=\"50\" y=\"180\" width=\"200\" height=\"80\" class=\"rect\" rx=\"10\" />
+  <text x=\"150\" y=\"210\" class=\"label\" text-anchor=\"middle\">Generate Episode</text>
+  <text x=\"150\" y=\"230\" class=\"sub\" text-anchor=\"middle\">Data: (S, A, R) trajectory</text>
+
+  <!-- Data Bridge -->
+  <path d=\"M 250 220 L 400 220\" class=\"arrow\" />
+  <text x=\"325\" y=\"210\" class=\"sub\" text-anchor=\"middle\">Experience Stream</text>
+
+  <!-- Learning Side -->
+  <rect x=\"400\" y=\"150\" width=\"250\" height=\"140\" class=\"rect highlight-green\" rx=\"10\" />
+  <text x=\"525\" y=\"180\" class=\"label\" text-anchor=\"middle\">Importance Sampling Engine</text>
+  <text x=\"525\" y=\"205\" class=\"sub\" text-anchor=\"middle\">1. Calculate Ratio: ρ = π(a|s) / b(a|s)</text>
+  <text x=\"525\" y=\"225\" class=\"sub\" text-anchor=\"middle\">2. Calculate Return: G</text>
+  <text x=\"525\" y=\"245\" class=\"sub\" text-anchor=\"middle\">3. Weight Return: ρ * G</text>
+  <text x=\"525\" y=\"265\" class=\"sub\" text-anchor=\"middle\">4. Update Q(s,a) & N(s,a)</text>
+
+  <rect x=\"400\" y=\"50\" width=\"250\" height=\"80\" class=\"rect highlight-blue\" rx=\"10\" />
+  <text x=\"525\" y=\"80\" class=\"label\" text-anchor=\"middle\">Target Policy (π)</text>
+  <text x=\"525\" y=\"100\" class=\"sub\" text-anchor=\"middle\">The \"Professional\" - Deterministic (Greedy)</text>
+
+  <!-- Loops -->
+  <path d=\"M 525 290 L 525 350 L 150 350 L 150 260\" class=\"arrow\" />
+  <text x=\"325\" y=\"340\" class=\"sub\" text-anchor=\"middle\">Learning Loop (Offline, Backwards)</text>
+
+  <path d=\"M 650 220 L 720 220 L 720 90 L 650 90\" class=\"arrow\" />
+  <text x=\"725\" y=\"155\" class=\"sub\" text-anchor=\"middle\" transform=\"rotate(270, 725, 155)\">Improvement</text>
+
+  <!-- Data flow indicators -->
+  <path d=\"M 525 130 L 525 150\" class=\"arrow data-flow\" style=\"stroke:#28a745\" />
+  <text x=\"540\" y=\"145\" class=\"sub\">π(a|s)</text>
+
+  <path d=\"M 150 130 L 150 180\" class=\"arrow\" />
+</svg>
+
 - **Limitation:** It only learns from the *tails* of episodes—after the behavior policy takes an action that the target policy would not have taken, the importance-sampling ratio becomes zero.
 
-### 5.8 *Discounting-aware Importance Sampling
+### 5.8 \*Discounting-aware Importance Sampling
 Standard IS treats the return $G_t$ as a single unit. However, if $\gamma < 1$, the return is composed of discounted rewards. This section discusses how to decompose the ratio to reduce variance by acknowledging that future rewards are less affected by earlier actions.
 
 ### 5.9 *Per-decision Importance Sampling
