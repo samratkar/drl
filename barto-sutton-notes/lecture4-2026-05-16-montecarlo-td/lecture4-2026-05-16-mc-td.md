@@ -28,6 +28,7 @@ layout: post
     - [Comparison Summary](#comparison-summary)
     - [5.1 Monte Carlo Prediction](#51-monte-carlo-prediction)
       - [First-visit vs. Every-visit MC](#first-visit-vs-every-visit-mc)
+      - [Incremental (Rolling) Average](#incremental-rolling-average)
       - [The Process flow of MC](#the-process-flow-of-mc)
       - [Two variants of policy evaluation and improvement](#two-variants-of-policy-evaluation-and-improvement)
       - [Two variants of Q(s,a) updates within an episode](#two-variants-of-qsa-updates-within-an-episode)
@@ -38,9 +39,15 @@ layout: post
     - [5.4 Monte Carlo Control without Exploring Starts](#54-monte-carlo-control-without-exploring-starts)
       - [Comparing Exploration Strategies](#comparing-exploration-strategies)
     - [5.5 Off-policy Prediction via Importance Sampling](#55-off-policy-prediction-via-importance-sampling)
+      - [1. The Importance Sampling Ratio ($\\rho$)](#1-the-importance-sampling-ratio-rho)
+      - [2. Ordinary Importance Sampling (OIS)](#2-ordinary-importance-sampling-ois)
+      - [3. Weighted Importance Sampling (WIS)](#3-weighted-importance-sampling-wis)
       - [Example 5.5: Infinite Variance](#example-55-infinite-variance)
     - [5.6 Incremental Implementation](#56-incremental-implementation)
+    - [Code Examples](#code-examples)
     - [5.7 Off-policy Monte Carlo Control](#57-off-policy-monte-carlo-control)
+      - [Detailed Process Flow (From Scratch)](#detailed-process-flow-from-scratch)
+      - [Visual Process Flow: Off-Policy MC](#visual-process-flow-off-policy-mc)
     - [5.8 \*Discounting-aware Importance Sampling](#58-discounting-aware-importance-sampling)
     - [5.9 \*Per-decision Importance Sampling](#59-per-decision-importance-sampling)
 - [Chapter 6: Temporal-Difference Learning](#chapter-6-temporal-difference-learning)
@@ -355,6 +362,12 @@ $$W_{n+1} \doteq W_n + \rho_n$$
 $$V_{n+1} \doteq V_n + \frac{\rho_n}{C_n} [G_n - V_n]$$
 Where $C_n$ is the cumulative sum of weights.
 
+### Code Examples 
+
+1. Monte Carlo On-policy Prediction (First-visit and Every-visit) - [code-base-mc-on-policy](./assets/mc_gpi_pedagogy.ipynb)
+2. Monte Carlo Off-policy Prediction (Ordinary and Weighted IS) - [code-base-mc-off-policy](./assets/mc_off_policy_pedagogy.ipynb)
+3. Monte Carlo Off-policy Control (Weighted IS) - [code-base-mc-off-policy-control](./assets/mc_off_policy_control_pedagogy.ipynb)
+   
 ### 5.7 Off-policy Monte Carlo Control
 Uses the behavior policy to generate episodes and the target policy (greedy) for learning.
 
