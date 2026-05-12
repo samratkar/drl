@@ -135,12 +135,13 @@ A common question is: *\"If MC doesn't bootstrap, does the Bellman Equation stil
 *   **Theoretically: YES.** The Bellman Equation defines what $V(s)$ is. It is the target we are trying to reach.
 *   **Computationally: NO.** The MC algorithm does not use the recursive property ($V(s) \leftarrow R + V(s')$). Instead, it uses the **Law of Large Numbers**. It treats the total return $G_t$ as a random variable and simply calculates its empirical mean. 
 
-**MC \"validates\" the Bellman Equation through experience rather than \"solving\" it through recursion.**
+**MC "validates" the Bellman Equation through experience rather than "solving" it through recursion.**
 
 ### Comparison Summary
+
 | Aspect | Dynamic Programming (DP) | Monte Carlo (MC) |
 | :--- | :--- | :--- |
-| **Model ($P, R$)** | Required (Model-Based) | Not Required (Model-Free) |
+| **Model (P, R)** | Required (Model-Based) | Not Required (Model-Free) |
 | **Update Rule** | Bellman Equation (Bootstrapping) | Average Returns (No Bootstrapping) |
 | **Temporal Scope** | One-step Lookahead | Full Episode (to Terminal) |
 | **Computation** | Expected Value (Integration) | Sample Means (Averaging) |
