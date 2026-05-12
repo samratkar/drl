@@ -149,6 +149,16 @@ While both methods use the same basic averaging formula, the **set of returns** 
 
 $$Q(s, a) = \frac{1}{N(s, a)} \sum_{i=1}^{N(s, a)} G_i(s, a)$$
 
+#### Incremental (Rolling) Average
+In practice, storing every return $G$ in a list to calculate the average is memory-intensive. Instead, we use an **incremental update rule** (rolling average):
+
+$$Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \frac{1}{N(S_t, A_t)} \left[ G_t - Q(S_t, A_t) \right]$$
+
+**Computational Superiority:**
+1. **Constant Memory ($O(1)$):** We only need to store two numbers per state-action pair: the current estimate $Q$ and the visit count $N$. We do not need to store the entire history of rewards.
+2. **Constant Time ($O(1)$):** The update happens in a single mathematical operation regardless of how many episodes have passed.
+3. **Non-stationary Tasks:** This form easily adapts to non-stationary environments by replacing $\frac{1}{N}$ with a constant step-size parameter $\alpha$ (learning rate).
+
 *   **First-visit MC:** $N(s, a)$ increments only the **first time** $(s, a)$ is visited in an episode.
 *   **Every-visit MC:** $N(s, a)$ increments **every single time** $(s, a)$ is visited in an episode.
 
