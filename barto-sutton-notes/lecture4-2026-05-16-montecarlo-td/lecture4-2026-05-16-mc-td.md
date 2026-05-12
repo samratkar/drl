@@ -383,60 +383,33 @@ The goal is to learn the optimal policy $\pi^*$ while following an exploratory b
 
 #### Visual Process Flow: Off-Policy MC
 
-<svg width=\"800\" height=\"450\" viewBox=\"0 0 800 450\" xmlns=\"http://www.w3.org/2000/svg\">
-  <style>
-    .rect { fill: #ffffff; stroke: #343a40; stroke-width: 2; }
-    .label { font-family: sans-serif; font-size: 14px; font-weight: bold; fill: #212529; }
-    .sub { font-family: sans-serif; font-size: 11px; fill: #6c757d; }
-    .arrow { fill: none; stroke: #007bff; stroke-width: 2; marker-end: url(#arrowhead); }
-    .data-flow { stroke: #28a745; stroke-dasharray: 4; }
-    .highlight-blue { fill: #e7f1ff; stroke: #007bff; }
-    .highlight-green { fill: #f1f8e9; stroke: #28a745; }
-  </style>
-  <defs>
-    <marker id=\"arrowhead\" markerWidth=\"10\" markerHeight=\"7\" refX=\"0\" refY=\"3.5\" orient=\"auto\">
-      <polygon points=\"0 0, 10 3.5, 0 7\" fill=\"#007bff\" />\n    </marker>
-    <marker id=\"arrowhead-green\" markerWidth=\"10\" markerHeight=\"7\" refX=\"0\" refY=\"3.5\" orient=\"auto\">\n      <polygon points=\"0 0, 10 3.5, 0 7\" fill=\"#28a745\" />\n    </marker>
-  </defs>
+```mermaid
+graph TD
+    subgraph Behavior [Behavior Policy b - The Beginner]
+        B[Stochastic/Random Policy] --> Gen[Generate Episode]
+    end
 
-  <!-- Behavior Side -->
-  <rect x=\"50\" y=\"50\" width=\"200\" height=\"80\" class=\"rect highlight-blue\" rx=\"10\" />
-  <text x=\"150\" y=\"80\" class=\"label\" text-anchor=\"middle\">Behavior Policy (b)</text>
-  <text x=\"150\" y=\"100\" class=\"sub\" text-anchor=\"middle\">The \"Beginner\" - Stochastic/Random</text>
+    subgraph Stream [Data trajectory]
+        Gen --> Traj[(S, A, R trajectory)]
+    end
 
-  <rect x=\"50\" y=\"180\" width=\"200\" height=\"80\" class=\"rect\" rx=\"10\" />
-  <text x=\"150\" y=\"210\" class=\"label\" text-anchor=\"middle\">Generate Episode</text>
-  <text x=\"150\" y=\"230\" class=\"sub\" text-anchor=\"middle\">Data: (S, A, R) trajectory</text>
+    subgraph Engine [Importance Sampling Engine]
+        Traj --> Ratio["Calculate Ratio: ρ = π/b"]
+        Ratio --> Ret["Calculate Return: G"]
+        Ret --> Weight["Weight Return: ρ * G"]
+        Weight --> Update["Update Q(s,a) & N(s,a)"]
+    end
 
-  <!-- Data Bridge -->
-  <path d=\"M 250 220 L 400 220\" class=\"arrow\" />
-  <text x=\"325\" y=\"210\" class=\"sub\" text-anchor=\"middle\">Experience Stream</text>
+    subgraph Target [Target Policy π - The Professional]
+        Update --> Improve[Improvement: argmax Q]
+        Improve --> TargetPol[Deterministic Greedy Policy]
+        TargetPol -.->|Policy Ratio| Ratio
+    end
 
-  <!-- Learning Side -->
-  <rect x=\"400\" y=\"150\" width=\"250\" height=\"140\" class=\"rect highlight-green\" rx=\"10\" />
-  <text x=\"525\" y=\"180\" class=\"label\" text-anchor=\"middle\">Importance Sampling Engine</text>
-  <text x=\"525\" y=\"205\" class=\"sub\" text-anchor=\"middle\">1. Calculate Ratio: ρ = π(a|s) / b(a|s)</text>
-  <text x=\"525\" y=\"225\" class=\"sub\" text-anchor=\"middle\">2. Calculate Return: G</text>
-  <text x=\"525\" y=\"245\" class=\"sub\" text-anchor=\"middle\">3. Weight Return: ρ * G</text>
-  <text x=\"525\" y=\"265\" class=\"sub\" text-anchor=\"middle\">4. Update Q(s,a) & N(s,a)</text>
+    Update -.->|Learning Loop| B
+```
 
-  <rect x=\"400\" y=\"50\" width=\"250\" height=\"80\" class=\"rect highlight-blue\" rx=\"10\" />
-  <text x=\"525\" y=\"80\" class=\"label\" text-anchor=\"middle\">Target Policy (π)</text>
-  <text x=\"525\" y=\"100\" class=\"sub\" text-anchor=\"middle\">The \"Professional\" - Deterministic (Greedy)</text>
-
-  <!-- Loops -->
-  <path d=\"M 525 290 L 525 350 L 150 350 L 150 260\" class=\"arrow\" />
-  <text x=\"325\" y=\"340\" class=\"sub\" text-anchor=\"middle\">Learning Loop (Offline, Backwards)</text>
-
-  <path d=\"M 650 220 L 720 220 L 720 90 L 650 90\" class=\"arrow\" />
-  <text x=\"725\" y=\"155\" class=\"sub\" text-anchor=\"middle\" transform=\"rotate(270, 725, 155)\">Improvement</text>
-
-  <!-- Data flow indicators -->
-  <path d=\"M 525 130 L 525 150\" class=\"arrow data-flow\" style=\"stroke:#28a745\" />
-  <text x=\"540\" y=\"145\" class=\"sub\">π(a|s)</text>
-
-  <path d=\"M 150 130 L 150 180\" class=\"arrow\" />
-</svg>
+- **Limitation:** It only learns from the *tails* of episodes—after the behavior policy takes an action that the target policy would not have taken, the importance-sampling ratio becomes zero.
 
 - **Limitation:** It only learns from the *tails* of episodes—after the behavior policy takes an action that the target policy would not have taken, the importance-sampling ratio becomes zero.
 
