@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RL Methods Exploration Portal</title>
+<style>
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  align-items: center;
+  padding-top: 80px;
+}
+
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(15, 15, 25, 0.98);
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  gap: 8px;
+  border-bottom: 1px solid #333;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  flex-wrap: wrap;
+}
+
+nav a {
+  color: #ccc;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.8rem;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  border: 1px solid #444;
+}
+
+nav a.active {
+  color: #fff;
+}
+
+.dashboard {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+  gap: 1.5rem;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(4, 80px);
+  grid-template-rows: repeat(4, 80px);
+  gap: 4px;
+  background-color: #444;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.grid-container.grid-large {
+  grid-template-columns: repeat(4, 100px);
+  grid-template-rows: repeat(4, 100px);
+}
+
+.cell {
+  background-color: #333;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  position: relative;
+  transition: background-color 0.3s ease;
+}
+
+.cell.terminal { background-color: #1a4d2e; }
+.cell.danger { background-color: #4d1a1a; border: 1px solid #f44336; }
+
+.cell-value { font-weight: bold; }
+
+.cell-id {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  font-size: 0.6rem;
+  opacity: 0.5;
+}
+
+.policy-tables {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  max-width: 90vw;
+  padding-bottom: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+table {
+  border-collapse: collapse;
+  font-size: 0.7rem;
+  background: #2a2a2a;
+}
+
+th, td {
+  border: 1px solid #444;
+  padding: 4px 8px;
+}
+
+.controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  background: #333;
+  color: #fff;
+  border: 1px solid #666;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+button:hover { background: #444; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.equation {
+  font-family: 'Times New Roman', Times, serif;
+  font-style: italic;
+  font-size: 1.2rem;
+  background: #111;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.action-arrows {
+  display: grid;
+  grid-template-areas:
+    ". up ."
+    "left . right"
+    ". down .";
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-items: center;
+}
+
+.arrow { font-size: 0.9rem; color: #64b5f6; opacity: 0.8; }
+.arrow-up { grid-area: up; }
+.arrow-down { grid-area: down; }
+.arrow-left { grid-area: left; }
+.arrow-right { grid-area: right; }
+
+.phase-container {
+  width: 100%;
+  max-width: 1300px;
+}
+
+.policy-view { text-align: center; }
+
+.convergence-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: bold;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.convergence-badge.done {
+  color: #4caf50;
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid #4caf50;
+}
+
+.convergence-badge.learning {
+  color: #ffa500;
+  background: rgba(255, 165, 0, 0.1);
+  border: 1px solid #ffa500;
+}
+
+header { text-align: center; margin-bottom: 1rem; }
+header h1 { margin-bottom: 0.5rem; }
+header p { color: #aaa; max-width: 800px; margin: 0 auto; }
+
+.hyperparams {
+  border: 1px solid #444;
+  background: #1a1a25;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.hyperparam-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hyperparam-group label {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #aaa;
+}
+
+.td-container {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.td-method { flex: 1; min-width: 400px; }
+
+input[type="range"] { width: 150px; }
+</style>
+</head>
+<body>
+<div class="container" id="app">
+
+<nav id="navbar">
+  <a href="#env" data-section="env" data-color="#2196f3">1. Environment</a>
+  <a href="#pi" data-section="pi" data-color="#ffa500">2. Policy Iteration</a>
+  <a href="#vi" data-section="vi" data-color="#9c27b0">3. Value Iteration</a>
+  <a href="#mc" data-section="mc" data-color="#00bcd4">4. Monte Carlo</a>
+  <a href="#td" data-section="td" data-color="#ff5722">5. TD Learning</a>
+  <a href="#compare" data-section="compare" data-color="#607d8b">6. Comparison</a>
+</nav>
+
+<header>
+  <h1>RL Methods Exploration Portal</h1>
+  <p>Interactive visualization of Reinforcement Learning algorithms. From exact Dynamic Programming to model-free Temporal Difference learning.</p>
+</header>
+
+<section class="hyperparams" id="hyperparams-section">
+  <div class="hyperparam-group">
+    <label id="gamma-label">Discount Factor (&gamma;): 0.90</label>
+    <input type="range" min="0" max="1" step="0.01" value="0.9" id="gamma-slider">
+  </div>
+  <div class="hyperparam-group">
+    <label id="alpha-label">Learning Rate (&alpha;): 0.10</label>
+    <input type="range" min="0.01" max="1" step="0.01" value="0.1" id="alpha-slider">
+  </div>
+  <div class="hyperparam-group">
+    <label id="epsilon-label">Exploration (&epsilon;): 0.20</label>
+    <input type="range" min="0" max="0.5" step="0.01" value="0.2" id="epsilon-slider">
+  </div>
+  <button id="reset-all-btn" style="padding:8px 16px;background:#f44336;color:white;border:none;border-radius:4px;font-weight:bold;">Reset All Progress</button>
+</section>
+
+<section id="env" class="phase-container" style="border:2px solid #2196f3;padding:20px;border-radius:12px;">
+  <h2 style="color:#2196f3;margin-top:0;">The MDP Environment</h2>
+  <div style="display:flex;gap:2.5rem;align-items:center;flex-wrap:wrap;">
+    <div class="grid-container grid-large" id="env-grid" style="border-color:#2196f3;"></div>
+    <div style="display:flex;flex-direction:column;gap:0.5rem;">
+      <p style="margin:0 0 0.5rem 0;font-size:0.85rem;max-width:220px;">4x4 gridworld. Reach the goal while avoiding danger zones.</p>
+      <div style="background:#1a1a2e;padding:6px 12px;border-radius:6px;border:1px solid #2196f3;font-size:0.8rem;"><strong>S:</strong> { 0 .. 15 }</div>
+      <div style="background:#1a1a2e;padding:6px 12px;border-radius:6px;border:1px solid #2196f3;font-size:0.8rem;"><strong>A:</strong> { &uarr; &darr; &larr; &rarr; }</div>
+      <div style="background:#1a1a2e;padding:6px 12px;border-radius:6px;border:1px solid #2196f3;font-size:0.8rem;"><strong>R:</strong> +10 goal, -5 danger, 0 step</div>
+      <div style="background:#1a1a2e;padding:6px 12px;border-radius:6px;border:1px solid #2196f3;font-size:0.8rem;" id="env-gamma-display"><strong>&gamma;:</strong> 0.90</div>
+      <div style="background:#1a1a2e;padding:6px 12px;border-radius:6px;border:1px solid #2196f3;font-size:0.8rem;"><strong>Dynamics:</strong> Deterministic</div>
+    </div>
+  </div>
+</section>
+
+<section id="pi" class="phase-container" style="border:2px solid #333;padding:20px;border-radius:12px;">
+  <h2 style="color:#ffa500;">STEP 1: Policy Evaluation</h2>
+  <div class="equation">V<sub>&pi;</sub>(s) = &Sigma;<sub>a</sub> &pi;(a|s) [r + &gamma; V<sub>&pi;</sub>(s')]</div>
+  <p>Iteratively update state values until they converge for the given policies. <span style="color:#888;font-size:0.8rem;">Convergence: max|&Delta;V| &lt; 0.001</span></p>
+  <div class="controls">
+    <button id="eval-play-btn">Start Evaluation</button>
+    <button id="eval-step-btn">Single Step</button>
+    <span id="eval-iter-display">Iteration: 0</span>
+    <span id="eval-badge" class="convergence-badge learning">&#9675; LEARNING</span>
+  </div>
+  <div class="dashboard" id="eval-dashboard"></div>
+  <div class="policy-tables" id="eval-tables"></div>
+  <div id="improvement-unlock" style="text-align:center;margin-top:20px;display:none;">
+    <button id="unlock-improvement-btn" style="padding:15px 30px;font-size:1.2rem;background-color:#4caf50;border:none;border-radius:8px;color:white;">Unlock Step 2: Policy Improvement</button>
+  </div>
+</section>
+
+<section id="improvement-section" class="phase-container" style="border:2px solid #4caf50;padding:20px;border-radius:12px;background:#111;display:none;">
+  <h2 style="color:#4caf50;">STEP 2: Policy Improvement (Manual)</h2>
+  <p>The values below are <strong>FROZEN</strong> from the evaluation above. Now, click "Improve Policy" to apply the <strong>argmax</strong> rule and transform the stochastic policy into a greedy optimal one.</p>
+  <div class="equation" style="background:#000;border:1px solid #4caf50;">&pi;'(s) = argmax<sub>a</sub> [r + &gamma; V<sub>&pi;</sub>(s')]</div>
+  <div style="text-align:center;margin-bottom:1rem;">
+    <button id="improve-btn" style="background-color:#4caf50;padding:10px 24px;border:none;border-radius:8px;color:#fff;font-size:1rem;">Improve Policy (Run argmax)</button>
+  </div>
+  <div class="dashboard" id="improvement-dashboard"></div>
+  <div class="policy-tables" id="improvement-tables"></div>
+</section>
+
+<section id="vi" class="phase-container" style="border:2px solid #9c27b0;padding:20px;border-radius:12px;">
+  <h2 style="color:#ce93d8;">Value Iteration</h2>
+  <div class="equation" style="border:1px solid #9c27b0;">V(s) = max<sub>a</sub> [r + &gamma; V(s')]</div>
+  <p>At each sweep, every state takes the <strong>max</strong> over all actions — evaluation and improvement happen simultaneously. <span style="color:#888;font-size:0.8rem;">Convergence: max|&Delta;V| &lt; 0.001</span></p>
+  <div class="controls">
+    <button id="vi-play-btn" style="border-color:#9c27b0;">Start Value Iteration</button>
+    <button id="vi-step-btn">Single Step</button>
+    <span id="vi-iter-display">Iteration: 0</span>
+    <span id="vi-badge" class="convergence-badge learning">&#9675; LEARNING</span>
+  </div>
+  <div style="display:flex;gap:2rem;flex-wrap:wrap;justify-content:center;align-items:flex-start;">
+    <div>
+      <h3 style="text-align:center;">V*(s)</h3>
+      <div class="grid-container" id="vi-grid" style="border-color:#9c27b0;"></div>
+    </div>
+    <div id="vi-policy-section" style="display:none;">
+      <h3 style="text-align:center;">&pi;*(s) &mdash; Extracted Policy</h3>
+      <div id="vi-extract-btn-container" style="text-align:center;margin-bottom:1rem;">
+        <button id="vi-extract-btn" style="background-color:#9c27b0;border:none;color:#fff;padding:8px 16px;border-radius:6px;">Extract Policy from V*</button>
+      </div>
+      <div class="grid-container" id="vi-policy-grid" style="border-color:#e91e63;"></div>
+    </div>
+  </div>
+  <div class="policy-tables" id="vi-tables" style="margin-top:1.5rem;"></div>
+</section>
+
+<section id="dp-compare" class="phase-container" style="border:2px solid #ffeb3b;padding:20px;border-radius:12px;background:#1a1a0a;display:none;">
+  <h2 style="color:#ffeb3b;">Comparison: Policy Iteration vs. Value Iteration</h2>
+  <div style="display:flex;gap:2rem;justify-content:center;flex-wrap:wrap;" id="dp-compare-content"></div>
+  <div style="margin-top:1.5rem;text-align:center;font-size:0.9rem;color:#ccc;max-width:700px;margin:1.5rem auto 0;">
+    <strong style="color:#ffeb3b;">Key Insight:</strong> Both converge to the same V* and &pi;*. Policy Iteration separates "evaluate" and "improve" cleanly. Value Iteration merges them &mdash; each Bellman update already takes the max, so it's both evaluating and improving at once. Value Iteration typically needs fewer total sweeps but each sweep does more work (max instead of weighted sum).
+  </div>
+</section>
+
+<section id="mc" class="phase-container" style="border:2px solid #00bcd4;padding:20px;border-radius:12px;">
+  <h2 style="color:#4dd0e1;">Monte Carlo &mdash; First-Visit</h2>
+  <div class="equation" style="border:1px solid #00bcd4;">Q(s,a) = average(Returns(s,a))</div>
+  <p>Generate full episodes using &epsilon;-greedy policy, then update Q-values with the <strong>average return</strong> from first visit to each (s, a) pair. <span style="color:#888;font-size:0.8rem;">Convergence: max|&Delta;Q| &lt; 0.01 after 50+ episodes</span></p>
+  <div class="controls">
+    <button id="mc-play-btn" style="border-color:#00bcd4;">Start MC</button>
+    <button id="mc-step-btn">Run Episode</button>
+    <span id="mc-episode-display">Episodes: 0</span>
+    <span id="mc-reward-display" style="color:#4dd0e1;">Last reward: 0.0</span>
+    <span id="mc-badge" class="convergence-badge learning">&#9675; LEARNING</span>
+  </div>
+  <div style="display:flex;gap:2rem;flex-wrap:wrap;justify-content:center;align-items:flex-start;">
+    <div>
+      <h3 style="text-align:center;">Greedy Policy from Q</h3>
+      <div class="grid-container" id="mc-grid" style="border-color:#00bcd4;"></div>
+    </div>
+    <div id="mc-path-section" style="display:none;">
+      <h3 style="text-align:center;" id="mc-path-title">Last Episode Path</h3>
+      <div class="grid-container" id="mc-path-grid" style="border-color:#009688;"></div>
+    </div>
+  </div>
+  <div class="policy-tables" id="mc-tables" style="margin-top:1.5rem;"></div>
+</section>
+
+<section id="td" class="phase-container" style="border:2px solid #ff5722;padding:20px;border-radius:12px;">
+  <div class="td-container">
+    <div class="td-method">
+      <h2 style="color:#ff8a65;">SARSA (On-Policy)</h2>
+      <div class="equation" style="border:1px solid #ff5722;font-size:1rem;">Q(s,a) &larr; Q(s,a) + &alpha;[r + &gamma;Q(s',a') - Q(s,a)]</div>
+      <p style="font-size:0.85rem;">Updates Q using the <strong>action actually taken</strong> (a') in the next state. Learns the value of the policy it follows. <span style="color:#888;font-size:0.75rem;">Convergence: max|&Delta;Q| &lt; 0.01 after 50+ episodes</span></p>
+      <div class="controls" style="flex-wrap:wrap;">
+        <button id="sarsa-play-btn" style="border-color:#ff5722;">Start SARSA</button>
+        <button id="sarsa-step-btn">Run Episode</button>
+        <span id="sarsa-info" style="font-size:0.8rem;">Ep: 0 | R: 0.0</span>
+        <span id="sarsa-badge" class="convergence-badge learning">&#9675; LEARNING</span>
+      </div>
+      <div style="display:flex;justify-content:center;">
+        <div class="grid-container" id="sarsa-grid" style="border-color:#ff5722;"></div>
+      </div>
+    </div>
+    <div class="td-method">
+      <h2 style="color:#ffb74d;">Q-Learning (Off-Policy)</h2>
+      <div class="equation" style="border:1px solid #ff9800;font-size:1rem;">Q(s,a) &larr; Q(s,a) + &alpha;[r + &gamma; max<sub>a'</sub> Q(s',a') - Q(s,a)]</div>
+      <p style="font-size:0.85rem;">Updates Q using the <strong>best possible action</strong> (max) in the next state. Learns optimal policy regardless of behavior. <span style="color:#888;font-size:0.75rem;">Convergence: max|&Delta;Q| &lt; 0.01 after 50+ episodes</span></p>
+      <div class="controls" style="flex-wrap:wrap;">
+        <button id="ql-play-btn" style="border-color:#ff9800;">Start Q-Learning</button>
+        <button id="ql-step-btn">Run Episode</button>
+        <span id="ql-info" style="font-size:0.8rem;">Ep: 0 | R: 0.0</span>
+        <span id="ql-badge" class="convergence-badge learning">&#9675; LEARNING</span>
+      </div>
+      <div style="display:flex;justify-content:center;">
+        <div class="grid-container" id="ql-grid" style="border-color:#ff9800;"></div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:1.5rem;text-align:center;font-size:0.85rem;color:#ccc;max-width:700px;margin:1.5rem auto 0;">
+    <strong style="color:#ff9800;">SARSA vs Q-Learning:</strong> SARSA uses the actual next action (a') &mdash; it learns the value of the &epsilon;-greedy policy it follows (safer, avoids danger). Q-Learning uses max &mdash; it learns the optimal policy regardless of exploration (bolder, may get closer to danger during learning).
+  </div>
+  <div class="policy-tables" id="td-tables" style="margin-top:1.5rem;"></div>
+</section>
+
+<section id="compare" class="phase-container" style="border:2px solid #fff;padding:20px;border-radius:12px;background:#0a0a0a;margin-top:2rem;">
+  <h2 style="color:#fff;">All Methods &mdash; Final Policies Compared</h2>
+  <div id="compare-content">
+    <div id="compare-placeholder" style="text-align:center;padding:40px;color:#666;border:1px dashed #333;border-radius:8px;">
+      <p>Comparative analytics will appear here once algorithms have run at least 20 episodes.</p>
+      <p style="font-size:0.8rem;" id="compare-progress">Current progress: MC(0), SARSA(0), QL(0)</p>
+    </div>
+    <div id="compare-results" style="display:none;"></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+(function() {
+  const GRID_SIZE = 4;
+  const ACTIONS = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
+  const DANGER_STATES = new Set([5, 9]);
+  const REWARD_DANGER = -5;
+  const REWARD_GOAL = 10;
+  const REWARD_STEP = 0;
+  const TOTAL_STATES = GRID_SIZE * GRID_SIZE;
+
+  let gamma = 0.9, alpha = 0.1, epsilon = 0.2;
+
+  const uniformPolicy = {}, optimisticPolicy = {}, suboptimalPolicy = {};
+  for (let s = 0; s < TOTAL_STATES; s++) {
+    uniformPolicy[s] = { UP: 0.25, DOWN: 0.25, LEFT: 0.25, RIGHT: 0.25 };
+    optimisticPolicy[s] = { UP: 0.1, DOWN: 0.4, LEFT: 0.1, RIGHT: 0.4 };
+    suboptimalPolicy[s] = { UP: 0.4, DOWN: 0.1, LEFT: 0.4, RIGHT: 0.1 };
+  }
+
+  const POLICIES = [
+    { id: 1, label: 'Policy 1', name: 'Uniform Random', policy: uniformPolicy },
+    { id: 2, label: 'Policy 2', name: 'Optimistic (Down/Right)', policy: optimisticPolicy },
+    { id: 3, label: 'Policy 3', name: 'Suboptimal (Up/Left)', policy: suboptimalPolicy },
+  ];
+
+  // State
+  let evalValues = POLICIES.map(() => new Array(TOTAL_STATES).fill(0));
+  let evalIteration = 0, isEvalDone = false, isEvalPlaying = false, evalInterval = null;
+
+  let frozenEvalValues = null, improvedPolicies = null, qValuesImproved = null, showImprovement = false;
+
+  let viValues = new Array(TOTAL_STATES).fill(0);
+  let viQValues = Array.from({ length: TOTAL_STATES }, () => ({ UP: 0, DOWN: 0, LEFT: 0, RIGHT: 0 }));
+  let viIteration = 0, viDone = false, viPlaying = false, viInterval = null, viPolicy = null;
+
+  let mcQTable = freshQTable(), mcReturns = freshReturnsTable();
+  let mcEpisode = 0, mcPlaying = false, mcDone = false, mcLastPath = [], mcTotalReward = 0, mcInterval = null;
+
+  let sarsaQTable = freshQTable(), sarsaEpisode = 0, sarsaPlaying = false, sarsaDone = false;
+  let sarsaLastPath = [], sarsaTotalReward = 0, sarsaInterval = null;
+
+  let qlQTable = freshQTable(), qlEpisode = 0, qlPlaying = false, qlDone = false;
+  let qlLastPath = [], qlTotalReward = 0, qlInterval = null;
+
+  function freshQTable() {
+    return Array.from({ length: TOTAL_STATES }, () => ({ UP: 0, DOWN: 0, LEFT: 0, RIGHT: 0 }));
+  }
+  function freshReturnsTable() {
+    return Array.from({ length: TOTAL_STATES }, () => ({ UP: [], DOWN: [], LEFT: [], RIGHT: [] }));
+  }
+
+  function getNextState(s, a) {
+    const row = Math.floor(s / GRID_SIZE), col = s % GRID_SIZE;
+    let nRow = row, nCol = col;
+    if (a === 'UP') nRow = Math.max(0, row - 1);
+    if (a === 'DOWN') nRow = Math.min(GRID_SIZE - 1, row + 1);
+    if (a === 'LEFT') nCol = Math.max(0, col - 1);
+    if (a === 'RIGHT') nCol = Math.min(GRID_SIZE - 1, col + 1);
+    return nRow * GRID_SIZE + nCol;
+  }
+
+  function getQValue(s, a, values) {
+    const nextS = getNextState(s, a);
+    let reward = REWARD_STEP;
+    if (nextS === TOTAL_STATES - 1) reward = REWARD_GOAL;
+    else if (DANGER_STATES.has(nextS)) reward = REWARD_DANGER;
+    return reward + gamma * values[nextS];
+  }
+
+  function getReward(nextS) {
+    if (nextS === TOTAL_STATES - 1) return REWARD_GOAL;
+    if (DANGER_STATES.has(nextS)) return REWARD_DANGER;
+    return REWARD_STEP;
+  }
+
+  function actionArrow(a) {
+    return { UP: '↑', DOWN: '↓', LEFT: '←', RIGHT: '→' }[a] || '?';
+  }
+
+  function epsilonGreedyAction(qTable, s, eps) {
+    if (Math.random() < eps) return ACTIONS[Math.floor(Math.random() * ACTIONS.length)];
+    let bestA = 'UP', bestQ = -Infinity;
+    for (const a of ACTIONS) {
+      if (qTable[s][a] > bestQ) { bestQ = qTable[s][a]; bestA = a; }
+    }
+    return bestA;
+  }
+
+  function qTableMaxDelta(oldQ, newQ) {
+    let maxD = 0;
+    for (let s = 0; s < TOTAL_STATES - 1; s++) {
+      for (const a of ACTIONS) maxD = Math.max(maxD, Math.abs(newQ[s][a] - oldQ[s][a]));
+    }
+    return maxD;
+  }
+
+  // --- RENDERING ---
+
+  function renderEnvGrid() {
+    const container = document.getElementById('env-grid');
+    container.innerHTML = '';
+    for (let sIdx = 0; sIdx < TOTAL_STATES; sIdx++) {
+      const isTerminal = sIdx === TOTAL_STATES - 1;
+      const isDanger = DANGER_STATES.has(sIdx);
+      const cell = document.createElement('div');
+      cell.className = 'cell' + (isTerminal ? ' terminal' : '') + (isDanger ? ' danger' : '');
+      cell.style.backgroundColor = isTerminal ? '#1a4d2e' : isDanger ? '#4d1a1a' : '#2a2a3a';
+
+      const idSpan = document.createElement('span');
+      idSpan.className = 'cell-id';
+      idSpan.textContent = sIdx;
+      cell.appendChild(idSpan);
+
+      if (isTerminal) {
+        cell.innerHTML += '<div style="text-align:center"><div style="font-size:1.2rem">🏁</div><div style="font-size:0.6rem;color:#4caf50">R=10</div></div>';
+      } else if (isDanger) {
+        cell.innerHTML += '<div style="text-align:center"><div style="font-size:1.2rem">💀</div><div style="font-size:0.6rem;color:#f44336">R=-5</div></div>';
+      } else {
+        cell.innerHTML += '<div class="action-arrows"><span class="arrow arrow-up">↑</span><span class="arrow arrow-left">←</span><span class="arrow arrow-right">→</span><span class="arrow arrow-down">↓</span></div>';
+      }
+      cell.prepend(idSpan);
+      container.appendChild(cell);
+    }
+  }
+
+  function renderEvalDashboard() {
+    const container = document.getElementById('eval-dashboard');
+    container.innerHTML = '';
+    POLICIES.forEach((p, pIdx) => {
+      const view = document.createElement('div');
+      view.className = 'policy-view';
+      view.innerHTML = `<h3>${p.label}<br/><span style="font-size:0.8em;opacity:0.7">${p.name}</span></h3>`;
+      const grid = document.createElement('div');
+      grid.className = 'grid-container';
+      for (let sIdx = 0; sIdx < TOTAL_STATES; sIdx++) {
+        const v = evalValues[pIdx][sIdx];
+        const isTerminal = sIdx === TOTAL_STATES - 1;
+        const isDanger = DANGER_STATES.has(sIdx);
+        const cell = document.createElement('div');
+        cell.className = 'cell' + (isTerminal ? ' terminal' : '') + (isDanger ? ' danger' : '');
+        if (!isTerminal) {
+          if (v >= 0) cell.style.backgroundColor = `rgba(255, 165, 0, ${Math.min(v / 10, 1)})`;
+          else cell.style.backgroundColor = `rgba(244, 67, 54, ${Math.min(Math.abs(v) / 5, 0.8)})`;
+        }
+        cell.innerHTML = `<span class="cell-id">${isDanger ? '💀' : sIdx}</span><span class="cell-value">${v.toFixed(2)}</span>`;
+        grid.appendChild(cell);
+      }
+      view.appendChild(grid);
+      container.appendChild(view);
+    });
+  }
+
+  function renderEvalTables() {
+    const container = document.getElementById('eval-tables');
+    container.innerHTML = '';
+    POLICIES.forEach((p, pIdx) => {
+      const div = document.createElement('div');
+      let html = `<h4>${p.label}<br/><span style="font-size:0.8em;opacity:0.7">${p.name}</span></h4>`;
+      html += '<table><thead><tr><th>State</th><th>UP</th><th>DOWN</th><th>LEFT</th><th>RIGHT</th><th style="background-color:#1a3a3a">V<sub>π</sub></th></tr></thead><tbody>';
+      for (let sIdx = 0; sIdx < TOTAL_STATES; sIdx++) {
+        const vColor = isEvalDone ? '#4caf50' : '#ffa500';
+        html += `<tr><td>${sIdx}</td><td>${p.policy[sIdx].UP.toFixed(2)}</td><td>${p.policy[sIdx].DOWN.toFixed(2)}</td><td>${p.policy[sIdx].LEFT.toFixed(2)}</td><td>${p.policy[sIdx].RIGHT.toFixed(2)}</td><td style="font-weight:bold;color:${vColor}">${evalValues[pIdx][sIdx].toFixed(2)}</td></tr>`;
+      }
+      html += '</tbody></table>';
+      div.innerHTML = html;
+      container.appendChild(div);
+    });
+  }
+
+  function renderImprovementSection() {
+    if (!showImprovement) {
+      document.getElementById('improvement-section').style.display = 'none';
+      return;
+    }
+    document.getElementById('improvement-section').style.display = '';
+
+    const dashboard = document.getElementById('improvement-dashboard');
+    dashboard.innerHTML = '';
+    POLICIES.forEach((p, pIdx) => {
+      const view = document.createElement('div');
+      view.className = 'policy-view';
+      view.innerHTML = `<h3>${p.label}<br/><span style="font-size:0.8em;opacity:0.7">${p.name} (Result)</span></h3>`;
+      const grid = document.createElement('div');
+      grid.className = 'grid-container';
+      grid.style.borderColor = '#4caf50';
+      for (let sIdx = 0; sIdx < TOTAL_STATES; sIdx++) {
+        const v = frozenEvalValues[pIdx][sIdx];
+        const isTerminal = sIdx === TOTAL_STATES - 1;
+        const isDanger = DANGER_STATES.has(sIdx);
+        const cell = document.createElement('div');
+        cell.className = 'cell' + (isTerminal ? ' terminal' : '') + (isDanger ? ' danger' : '');
+        if (!isTerminal) {
+          if (v >= 0) cell.style.backgroundColor = `rgba(76, 175, 80, ${Math.min(v / 10, 0.4)})`;
+          else cell.style.backgroundColor = `rgba(244, 67, 54, ${Math.min(Math.abs(v) / 5, 0.6)})`;
+        }
+        let inner = `<span class="cell-id">${isDanger ? '💀' : sIdx}</span><span class="cell-value" style="opacity:0.6">${v.toFixed(2)}</span>`;
+        if (improvedPolicies && !isTerminal) {
+          inner += `<div style="color:#fff;font-weight:bold;font-size:0.9rem;background-color:#2e7d32;padding:2px 4px;border-radius:4px;">${actionArrow(improvedPolicies[pIdx][sIdx])}</div>`;
+        }
+        cell.innerHTML = inner;
+        grid.appendChild(cell);
+      }
+      view.appendChild(grid);
+      dashboard.appendChild(view);
+    });
+
+    const tables = document.getElementById('improvement-tables');
+    tables.innerHTML = '';
+    POLICIES.forEach((p, pIdx) => {
+      const div = document.createElement('div');
+      let html = `<h4>${p.label}<br/><span style="font-size:0.8em;opacity:0.7">${p.name} &mdash; Improved π'</span></h4>`;
+      html += '<table><thead><tr><th rowspan="2">State</th><th colspan="4">π\'(a|s) / Q(s,a)</th><th rowspan="2" style="background-color:#1a3a3a">V<sub>π</sub></th></tr><tr><th>UP</th><th>DOWN</th><th>LEFT</th><th>RIGHT</th></tr></thead><tbody>';
+      for (let sIdx = 0; sIdx < TOTAL_STATES; sIdx++) {
+        const bestAction = improvedPolicies ? improvedPolicies[pIdx][sIdx] : null;
+        const stateQ = qValuesImproved ? qValuesImproved[pIdx][sIdx] : null;
+        html += `<tr><td>${sIdx}</td>`;
+        if (bestAction && stateQ) {
+          for (const a of ACTIONS) {
+            const isBest = bestAction === a;
+            html += `<td style="color:${isBest ? '#4caf50' : '#888'};font-weight:${isBest ? 'bold' : 'normal'}"><div>${isBest ? '1.00' : '0.00'}</div><div style="font-size:0.65rem;color:${isBest ? '#81c784' : '#666'};margin-top:2px">Q=${stateQ[a].toFixed(2)}</div></td>`;
+          }
+        } else {
+          html += `<td>${p.policy[sIdx].UP.toFixed(2)}</td><td>${p.policy[sIdx].DOWN.toFixed(2)}</td><td>${p.policy[sIdx].LEFT.toFixed(2)}</td><td>${p.policy[sIdx].RIGHT.toFixed(2)}</td>`;
+        }
+        html += `<td style="background:#0a0a0a">${frozenEvalValues[pIdx][sIdx].toFixed(2)}</td></tr>`;
+      }
+      html += '</tbody></table>';
+      div.innerHTML = html;
+      tables.appendChild(div);
+    });
+  }
+
+  function renderViGrid() {
+    const container = document.getElementById('vi-grid');
+    container.innerHTML = '';
+    for (let sIdx = 0; sIdx < TOTAL_STATES; sIdx++) {
+      const v = viValues[sIdx];
+      const isTerminal = sIdx === TOTAL_STATES - 1;
+      const isDanger = DANGER_STATES.has(sIdx);
+      const cell = document.createElement('div');
+      cell.className = 'cell' + (isTerminal ? ' terminal' : '') + (isDanger ? ' danger' : '');
+      if (!isTerminal) {
+        if (v >= 0) cell.style.backgroundColor = `rgba(206, 147, 216, ${Math.min(v / 10, 1)})`;
+        else cell.style.backgroundColor = `rgba(244, 67, 54, ${Math.min(Math.abs(v) / 5, 0.8)})`;
+      }
+      cell.innerHTML = `<span class="cell-id">${isDanger ? '💀' : sIdx}</span><span class="cell-value">${v.toFixed(2)}</span>`;
+      container.appendChild(cell);
+    }
+  }
+
+  function renderViPolicyGrid() {
+    if (!viDone) { document.getElementById('vi-policy-section').style.display = 'none'; return; }
+    document.getElementById('vi-policy-section').style.display = '';
+    if (viPolicy) document.getElementById('vi-extract-btn-container').style.display = 'none';
+    else document.getElementById('vi-extract-btn-container').style.display = '';
+
+    const container = document.getElementById('vi-policy-grid');
+    container.innerHTML = '';
+    for (let sIdx = 0; sIdx < TOTAL_STATES; sIdx++) {
+      const v = viValues[sIdx];
+      const isTerminal = sIdx === TOTAL_STATES - 1;
+      const isDanger = DANGER_STATES.has(sIdx);
+      const cell = document.createElement('div');
+      cell.className = 'cell' + (isTerminal ? ' terminal' : '') + (isDanger ? ' danger' : '');
+      if (!isTerminal) {
+        if (v >= 0) cell.style.backgroundColor = `rgba(206, 147, 216, ${Math.min(v / 10, 0.4)})`;
+        else cell.style.backgroundColor = `rgba(244, 67, 54, ${Math.min(Math.abs(v) / 5, 0.4)})`;
+      }
+      let inner = `<span class="cell-id">${isDanger ? '💀' : sIdx}</span>`;
+      if (viPolicy && !isTerminal) {
+        inner += `<div style="color:#fff;font-weight:bold;font-size:1.1rem;">${actionArrow(viPolicy[sIdx])}</div>`;
+      } else if (isTerminal) {
+        inner += '<span style="font-size:1rem">🏁</span>';
+      } else {
+        inner += '<span class="cell-value" style="opacity:0.5">?</span>';
+      }
+      cell.innerHTML = inner;
+      container.appendChild(cell);
+    }
+  }
+
+  function renderViTable() {
+    const container = document.getElementById('vi-tables');
+    if (viIteration === 0) { container.innerHTML = ''; return; }
+    let html = `<div><h4>Value Iteration<br/><span style="font-size:0.8em;opacity:0.7">Q(s,a) &rarr; max &rarr; V(s) | Iteration ${viIteration}</span></h4>`;
+    html += '<table><thead><tr><th rowspan="2">State</th><th colspan="4">Q(s,a) &amp; π(a|s)</th><th rowspan="2" style="background-color:#2a1a3a">V(s) = max Q</th></tr><tr><th>UP</th><th>DOWN</th><th>LEFT</th><th>RIGHT</th></tr></thead><tbody>';
+    for (let sIdx = 0; sIdx < TOTAL_STATES; sIdx++) {
+      const stateQ = viQValues[sIdx];
+      const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
+      const isTerminal = sIdx === TOTAL_STATES - 1;
+      html += `<tr><td>${sIdx}</td>`;
+      for (const a of ACTIONS) {
+        const isBest = !isTerminal && stateQ[a] === maxQ;
+        html += `<td style="color:${isBest ? '#ce93d8' : '#888'};font-weight:${isBest ? 'bold' : 'normal'}"><div style="font-size:0.7rem;color:${isBest ? '#ce93d8' : '#666'}">Q=${stateQ[a].toFixed(2)}</div><div>${isTerminal ? '-' : isBest ? '1.00' : '0.00'}</div></td>`;
+      }
+      html += `<td style="background:#1a0a2a;font-weight:bold;color:#ce93d8">${viValues[sIdx].toFixed(2)}</td></tr>`;
+    }
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+  }
+
+  function renderDpCompare() {
+    if (!isEvalDone && !viDone) { document.getElementById('dp-compare').style.display = 'none'; return; }
+    document.getElementById('dp-compare').style.display = '';
+    const container = document.getElementById('dp-compare-content');
+    container.innerHTML = `
+      <div style="background:#111;border:1px solid #ffa500;border-radius:8px;padding:16px;min-width:280px;">
+        <h3 style="color:#ffa500;margin-top:0;">Policy Iteration</h3>
+        <table style="width:100%"><tbody>
+          <tr><td>Eval Iterations</td><td style="font-weight:bold;color:#ffa500">${evalIteration}</td></tr>
+          <tr><td>Improvement Steps</td><td style="font-weight:bold;color:#4caf50">1</td></tr>
+          <tr><td>Total Sweeps</td><td style="font-weight:bold">${evalIteration + 1}</td></tr>
+          <tr><td style="padding-top:8px">Update Rule</td><td style="padding-top:8px;font-size:0.75rem">V = &Sigma; π(a|s) &middot; Q(s,a)</td></tr>
+          <tr><td>Needs Policy?</td><td style="color:#ffa500">Yes (π given)</td></tr>
+          <tr><td>When to use</td><td style="font-size:0.75rem">Few iterations to converge each eval</td></tr>
+        </tbody></table>
+      </div>
+      <div style="background:#111;border:1px solid #9c27b0;border-radius:8px;padding:16px;min-width:280px;">
+        <h3 style="color:#ce93d8;margin-top:0;">Value Iteration</h3>
+        <table style="width:100%"><tbody>
+          <tr><td>Iterations</td><td style="font-weight:bold;color:#ce93d8">${viIteration}</td></tr>
+          <tr><td>Improvement Steps</td><td style="font-weight:bold;color:#4caf50">Every sweep</td></tr>
+          <tr><td>Total Sweeps</td><td style="font-weight:bold">${viIteration}</td></tr>
+          <tr><td style="padding-top:8px">Update Rule</td><td style="padding-top:8px;font-size:0.75rem">V = max_a Q(s,a)</td></tr>
+          <tr><td>Needs Policy?</td><td style="color:#ce93d8">No (implicit max)</td></tr>
+          <tr><td>When to use</td><td style="font-size:0.75rem">Direct path to V*, no policy overhead</td></tr>
+        </tbody></table>
+      </div>`;
+  }
+
+  function renderQGrid(containerId, qTable, lastPath, borderColor, highlightColor, episode) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    for (let sIdx = 0; sIdx < TOTAL_STATES; sIdx++) {
+      const stateQ = qTable[sIdx];
+      const isTerminal = sIdx === TOTAL_STATES - 1;
+      const isDanger = DANGER_STATES.has(sIdx);
+      const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
+      const bestA = ACTIONS.find(a => stateQ[a] === maxQ) || 'UP';
+      const onPath = lastPath.includes(sIdx);
+      const cell = document.createElement('div');
+      cell.className = 'cell' + (isTerminal ? ' terminal' : '') + (isDanger ? ' danger' : '');
+      if (!isTerminal) {
+        if (maxQ >= 0) cell.style.backgroundColor = highlightColor.replace('A', Math.min(maxQ / 10, 0.8).toString());
+        else cell.style.backgroundColor = `rgba(244, 67, 54, ${Math.min(Math.abs(maxQ) / 5, 0.6)})`;
+      }
+      if (onPath) cell.style.border = '2px solid #fff';
+      let inner = `<span class="cell-id">${isDanger ? '💀' : sIdx}</span>`;
+      if (isTerminal) {
+        inner += '<span style="font-size:0.9rem">🏁</span>';
+      } else if (episode > 0) {
+        inner += `<div style="color:#fff;font-weight:bold;font-size:1rem;">${actionArrow(bestA)}</div>`;
+      } else {
+        inner += '<span class="cell-value" style="opacity:0.5">?</span>';
+      }
+      if (!isTerminal) inner += `<span style="font-size:0.5rem;position:absolute;bottom:2px;color:#aaa">${maxQ.toFixed(1)}</span>`;
+      cell.innerHTML = inner;
+      container.appendChild(cell);
+    }
+  }
+
+  function renderMcGrid() {
+    renderQGrid('mc-grid', mcQTable, mcLastPath, '#00bcd4', 'rgba(0, 188, 212, A)', mcEpisode);
+  }
+
+  function renderMcPathGrid() {
+    if (mcLastPath.length === 0) { document.getElementById('mc-path-section').style.display = 'none'; return; }
+    document.getElementById('mc-path-section').style.display = '';
+    document.getElementById('mc-path-title').innerHTML = `Last Episode Path<br/><span style="font-size:0.7em;opacity:0.7">${mcLastPath.length - 1} steps</span>`;
+    const container = document.getElementById('mc-path-grid');
+    container.innerHTML = '';
+    for (let sIdx = 0; sIdx < TOTAL_STATES; sIdx++) {
+      const isTerminal = sIdx === TOTAL_STATES - 1;
+      const isDanger = DANGER_STATES.has(sIdx);
+      const pathIdx = mcLastPath.indexOf(sIdx);
+      const onPath = pathIdx !== -1;
+      const stateQ = mcQTable[sIdx];
+      const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
+      const cell = document.createElement('div');
+      cell.className = 'cell' + (isTerminal ? ' terminal' : '') + (isDanger ? ' danger' : '');
+      if (onPath) cell.style.backgroundColor = 'rgba(0, 188, 212, 0.4)';
+      let inner = `<span class="cell-id">${isDanger ? '💀' : sIdx}</span>`;
+      if (onPath) inner += `<span style="font-weight:bold;color:#4dd0e1">${pathIdx === 0 ? 'S' : pathIdx === mcLastPath.length - 1 ? 'E' : pathIdx}</span>`;
+      if (!isTerminal) inner += `<span style="font-size:0.5rem;position:absolute;bottom:2px;color:#aaa">${maxQ.toFixed(1)}</span>`;
+      cell.innerHTML = inner;
+      container.appendChild(cell);
+    }
+  }
+
+  function renderQTable(containerId, qTable, episode, color, labelPrefix, params) {
+    const container = document.getElementById(containerId);
+    if (episode === 0) { container.innerHTML = ''; return; }
+    let html = `<div><h4>${labelPrefix} Q-Table<br/><span style="font-size:0.8em;opacity:0.7">${params}</span></h4>`;
+    html += `<table><thead><tr><th>State</th><th>Q(s,↑)</th><th>Q(s,↓)</th><th>Q(s,←)</th><th>Q(s,→)</th><th style="background-color:#0a2a2a">Best</th></tr></thead><tbody>`;
+    for (let sIdx = 0; sIdx < TOTAL_STATES; sIdx++) {
+      const stateQ = qTable[sIdx];
+      const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
+      const hasNonZero = ACTIONS.some(a => stateQ[a] !== 0);
+      html += `<tr><td>${sIdx}</td>`;
+      for (const a of ACTIONS) {
+        const isBest = stateQ[a] === maxQ && (maxQ !== 0 || hasNonZero);
+        html += `<td style="color:${isBest ? color : '#888'};font-weight:${isBest ? 'bold' : 'normal'}">${stateQ[a].toFixed(2)}</td>`;
+      }
+      const bestA = (maxQ !== 0 || hasNonZero) ? actionArrow(ACTIONS.find(a => stateQ[a] === maxQ)) : '-';
+      html += `<td style="color:${color};font-weight:bold">${bestA}</td></tr>`;
+    }
+    html += '</tbody></table></div>';
+    return html;
+  }
+
+  function renderMcTable() {
+    const container = document.getElementById('mc-tables');
+    if (mcEpisode === 0) { container.innerHTML = ''; return; }
+    container.innerHTML = renderQTable('mc-tables', mcQTable, mcEpisode, '#4dd0e1', 'Monte Carlo', `Episode ${mcEpisode} | ε=${epsilon} | γ=${gamma}`);
+  }
+
+  function renderTdTables() {
+    const container = document.getElementById('td-tables');
+    let html = '';
+    if (sarsaEpisode > 0) {
+      html += renderQTable('td-tables', sarsaQTable, sarsaEpisode, '#ff8a65', 'SARSA', `α=${alpha} | ε=${epsilon} | γ=${gamma}`);
+    }
+    if (qlEpisode > 0) {
+      html += renderQTable('td-tables', qlQTable, qlEpisode, '#ffb74d', 'Q-Learning', `α=${alpha} | ε=${epsilon} | γ=${gamma}`);
+    }
+    container.innerHTML = html;
+  }
+
+  function renderSarsaGrid() {
+    renderQGrid('sarsa-grid', sarsaQTable, sarsaLastPath, '#ff5722', 'rgba(255, 138, 101, A)', sarsaEpisode);
+  }
+
+  function renderQlGrid() {
+    renderQGrid('ql-grid', qlQTable, qlLastPath, '#ff9800', 'rgba(255, 183, 77, A)', qlEpisode);
+  }
+
+  function renderCompareSection() {
+    document.getElementById('compare-progress').textContent = `Current progress: MC(${mcEpisode}), SARSA(${sarsaEpisode}), QL(${qlEpisode})`;
+    if (mcEpisode <= 20 && sarsaEpisode <= 20 && qlEpisode <= 20) {
+      document.getElementById('compare-placeholder').style.display = '';
+      document.getElementById('compare-results').style.display = 'none';
+      return;
+    }
+    document.getElementById('compare-placeholder').style.display = 'none';
+    document.getElementById('compare-results').style.display = '';
+
+    let html = '<p style="font-size:0.85rem;color:#aaa;text-align:center;">After sufficient learning, all methods should converge to similar optimal policies for this deterministic environment.</p>';
+    html += '<div class="dashboard">';
+
+    // Value Iteration policy
+    html += '<div class="policy-view"><h3 style="color:#ce93d8">Value Iteration<br/><span style="font-size:0.7em;opacity:0.7">(DP, model-based)</span></h3><div class="grid-container" style="border-color:#9c27b0">';
+    for (let sIdx = 0; sIdx < TOTAL_STATES; sIdx++) {
+      const isTerminal = sIdx === TOTAL_STATES - 1;
+      const isDanger = DANGER_STATES.has(sIdx);
+      const bestA = viPolicy ? viPolicy[sIdx] : null;
+      html += `<div class="cell${isTerminal ? ' terminal' : ''}${isDanger ? ' danger' : ''}"><span class="cell-id">${isDanger ? '💀' : sIdx}</span>`;
+      if (isTerminal) html += '<span>🏁</span>';
+      else if (bestA && bestA !== 'NONE') html += `<span style="font-weight:bold;font-size:1rem">${actionArrow(bestA)}</span>`;
+      else html += '<span style="opacity:0.5">?</span>';
+      html += '</div>';
+    }
+    html += '</div></div>';
+
+    // MC policy
+    html += `<div class="policy-view"><h3 style="color:#4dd0e1">Monte Carlo<br/><span style="font-size:0.7em;opacity:0.7">(model-free, ep ${mcEpisode})</span></h3><div class="grid-container" style="border-color:#00bcd4">`;
+    for (let sIdx = 0; sIdx < TOTAL_STATES; sIdx++) {
+      const isTerminal = sIdx === TOTAL_STATES - 1;
+      const isDanger = DANGER_STATES.has(sIdx);
+      const stateQ = mcQTable[sIdx];
+      const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
+      const bestA = ACTIONS.find(a => stateQ[a] === maxQ) || 'UP';
+      html += `<div class="cell${isTerminal ? ' terminal' : ''}${isDanger ? ' danger' : ''}"><span class="cell-id">${isDanger ? '💀' : sIdx}</span>`;
+      if (isTerminal) html += '<span>🏁</span>';
+      else if (mcEpisode > 0) html += `<span style="font-weight:bold;font-size:1rem">${actionArrow(bestA)}</span>`;
+      else html += '<span style="opacity:0.5">?</span>';
+      html += '</div>';
+    }
+    html += '</div></div>';
+
+    // SARSA policy
+    html += `<div class="policy-view"><h3 style="color:#ff8a65">SARSA<br/><span style="font-size:0.7em;opacity:0.7">(on-policy TD, ep ${sarsaEpisode})</span></h3><div class="grid-container" style="border-color:#ff5722">`;
+    for (let sIdx = 0; sIdx < TOTAL_STATES; sIdx++) {
+      const isTerminal = sIdx === TOTAL_STATES - 1;
+      const isDanger = DANGER_STATES.has(sIdx);
+      const stateQ = sarsaQTable[sIdx];
+      const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
+      const bestA = ACTIONS.find(a => stateQ[a] === maxQ) || 'UP';
+      html += `<div class="cell${isTerminal ? ' terminal' : ''}${isDanger ? ' danger' : ''}"><span class="cell-id">${isDanger ? '💀' : sIdx}</span>`;
+      if (isTerminal) html += '<span>🏁</span>';
+      else if (sarsaEpisode > 0) html += `<span style="font-weight:bold;font-size:1rem">${actionArrow(bestA)}</span>`;
+      else html += '<span style="opacity:0.5">?</span>';
+      html += '</div>';
+    }
+    html += '</div></div>';
+
+    // Q-Learning policy
+    html += `<div class="policy-view"><h3 style="color:#ffb74d">Q-Learning<br/><span style="font-size:0.7em;opacity:0.7">(off-policy TD, ep ${qlEpisode})</span></h3><div class="grid-container" style="border-color:#ff9800">`;
+    for (let sIdx = 0; sIdx < TOTAL_STATES; sIdx++) {
+      const isTerminal = sIdx === TOTAL_STATES - 1;
+      const isDanger = DANGER_STATES.has(sIdx);
+      const stateQ = qlQTable[sIdx];
+      const maxQ = Math.max(...ACTIONS.map(a => stateQ[a]));
+      const bestA = ACTIONS.find(a => stateQ[a] === maxQ) || 'UP';
+      html += `<div class="cell${isTerminal ? ' terminal' : ''}${isDanger ? ' danger' : ''}"><span class="cell-id">${isDanger ? '💀' : sIdx}</span>`;
+      if (isTerminal) html += '<span>🏁</span>';
+      else if (qlEpisode > 0) html += `<span style="font-weight:bold;font-size:1rem">${actionArrow(bestA)}</span>`;
+      else html += '<span style="opacity:0.5">?</span>';
+      html += '</div>';
+    }
+    html += '</div></div></div>';
+
+    // Comparison table
+    html += `<div style="margin-top:1.5rem"><table style="margin:0 auto;font-size:0.8rem"><thead><tr><th>Property</th><th style="color:#ce93d8">DP (Value Iter)</th><th style="color:#4dd0e1">Monte Carlo</th><th style="color:#ff8a65">SARSA</th><th style="color:#ffb74d">Q-Learning</th></tr></thead><tbody>
+      <tr><td>Needs model?</td><td>Yes</td><td>No</td><td>No</td><td>No</td></tr>
+      <tr><td>Update timing</td><td>Every sweep</td><td>End of episode</td><td>Every step</td><td>Every step</td></tr>
+      <tr><td>Bootstrap?</td><td>Yes</td><td>No</td><td>Yes</td><td>Yes</td></tr>
+      <tr><td>On/Off policy</td><td>N/A</td><td>On-policy</td><td>On-policy</td><td>Off-policy</td></tr>
+      <tr><td>Update target</td><td>max Q</td><td>G (full return)</td><td>Q(s',a')</td><td>max Q(s',a')</td></tr>
+      <tr><td>Convergence</td><td>Fast (exact)</td><td>Slow (variance)</td><td>Medium</td><td>Medium</td></tr>
+    </tbody></table></div>`;
+
+    document.getElementById('compare-results').innerHTML = html;
+  }
+
+  // --- ALGORITHMS ---
+
+  function runEvaluationStep() {
+    let maxDelta = 0;
+    const nextValues = evalValues.map((policyValues, pIdx) => {
+      const policy = POLICIES[pIdx].policy;
+      const next = [...policyValues];
+      for (let s = 0; s < TOTAL_STATES - 1; s++) {
+        let newValue = 0;
+        for (const a of ACTIONS) {
+          newValue += policy[s][a] * getQValue(s, a, policyValues);
+        }
+        next[s] = newValue;
+        maxDelta = Math.max(maxDelta, Math.abs(newValue - policyValues[s]));
+      }
+      return next;
+    });
+    evalValues = nextValues;
+    evalIteration++;
+    if (maxDelta < 0.001 && evalIteration > 1) {
+      isEvalDone = true;
+      isEvalPlaying = false;
+      clearInterval(evalInterval);
+    }
+    updateEvalUI();
+  }
+
+  function updateEvalUI() {
+    document.getElementById('eval-iter-display').textContent = `Iteration: ${evalIteration}`;
+    document.getElementById('eval-badge').className = `convergence-badge ${isEvalDone ? 'done' : 'learning'}`;
+    document.getElementById('eval-badge').innerHTML = isEvalDone ? '✓ CONVERGED' : '○ LEARNING';
+    document.getElementById('eval-play-btn').textContent = isEvalPlaying ? 'Pause Evaluation' : 'Start Evaluation';
+    document.getElementById('eval-play-btn').disabled = isEvalDone;
+    document.getElementById('eval-step-btn').disabled = isEvalDone || isEvalPlaying;
+    document.getElementById('improvement-unlock').style.display = isEvalDone && !showImprovement ? '' : 'none';
+    renderEvalDashboard();
+    renderEvalTables();
+    renderDpCompare();
+  }
+
+  function runViStep() {
+    let maxDelta = 0;
+    const nextValues = [...viValues];
+    const nextQValues = [...viQValues];
+    for (let s = 0; s < TOTAL_STATES - 1; s++) {
+      let bestQ = -Infinity;
+      const stateQ = {};
+      for (const a of ACTIONS) {
+        const q = getQValue(s, a, viValues);
+        stateQ[a] = q;
+        if (q > bestQ) bestQ = q;
+      }
+      maxDelta = Math.max(maxDelta, Math.abs(bestQ - viValues[s]));
+      nextValues[s] = bestQ;
+      nextQValues[s] = stateQ;
+    }
+    viValues = nextValues;
+    viQValues = nextQValues;
+    viIteration++;
+    if (maxDelta < 0.001 && viIteration > 1) {
+      viDone = true;
+      viPlaying = false;
+      clearInterval(viInterval);
+    }
+    updateViUI();
+  }
+
+  function updateViUI() {
+    document.getElementById('vi-iter-display').textContent = `Iteration: ${viIteration}`;
+    document.getElementById('vi-badge').className = `convergence-badge ${viDone ? 'done' : 'learning'}`;
+    document.getElementById('vi-badge').innerHTML = viDone ? '✓ CONVERGED' : '○ LEARNING';
+    document.getElementById('vi-play-btn').textContent = viPlaying ? 'Pause' : 'Start Value Iteration';
+    document.getElementById('vi-play-btn').disabled = viDone;
+    document.getElementById('vi-step-btn').disabled = viDone || viPlaying;
+    renderViGrid();
+    renderViPolicyGrid();
+    renderViTable();
+    renderDpCompare();
+  }
+
+  function extractViPolicy() {
+    viPolicy = [];
+    for (let s = 0; s < TOTAL_STATES - 1; s++) {
+      let bestQ = -Infinity, bestA = 'UP';
+      for (const a of ACTIONS) {
+        const q = getQValue(s, a, viValues);
+        if (q > bestQ) { bestQ = q; bestA = a; }
+      }
+      viPolicy[s] = bestA;
+    }
+    viPolicy[TOTAL_STATES - 1] = 'NONE';
+    renderViPolicyGrid();
+    renderCompareSection();
+  }
+
+  function generateEpisode(qTable, eps) {
+    const states = [], actions = [], rewards = [];
+    let s = Math.floor(Math.random() * (TOTAL_STATES - 1));
+    let steps = 0;
+    while (s !== TOTAL_STATES - 1 && steps < 200) {
+      states.push(s);
+      const a = epsilonGreedyAction(qTable, s, eps);
+      actions.push(a);
+      const nextS = getNextState(s, a);
+      rewards.push(getReward(nextS));
+      s = nextS;
+      steps++;
+    }
+    states.push(s);
+    return { states, actions, rewards };
+  }
+
+  function runMcEpisode() {
+    const { states, actions, rewards } = generateEpisode(mcQTable, epsilon);
+    const newQTable = mcQTable.map(q => ({ ...q }));
+    const newReturns = mcReturns.map(r => ({ UP: [...r.UP], DOWN: [...r.DOWN], LEFT: [...r.LEFT], RIGHT: [...r.RIGHT] }));
+
+    let G = 0;
+    const visited = new Set();
+    for (let t = states.length - 2; t >= 0; t--) {
+      G = gamma * G + rewards[t];
+      const key = `${states[t]}-${actions[t]}`;
+      if (!visited.has(key)) {
+        visited.add(key);
+        newReturns[states[t]][actions[t]].push(G);
+        const rets = newReturns[states[t]][actions[t]];
+        newQTable[states[t]][actions[t]] = rets.reduce((a, b) => a + b, 0) / rets.length;
+      }
+    }
+
+    const delta = qTableMaxDelta(mcQTable, newQTable);
+    mcQTable = newQTable;
+    mcReturns = newReturns;
+    mcEpisode++;
+    mcLastPath = states;
+    mcTotalReward = rewards.reduce((a, b) => a + b, 0);
+
+    if (delta < 0.01 && mcEpisode > 50) {
+      mcDone = true;
+      mcPlaying = false;
+      clearInterval(mcInterval);
+    }
+    updateMcUI();
+  }
+
+  function updateMcUI() {
+    document.getElementById('mc-episode-display').textContent = `Episodes: ${mcEpisode}`;
+    document.getElementById('mc-reward-display').textContent = `Last reward: ${mcTotalReward.toFixed(1)}`;
+    document.getElementById('mc-badge').className = `convergence-badge ${mcDone ? 'done' : 'learning'}`;
+    document.getElementById('mc-badge').innerHTML = mcDone ? '✓ CONVERGED' : '○ LEARNING';
+    document.getElementById('mc-play-btn').textContent = mcPlaying ? 'Pause' : 'Start MC';
+    document.getElementById('mc-play-btn').disabled = mcDone;
+    document.getElementById('mc-step-btn').disabled = mcPlaying || mcDone;
+    renderMcGrid();
+    renderMcPathGrid();
+    renderMcTable();
+    renderCompareSection();
+  }
+
+  function runSarsaEpisode() {
+    const newQTable = sarsaQTable.map(q => ({ ...q }));
+    let s = Math.floor(Math.random() * (TOTAL_STATES - 1));
+    let a = epsilonGreedyAction(newQTable, s, epsilon);
+    const path = [s];
+    let totalR = 0, steps = 0;
+
+    while (s !== TOTAL_STATES - 1 && steps < 200) {
+      const nextS = getNextState(s, a);
+      const r = getReward(nextS);
+      totalR += r;
+      const nextA = epsilonGreedyAction(newQTable, nextS, epsilon);
+      newQTable[s][a] += alpha * (r + gamma * newQTable[nextS][nextA] - newQTable[s][a]);
+      s = nextS;
+      a = nextA;
+      path.push(s);
+      steps++;
+    }
+
+    const delta = qTableMaxDelta(sarsaQTable, newQTable);
+    sarsaQTable = newQTable;
+    sarsaEpisode++;
+    sarsaLastPath = path;
+    sarsaTotalReward = totalR;
+
+    if (delta < 0.01 && sarsaEpisode > 50) {
+      sarsaDone = true;
+      sarsaPlaying = false;
+      clearInterval(sarsaInterval);
+    }
+    updateSarsaUI();
+  }
+
+  function updateSarsaUI() {
+    document.getElementById('sarsa-info').textContent = `Ep: ${sarsaEpisode} | R: ${sarsaTotalReward.toFixed(1)}`;
+    document.getElementById('sarsa-badge').className = `convergence-badge ${sarsaDone ? 'done' : 'learning'}`;
+    document.getElementById('sarsa-badge').innerHTML = sarsaDone ? '✓ CONVERGED' : '○ LEARNING';
+    document.getElementById('sarsa-play-btn').textContent = sarsaPlaying ? 'Pause' : 'Start SARSA';
+    document.getElementById('sarsa-play-btn').disabled = sarsaDone;
+    document.getElementById('sarsa-step-btn').disabled = sarsaPlaying || sarsaDone;
+    renderSarsaGrid();
+    renderTdTables();
+    renderCompareSection();
+  }
+
+  function runQlEpisode() {
+    const newQTable = qlQTable.map(q => ({ ...q }));
+    let s = Math.floor(Math.random() * (TOTAL_STATES - 1));
+    const path = [s];
+    let totalR = 0, steps = 0;
+
+    while (s !== TOTAL_STATES - 1 && steps < 200) {
+      const a = epsilonGreedyAction(newQTable, s, epsilon);
+      const nextS = getNextState(s, a);
+      const r = getReward(nextS);
+      totalR += r;
+      const maxNextQ = Math.max(...ACTIONS.map(na => newQTable[nextS][na]));
+      newQTable[s][a] += alpha * (r + gamma * maxNextQ - newQTable[s][a]);
+      s = nextS;
+      path.push(s);
+      steps++;
+    }
+
+    const delta = qTableMaxDelta(qlQTable, newQTable);
+    qlQTable = newQTable;
+    qlEpisode++;
+    qlLastPath = path;
+    qlTotalReward = totalR;
+
+    if (delta < 0.01 && qlEpisode > 50) {
+      qlDone = true;
+      qlPlaying = false;
+      clearInterval(qlInterval);
+    }
+    updateQlUI();
+  }
+
+  function updateQlUI() {
+    document.getElementById('ql-info').textContent = `Ep: ${qlEpisode} | R: ${qlTotalReward.toFixed(1)}`;
+    document.getElementById('ql-badge').className = `convergence-badge ${qlDone ? 'done' : 'learning'}`;
+    document.getElementById('ql-badge').innerHTML = qlDone ? '✓ CONVERGED' : '○ LEARNING';
+    document.getElementById('ql-play-btn').textContent = qlPlaying ? 'Pause' : 'Start Q-Learning';
+    document.getElementById('ql-play-btn').disabled = qlDone;
+    document.getElementById('ql-step-btn').disabled = qlPlaying || qlDone;
+    renderQlGrid();
+    renderTdTables();
+    renderCompareSection();
+  }
+
+  function resetAll() {
+    clearInterval(evalInterval); clearInterval(viInterval);
+    clearInterval(mcInterval); clearInterval(sarsaInterval); clearInterval(qlInterval);
+
+    evalValues = POLICIES.map(() => new Array(TOTAL_STATES).fill(0));
+    evalIteration = 0; isEvalDone = false; isEvalPlaying = false;
+    frozenEvalValues = null; improvedPolicies = null; qValuesImproved = null; showImprovement = false;
+
+    viValues = new Array(TOTAL_STATES).fill(0);
+    viQValues = Array.from({ length: TOTAL_STATES }, () => ({ UP: 0, DOWN: 0, LEFT: 0, RIGHT: 0 }));
+    viIteration = 0; viDone = false; viPlaying = false; viPolicy = null;
+
+    mcQTable = freshQTable(); mcReturns = freshReturnsTable();
+    mcEpisode = 0; mcPlaying = false; mcDone = false; mcLastPath = []; mcTotalReward = 0;
+
+    sarsaQTable = freshQTable(); sarsaEpisode = 0; sarsaPlaying = false; sarsaDone = false;
+    sarsaLastPath = []; sarsaTotalReward = 0;
+
+    qlQTable = freshQTable(); qlEpisode = 0; qlPlaying = false; qlDone = false;
+    qlLastPath = []; qlTotalReward = 0;
+
+    renderAll();
+  }
+
+  function renderAll() {
+    renderEnvGrid();
+    updateEvalUI();
+    renderImprovementSection();
+    updateViUI();
+    updateMcUI();
+    updateSarsaUI();
+    updateQlUI();
+    renderCompareSection();
+  }
+
+  // --- EVENT HANDLERS ---
+
+  document.getElementById('gamma-slider').addEventListener('input', function() {
+    gamma = parseFloat(this.value);
+    document.getElementById('gamma-label').textContent = `Discount Factor (γ): ${gamma.toFixed(2)}`;
+    document.getElementById('env-gamma-display').innerHTML = `<strong>γ:</strong> ${gamma.toFixed(2)}`;
+  });
+  document.getElementById('alpha-slider').addEventListener('input', function() {
+    alpha = parseFloat(this.value);
+    document.getElementById('alpha-label').textContent = `Learning Rate (α): ${alpha.toFixed(2)}`;
+  });
+  document.getElementById('epsilon-slider').addEventListener('input', function() {
+    epsilon = parseFloat(this.value);
+    document.getElementById('epsilon-label').textContent = `Exploration (ε): ${epsilon.toFixed(2)}`;
+  });
+
+  document.getElementById('reset-all-btn').addEventListener('click', resetAll);
+
+  document.getElementById('eval-play-btn').addEventListener('click', function() {
+    if (isEvalDone) return;
+    isEvalPlaying = !isEvalPlaying;
+    if (isEvalPlaying) evalInterval = setInterval(runEvaluationStep, 100);
+    else clearInterval(evalInterval);
+    this.textContent = isEvalPlaying ? 'Pause Evaluation' : 'Start Evaluation';
+    document.getElementById('eval-step-btn').disabled = isEvalPlaying;
+  });
+  document.getElementById('eval-step-btn').addEventListener('click', function() {
+    if (!isEvalDone && !isEvalPlaying) runEvaluationStep();
+  });
+
+  document.getElementById('unlock-improvement-btn').addEventListener('click', function() {
+    frozenEvalValues = evalValues.map(v => [...v]);
+    showImprovement = true;
+    document.getElementById('improvement-unlock').style.display = 'none';
+    renderImprovementSection();
+  });
+
+  document.getElementById('improve-btn').addEventListener('click', function() {
+    if (!frozenEvalValues || improvedPolicies) return;
+    const newImproved = [], newQValues = [];
+    frozenEvalValues.forEach((policyValues) => {
+      const bestActions = [], policyQValues = [];
+      for (let s = 0; s < TOTAL_STATES - 1; s++) {
+        let bestQ = -Infinity, bestA = 'UP';
+        const stateQ = {};
+        for (const a of ACTIONS) {
+          const q = getQValue(s, a, policyValues);
+          stateQ[a] = q;
+          if (q > bestQ) { bestQ = q; bestA = a; }
+        }
+        bestActions[s] = bestA;
+        policyQValues[s] = stateQ;
+      }
+      bestActions[TOTAL_STATES - 1] = 'NONE';
+      policyQValues[TOTAL_STATES - 1] = { UP: 0, DOWN: 0, LEFT: 0, RIGHT: 0 };
+      newImproved.push(bestActions);
+      newQValues.push(policyQValues);
+    });
+    improvedPolicies = newImproved;
+    qValuesImproved = newQValues;
+    this.disabled = true;
+    this.style.backgroundColor = '#333';
+    this.textContent = 'Policy Improved!';
+    renderImprovementSection();
+  });
+
+  document.getElementById('vi-play-btn').addEventListener('click', function() {
+    if (viDone) return;
+    viPlaying = !viPlaying;
+    if (viPlaying) viInterval = setInterval(runViStep, 100);
+    else clearInterval(viInterval);
+    updateViUI();
+  });
+  document.getElementById('vi-step-btn').addEventListener('click', function() {
+    if (!viDone && !viPlaying) runViStep();
+  });
+  document.getElementById('vi-extract-btn').addEventListener('click', extractViPolicy);
+
+  document.getElementById('mc-play-btn').addEventListener('click', function() {
+    if (mcDone) return;
+    mcPlaying = !mcPlaying;
+    if (mcPlaying) mcInterval = setInterval(runMcEpisode, 150);
+    else clearInterval(mcInterval);
+    updateMcUI();
+  });
+  document.getElementById('mc-step-btn').addEventListener('click', function() {
+    if (!mcPlaying && !mcDone) runMcEpisode();
+  });
+
+  document.getElementById('sarsa-play-btn').addEventListener('click', function() {
+    if (sarsaDone) return;
+    sarsaPlaying = !sarsaPlaying;
+    if (sarsaPlaying) sarsaInterval = setInterval(runSarsaEpisode, 150);
+    else clearInterval(sarsaInterval);
+    updateSarsaUI();
+  });
+  document.getElementById('sarsa-step-btn').addEventListener('click', function() {
+    if (!sarsaPlaying && !sarsaDone) runSarsaEpisode();
+  });
+
+  document.getElementById('ql-play-btn').addEventListener('click', function() {
+    if (qlDone) return;
+    qlPlaying = !qlPlaying;
+    if (qlPlaying) qlInterval = setInterval(runQlEpisode, 150);
+    else clearInterval(qlInterval);
+    updateQlUI();
+  });
+  document.getElementById('ql-step-btn').addEventListener('click', function() {
+    if (!qlPlaying && !qlDone) runQlEpisode();
+  });
+
+  // Navigation scroll highlight
+  let activeSection = 'env';
+  function updateNavHighlight() {
+    const sections = ['env', 'pi', 'vi', 'dp-compare', 'mc', 'td', 'compare'];
+    const scrollPos = window.scrollY + 100;
+    for (const section of sections) {
+      const el = document.getElementById(section);
+      if (el && el.offsetTop <= scrollPos && el.offsetTop + el.offsetHeight > scrollPos) {
+        activeSection = section === 'dp-compare' ? 'compare' : section;
+        break;
+      }
+    }
+    document.querySelectorAll('nav a').forEach(a => {
+      const sec = a.dataset.section;
+      const color = a.dataset.color;
+      if (sec === activeSection) {
+        a.classList.add('active');
+        a.style.background = color;
+        a.style.borderColor = color;
+        a.style.boxShadow = `0 0 10px ${color}44`;
+      } else {
+        a.classList.remove('active');
+        a.style.background = 'rgba(255, 255, 255, 0.05)';
+        a.style.borderColor = '#444';
+        a.style.boxShadow = 'none';
+      }
+    });
+  }
+
+  window.addEventListener('scroll', updateNavHighlight);
+  document.querySelectorAll('nav a').forEach(a => {
+    a.addEventListener('click', function(e) {
+      e.preventDefault();
+      const id = this.getAttribute('href').substring(1);
+      const el = document.getElementById(id);
+      if (el) window.scrollTo({ top: el.offsetTop - 80, behavior: 'smooth' });
+    });
+  });
+
+  // Initial render
+  renderAll();
+  updateNavHighlight();
+})();
+</script>
+</body>
+</html>
