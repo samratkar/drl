@@ -12,11 +12,19 @@ layout: post
 
 ### N1. Sample-Average Computation
 
+An agent pulls arm $a$ three times and receives rewards $R_1 = 2$, $R_2 = 4$, $R_3 = 3$. Compute $Q_4(a)$ using the sample-average method.
+
+**Solution:**
+
 $Q_4(a) = \frac{2 + 4 + 3}{3} = 3.0$
 
 ---
 
 ### N2. Incremental Update — Step by Step
+
+Starting with $Q_1 = 0$, use the incremental update $Q_{n+1} = Q_n + \frac{1}{n}(R_n - Q_n)$ to compute $Q_2$, $Q_3$, and $Q_4$ for rewards $R_1 = 4$, $R_2 = 6$, $R_3 = 2$. Verify your answer against the simple average formula.
+
+**Solution:**
 
 - $Q_2 = 0 + \frac{1}{1}(4 - 0) = 4.0$
 - $Q_3 = 4 + \frac{1}{2}(6 - 4) = 5.0$
@@ -27,6 +35,10 @@ Verify: $(4 + 6 + 2)/3 = 4.0$ ✓
 ---
 
 ### N3. Epsilon-Greedy Probabilities
+
+A 5-armed bandit uses $\epsilon$-greedy with $\epsilon = 0.2$. Current estimates: $Q_t = [1.5, 2.3, 2.3, 0.8, 1.0]$. Arms 2 and 3 are tied for the best (assume ties broken uniformly). What is the probability of selecting each arm? Verify the probabilities sum to 1.
+
+**Solution:**
 
 - Explore probability per arm: $\epsilon / k = 0.2 / 5 = 0.04$
 - Arms 2 and 3 are both greedy. Greedy probability split: $(1 - \epsilon) / 2 = 0.8 / 2 = 0.4$
@@ -41,6 +53,10 @@ Verify: $(4 + 6 + 2)/3 = 4.0$ ✓
 
 ### N4. Constant Step-Size Update
 
+With $\alpha = 0.2$ and $Q_1 = 0$, compute $Q_2$, $Q_3$, $Q_4$ for rewards $R_1 = 5$, $R_2 = 3$, $R_3 = 7$.
+
+**Solution:**
+
 - $Q_2 = 0 + 0.2(5 - 0) = 1.0$
 - $Q_3 = 1.0 + 0.2(3 - 1.0) = 1.4$
 - $Q_4 = 1.4 + 0.2(7 - 1.4) = 2.52$
@@ -48,6 +64,10 @@ Verify: $(4 + 6 + 2)/3 = 4.0$ ✓
 ---
 
 ### N5. Exponential Recency-Weighted Average — Weight Computation
+
+With $\alpha = 0.3$ and $n = 5$ total rewards observed, compute the weight on each reward $R_i$ ($i = 1, \ldots, 5$) and on the initial value $Q_1$. Verify the weights sum to 1.
+
+**Solution:**
 
 Weight on $R_i$ = $\alpha(1-\alpha)^{n-i} = 0.3 \times 0.7^{5-i}$
 
@@ -65,6 +85,10 @@ Weight on $R_i$ = $\alpha(1-\alpha)^{n-i} = 0.3 \times 0.7^{5-i}$
 
 ### N6. Verify Weights Sum to 1
 
+Show algebraically that the weights in the exponential recency-weighted average sum to 1. That is, prove: $(1-\alpha)^n + \sum_{i=1}^{n} \alpha(1-\alpha)^{n-i} = 1$
+
+**Solution:**
+
 Total weight = $(1-\alpha)^n + \sum_{i=1}^n \alpha(1-\alpha)^{n-i}$
 
 $= (1-\alpha)^n + \alpha \sum_{j=0}^{n-1} (1-\alpha)^j$ (substituting $j = n - i$)
@@ -78,6 +102,10 @@ $= (1-\alpha)^n + 1 - (1-\alpha)^n = 1$ ✓
 ---
 
 ### N7. Initial Bias Decay
+
+With $Q_1 = 10$, $\alpha = 0.2$, compute the weight on $Q_1$ and its contribution to $Q_{n+1}$ after $n = 1, 3, 5, 10, 20$ steps.
+
+**Solution:**
 
 Weight on $Q_1 = (1-\alpha)^n = 0.8^n$
 
@@ -93,6 +121,10 @@ Weight on $Q_1 = (1-\alpha)^n = 0.8^n$
 
 ### N8. Sample-Average Destroys Initial Bias
 
+With $Q_1 = 100$ (wildly optimistic) and sample-average ($\alpha_n = 1/n$), compute $Q_2$, $Q_3$, $Q_4$ for rewards $R_1 = 1$, $R_2 = 3$, $R_3 = 2$. What happens to the initial bias after the first step?
+
+**Solution:**
+
 - $Q_2 = 100 + \frac{1}{1}(1 - 100) = 1.0$ (initial bias completely gone!)
 - $Q_3 = 1.0 + \frac{1}{2}(3 - 1.0) = 2.0$
 - $Q_4 = 2.0 + \frac{1}{3}(2 - 2.0) = 2.0$
@@ -102,6 +134,14 @@ After just one step, $Q_1 = 100$ has zero influence.
 ---
 
 ### N9. Convergence Conditions Check
+
+Determine whether each step-size sequence satisfies the convergence conditions $\sum \alpha_n = \infty$ and $\sum \alpha_n^2 < \infty$:
+(a) $\alpha_n = 1/n$  
+(b) $\alpha_n = 0.1$ (constant)  
+(c) $\alpha_n = 1/n^2$  
+(d) $\alpha_n = 1/\sqrt{n}$
+
+**Solution:**
 
 | Sequence | $\sum \alpha_n$ | $\sum \alpha_n^2$ | Both satisfied? |
 |----------|----------------|-------------------|-----------------|
@@ -114,6 +154,10 @@ After just one step, $Q_1 = 100$ has zero influence.
 
 ### N10. UCB Score Computation
 
+At step $t = 100$ with $c = 2$, compute the UCB score for each arm and determine which arm is selected: Arm 1: Q=2.5, N=40; Arm 2: Q=1.8, N=5; Arm 3: Q=3.0, N=50
+
+**Solution:**
+
 UCB score = $Q_t(a) + 2\sqrt{\ln(100) / N_t(a)}$, where $\ln(100) = 4.605$.
 
 - Arm 1: $2.5 + 2\sqrt{4.605/40} = 2.5 + 2 \times 0.339 = 2.5 + 0.679 = 3.179$
@@ -125,6 +169,10 @@ UCB score = $Q_t(a) + 2\sqrt{\ln(100) / N_t(a)}$, where $\ln(100) = 4.605$.
 ---
 
 ### N11. UCB — Bonus Decay Over Time
+
+For arm $a$ with $c = 2$, compute the UCB bonus at steps $t = 10, 100, 1000$ assuming $N_t(a) = t/2$. What trend do you observe?
+
+**Solution:**
 
 Bonus = $2\sqrt{\ln t / (t/2)} = 2\sqrt{2 \ln t / t}$
 
@@ -139,6 +187,10 @@ The bonus shrinks as the arm is sampled more, transitioning from exploration to 
 ---
 
 ### N12. Softmax Probabilities from Preferences
+
+Compute the action probabilities $\pi_t(a)$ from preferences $H_t = [1.0, 2.0, 0.5]$ using softmax. Verify the probabilities sum to 1.
+
+**Solution:**
 
 - $e^{1.0} = 2.718$
 - $e^{2.0} = 7.389$
@@ -157,6 +209,10 @@ Check: $0.231 + 0.629 + 0.140 = 1.000$ ✓
 
 ### N13. Gradient Bandit — One Update Step (With Baseline)
 
+Given: $H_t = [1.0, 2.0, 0.5]$, $\pi_t = [0.231, 0.629, 0.140]$. Agent selects arm 2, receives $R_t = 3.5$, baseline $\bar{R}_t = 2.0$, $\alpha = 0.1$. Compute $H_{t+1}$ for all arms.
+
+**Solution:**
+
 $R_t - \bar{R}_t = 3.5 - 2.0 = 1.5$ (positive — good reward)
 
 - Arm 1 (not selected): $H_{t+1}(1) = 1.0 + 0.1 \times 1.5 \times (0 - 0.231) = 1.0 - 0.035 = 0.965$
@@ -168,6 +224,10 @@ Arm 2 (selected, good reward) → preference increased. Others decreased.
 ---
 
 ### N14. Gradient Bandit — Bad Reward Update
+
+Same setup as N13 but now $R_t = 0.5$ (below baseline) and the agent selects arm 1. Compute $H_{t+1}$ for all arms.
+
+**Solution:**
 
 $R_t - \bar{R}_t = 0.5 - 2.0 = -1.5$ (negative — bad reward)
 
@@ -181,6 +241,10 @@ Arm 1 (selected, bad reward) → preference decreased. Others increased (probabi
 
 ### N15. Gradient Bandit — Without Baseline
 
+Using preferences $H_t = [0, 0, 0]$ and true reward mean shifted to +4. Agent selects arm 1 and receives $R_t = 3.8$. Compute with $\alpha = 0.4$ and no baseline. What is problematic?
+
+**Solution:**
+
 $R_t - \bar{R}_t = 3.8 - 0 = 3.8$ (positive, even though arm 1 might be bad!)
 
 - Arm 1 (selected): $H_{t+1}(1) = 0 + 0.4 \times 3.8 \times (1 - 1/3) = 0 + 1.013 = 1.013$
@@ -193,6 +257,10 @@ Arm 1's preference increased massively — but $R_t = 3.8$ might be below the tr
 
 ### N16. Expected Reward Computation
 
+An agent's current policy is $\pi_t = [0.5, 0.3, 0.2]$ and true values are $q_{\ast} = [1.0, 3.0, 2.0]$. Compute $\mathbb{E}[R_t]$. What would the optimal expected reward be? How much reward per step is the current policy losing?
+
+**Solution:**
+
 $\mathbb{E}[R_t] = 0.5 \times 1.0 + 0.3 \times 3.0 + 0.2 \times 2.0 = 0.5 + 0.9 + 0.4 = 1.8$
 
 Optimal: put all probability on arm 2 → $\mathbb{E}[R_t] = 3.0$
@@ -203,6 +271,10 @@ The current policy loses $3.0 - 1.8 = 1.2$ in expected reward per step.
 
 ### N17. Optimistic Greedy — First Few Steps
 
+A 3-armed bandit with $Q_1 = [5, 5, 5]$, $\alpha = 0.1$, true values $q_{\ast} = [1, 2, 1.5]$. The greedy agent selects arm 1, receives $R_1 = 1.2$. Compute new estimates and predict which arm is selected next.
+
+**Solution:**
+
 $Q_2(1) = 5 + 0.1(1.2 - 5) = 5 - 0.38 = 4.62$
 $Q_2(2) = 5$ (unchanged)
 $Q_2(3) = 5$ (unchanged)
@@ -212,6 +284,10 @@ Next step: greedy selects $\argmax[4.62, 5, 5]$ → arm 2 or 3 (tied at 5). The 
 ---
 
 ### N18. Comparing Step-Sizes — After 5 Rewards
+
+An arm receives rewards $R = [3, 1, 4, 1, 5]$. Starting from $Q_1 = 0$, compute $Q_6$ using (a) Sample average and (b) Constant $\alpha = 0.3$. Compare.
+
+**Solution:**
 
 **(a) Sample average:**
 $Q_6 = (3 + 1 + 4 + 1 + 5) / 5 = 14/5 = 2.8$
@@ -229,6 +305,10 @@ Note $Q_6$ is similar but not identical — the constant $\alpha$ method gives m
 
 ### N19. UCB — Effect of $c$ Parameter
 
+At $t = 50$, arm $a$ has $Q_t(a) = 2.0$ and $N_t(a) = 10$. Compute the UCB score for $c = 0.5, 1, 2, 4$. At what value of $c$ does the exploration bonus dominate?
+
+**Solution:**
+
 $\ln(50) = 3.912$. Bonus factor = $\sqrt{3.912/10} = 0.626$.
 
 | $c$ | Bonus = $c \times 0.626$ | Score |
@@ -243,6 +323,10 @@ Larger $c$ → more exploration. At $c = 4$, the bonus dominates the estimated v
 ---
 
 ### N20. Full Update Comparison — All Methods
+
+A 3-armed bandit at step $t = 10$. Q = [2.0, 1.5, 2.5], N = [5, 3, 2]. Which arm does each method select? (epsilon-greedy eps=0.1 coin=0.95, UCB c=2, Gradient bandit H=[0.5, 0.3, 0.8], Plain greedy)
+
+**Solution:**
 
 **$\epsilon$-greedy**: Random number 0.95 > $\epsilon = 0.1$, so exploit: $\argmax[2.0, 1.5, 2.5] = \textbf{arm 3}$
 

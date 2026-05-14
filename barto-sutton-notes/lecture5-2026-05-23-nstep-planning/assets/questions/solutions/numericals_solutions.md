@@ -4,7 +4,9 @@ layout: post
 
 # Numerical Question Solutions - Lecture 5
 
-1. **Calculating n-step Returns:**
+1. **Calculating n-step Returns:** Given a sequence of rewards $R_1=2, R_2=-1, R_3=4, R_4=10$ and states $S_0, S_1, S_2, S_3, S_4$. Assume $\gamma = 0.9$ and $V(S_4) = 5.0$. Calculate: a) The 1-step return $G_{0:1}$ b) The 2-step return $G_{0:2}$ c) The 3-step return $G_{0:3}$ d) The 4-step return $G_{0:4}$
+
+   **Solution:**
    Given $R_1=2, R_2=-1, R_3=4, R_4=10$ and $V(S_4)=5.0, \gamma=0.9$.
    
    a) **1-step return $G_{0:1}$:**
@@ -22,21 +24,29 @@ layout: post
    c) $G_{0:3} = R_1 + 0.9 R_2 + 0.81 R_3 + 0.9^3 V(S_3) = 2 - 0.9 + 0.81(4) + 0.729(5.0) = 1.1 + 3.24 + 3.645 = 7.985$
    d) $G_{0:4} = R_1 + 0.9 R_2 + 0.81 R_3 + 0.729 R_4 + 0.9^4 V(S_4) = 2 - 0.9 + 3.24 + 0.729(10) + 0.6561(5.0) = 4.34 + 7.29 + 3.2805 = 14.9105$
 
-2. **Importance Sampling Ratio:**
+2. **Importance Sampling Ratio:** Consider an off-policy n-step task. Target policy: $\pi(left \mid s) = 0.8, \pi(right \mid s) = 0.2$. Behavior policy: $b(left \mid s) = 0.5, b(right \mid s) = 0.5$. Actions taken: $A_0=left, A_1=left, A_2=right$. Calculate the 3-step importance sampling ratio $\rho_{0:2}$.
+
+   **Solution:**
    $\rho_{0:2} = \frac{\pi(A_0 \mid S_0)}{b(A_0 \mid S_0)} \cdot \frac{\pi(A_1 \mid S_1)}{b(A_1 \mid S_1)} \cdot \frac{\pi(A_2 \mid S_2)}{b(A_2 \mid S_2)}$
    $\rho_{0:2} = \frac{0.8}{0.5} \cdot \frac{0.8}{0.5} \cdot \frac{0.2}{0.5} = 1.6 \cdot 1.6 \cdot 0.4 = 2.56 \cdot 0.4 = 1.024$.
 
-3. **Dyna-Q+ Exploration Bonus:**
+3. **Dyna-Q+ Exploration Bonus:** In Dyna-Q+, the bonus added to the reward in planning is $r + \kappa\sqrt{\tau}$. If $\kappa = 0.01$ and a state-action pair $(s, a)$ was last tried 1000 time steps ago, what is the exploration bonus added to the simulated reward?
+
+   **Solution:**
    Bonus = $\kappa \sqrt{\tau} = 0.01 \cdot \sqrt{1000} \approx 0.01 \cdot 31.62 = 0.3162$.
    The simulated reward used in planning becomes $r + 0.3162$.
 
-4. **Tree Backup Returns:**
+4. **Tree Backup Returns:** In a 2-step Tree Backup update, we visit state $S_t$, take action $A_t$, reach $S_{t+1}$, then take $A_{t+1}$ and reach $S_{t+2}$. Assume $\gamma=1.0$, $R_{t+1}=2, R_{t+2}=3$. Policy $\pi(a \mid S_{t+1})$: $A_{t+1}$ has prob 0.6, other action $a'$ has prob 0.4. Estimates: $Q(S_{t+1}, a') = 10, Q(S_{t+2}, a) = 5$ for all $a$ in $S_{t+2}$. Calculate the 2-step Tree Backup return $G_{t:t+2}$.
+
+   **Solution:**
    $G_{t:t+2} = R_{t+1} + \gamma \sum_{a \neq A_{t+1}} \pi(a \mid S_{t+1}) Q(S_{t+1}, a) + \gamma \pi(A_{t+1} \mid S_{t+1}) [R_{t+2} + \gamma V(S_{t+2})]$
    Given $\gamma=1.0$:
    $G_{t:t+2} = 2 + (0.4 \cdot 10) + 0.6 \cdot [3 + 1.0 \cdot 5]$
    $G_{t:t+2} = 2 + 4 + 0.6 \cdot [8] = 6 + 4.8 = 10.8$.
 
-5. **Wait-and-See return:**
+5. **Wait-and-See return:** For a task with $n=3, \gamma=0.9$. Rewards: $R_1=1, R_2=1, R_3=1$. The episode ends at $T=3$. What is the n-step return $G_{0:3}$? (Hint: Does it involve bootstrapping?)
+
+   **Solution:**
    Since the episode ends at $T=3$, the 3-step return $G_{0:3}$ is just the full return (Monte Carlo return) because there is no $S_3$ to bootstrap from (or $V(S_3)=0$).
    $G_{0:3} = R_1 + \gamma R_2 + \gamma^2 R_3 = 1 + 0.9(1) + 0.81(1) = 1 + 0.9 + 0.81 = 2.71$.
    It does **not** involve bootstrapping.
