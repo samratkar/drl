@@ -231,27 +231,27 @@ layout: post
 
     **Intuition:** Both states are symmetric (each transitions to the other with the same reward), so they must have the same value. The value of 2 represents the discounted sum of all future rewards: $1 + 0.5 + 0.25 + \cdots = \frac{1}{1-0.5} = 2$.
 
-15. **Question:** **Bellman Optimality**: In a state $S$, two actions $a_1, a_2$ exist. $a_1$: $50\%$ chance of $R=10, V(S')=0$; $50\%$ chance of $R=0, V(S')=10$. $a_2$: $100\%$ chance of $R=4, V(S')=2$. With $\gamma=1$, find $V^*(S)$.
+15. **Question:** **Bellman Optimality**: In a state $S$, two actions $a_1, a_2$ exist. $a_1$: $50\%$ chance of $R=10, V(S')=0$; $50\%$ chance of $R=0, V(S')=10$. $a_2$: $100\%$ chance of $R=4, V(S')=2$. With $\gamma=1$, find $V^\ast(S)$.
 
     **Answer:** $a_1: 0.5[10 + 0] + 0.5[0 + 10] = 5 + 5 = 10$.
     $a_2: 1.0[4 + 2] = 6$.
-    $V^*(S) = \max(10, 6) = 10$.
+    $V^\ast(S) = \max(10, 6) = 10$.
 
     **Explanation (Sutton & Barto, Ch 3, Section 3.6 - Bellman Optimality Equation):**
 
-    The Bellman optimality equation is: $V^*(s) = \max_a \sum_{s',r} p(s',r|s,a)[r + \gamma V^*(s')]$
+    The Bellman optimality equation is: $V^\ast(s) = \max_a \sum_{s',r} p(s',r|s,a)[r + \gamma V^\ast(s')]$
 
-    We compute $q^*(s, a)$ for each action, then take the max.
+    We compute $q^\ast(s, a)$ for each action, then take the max.
 
     **Action $a_1$** (stochastic — two outcomes):
     - 50% chance: $R = 10$, next state value $V(S') = 0$ → contribution: $0.5[10 + 1 \times 0] = 5$
     - 50% chance: $R = 0$, next state value $V(S') = 10$ → contribution: $0.5[0 + 1 \times 10] = 5$
-    - Total: $q^*(s, a_1) = 5 + 5 = 10$
+    - Total: $q^\ast(s, a_1) = 5 + 5 = 10$
 
     **Action $a_2$** (deterministic — one outcome):
-    - 100% chance: $R = 4$, next state value $V(S') = 2$ → $q^*(s, a_2) = 1.0[4 + 1 \times 2] = 6$
+    - 100% chance: $R = 4$, next state value $V(S') = 2$ → $q^\ast(s, a_2) = 1.0[4 + 1 \times 2] = 6$
 
-    **Optimal value:** $V^*(S) = \max(10, 6) = 10$ → the optimal policy chooses $a_1$.
+    **Optimal value:** $V^\ast(S) = \max(10, 6) = 10$ → the optimal policy chooses $a_1$.
 
     Note: $\gamma = 1$ here, so there is no discounting. Even though $a_1$ is risky (stochastic), its expected value is higher than the safe action $a_2$.
 
@@ -441,7 +441,7 @@ layout: post
 
     **Policy is stable! Converged in 2 iterations.**
 
-    Final: $V^*(A) = 4.5, \quad V^*(B) = 5.0, \quad \pi^*(A) = \text{right}, \quad \pi^*(B) = \text{right}$
+    Final: $V^\ast(A) = 4.5, \quad V^\ast(B) = 5.0, \quad \pi^\ast(A) = \text{right}, \quad \pi^\ast(B) = \text{right}$
 
     ---
 
@@ -457,9 +457,9 @@ layout: post
 
     **Converged in 3 sweeps** ($\Delta = 0$ at sweep 3).
 
-    Final: $V^*(A) = 4.5, \quad V^*(B) = 5.0$
+    Final: $V^\ast(A) = 4.5, \quad V^\ast(B) = 5.0$
 
-    Extract policy: $\pi^*(s) = \arg\max_a Q(s, a)$ → $\pi^*(A) = \text{right}, \quad \pi^*(B) = \text{right}$
+    Extract policy: $\pi^\ast(s) = \arg\max_a Q(s, a)$ → $\pi^\ast(A) = \text{right}, \quad \pi^\ast(B) = \text{right}$
 
     ---
 
@@ -486,7 +486,7 @@ layout: post
     - **right**: move one step toward Terminal, $R = 0$ (except $E \to \text{Terminal}$ gives $R = +10$)
     - $\gamma = 0.9$
 
-    Optimal values: $V^* = [6.56, \ 7.29, \ 8.10, \ 9.00, \ 10.00]$
+    Optimal values: $V^\ast = [6.56, \ 7.29, \ 8.10, \ 9.00, \ 10.00]$
 
     **Policy Iteration (iterative evaluation, $\theta = 0.01$):**
 
@@ -1035,7 +1035,7 @@ layout: post
 
     Starting from $V(C) = 0, V(W) = 0$. Update: $V(s) \leftarrow \max_a Q(s, a)$.
 
-    | Iter | $Q(C,S)$ | $Q(C,F)$ | $V(C)$ | $Q(W,S)$ | $Q(W,F)$ | $V(W)$ | $\pi^*$ | $\Delta$ |
+    | Iter | $Q(C,S)$ | $Q(C,F)$ | $V(C)$ | $Q(W,S)$ | $Q(W,F)$ | $V(W)$ | $\pi^\ast$ | $\Delta$ |
     |------|-----------|-----------|---------|-----------|-----------|---------|---------|----------|
     | 0 | — | — | $0$ | — | — | $0$ | — | — |
     | 1 | $1.00$ | $2.00$ | $2.00$ | $1.00$ | $-10$ | $1.00$ | F, S | $2.00$ |
@@ -1075,7 +1075,7 @@ layout: post
     | Method | Iterations to converge | Why |
     |--------|:----------------------:|-----|
     | **Policy Iteration** | **2** | Exact evaluation solves the linear system in one shot; only 1 policy change needed |
-    | **Value Iteration** | **49** | Iteratively approaches $V^*$; the self-loop ($C \to C$ with 50%) creates slow convergence |
+    | **Value Iteration** | **49** | Iteratively approaches $V^\ast$; the self-loop ($C \to C$ with 50%) creates slow convergence |
     | **Ratio** | **24.5× more for VI** | |
 
     **Why Value Iteration is slow here:**

@@ -8,7 +8,6 @@ layout: post
 ---
 
 # Lecture 4: Monte Carlo Methods & Temporal-Difference Learning
-**Date:** 2026-05-16  
 **Reference:** Sutton & Barto, Chapters 5 & 6 (2nd Edition)
 
 ---

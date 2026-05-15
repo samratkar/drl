@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Lecture 4: Monte Carlo Methods &amp; Temporal-Difference Learning</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js"
+  type="text/javascript"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+mermaid.initialize({ startOnLoad: true });
+</script>
+<style>
+html {
+  background: #f5f7fb;
+}
+body {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 32px 40px 56px;
+  background: #ffffff;
+  color: #1f1f1f;
+  font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+  box-shadow: 0 8px 24px rgba(60, 64, 67, 0.12);
+  border-radius: 16px;
+}
+header#title-block-header {
+  display: none;
+}
+h1, h2, h3, h4 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #9370db;
+}
+h1 {
+  margin-top: 0;
+  margin-bottom: 24px;
+  font-size: 2.25rem;
+  text-align: left;
+  letter-spacing: -0.02em;
+}
+h2 {
+  margin-top: 36px;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e3eb;
+  font-size: 1.52rem;
+}
+h3 {
+  margin-top: 28px;
+  margin-bottom: 10px;
+  font-size: 1.22rem;
+}
+h4 {
+  margin-top: 22px;
+  margin-bottom: 8px;
+  font-size: 1rem;
+  color: #3c4043;
+}
+p, li {
+  text-align: left;
+}
+p {
+  margin: 0.75rem 0 1rem;
+}
+ul, ol {
+  margin-top: 0.35rem;
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+li {
+  margin: 0.24rem 0;
+}
+hr {
+  height: 1px;
+  border: 0;
+  background: #e0e3eb;
+  margin: 24px 0;
+}
+a {
+  color: #1a73e8;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+blockquote {
+  border-left: 4px solid #1a73e8;
+  color: #3c4043;
+  background: #f8fbff;
+  margin: 1rem 0;
+  padding: 0.4rem 1rem;
+  border-radius: 0 8px 8px 0;
+}
+code, pre code {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.9em;
+}
+code {
+  background: #f1f3f4;
+  padding: 0.12rem 0.3rem;
+  border-radius: 4px;
+}
+pre {
+  background: #f8f9fa;
+  border: 1px solid #e0e3eb;
+  border-radius: 10px;
+  padding: 14px 16px;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre;
+}
+pre > code {
+  display: block;
+  white-space: pre;
+  word-break: normal;
+  overflow-wrap: normal;
+  tab-size: 4;
+}
+table {
+  width: auto;
+  max-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 1.25rem auto;
+  display: inline-table;
+  table-layout: auto;
+  font-size: 0.96em;
+  border: 1px solid #d8bfd8;
+  border-top: none;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(147, 112, 219, 0.12);
+}
+th, td {
+  border-right: 1px solid #e9d5ff;
+  border-bottom: 1px solid #e9d5ff;
+  padding: 10px 12px;
+  vertical-align: top;
+}
+th {
+  background: #ede9fe;
+  color: #202124;
+}
+thead th {
+  font-weight: 700;
+  border-top: none !important;
+}
+tbody tr:nth-child(even) td {
+  background: #fbfcfe;
+}
+tbody tr:hover td {
+  background: #faf5ff;
+}
+tr > *:last-child {
+  border-right: 0;
+}
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+thead tr:first-child th:first-child {
+  border-top: none !important;
+}
+thead tr:first-child th {
+  border-top: none !important;
+}
+.sourceCode,
+pre code {
+  font-variant-ligatures: none;
+}
+.math.display {
+  overflow-x: auto;
+  margin: 1rem 0 1.1rem;
+  text-align: center;
+}
+.math.inline {
+  white-space: normal;
+}
+.mermaid {
+  text-align: center;
+  margin: 1.2rem 0 1.35rem;
+}
+pre.mermaid {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+img, svg {
+  display: block;
+  margin: 1rem auto;
+  max-width: 100%;
+}
+@page {
+  margin: 0.6in;
+}
+@media print {
+  html {
+    background: white;
+  }
+  body {
+    box-shadow: none;
+    background: white;
+    padding: 0;
+    font-size: 12pt;
+    border-radius: 0;
+    max-width: none;
+  }
+  a {
+    color: inherit;
+  }
+}
+</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Lecture 4: Monte Carlo Methods &amp;
+Temporal-Difference Learning</h1>
+</header>
+<h1
+id="lecture-4-monte-carlo-methods-temporal-difference-learning">Lecture
+4: Monte Carlo Methods &amp; Temporal-Difference Learning</h1>
+<p><strong>Reference:</strong> Sutton &amp; Barto, Chapters 5 &amp; 6
+(2nd Edition)</p>
+<hr />
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a
+href="#lecture-4-monte-carlo-methods--temporal-difference-learning">Lecture
+4: Monte Carlo Methods &amp; Temporal-Difference Learning</a>
+<ul>
+<li><a href="#table-of-contents">Table of Contents</a></li>
+</ul></li>
+<li><a href="#lecture-map">Lecture Map</a></li>
+<li><a href="#chapter-5-monte-carlo-methods">Chapter 5: Monte Carlo
+Methods</a>
+<ul>
+<li><a href="#50-deep-dive-monte-carlo-vs-dynamic-programming">5.0 Deep
+Dive: Monte Carlo vs. Dynamic Programming</a>
+<ul>
+<li><a href="#1-the-model-requirement-model-free-vs-model-based">1. The
+Model Requirement (Model-Free vs. Model-Based)</a>
+<ul>
+<li><a href="#concrete-example-what-does-a-model-look-like">Concrete
+Example: What does a “Model” look like?</a></li>
+</ul></li>
+<li><a href="#2-bootstrapping-vs-sampling">2. Bootstrapping
+vs. Sampling</a></li>
+<li><a href="#3-the-lookahead-logic">3. The “Lookahead” Logic</a></li>
+<li><a href="#4-the-exploration-challenge">4. The Exploration
+Challenge</a></li>
+<li><a href="#5-does-mc-use-the-bellman-equation">5. Does MC use the
+Bellman Equation?</a></li>
+<li><a href="#comparison-summary">Comparison Summary</a></li>
+<li><a href="#51-monte-carlo-prediction">5.1 Monte Carlo Prediction</a>
+<ul>
+<li><a href="#first-visit-vs-every-visit-mc">First-visit vs. Every-visit
+MC</a></li>
+<li><a href="#incremental-rolling-average">Incremental (Rolling)
+Average</a></li>
+<li><a href="#the-process-flow-of-mc">The Process flow of MC</a></li>
+<li><a href="#two-variants-of-policy-evaluation-and-improvement">Two
+variants of policy evaluation and improvement</a></li>
+<li><a href="#two-variants-of-qsa-updates-within-an-episode">Two
+variants of Q(s,a) updates within an episode</a></li>
+<li><a href="#example-51-blackjack">Example 5.1: Blackjack</a></li>
+</ul></li>
+<li><a href="#52-monte-carlo-estimation-of-action-values">5.2 Monte
+Carlo Estimation of Action Values</a></li>
+<li><a href="#53-monte-carlo-control">5.3 Monte Carlo Control</a>
+<ul>
+<li><a href="#monte-carlo-with-exploring-starts-mc-es">Monte Carlo with
+Exploring Starts (MC ES)</a></li>
+</ul></li>
+<li><a href="#54-monte-carlo-control-without-exploring-starts">5.4 Monte
+Carlo Control without Exploring Starts</a>
+<ul>
+<li><a href="#comparing-exploration-strategies">Comparing Exploration
+Strategies</a></li>
+</ul></li>
+<li><a href="#55-off-policy-prediction-via-importance-sampling">5.5
+Off-policy Prediction via Importance Sampling</a>
+<ul>
+<li><a href="#1-the-importance-sampling-ratio-rho">1. The Importance
+Sampling Ratio (<span class="math inline">\(\\rho\)</span>)</a></li>
+<li><a href="#2-ordinary-importance-sampling-ois">2. Ordinary Importance
+Sampling (OIS)</a></li>
+<li><a href="#3-weighted-importance-sampling-wis">3. Weighted Importance
+Sampling (WIS)</a></li>
+<li><a href="#example-55-infinite-variance">Example 5.5: Infinite
+Variance</a></li>
+</ul></li>
+<li><a href="#56-incremental-implementation">5.6 Incremental
+Implementation</a></li>
+<li><a href="#code-examples">Code Examples</a></li>
+<li><a href="#57-off-policy-monte-carlo-control">5.7 Off-policy Monte
+Carlo Control</a>
+<ul>
+<li><a href="#detailed-process-flow-from-scratch">Detailed Process Flow
+(From Scratch)</a></li>
+<li><a href="#visual-process-flow-off-policy-mc">Visual Process Flow:
+Off-Policy MC</a></li>
+</ul></li>
+<li><a href="#58-discounting-aware-importance-sampling">5.8
+*Discounting-aware Importance Sampling</a></li>
+<li><a href="#59-per-decision-importance-sampling">5.9 *Per-decision
+Importance Sampling</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#chapter-6-temporal-difference-learning">Chapter 6:
+Temporal-Difference Learning</a>
+<ul>
+<li><a href="#61-td-prediction">6.1 TD Prediction</a></li>
+<li><a href="#62-advantages-of-td-prediction-methods">6.2 Advantages of
+TD Prediction Methods</a></li>
+<li><a href="#63-optimality-of-td0">6.3 Optimality of TD(0)</a></li>
+<li><a href="#64-sarsa-on-policy-td-control">6.4 Sarsa: On-policy TD
+Control</a></li>
+<li><a href="#65-q-learning-off-policy-td-control">6.5 Q-learning:
+Off-policy TD Control</a>
+<ul>
+<li><a href="#example-66-cliff-walking">Example 6.6: Cliff
+Walking</a></li>
+</ul></li>
+<li><a href="#66-expected-sarsa">6.6 Expected Sarsa</a></li>
+<li><a href="#67-maximization-bias-and-double-learning">6.7 Maximization
+Bias and Double Learning</a></li>
+<li><a href="#68-games-afterstates-and-other-special-cases">6.8 Games,
+Afterstates, and Other Special Cases</a></li>
+<li><a href="#practice-exercises">Practice Exercises</a></li>
+</ul></li>
+</ul>
+<hr />
+<h1 id="lecture-map">Lecture Map</h1>
+<p><img src="./assets/images/lecture4map.png" /></p>
+<h1 id="chapter-5-monte-carlo-methods">Chapter 5: Monte Carlo
+Methods</h1>
+<p>Monte Carlo (MC) methods learn from
+<strong>experience</strong>—sample sequences of states, actions, and
+rewards from actual or simulated interaction with an environment. Unlike
+Dynamic Programming, they require no model (<span
+class="math inline">\(P\)</span> and <span
+class="math inline">\(R\)</span>).</p>
+<h2 id="deep-dive-monte-carlo-vs.-dynamic-programming">5.0 Deep Dive:
+Monte Carlo vs. Dynamic Programming</h2>
+<p>To understand Monte Carlo, we must contrast it with the Dynamic
+Programming (DP) methods from the previous lecture. The transition from
+DP to MC represents the move from <strong>Planning</strong> (using a
+model) to <strong>Learning</strong> (using experience).</p>
+<h3 id="the-model-requirement-model-free-vs.-model-based">1. The Model
+Requirement (Model-Free vs. Model-Based)</h3>
+<ul>
+<li><strong>DP (Model-Based):</strong> Requires a full environment model
+(<span class="math inline">\(P(s&#39;|s,a)\)</span> and <span
+class="math inline">\(R(s,a)\)</span>). It "computes" the value function
+by knowing exactly where every action leads.</li>
+<li><strong>MC (Model-Free):</strong> Requires only
+<strong>experience</strong>. It doesn’t know <span
+class="math inline">\(P\)</span>. Instead, it takes an action and "sees"
+what happens. The environment’s physics replace the mathematical
+model.</li>
+</ul>
+<h4 id="concrete-example-what-does-a-model-look-like">Concrete Example:
+What does a “Model” look like?</h4>
+<p>In DP, the environment is a known <strong>Data Structure</strong>. In
+MC, the environment is a <strong>Black Box</strong>.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- DYNAMIC PROGRAMMING (Model-Based) ---</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># We have a dictionary telling us exactly what will happen.</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># P[state][action] = [(probability, next_state, reward, is_terminal), ...]</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>P <span class="op">=</span> {</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="dv">4</span>: { <span class="co"># From State 4 (Center)</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>        <span class="dv">0</span>: [(<span class="fl">1.0</span>, <span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>, <span class="va">False</span>)], <span class="co"># Action UP leads to State 1 with 100% prob</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        <span class="dv">1</span>: [(<span class="fl">1.0</span>, <span class="dv">7</span>, <span class="op">-</span><span class="dv">1</span>, <span class="va">False</span>)], <span class="co"># Action DOWN leads to State 7</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        <span class="dv">2</span>: [(<span class="fl">1.0</span>, <span class="dv">3</span>, <span class="op">-</span><span class="dv">1</span>, <span class="va">False</span>)], <span class="co"># Action LEFT leads to State 3</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>        <span class="dv">3</span>: [(<span class="fl">1.0</span>, <span class="dv">5</span>, <span class="op">-</span><span class="dv">1</span>, <span class="va">False</span>)]  <span class="co"># Action RIGHT leads to State 5</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># DP Update Logic: Uses the internal dictionary</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dp_update(s, a, V, gamma<span class="op">=</span><span class="fl">0.9</span>):</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    expected_value <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> prob, next_s, reward, done <span class="kw">in</span> P[s][a]:</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>        expected_value <span class="op">+=</span> prob <span class="op">*</span> (reward <span class="op">+</span> gamma <span class="op">*</span> V[next_s])</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> expected_value</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co"># --- MONTE CARLO (Model-Free) ---</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co"># We have NO dictionary. We just interact with an &#39;env&#39; object.</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mc_experience(s, a, env):</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># We don&#39;t know where we will end up until we call .step()</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    next_s, reward, done <span class="op">=</span> env.step(a) </span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> next_s, reward, done</span></code></pre></div>
+<h3 id="bootstrapping-vs.-sampling">2. Bootstrapping vs. Sampling</h3>
+<ul>
+<li><strong>DP (Bootstrapping):</strong> Updates estimates based on
+other estimates. It uses the <strong>Bellman Equation</strong> to look
+one step ahead and "borrows" the value of the next state (<span
+class="math inline">\(V(s&#39;)\)</span>) to update the current state
+(<span class="math inline">\(V(s)\)</span>): <span
+class="math display">\[V(s) = \sum_{a, s&#39;, r} \pi(a|s) p(s&#39;,
+r|s, a) [r + \gamma V(s&#39;)]\]</span></li>
+<li><strong>MC (No Bootstrapping):</strong> Estimates are independent.
+The value of a state is not based on the values of other states; it is
+based on the <strong>actual returns</strong> (<span
+class="math inline">\(G_t\)</span>) observed from that state until the
+terminal state: <span class="math display">\[V(s) \approx
+\text{average}(G_t)\]</span></li>
+</ul>
+<h3 id="the-lookahead-logic">3. The "Lookahead" Logic</h3>
+<ul>
+<li><strong>DP (One-step Lookahead):</strong> While the <em>value</em>
+of a state represents an infinite future, the <strong>update</strong> is
+one-step. It looks ahead only to the immediate next states (<span
+class="math inline">\(s&#39;\)</span>) and then "bootstraps" the rest of
+the infinite future by using the current estimate <span
+class="math inline">\(V(s&#39;)\)</span>. It assumes that <span
+class="math inline">\(V(s&#39;)\)</span> already correctly captures
+everything that happens after <span
+class="math inline">\(s&#39;\)</span>.</li>
+<li><strong>MC (Multi-step Return):</strong> There is no bootstrapping.
+The update uses the <strong>entire sequence</strong> of rewards until
+the end of the episode. It doesn’t "borrow" from the estimate of the
+next state; it actually waits to see every single reward that
+follows.</li>
+</ul>
+<p><strong>Analogy:</strong> - <strong>DP</strong> is like asking a
+traveler: "What is the total distance to the destination?" and the
+traveler answers: "It is 5 miles to the next town, plus whatever the
+sign in that town says the remaining distance is." (One-step lookahead +
+Bootstrapping). - <strong>MC</strong> is like actually driving the
+entire way to the destination and then looking at your odometer to see
+exactly how far you traveled. (Multi-step/Full-episode experience).</p>
+<h3 id="the-exploration-challenge">4. The Exploration Challenge</h3>
+<ul>
+<li><strong>DP:</strong> "Sweeps" through the entire state space.
+Because we have a model, we can calculate the value of any state at any
+time.</li>
+<li><strong>MC:</strong> Can only learn about states it actually visits.
+If the policy never goes to State 7, State 7 remains a mystery. This
+necessitates <strong>Exploring Starts</strong> or <strong>Stochastic
+Policies</strong> (<span
+class="math inline">\(\\epsilon\)</span>-greedy) to ensure the agent
+"sees" the whole world.</li>
+</ul>
+<h3 id="does-mc-use-the-bellman-equation">5. Does MC use the Bellman
+Equation?</h3>
+<p>A common question is: <em>"If MC doesn’t bootstrap, does the Bellman
+Equation still matter?"</em> * <strong>Theoretically: YES.</strong> The
+Bellman Equation defines what <span class="math inline">\(V(s)\)</span>
+is. It is the target we are trying to reach. * <strong>Computationally:
+NO.</strong> The MC algorithm does not use the recursive property (<span
+class="math inline">\(V(s) \leftarrow R + V(s&#39;)\)</span>). Instead,
+it uses the <strong>Law of Large Numbers</strong>. It treats the total
+return <span class="math inline">\(G_t\)</span> as a random variable and
+simply calculates its empirical mean.</p>
+<p><strong>MC “validates” the Bellman Equation through experience rather
+than “solving” it through recursion.</strong></p>
+<h3 id="comparison-summary">Comparison Summary</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Aspect</th>
+<th style="text-align: left;">Dynamic Programming (DP)</th>
+<th style="text-align: left;">Monte Carlo (MC)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>Model (P, R)</strong></td>
+<td style="text-align: left;">Required (Model-Based)</td>
+<td style="text-align: left;">Not Required (Model-Free)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Update Rule</strong></td>
+<td style="text-align: left;">Bellman Equation (Bootstrapping)</td>
+<td style="text-align: left;">Average Returns (No Bootstrapping)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Temporal Scope</strong></td>
+<td style="text-align: left;">One-step Lookahead</td>
+<td style="text-align: left;">Full Episode (to Terminal)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Computation</strong></td>
+<td style="text-align: left;">Expected Value (Integration)</td>
+<td style="text-align: left;">Sample Means (Averaging)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Prerequisite</strong></td>
+<td style="text-align: left;">Knowledge of “Physics”</td>
+<td style="text-align: left;">Interaction with “Physics”</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="monte-carlo-prediction">5.1 Monte Carlo Prediction</h3>
+<p>MC prediction learns the state-value function <span
+class="math inline">\(v_\pi\)</span> for a given policy <span
+class="math inline">\(\pi\)</span> by averaging the returns observed
+after visiting a state.</p>
+<h4 id="first-visit-vs.-every-visit-mc">First-visit vs. Every-visit
+MC</h4>
+<p>While both methods use the same basic averaging formula, the
+<strong>set of returns</strong> they consider is different. We estimate
+the action-value function <span class="math inline">\(Q(s, a)\)</span>
+using the count of visits <span class="math inline">\(N(s,
+a)\)</span>:</p>
+<p><span class="math display">\[Q(s, a) = \frac{1}{N(s, a)}
+\sum_{i=1}^{N(s, a)} G_i(s, a)\]</span></p>
+<h4 id="incremental-rolling-average">Incremental (Rolling) Average</h4>
+<p>In practice, storing every return <span
+class="math inline">\(G\)</span> in a list to calculate the average is
+memory-intensive. Instead, we use an <strong>incremental update
+rule</strong> (rolling average):</p>
+<p><span class="math display">\[Q(S_t, A_t) \leftarrow Q(S_t, A_t) +
+\frac{1}{N(S_t, A_t)} \left[ G_t - Q(S_t, A_t) \right]\]</span></p>
+<p><strong>Computational Superiority:</strong> 1. <strong>Constant
+Memory (<span class="math inline">\(O(1)\)</span>):</strong> We only
+need to store two numbers per state-action pair: the current estimate
+<span class="math inline">\(Q\)</span> and the visit count <span
+class="math inline">\(N\)</span>. We do not need to store the entire
+history of rewards. 2. <strong>Constant Time (<span
+class="math inline">\(O(1)\)</span>):</strong> The update happens in a
+single mathematical operation regardless of how many episodes have
+passed. 3. <strong>Non-stationary Tasks:</strong> This form easily
+adapts to non-stationary environments by replacing <span
+class="math inline">\(\frac{1}{N}\)</span> with a constant step-size
+parameter <span class="math inline">\(\alpha\)</span> (learning
+rate).</p>
+<ul>
+<li><strong>First-visit MC:</strong> <span class="math inline">\(N(s,
+a)\)</span> increments only the <strong>first time</strong> <span
+class="math inline">\((s, a)\)</span> is visited in an episode.</li>
+<li><strong>Every-visit MC:</strong> <span class="math inline">\(N(s,
+a)\)</span> increments <strong>every single time</strong> <span
+class="math inline">\((s, a)\)</span> is visited in an episode.</li>
+</ul>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Feature</th>
+<th style="text-align: left;">First-visit MC</th>
+<th style="text-align: left;">Every-visit MC</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>Statistical Bias</strong></td>
+<td style="text-align: left;">Unbiased (Purest estimate).</td>
+<td style="text-align: left;">Initially Biased (but converges to
+unbiased).</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Variance</strong></td>
+<td style="text-align: left;">Higher (Fewer samples).</td>
+<td style="text-align: left;">Lower (More samples per episode).</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Simplicity</strong></td>
+<td style="text-align: left;">Requires a “visited” check.</td>
+<td style="text-align: left;">No check needed; simpler to
+implement.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="the-process-flow-of-mc">The Process flow of MC</h4>
+<p><img src="./assets/images/montecarlo-onpolicy.png" /></p>
+<p><img src="./assets/images/mc-process-flow.png" /></p>
+<h4 id="two-variants-of-policy-evaluation-and-improvement">Two variants
+of policy evaluation and improvement</h4>
+<ol type="1">
+<li><strong>Exploration Start (ES)</strong>: Start each episode in a
+random state-action pair to ensure all pairs are visited.</li>
+<li><strong>Stochastic Policy</strong>: Use an <span
+class="math inline">\(\epsilon\)</span>-greedy policy to ensure
+continual exploration during learning. But use always first state to
+begin the episodes.</li>
+</ol>
+<h4 id="two-variants-of-qsa-updates-within-an-episode">Two variants of
+Q(s,a) updates within an episode</h4>
+<ol type="1">
+<li><strong>First-visit MC:</strong> Averages returns following the
+first visit to state <span class="math inline">\(s\)</span> in an
+episode.</li>
+<li><strong>Every-visit MC:</strong> Averages returns following every
+visit to state <span class="math inline">\(s\)</span> in an
+episode.</li>
+</ol>
+<p><img src="./assets/images/mc-process-flow-2.png" /></p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> collections <span class="im">import</span> defaultdict</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> first_visit_mc_q_prediction(pi, env, num_episodes, gamma<span class="op">=</span><span class="fl">1.0</span>):</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">    First-visit MC prediction, for estimating Q ≈ q_π</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co">    &quot;&quot;&quot;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    Q <span class="op">=</span> defaultdict(<span class="kw">lambda</span>: np.zeros(env.action_space.n))</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    N <span class="op">=</span> defaultdict(<span class="kw">lambda</span>: np.zeros(env.action_space.n)) <span class="co"># Visit counts</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    returns_sum <span class="op">=</span> defaultdict(<span class="kw">lambda</span>: np.zeros(env.action_space.n))</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(num_episodes):</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        <span class="co"># 1. Generate an episode following policy pi</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>        episode <span class="op">=</span> []</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        state, _ <span class="op">=</span> env.reset()</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        done <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">while</span> <span class="kw">not</span> done:</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>            action <span class="op">=</span> pi(state)</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>            next_state, reward, term, trunc, _ <span class="op">=</span> env.step(action)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>            episode.append((state, action, reward))</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>            state, done <span class="op">=</span> next_state, term <span class="kw">or</span> trunc</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>        <span class="co"># 2. Process episode backwards</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>        G <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>        sa_in_episode <span class="op">=</span> [(x[<span class="dv">0</span>], x[<span class="dv">1</span>]) <span class="cf">for</span> x <span class="kw">in</span> episode]</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> t <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(episode) <span class="op">-</span> <span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>):</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>            s_t, a_t, r_tp1 <span class="op">=</span> episode[t]</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>            G <span class="op">=</span> gamma <span class="op">*</span> G <span class="op">+</span> r_tp1</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Check if this is the first visit to (s_t, a_t) in this episode</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> (s_t, a_t) <span class="kw">not</span> <span class="kw">in</span> sa_in_episode[:t]:</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>                returns_sum[s_t][a_t] <span class="op">+=</span> G</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>                N[s_t][a_t] <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>                Q[s_t][a_t] <span class="op">=</span> returns_sum[s_t][a_t] <span class="op">/</span> N[s_t][a_t]</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Q</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> every_visit_mc_q_prediction(pi, env, num_episodes, gamma<span class="op">=</span><span class="fl">1.0</span>):</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="co">    Every-visit MC prediction, for estimating Q ≈ q_π</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="co">    &quot;&quot;&quot;</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>    Q <span class="op">=</span> defaultdict(<span class="kw">lambda</span>: np.zeros(env.action_space.n))</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>    N <span class="op">=</span> defaultdict(<span class="kw">lambda</span>: np.zeros(env.action_space.n))</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>    returns_sum <span class="op">=</span> defaultdict(<span class="kw">lambda</span>: np.zeros(env.action_space.n))</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(num_episodes):</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>        <span class="co"># 1. Generate episode (same logic as above)</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>        <span class="co"># 2. Process episode backwards</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>        G <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> t <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(episode) <span class="op">-</span> <span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>):</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>            s_t, a_t, r_tp1 <span class="op">=</span> episode[t]</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>            G <span class="op">=</span> gamma <span class="op">*</span> G <span class="op">+</span> r_tp1</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>            <span class="co"># NO CHECK: Update every time (s_t, a_t) appears</span></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>            returns_sum[s_t][a_t] <span class="op">+=</span> G</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>            N[s_t][a_t] <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>            Q[s_t][a_t] <span class="op">=</span> returns_sum[s_t][a_t] <span class="op">/</span> N[s_t][a_t]</span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Q</span></code></pre></div>
+<h4 id="example-5.1-blackjack">Example 5.1: Blackjack</h4>
+<p>In Blackjack, the state is defined by the player’s sum (12–21), the
+dealer’s showing card (ace–10), and whether the player has a "usable
+ace." We evaluate a policy that sticks only on 20 or 21.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># From assets/blackjack_mc.py</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Q-value update for state s and action a</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>idx <span class="op">=</span> (p_sum <span class="op">-</span> <span class="dv">12</span>, d_card <span class="op">-</span> <span class="dv">1</span>, <span class="bu">int</span>(u_ace))</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>returns_sum[idx][action] <span class="op">+=</span> G</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>N[idx][action] <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>Q[idx][action] <span class="op">=</span> returns_sum[idx][action] <span class="op">/</span> N[idx][action]</span></code></pre></div>
+<h3 id="monte-carlo-estimation-of-action-values">5.2 Monte Carlo
+Estimation of Action Values</h3>
+<p>If a model is not available, it is particularly useful to estimate
+<strong>action values</strong> (<span
+class="math inline">\(q_*\)</span>) rather than state values (<span
+class="math inline">\(v_*\)</span>). - Without a model, state values
+alone are not sufficient for action selection (you can’t see the
+one-step lookahead). - <strong>The exploration problem:</strong> If we
+use a deterministic policy, some state-action pairs may never be
+visited. We must ensure <strong>continual exploration</strong>.</p>
+<h3 id="monte-carlo-control">5.3 Monte Carlo Control</h3>
+<p>The general pattern of MC control is <strong>Generalized Policy
+Iteration (GPI)</strong>: 1. <strong>Evaluation:</strong> Use MC to
+estimate <span class="math inline">\(q_\pi\)</span>. 2.
+<strong>Improvement:</strong> Make the policy greedy w.r.t. <span
+class="math inline">\(q_\pi\)</span>.</p>
+<blockquote>
+<p><strong>Common Pitfall: Average vs. Max G</strong> Students often
+mistake MC for a search for the “single best episode.” - <strong>Wrong
+Logic:</strong> “Run 10 episodes and pick the policy that gave the
+single highest <span class="math inline">\(G\)</span>.” (Vulnerable to
+noise/luck). - <strong>Correct Logic:</strong> “Run many episodes and
+update <span class="math inline">\(\pi(s)\)</span> to pick the action
+with the highest <strong>average</strong> <span
+class="math inline">\(G\)</span>.” (Robust to noise).</p>
+<p>We maximize the <strong>Expected Return</strong> (<span
+class="math inline">\(\mathbb{E}[G]\)</span>), not a single sample
+return (<span class="math inline">\(G_{sample}\)</span>).</p>
+</blockquote>
+<h4 id="monte-carlo-with-exploring-starts-mc-es">Monte Carlo with
+Exploring Starts (MC ES)</h4>
+<p>To guarantee exploration, we assume that every state-action pair has
+a non-zero probability of being the start of an episode. -
+<strong>Example 5.3:</strong> Blackjack with Exploring Starts converges
+to the optimal policy, effectively learning when to hit or stick.</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># From assets/mc_gpi_demonstration.py</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Pedagogical demonstration of GPI in Monte Carlo ES</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Generate an episode with Exploring Starts</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Backtrack to calculate Returns (G)</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Update Policy: pi(s) = argmax_a Q(s,a)</span></span></code></pre></div>
+<h3 id="monte-carlo-control-without-exploring-starts">5.4 Monte Carlo
+Control without Exploring Starts</h3>
+<p>In real-world applications, we cannot always teleport the agent to a
+random state. To ensure exploration without “Exploring Starts,” we must
+use a <strong>Stochastic Policy</strong>.</p>
+<h4 id="comparing-exploration-strategies">Comparing Exploration
+Strategies</h4>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Strategy</th>
+<th style="text-align: left;"><strong>Exploring Starts
+(ES)</strong></th>
+<th style="text-align: left;"><strong><span
+class="math inline">\(\epsilon\)</span>-Greedy (On-Policy)</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>Assumption</strong></td>
+<td style="text-align: left;">Can start the agent in ANY
+state/action.</td>
+<td style="text-align: left;">Agent must start from a FIXED state.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Policy Type</strong></td>
+<td style="text-align: left;">Deterministic (always picks
+<code>argmax</code>).</td>
+<td style="text-align: left;">Stochastic (usually <code>argmax</code>,
+rarely random).</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Logic</strong></td>
+<td style="text-align: left;">"Force" exploration via the starting
+point.</td>
+<td style="text-align: left;">"Force" exploration via the action
+selection.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Practicality</strong></td>
+<td style="text-align: left;">Low (hard to reset real systems).</td>
+<td style="text-align: left;">High (how real robots/agents learn).</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong><span class="math inline">\(\epsilon\)</span>-greedy
+policy:</strong> Most of the time, pick the action with the highest
+<span class="math inline">\(q\)</span>-value. With probability <span
+class="math inline">\(\epsilon\)</span>, pick an action at random.</li>
+<li>This ensures that all actions are tried infinitely often even if the
+agent always starts at the same position.</li>
+</ul>
+<hr />
+<h3 id="off-policy-prediction-via-importance-sampling">5.5 Off-policy
+Prediction via Importance Sampling</h3>
+<p>How can we learn about a <strong>target policy</strong> <span
+class="math inline">\(\pi\)</span> while following a different
+<strong>behavior policy</strong> <span class="math inline">\(b\)</span>?
+This is <strong>off-policy learning</strong>.</p>
+<p>Think of it as: You want to know how a Professional (<span
+class="math inline">\(\pi\)</span>) would play, but your only data is
+from a Beginner (<span class="math inline">\(b\)</span>).</p>
+<blockquote>
+<p><strong>Pro-Tip: Knowing vs. Estimating <span
+class="math inline">\(b\)</span></strong> You do <strong>not</strong>
+estimate the behavior policy <span class="math inline">\(b\)</span> from
+the episodes. You must <strong>define</strong> it (e.g., as a uniform
+random policy). To calculate the ratio <span
+class="math inline">\(\rho\)</span>, you need to know the <strong>exact
+probability</strong> <span class="math inline">\(b(a|s)\)</span> used to
+generate the data. If you don’t know the exact math of the beginner, you
+cannot accurately estimate the professional.</p>
+</blockquote>
+<h4 id="the-importance-sampling-ratio-rho">1. The Importance Sampling
+Ratio (<span class="math inline">\(\rho\)</span>)</h4>
+<p>When the beginner (<span class="math inline">\(b\)</span>) takes an
+action, we ask: <em>“How much more (or less) likely was the professional
+to take that same action?”</em> <span class="math display">\[\rho =
+\frac{\pi(a|s)}{b(a|s)}\]</span></p>
+<p>For a whole episode (from time <span class="math inline">\(t\)</span>
+to <span class="math inline">\(T\)</span>), we multiply the ratios of
+every action taken. The Capital Pi (<span
+class="math inline">\(\Pi\)</span>) symbol represents a
+<strong>product</strong>: <span class="math display">\[\rho_{t:T-1}
+\doteq \prod_{k=t}^{T-1} \frac{\pi(A_k|S_k)}{b(A_k|S_k)}\]</span></p>
+<p><strong>Expanded Series Form:</strong> <span
+class="math display">\[\rho_{t:T-1} = \frac{\pi(A_t|S_t)}{b(A_t|S_t)}
+\times \frac{\pi(A_{t+1}|S_{t+1})}{b(A_{t+1}|S_{t+1})} \times \dots
+\times \frac{\pi(A_{T-1}|S_{T-1})}{b(A_{T-1}|S_{T-1})}\]</span></p>
+<h4 id="ordinary-importance-sampling-ois">2. Ordinary Importance
+Sampling (OIS)</h4>
+<p>We multiply each observed return (<span
+class="math inline">\(G_t\)</span>) by its ratio (<span
+class="math inline">\(\rho\)</span>) and take the standard average over
+<span class="math inline">\(n\)</span> episodes: <span
+class="math display">\[V(s) = \frac{\sum_{t \in \mathcal{T}(s)}
+\rho_{t:T(t)-1} G_t}{|\mathcal{T}(s)|}\]</span></p>
+<ul>
+<li><strong>Property:</strong> Unbiased, but has
+<strong>extreme/infinite variance</strong>. A single unlikely action can
+blow up the ratio and make the estimate unstable.</li>
+</ul>
+<h4 id="weighted-importance-sampling-wis">3. Weighted Importance
+Sampling (WIS)</h4>
+<p>Instead of dividing by the number of episodes, we divide by the
+<strong>sum of the ratios</strong>: <span class="math display">\[V(s) =
+\frac{\sum_{t \in \mathcal{T}(s)} \rho_{t:T(t)-1} G_t}{\sum_{t \in
+\mathcal{T}(s)} \rho_{t:T(t)-1}}\]</span></p>
+<ul>
+<li><strong>Property:</strong> Biased (initially), but has <strong>much
+lower variance</strong>. It is the practical choice for most RL
+applications.</li>
+</ul>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Feature</th>
+<th style="text-align: left;">Ordinary (OIS)</th>
+<th style="text-align: left;">Weighted (WIS)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>Bias</strong></td>
+<td style="text-align: left;">Unbiased</td>
+<td style="text-align: left;">Biased (converges to zero bias)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Variance</strong></td>
+<td style="text-align: left;">High/Infinite</td>
+<td style="text-align: left;">Lower/Stable</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Practicality</strong></td>
+<td style="text-align: left;">Low</td>
+<td style="text-align: left;">High</td>
+</tr>
+</tbody>
+</table>
+<h4 id="example-5.5-infinite-variance">Example 5.5: Infinite
+Variance</h4>
+<p>Ordinary importance sampling can have <strong>infinite
+variance</strong>. If the importance-sampling ratio has a mean greater
+than 1, its variance can grow without bound.</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># From assets/infinite_variance.py</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualizes the extreme fluctuations of Ordinary IS in Example 5.5</span></span></code></pre></div>
+<h3 id="incremental-implementation">5.6 Incremental Implementation</h3>
+<p>Weighted importance sampling can be implemented incrementally: <span
+class="math display">\[W_{n+1} \doteq W_n + \rho_n\]</span> <span
+class="math display">\[V_{n+1} \doteq V_n + \frac{\rho_n}{C_n} [G_n -
+V_n]\]</span> Where <span class="math inline">\(C_n\)</span> is the
+cumulative sum of weights.</p>
+<h3 id="code-examples">Code Examples</h3>
+<ol type="1">
+<li>Monte Carlo On-policy Prediction (First-visit and Every-visit) - <a
+href="./assets/mc_gpi_pedagogy.ipynb">code-base-mc-on-policy</a></li>
+<li>Monte Carlo Off-policy Prediction (Ordinary and Weighted IS) - <a
+href="./assets/mc_off_policy_pedagogy.ipynb">code-base-mc-off-policy</a></li>
+<li>Monte Carlo Off-policy Control (Weighted IS) - <a
+href="./assets/mc_off_policy_control_pedagogy.ipynb">code-base-mc-off-policy-control</a></li>
+</ol>
+<h3 id="off-policy-monte-carlo-control">5.7 Off-policy Monte Carlo
+Control</h3>
+<p>Uses the behavior policy to generate episodes and the target policy
+(greedy) for learning.</p>
+<h4 id="detailed-process-flow-from-scratch">Detailed Process Flow (From
+Scratch)</h4>
+<p>The goal is to learn the optimal policy <span
+class="math inline">\(\pi^*\)</span> while following an exploratory
+behavior policy <span class="math inline">\(b\)</span>. Here is exactly
+what happens in every iteration:</p>
+<ol type="1">
+<li><strong>Initialize</strong>:
+<ul>
+<li><strong>Target Policy (<span
+class="math inline">\(\pi\)</span>):</strong> The greedy policy we want
+to optimize.</li>
+<li><strong>Behavior Policy (<span
+class="math inline">\(b\)</span>):</strong> A stochastic policy (e.g.,
+uniform random) used to generate data.</li>
+<li><strong><span class="math inline">\(Q(s, a)\)</span> &amp; <span
+class="math inline">\(C(s, a)\)</span></strong>: Action-values and
+cumulative weights (for weighted averaging).</li>
+</ul></li>
+<li><strong>Generate Experience</strong>:
+<ul>
+<li>The agent plays a <strong>full episode</strong> using the behavior
+policy <span class="math inline">\(b\)</span>.</li>
+<li>It records the sequence: <span class="math inline">\(S_0, A_0, R_1,
+S_1, A_1, R_2 \dots S_T\)</span>.</li>
+</ul></li>
+<li><strong>Process Backwards (The Learning Phase)</strong>:
+<ul>
+<li>Start from the end of the episode and move toward the
+beginning.</li>
+<li>For each step <span class="math inline">\(t\)</span>:
+<ul>
+<li>Calculate the <strong>Return (<span
+class="math inline">\(G\)</span>)</strong> from that point forward.</li>
+<li>Calculate the <strong>Importance Sampling Ratio (<span
+class="math inline">\(\rho\)</span>)</strong>: How much more likely was
+the Target <span class="math inline">\(\pi\)</span> to take action <span
+class="math inline">\(A_t\)</span> compared to Behavior <span
+class="math inline">\(b\)</span>?</li>
+<li>Update the <strong>Cumulative Weight (<span
+class="math inline">\(C\)</span>)</strong>: <span
+class="math inline">\(C \leftarrow C + \rho\)</span>.</li>
+<li>Update <strong><span class="math inline">\(Q(s,
+a)\)</span></strong>: Use the ratio to weight the return. <span
+class="math inline">\(Q \leftarrow Q + \frac{\rho}{C}[G -
+Q]\)</span>.</li>
+<li><strong>Policy Improvement</strong>: Update <span
+class="math inline">\(\pi(s) = \arg\max_a Q(s, a)\)</span>.</li>
+<li><strong>Convergence Check</strong>: If the action taken by the
+beginner (<span class="math inline">\(A_t\)</span>) is
+<strong>not</strong> the action the professional (<span
+class="math inline">\(\pi\)</span>) would take, stop learning from this
+episode (the ratio becomes zero).</li>
+</ul></li>
+</ul></li>
+</ol>
+<h4 id="visual-process-flow-off-policy-mc">Visual Process Flow:
+Off-Policy MC</h4>
+<pre class="mermaid">graph TD
+    subgraph Behavior [Behavior Policy b - The Beginner]
+        B[Stochastic/Random Policy] --> Gen[Generate Episode]
+    end
+
+    subgraph Stream [Data trajectory]
+        Gen --> Traj[(S, A, R trajectory)]
+    end
+
+    subgraph Engine [Importance Sampling Engine]
+        Traj --> Ratio["Calculate Ratio: ρ = π/b"]
+        Ratio --> Ret["Calculate Return: G"]
+        Ret --> Weight["Weight Return: ρ * G"]
+        Weight --> Update["Update Q(s,a) & N(s,a)"]
+    end
+
+    subgraph Target [Target Policy π - The Professional]
+        Update --> Improve[Improvement: argmax Q]
+        Improve --> TargetPol[Deterministic Greedy Policy]
+        TargetPol -.->|Policy Ratio| Ratio
+    end
+
+    Update -.->|Learning Loop| B</pre>
+<ul>
+<li><p><strong>Limitation:</strong> It only learns from the
+<em>tails</em> of episodes—after the behavior policy takes an action
+that the target policy would not have taken, the importance-sampling
+ratio becomes zero.</p></li>
+<li><p><strong>Limitation:</strong> It only learns from the
+<em>tails</em> of episodes—after the behavior policy takes an action
+that the target policy would not have taken, the importance-sampling
+ratio becomes zero.</p></li>
+</ul>
+<h3 id="discounting-aware-importance-sampling">5.8 *Discounting-aware
+Importance Sampling</h3>
+<p>Standard IS treats the return <span
+class="math inline">\(G_t\)</span> as a single unit. However, if <span
+class="math inline">\(\gamma &lt; 1\)</span>, the return is composed of
+discounted rewards. This section discusses how to decompose the ratio to
+reduce variance by acknowledging that future rewards are less affected
+by earlier actions.</p>
+<h3 id="per-decision-importance-sampling">5.9 *Per-decision Importance
+Sampling</h3>
+<p>Further refines IS by applying the ratio only to the rewards that
+actually depend on the actions taken at that time: <span
+class="math display">\[\mathbb{E}[\rho_{t:T-1} G_t] = \mathbb{E} \left[
+\sum_{k=t}^{T-1} \rho_{t:k} R_{k+1} \right]\]</span></p>
+<hr />
+<h1 id="chapter-6-temporal-difference-learning">Chapter 6:
+Temporal-Difference Learning</h1>
+<p>Temporal-Difference (TD) learning is a combination of MC and DP. Like
+MC, it learns from experience. Like DP, it
+<strong>bootstraps</strong>—updates estimates based on other
+estimates.</p>
+<h3 id="td-prediction">6.1 TD Prediction</h3>
+<p>The simplest TD method, <strong>TD(0)</strong>, updates the value of
+a state based on the immediate reward and the estimated value of the
+next state: <span class="math display">\[V(S_t) \leftarrow V(S_t) +
+\alpha [R_{t+1} + \gamma V(S_{t+1}) - V(S_t)]\]</span></p>
+<p><strong>Backup Diagram for TD(0):</strong></p>
+<pre class="mermaid">graph TD
+    s((s)) --> r(R) --> s_next((s'))</pre>
+<h3 id="advantages-of-td-prediction-methods">6.2 Advantages of TD
+Prediction Methods</h3>
+<ol type="1">
+<li><strong>Online learning:</strong> Updates happen after each step,
+not just at the end of an episode.</li>
+<li><strong>No model needed:</strong> Just like MC.</li>
+<li><strong>Efficiency:</strong> TD often converges faster than MC on
+Markovian tasks.</li>
+</ol>
+<h3 id="optimality-of-td0">6.3 Optimality of TD(0)</h3>
+<p>If we have a fixed set of experience (Batch Training), TD(0)
+converges to the <strong>Certainty-Equivalence estimate</strong>—the
+estimate that would be correct if the observed transitions were the true
+dynamics. - <strong>Example 6.4:</strong> Random Walk batch results
+(Figure 6.2) show TD(0) outperforming MC.</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># From assets/batch_learning.py</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Implements Batch TD vs Batch MC for Figure 6.2</span></span></code></pre></div>
+<h3 id="sarsa-on-policy-td-control">6.4 Sarsa: On-policy TD Control</h3>
+<p>Updates the action-value function based on the actions actually taken
+by the current policy (S, A, R, S’, A’): <span
+class="math display">\[Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha
+[R_{t+1} + \gamma Q(S_{t+1}, A_{t+1}) - Q(S_t, A_t)]\]</span></p>
+<h3 id="q-learning-off-policy-td-control">6.5 Q-learning: Off-policy TD
+Control</h3>
+<p>One of the most important breakthroughs in RL. It learns the optimal
+action-value function <span class="math inline">\(q_*\)</span> directly,
+independent of the policy being followed: <span
+class="math display">\[Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha
+[R_{t+1} + \gamma \max_a Q(S_{t+1}, a) - Q(S_t, A_t)]\]</span></p>
+<h4 id="example-6.6-cliff-walking">Example 6.6: Cliff Walking</h4>
+<p>Contrasts Sarsa (safe path) vs Q-learning (optimal but risky path).
+Sarsa accounts for the exploration it <em>actually</em> does, whereas
+Q-learning assumes it will eventually act optimally.</p>
+<h3 id="expected-sarsa">6.6 Expected Sarsa</h3>
+<p>Instead of using a sample action <span
+class="math inline">\(A_{t+1}\)</span>, it uses the expected value over
+all actions under the current policy: <span
+class="math display">\[Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha
+[R_{t+1} + \gamma \sum_a \pi(a\mid S_{t+1}) Q(S_{t+1}, a) - Q(S_t,
+A_t)]\]</span></p>
+<h3 id="maximization-bias-and-double-learning">6.7 Maximization Bias and
+Double Learning</h3>
+<p>Algorithms that use a <span class="math inline">\(\max\)</span> (like
+Q-learning) or a greedy policy (like Sarsa) are subject to
+<strong>Maximization Bias</strong>—overestimating values due to taking
+the maximum over noisy estimates. - <strong>Solution:</strong> Use two
+independent estimates (<span class="math inline">\(Q_1\)</span> and
+<span class="math inline">\(Q_2\)</span>). Use one to pick the action
+and the other to estimate its value.</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># From assets/maximization_bias.py</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Double Q-learning vs Q-learning (Figure 6.5)</span></span></code></pre></div>
+<h3 id="games-afterstates-and-other-special-cases">6.8 Games,
+Afterstates, and Other Special Cases</h3>
+<p>In many games (like Tic-Tac-Toe), many state-action pairs lead to the
+same result (the same board position). These are called
+<strong>Afterstates</strong>. Learning values for afterstates is more
+efficient because it generalizes across different actions that lead to
+the same configuration.</p>
+<hr />
+<h2 id="practice-exercises">Practice Exercises</h2>
+<p>Test your understanding of Monte Carlo and TD methods with these
+exercises:</p>
+<ul>
+<li><a href="./assets/questions/mcqs.md">Multiple Choice Questions
+(MCQs)</a></li>
+<li><a href="./assets/questions/subjective.md">Subjective
+Questions</a></li>
+<li><a href="./assets/questions/numericals.md">Numerical
+Questions</a></li>
+<li><a href="./assets/questions/programming.md">Programming
+Questions</a></li>
+</ul>
+<p><em>Solutions can be found in the <a
+href="./assets/questions/solutions/">assets/questions/solutions/</a>
+folder.</em></p>
+<hr />
+<p><em>Reference: Sutton, R. S., &amp; Barto, A. G. (2018).
+Reinforcement Learning: An Introduction. MIT Press.</em></p>
+</body>
+</html>
+
