@@ -24,7 +24,7 @@ layout: post
 
    $G_t = R + \gamma R + \gamma^2 R + \cdots = R(1 + \gamma + \gamma^2 + \cdots) = R \sum_{k=0}^{\infty} \gamma^k$
 
-   This is a geometric series that converges to $\frac{1}{1-\gamma}$ when $|\gamma| < 1$.
+   This is a geometric series that converges to $\frac{1}{1-\gamma}$ when $\gamma < 1$.
 
    Therefore: $G_t = \frac{R}{1 - \gamma}$
 
