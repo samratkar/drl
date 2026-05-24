@@ -5,7 +5,7 @@ title : "NStep Planning"
 category : Lectures
 subcategory : nstep-plan
 textbook : [chapter7]
-layout: post
+layout: 
 deliveries : []
 ---
 
