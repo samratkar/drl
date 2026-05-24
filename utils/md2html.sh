@@ -25,7 +25,7 @@ case "$(printf '%s' "$input_path" | tr '[:upper:]' '[:lower:]')" in
   *) echo "Input must be a Markdown file: $input_path" >&2; exit 1 ;;
 esac
 
-markdown_text="$(python - "$input_path" <<'PY'
+markdown_text="$(python3 - "$input_path" <<'PY'
 from pathlib import Path
 import re
 import sys
@@ -57,7 +57,7 @@ render_html() {
     --output "$html_output" \
     "$md_input"
 
-  python - "$html_output" "$doc_title" <<'PY'
+  python3 - "$html_output" "$doc_title" <<'PY'
 from html import escape, unescape
 from pathlib import Path
 import re
