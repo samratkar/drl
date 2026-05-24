@@ -106,22 +106,29 @@ title: Deep Reinforcement Learning - A course on Barto Sutton's book
                 {% assign filename = p.path | split: "/" | last | remove: ".md" %}
                 {% assign parts = filename | split: "-" %}
                 {% assign lecture_num = parts[0] | remove: "lecture" %}
-                {% assign lecture_date = parts[1] | append: "-" | append: parts[2] | append: "-" | append: parts[3] %}
                 {% assign lecture_file = p.path | split: "/" | last %}
                 {% assign lecture_dir = p.path | remove: lecture_file %}
                 {% assign q_prefix = lecture_dir | append: "assets/questions/" %}
                 {% assign s_prefix = lecture_dir | append: "assets/questions/solutions/" %}
+                {% assign first_delivery = p.deliveries | first | default: "" %}
                 
                 <tr class="lecture-row border-b border-slate-100 hover:bg-blue-50/20 transition-colors" 
-                    data-date="{{ lecture_date }}"
+                    data-date="{{ first_delivery }}"
                     data-category="{{ p.subcategory | default: p.category }}"
-                    data-tags="{{ p.tags | join: ',' }}">
+                    data-tags="{{ p.tags | join: ',' }}"
+                    data-num="{{ lecture_num }}">
                   <td class="px-6 py-4 text-sm font-black text-slate-400 text-center">{{ lecture_num }}</td>
                   <td class="px-6 py-4">
                     <div class="flex flex-col">
                       <a href="{{ p.url | relative_url }}" class="text-sm font-bold text-slate-800 hover:text-blue-600 transition-colors">{{ p.title }}</a>
                       <div class="flex items-center gap-2 mt-1">
-                        <span class="text-[10px] text-slate-400 font-mono">{{ lecture_date }}</span>
+                        {% if p.deliveries.size > 0 %}
+                          {% for d in p.deliveries %}
+                            <span class="text-[10px] text-slate-400 font-mono">{{ d }}</span>
+                          {% endfor %}
+                        {% else %}
+                          <span class="text-[10px] text-slate-300 font-mono">TBD</span>
+                        {% endif %}
                         <span class="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">{{ p.subcategory | default: "General" }}</span>
                       </div>
                     </div>
@@ -282,8 +289,15 @@ title: Deep Reinforcement Learning - A course on Barto Sutton's book
   (function sortLectures() {
     const tbody = document.getElementById('lectureBody');
     if (!tbody) return;
-    const rows = Array.from(tbody.querySelectorAll('tr[data-date]'));
-    rows.sort((a, b) => a.dataset.date.localeCompare(b.dataset.date));
+    const rows = Array.from(tbody.querySelectorAll('tr.lecture-row'));
+    rows.sort((a, b) => {
+      const dateA = a.dataset.date || '';
+      const dateB = b.dataset.date || '';
+      if (dateA && dateB) return dateA.localeCompare(dateB);
+      if (dateA) return -1;
+      if (dateB) return 1;
+      return parseInt(a.dataset.num) - parseInt(b.dataset.num);
+    });
     rows.forEach(row => tbody.appendChild(row));
   })();
 </script>

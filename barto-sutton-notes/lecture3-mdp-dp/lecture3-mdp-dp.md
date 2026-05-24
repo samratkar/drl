@@ -703,19 +703,19 @@ In practice, convergence is remarkably fast — often far fewer iterations than 
 
 ### Example 1: race car on a track (Sutton & Barto, Example 4.1)
 Predicting the car to move slow or fast to balance between its states of hot, cold and over heated. 
-[Car Race implementation](https://github.com/samratkar/drl/blob/main/barto-sutton-notes/lecture3-2026-05-09-mdp/assets/race-car/dp_race_car_demonstration.ipynb)
-[Care Race Mathemtical Formulation](https://github.com/samratkar/drl/blob/main/barto-sutton-notes/lecture3-2026-05-09-mdp/assets/race-car/mdp_race_car.xlsx)
+[Car Race implementation](https://github.com/samratkar/drl/blob/main/barto-sutton-notes/lecture3-mdp-dp/assets/race-car/dp_race_car_demonstration.ipynb)
+[Care Race Mathemtical Formulation](https://github.com/samratkar/drl/blob/main/barto-sutton-notes/lecture3-mdp-dp/assets/race-car/mdp_race_car.xlsx)
 
 ### Example 2: Jack's Car Rental (Sutton & Barto, Example 4.2)
 Jack manages two car rental locations. This is a classic example of a complex MDP where Policy Iteration is significantly more efficient than brute-force search.
-[Jack's car rental implementation](https://github.com/samratkar/drl/blob/main/barto-sutton-notes/lecture3-2026-05-09-mdp/assets/jack-car-rental/jack_car_rental_implementation.ipynb)
+[Jack's car rental implementation](https://github.com/samratkar/drl/blob/main/barto-sutton-notes/lecture3-mdp-dp/assets/jack-car-rental/jack_car_rental_implementation.ipynb)
 
 ### Example 3 : Grid world problem 1
-[Grid world 1 implementation](https://github.com/samratkar/drl/blob/main/barto-sutton-notes/lecture3-2026-05-09-mdp/assets/grid-game/dynamic_programming_case_study.ipynb)
+[Grid world 1 implementation](https://github.com/samratkar/drl/blob/main/barto-sutton-notes/lecture3-mdp-dp/assets/grid-game/dynamic_programming_case_study.ipynb)
 [Grid world 1 Game](https://samratkar.github.io/assets/drl/webinars/dp-qlearning/src/dynamic_programming_game.html)
 
 ### Example 4 : Grid world problem 2
-[Grid world 2 Game — Interactive Demo](https://samratkar.github.io/drl/barto-sutton-notes/lecture3-2026-05-09-mdp-dp/assets/policy-evaluation-dp-html/index.html)
+[Grid world 2 Game — Interactive Demo](https://samratkar.github.io/drl/barto-sutton-notes/lecture3-mdp-dp-dp/assets/policy-evaluation-dp-html/index.html)
 
 
 #### Problem Formulation
@@ -1132,13 +1132,13 @@ $$\pi_*(s) = \argmax_a \, q_*(s,a)$$
 
 ## Working simulation of all the above methods and their comparison 
 
-**[Launch Interactive RL Methods Explorer](https://samratkar.github.io/drl/barto-sutton-notes/lecture3-2026-05-09-mdp-dp/assets/policy-evaluation-dp-html/index.html)** — a static web page that runs entirely in the browser, no installation required.
+**[Launch Interactive RL Methods Explorer](https://samratkar.github.io/drl/barto-sutton-notes/lecture3-mdp-dp-dp/assets/policy-evaluation-dp-html/index.html)** — a static web page that runs entirely in the browser, no installation required.
 
 <details>
 <summary>Alternative: Run locally from source</summary>
 
 Clone the repository — [https://github.com/samratkar/drl](https://github.com/samratkar/drl)  
-Open the file directly in your browser: `barto-sutton-notes/lecture3-2026-05-09-mdp-dp/assets/policy-evaluation-dp-html/index.html`
+Open the file directly in your browser: `barto-sutton-notes/lecture3-mdp-dp-dp/assets/policy-evaluation-dp-html/index.html`
 </details>
 
 You will get the following running simulations of a 4X4 board game

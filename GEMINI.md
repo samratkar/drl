@@ -13,7 +13,7 @@ The repository is organized into sequential modules:
     - `assets/`: Custom environment definitions.
 - **`3-sarsa/`**: Temporal Difference learning implementations (Sarsa, Q-Learning).
 - **`cases/1-gym_atari_lunar_lander/`**: Progressive DQN implementation chain (Basic -> Replay Buffer -> Fixed Q -> DDQN -> Prioritized Replay).
-- **`class-discs/BITS-DRL-S2-25_AIMLCZG512/lecture3-2026-05-09-mdp/assets/race-car/`**: Comprehensive RL comparison using the Race Car problem (DP, MC, TD, Q-Learning).
+- **`class-discs/BITS-DRL-S2-25_AIMLCZG512/lecture3-mdp-dp/assets/race-car/`**: Comprehensive RL comparison using the Race Car problem (DP, MC, TD, Q-Learning).
 - **`class-discs/sara-sojourn/`**: Comparative dashboards and visualizations of different algorithms.
 - **`books/memory/`**: Comprehensive notes on foundational texts like Sutton & Barto.
 - **`assignments/`**: Course-related tasks and quizzes.
@@ -66,7 +66,7 @@ jupyter notebook 1-introduction/env.ipynb
 - **Reproducibility**: No central test suite exists. Validation is performed by running scripts and observing convergence in rewards or visualization dashboards.
 
 ### Interactive Web Visualization: RL Methods Comparison
-Located at `barto-sutton-notes/lecture3-2026-05-09-mdp/assets/policy-evaluation-dp/` — a React + Vite + TypeScript app demonstrating DP and model-free methods on a 4×4 gridworld with danger zones.
+Located at `barto-sutton-notes/lecture3-mdp-dp/assets/policy-evaluation-dp/` — a React + Vite + TypeScript app demonstrating DP and model-free methods on a 4×4 gridworld with danger zones.
 
 **Sections:**
 - **MDP Environment**: Grid with states, action arrows, goal (🏁, R=+10), danger cells (💀, R=-5)
@@ -82,7 +82,7 @@ Located at `barto-sutton-notes/lecture3-2026-05-09-mdp/assets/policy-evaluation-
 
 **Running:**
 ```bash
-cd barto-sutton-notes/lecture3-2026-05-09-mdp/assets/policy-evaluation-dp
+cd barto-sutton-notes/lecture3-mdp-dp/assets/policy-evaluation-dp
 npm install
 npm run dev
 ```

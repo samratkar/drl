@@ -58,7 +58,7 @@ DQN variants use a consistent 3-layer fully-connected architecture (state_dim �
 
 ### Interactive Web Visualizations
 
-`barto-sutton-notes/lecture3-2026-05-09-mdp/assets/policy-evaluation-dp/` — React + Vite + TypeScript app demonstrating Dynamic Programming methods on a 4×4 gridworld with danger zones.
+`barto-sutton-notes/lecture3-mdp-dp/assets/policy-evaluation-dp/` — React + Vite + TypeScript app demonstrating Dynamic Programming methods on a 4×4 gridworld with danger zones.
 
 **Structure:**
 - MDP Environment section: grid visualization with states, actions (arrows), goal (🏁), danger cells (💀, R=-5)
@@ -74,7 +74,7 @@ DQN variants use a consistent 3-layer fully-connected architecture (state_dim �
 
 **Running:**
 ```bash
-cd barto-sutton-notes/lecture3-2026-05-09-mdp/assets/policy-evaluation-dp
+cd barto-sutton-notes/lecture3-mdp-dp/assets/policy-evaluation-dp
 npm install
 npm run dev
 ```
