@@ -40,7 +40,8 @@ title: Deep Reinforcement Learning - A course on Barto Sutton's book
             <tr class="bg-slate-50/30 border-b border-slate-200">
               <th class="px-4 py-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest w-10 text-center">#</th>
               <th class="px-4 py-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Title</th>
-              <th class="px-4 py-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Resources</th>
+              <th class="px-4 py-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Questions</th>
+              <th class="px-4 py-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Solutions</th>
             </tr>
           </thead>
           <tbody id="lectureBody">
@@ -64,37 +65,37 @@ title: Deep Reinforcement Learning - A course on Barto Sutton's book
                   <a href="{{ p.url | relative_url }}" class="text-sm font-bold text-slate-800 hover:text-blue-600 transition-colors">{{ p.title }}</a>
                 </td>
                 <td class="px-4 py-3">
-                  <div class="flex flex-col gap-1.5">
-                    <div class="flex flex-wrap gap-1.5 items-center">
-                      {% assign found_questions = false %}
-                      {% for q in site.pages %}
-                        {% if q.layout == "post" and q.path contains q_prefix %}
-                          {% unless q.path contains s_prefix %}
-                            {% assign q_ext = q.path | split: "." | last %}
-                            {% if q_ext == "md" %}
-                              {% assign found_questions = true %}
-                              {% assign q_name = q.path | split: "/" | last | remove: ".md" %}
-                              <a href="{{ q.url | relative_url }}" class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded hover:bg-emerald-100 transition-colors no-underline border border-emerald-100">{{ q_name }}</a>
-                            {% endif %}
-                          {% endunless %}
-                        {% endif %}
-                      {% endfor %}
-                      {% unless found_questions %}<span class="text-slate-300 text-[10px]">—</span>{% endunless %}
-                    </div>
-                    <div class="flex flex-wrap gap-1.5 items-center">
-                      {% assign found_solutions = false %}
-                      {% for s in site.pages %}
-                        {% if s.layout == "post" and s.path contains s_prefix %}
-                          {% assign s_ext = s.path | split: "." | last %}
-                          {% if s_ext == "md" %}
-                            {% assign found_solutions = true %}
-                            {% assign s_name = s.path | split: "/" | last | remove: ".md" %}
-                            <a href="{{ s.url | relative_url }}" class="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded hover:bg-amber-100 transition-colors no-underline border border-amber-100">{{ s_name }}</a>
+                  <div class="flex flex-wrap gap-1.5 items-center">
+                    {% assign found_questions = false %}
+                    {% for q in site.pages %}
+                      {% if q.layout == "post" and q.path contains q_prefix %}
+                        {% unless q.path contains s_prefix %}
+                          {% assign q_ext = q.path | split: "." | last %}
+                          {% if q_ext == "md" %}
+                            {% assign found_questions = true %}
+                            {% assign q_name = q.path | split: "/" | last | remove: ".md" %}
+                            <a href="{{ q.url | relative_url }}" class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded hover:bg-emerald-100 transition-colors no-underline border border-emerald-100">{{ q_name }}</a>
                           {% endif %}
+                        {% endunless %}
+                      {% endif %}
+                    {% endfor %}
+                    {% unless found_questions %}<span class="text-slate-300 text-[10px]">—</span>{% endunless %}
+                  </div>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex flex-wrap gap-1.5 items-center">
+                    {% assign found_solutions = false %}
+                    {% for s in site.pages %}
+                      {% if s.layout == "post" and s.path contains s_prefix %}
+                        {% assign s_ext = s.path | split: "." | last %}
+                        {% if s_ext == "md" %}
+                          {% assign found_solutions = true %}
+                          {% assign s_name = s.path | split: "/" | last | remove: ".md" %}
+                          <a href="{{ s.url | relative_url }}" class="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded hover:bg-amber-100 transition-colors no-underline border border-amber-100">{{ s_name }}</a>
                         {% endif %}
-                      {% endfor %}
-                      {% unless found_solutions %}<span class="text-slate-300 text-[10px]">—</span>{% endunless %}
-                    </div>
+                      {% endif %}
+                    {% endfor %}
+                    {% unless found_solutions %}<span class="text-slate-300 text-[10px]">—</span>{% endunless %}
                   </div>
                 </td>
               </tr>
