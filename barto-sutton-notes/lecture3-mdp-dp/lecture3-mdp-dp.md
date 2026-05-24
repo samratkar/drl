@@ -808,39 +808,86 @@ Policy iteration converges from $\pi_0$ to the optimal policy $\pi_4$ in just **
 
 Consider the 4×4 gridworld (Example 4.1, Sutton & Barto). Terminal states are at top-left and bottom-right. Every non-terminal transition gives reward $-1$, $\gamma = 1$, under the equiprobable random policy. Policy evaluation produces successive approximations $V_k$:
 
-```
-         V_k                                          Greedy policy from V_k
-
-k=0:   0.0   0.0   0.0   0.0                         *    .    .    .
-       0.0   0.0   0.0   0.0                         .    .    .    .
-       0.0   0.0   0.0   0.0                         .    .    .    .
-       0.0   0.0   0.0   0.0                         .    .    .    *
-
-k=1:   0.0  -1.0  -1.0  -1.0                         *    ←    ←    ↓
-      -1.0  -1.0  -1.0  -1.0                         ↑   ←↑   ↓→   ↓
-      -1.0  -1.0  -1.0  -1.0                         ↑   ←↑   ↓→   ↓
-      -1.0  -1.0  -1.0   0.0                         ↑    →    →    *
-
-k=2:   0.0  -1.7  -2.0  -2.0                         *    ←    ←    ↓
-      -1.7  -2.0  -2.0  -2.0                         ↑    ←   ←↓    ↓
-      -2.0  -2.0  -2.0  -1.7                         ↑   ↑→    →    ↓
-      -2.0  -2.0  -1.7   0.0                         ↑    →    →    *
-
-k=3:   0.0  -2.4  -2.9  -3.0                         *    ←    ←    ↓
-      -2.4  -2.9  -3.0  -2.9                         ↑    ←    ←    ↓
-      -2.9  -3.0  -2.9  -2.4                         ↑    ↓    →    ↓
-      -3.0  -2.9  -2.4   0.0                         ↑    →    →    *
-
-k=10:  0.0 -14.0 -20.0 -22.0                         *    ←    ←    ↓
-     -14.0 -18.0 -20.0 -20.0                         ↑    ←    ←    ↓
-     -20.0 -20.0 -18.0 -14.0                         ↑    ↓    →    ↓
-     -22.0 -20.0 -14.0   0.0                         ↑    →    →    *
-
-k=∞:   0.0 -14.0 -20.0 -22.0                         *    ←    ←    ↓
-     -14.0 -18.0 -20.0 -20.0                         ↑    ←    ←    ↓
-     -20.0 -20.0 -18.0 -14.0                         ↑    ↓    →    ↓
-     -22.0 -20.0 -14.0   0.0                         ↑    →    →    *
-```
+<table style="width:100%; border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:0.8em;">
+<tr style="border-bottom:2px solid #e2e8f0;">
+<th style="padding:6px 12px; text-align:left;">k</th>
+<th style="padding:6px 12px; text-align:left;">V<sub>k</sub></th>
+<th style="padding:6px 12px; text-align:left;">Greedy policy from V<sub>k</sub></th>
+<th style="padding:6px 12px; text-align:center;">Optimal?</th>
+</tr>
+<tr style="background:#fff;">
+<td style="padding:6px 12px; vertical-align:top; font-weight:bold;">0</td>
+<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> 0.0   0.0   0.0   0.0
+ 0.0   0.0   0.0   0.0
+ 0.0   0.0   0.0   0.0
+ 0.0   0.0   0.0   0.0</pre></td>
+<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> *    .    .    .
+ .    .    .    .
+ .    .    .    .
+ .    .    .    *</pre></td>
+<td style="padding:6px 12px; vertical-align:middle; text-align:center;">✗</td>
+</tr>
+<tr style="background:#f8fafc;">
+<td style="padding:6px 12px; vertical-align:top; font-weight:bold;">1</td>
+<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> 0.0  -1.0  -1.0  -1.0
+-1.0  -1.0  -1.0  -1.0
+-1.0  -1.0  -1.0  -1.0
+-1.0  -1.0  -1.0   0.0</pre></td>
+<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> *    ←    ←    ↓
+ ↑   ←↑   ↓→   ↓
+ ↑   ←↑   ↓→   ↓
+ ↑    →    →    *</pre></td>
+<td style="padding:6px 12px; vertical-align:middle; text-align:center;">✗</td>
+</tr>
+<tr style="background:#fff;">
+<td style="padding:6px 12px; vertical-align:top; font-weight:bold;">2</td>
+<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> 0.0  -1.7  -2.0  -2.0
+-1.7  -2.0  -2.0  -2.0
+-2.0  -2.0  -2.0  -1.7
+-2.0  -2.0  -1.7   0.0</pre></td>
+<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> *    ←    ←    ↓
+ ↑    ←   ←↓    ↓
+ ↑   ↑→    →    ↓
+ ↑    →    →    *</pre></td>
+<td style="padding:6px 12px; vertical-align:middle; text-align:center;">✗</td>
+</tr>
+<tr style="background:#ecfdf5; border-left:4px solid #10b981;">
+<td style="padding:6px 12px; vertical-align:top; font-weight:bold; color:#065f46;">3 ✓</td>
+<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> 0.0  -2.4  -2.9  -3.0
+-2.4  -2.9  -3.0  -2.9
+-2.9  -3.0  -2.9  -2.4
+-3.0  -2.9  -2.4   0.0</pre></td>
+<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0; color:#065f46; font-weight:bold;"> *    ←    ←    ↓
+ ↑    ←    ←    ↓
+ ↑    ↓    →    ↓
+ ↑    →    →    *</pre></td>
+<td style="padding:6px 12px; vertical-align:middle; text-align:center; color:#065f46; font-weight:bold;">✓ optimal</td>
+</tr>
+<tr style="background:#ecfdf5; border-left:4px solid #10b981;">
+<td style="padding:6px 12px; vertical-align:top; font-weight:bold; color:#065f46;">10 ✓</td>
+<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> 0.0  -14.  -20.  -22.
+-14.  -18.  -20.  -20.
+-20.  -20.  -18.  -14.
+-22.  -20.  -14.   0.0</pre></td>
+<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0; color:#065f46; font-weight:bold;"> *    ←    ←    ↓
+ ↑    ←    ←    ↓
+ ↑    ↓    →    ↓
+ ↑    →    →    *</pre></td>
+<td style="padding:6px 12px; vertical-align:middle; text-align:center; color:#065f46; font-weight:bold;">✓ optimal</td>
+</tr>
+<tr style="background:#ecfdf5; border-left:4px solid #10b981;">
+<td style="padding:6px 12px; vertical-align:top; font-weight:bold; color:#065f46;">∞ ✓</td>
+<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> 0.0  -14.  -20.  -22.
+-14.  -18.  -20.  -20.
+-20.  -20.  -18.  -14.
+-22.  -20.  -14.   0.0</pre></td>
+<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0; color:#065f46; font-weight:bold;"> *    ←    ←    ↓
+ ↑    ←    ←    ↓
+ ↑    ↓    →    ↓
+ ↑    →    →    *</pre></td>
+<td style="padding:6px 12px; vertical-align:middle; text-align:center; color:#065f46; font-weight:bold;">✓ optimal</td>
+</tr>
+</table>
 
 The greedy policies from $V_3$, $V_{10}$, and $V_\infty$ are **identical** — even though their value estimates are very different ($-3.0$ vs $-22.0$ for the same state). Sweeps beyond $k=3$ keep refining the values but **never change which action is best**.
 
