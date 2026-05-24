@@ -5,6 +5,7 @@ category : Lectures
 subcategory : MAB
 textbook : [chapter2]
 layout: post
+deliveries : [2026-05-02]
 ---
 ## Table of Contents
 - [Table of Contents](#table-of-contents)

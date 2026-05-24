@@ -1,5 +1,12 @@
 ---
 layout: post
+tags : [nstep-planning]
+title : "NStep Planning"
+category : Lectures
+subcategory : nstep-plan
+textbook : [chapter7]
+layout: post
+deliveries : []
 ---
 
 # Lecture 5: n-step Bootstrapping & Planning with Tabular Methods

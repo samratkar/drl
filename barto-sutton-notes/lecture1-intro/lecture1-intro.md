@@ -5,6 +5,7 @@ category : Lectures
 subcategory : Introduction
 textbook : [chapter1]
 layout: post
+deliveries : [2026-04-25]
 ---
 ## Table of Contents
 - [Table of Contents](#table-of-contents)

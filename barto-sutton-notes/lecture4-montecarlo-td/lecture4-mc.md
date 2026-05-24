@@ -5,6 +5,7 @@ category : Lectures
 subcategory : monte-carlo
 textbook : [chapter5, chapter6]
 layout: post
+deliveries : []
 ---
 
 # Lecture 4: Monte Carlo Methods & Temporal-Difference Learning

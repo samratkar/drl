@@ -5,6 +5,7 @@ category : Lectures
 subcategory : dynamic-programming
 textbook : [chapter3, chapter4]
 layout: post
+deliveries : [2026-05-09, 2026-05-16]
 ---
 ## Table of Contents
 1. [Introduction](#finite-markov-decision-processes--dynamic-programming)
