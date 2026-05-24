@@ -1066,7 +1066,7 @@ The two processes can be visualized as two constraints:
 - **Evaluation line**: $V = v_\pi$ (value function is correct for $\pi$)
 - **Improvement line**: $\pi = \text{greedy}(V)$ (policy is greedy w.r.t. $V$)
 
-The only point satisfying both is $(v_*, \pi_*)$. GPI zig-zags between these constraints, converging to the intersection.
+The only point satisfying both is $(v_\ast, \pi_\ast)$. GPI zig-zags between these constraints, converging to the intersection.
 
 ## Asynchronous Dynamic Programming (Sutton & Barto, p. 85)
 
