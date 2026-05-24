@@ -407,7 +407,7 @@ No model needed! This is why $q_*$ is so valuable — it encodes the optimal pol
 
 ### Why Not Just Solve the Bellman Optimality Equations Directly?
 
-The Bellman optimality equations for $v_*$ form a system of $|\mathcal{S}|$ equations in $|\mathcal{S}|$ unknowns. In principle, we could solve them. In practice:
+The Bellman optimality equations for $v_\ast$ form a system of $\mathcal{S}$ equations in $\mathcal{S}$ unknowns. In principle, we could solve them. In practice:
 
 1. We rarely know the dynamics $p$ exactly
 2. The state space is often enormous (or continuous)
