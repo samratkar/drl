@@ -697,7 +697,7 @@ def policy_iteration(env, gamma=1.0, theta=1e-8):
             return policy, V
 ```
 
-**Convergence guarantee**: A finite MDP has a finite number of deterministic policies ($|\mathcal{A}|^{|\mathcal{S}|}$). Each policy improvement step is guaranteed to strictly improve the policy (or reach optimality). Therefore, policy iteration must converge in a finite number of iterations.
+**Convergence guarantee**: A finite MDP has a finite number of deterministic policies ($\mathcal{A}^{\mathcal{S}}$). Each policy improvement step is guaranteed to strictly improve the policy (or reach optimality). Therefore, policy iteration must converge in a finite number of iterations.
 
 In practice, convergence is remarkably fast — often far fewer iterations than the number of policies.
 
@@ -803,6 +803,35 @@ Policy iteration converges from $\pi_0$ to the optimal policy $\pi_4$ in just **
 ## Value Iteration
 
 **Key insight**: Policy iteration requires **complete** policy evaluation at each step, which itself requires multiple sweeps. But do we really need exact $v_\pi$ before improving?
+
+### Motivation: Truncated Evaluation is Often Enough (Figure 4.1)
+
+Consider the 4×4 gridworld with the equiprobable random policy. Policy evaluation produces a sequence of value function approximations $V_k$ as $k$ increases:
+
+```
+k=1                    k=2                    k=3                    k=10 (converged)
+ 0.0 -1.0 -1.0 -1.0    0.0 -1.7 -2.0 -2.0    0.0 -2.2 -2.9 -3.2    0.0 -14 -20 -22
+-1.0 -1.0 -1.0 -1.0   -1.7 -2.0 -2.0 -2.0   -2.2 -2.9 -3.2 -3.2   -14 -18 -20 -20
+-1.0 -1.0 -1.0 -1.0   -2.0 -2.0 -2.0 -1.7   -2.9 -3.2 -2.9 -2.2   -20 -20 -18 -14
+-1.0 -1.0 -1.0  0.0   -2.0 -2.0 -1.7  0.0   -3.2 -2.9 -2.2  0.0   -22 -20 -14  0.0
+```
+
+Now extract the greedy policy (argmax over actions) at each stage:
+
+```
+Greedy policy from k=1:       Greedy policy from k=3:       Greedy policy from k=∞:
+
+  *   ←   ←   ↓                *   ←   ←   ↓                *   ←   ←   ↓
+  ↑   ←↑  ←↓  ↓                ↑   ←   ←   ↓                ↑   ←   ←   ↓
+  ↑   ↑↓  →↓  ↓                ↑   ↑   ↓→  ↓                ↑   ↓   →   ↓
+  ↑   →   →   *                ↑   →   →   *                ↑   →   →   *
+```
+
+The greedy policy from $V_3$ is already **identical** to the greedy policy from the fully converged $V_\infty$. Sweeps 4, 5, ..., $\infty$ of policy evaluation refine the value estimates but **do not change the resulting greedy policy at all**.
+
+This reveals a fundamental inefficiency in full policy iteration: we spend many sweeps computing precise values, but the policy improvement step only needs the values to be accurate enough to identify the correct **ordering** of actions — not their exact magnitudes. Once the best action in each state is clear, further precision is wasted work.
+
+This motivates **truncating** policy evaluation. The extreme case — stopping after just **one sweep** — gives us value iteration:
 
 Value iteration combines the evaluation and improvement steps into a single update:
 
