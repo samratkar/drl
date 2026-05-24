@@ -930,15 +930,14 @@ def value_iteration(env, gamma=1.0, theta=1e-8):
 
 ### Side-by-Side Algorithm Comparison
 
-<table>
+<table style="width:100%; border-collapse:collapse;">
 <tr>
-<th>Policy Iteration</th>
-<th>Value Iteration</th>
+<th style="width:50%; padding:8px; border:1px solid #e2e8f0; background:#f8fafc;">Policy Iteration</th>
+<th style="width:50%; padding:8px; border:1px solid #e2e8f0; background:#f8fafc;">Value Iteration</th>
 </tr>
 <tr>
-<td>
-
-```
+<td style="padding:8px; border:1px solid #e2e8f0; vertical-align:top;">
+<pre style="font-size:0.8em; margin:0; white-space:pre-wrap;">
 1. Initialization:
    V(s) ∈ ℝ, π(s) ∈ A(s) arbitrarily
 
@@ -947,31 +946,24 @@ def value_iteration(env, gamma=1.0, theta=1e-8):
        Δ ← 0
        For each s ∈ S:
            v ← V(s)
-```
-<mark><strong>
-```
-           V(s) ← Σ_{s',r} p(s',r|s,π(s)) [r + γ V(s')]
-```
-</strong></mark>
-```
+</pre>
+<pre style="font-size:0.8em; margin:0; white-space:pre-wrap; background:#fef3c7; border-left:4px solid #f59e0b; padding:4px 8px;"><b>           V(s) ← Σ p(s',r|s,π(s)) [r + γ V(s')]</b></pre>
+<pre style="font-size:0.8em; margin:0; white-space:pre-wrap;">
            Δ ← max(Δ, |v - V(s)|)
-       Until Δ < θ
+       Until Δ &lt; θ
 
 3. Policy Improvement:
    policy_stable ← true
    For each s ∈ S:
        old_action ← π(s)
-       π(s) ← argmax_a Σ_{s',r} p(s',r|s,a)
-                        [r + γ V(s')]
+       π(s) ← argmax_a Σ p(s',r|s,a) [r + γ V(s')]
        If old_action ≠ π(s): policy_stable ← false
    If policy_stable: stop, return V, π
    Else: go to step 2
-```
-
+</pre>
 </td>
-<td>
-
-```
+<td style="padding:8px; border:1px solid #e2e8f0; vertical-align:top;">
+<pre style="font-size:0.8em; margin:0; white-space:pre-wrap;">
 1. Initialization:
    V(s) ∈ ℝ arbitrarily
 
@@ -980,36 +972,39 @@ def value_iteration(env, gamma=1.0, theta=1e-8):
        Δ ← 0
        For each s ∈ S:
            v ← V(s)
-```
-<mark><strong>
-```
-           V(s) ← max_a Σ_{s',r} p(s',r|s,a) [r + γ V(s')]
-```
-</strong></mark>
-```
+</pre>
+<pre style="font-size:0.8em; margin:0; white-space:pre-wrap; background:#dbeafe; border-left:4px solid #3b82f6; padding:4px 8px;"><b>           V(s) ← max_a Σ p(s',r|s,a) [r + γ V(s')]</b></pre>
+<pre style="font-size:0.8em; margin:0; white-space:pre-wrap;">
            Δ ← max(Δ, |v - V(s)|)
-       Until Δ < θ
+       Until Δ &lt; θ
 
 2. Extract policy (once, at the end):
    For each s ∈ S:
-       π(s) ← argmax_a Σ_{s',r} p(s',r|s,a)
-                        [r + γ V(s')]
+       π(s) ← argmax_a Σ p(s',r|s,a) [r + γ V(s')]
 
 
+   Output: V ≈ v*, π ≈ π*
 
-   Output: V ≈ v_*, π ≈ π_*
-
-```
-
+</pre>
 </td>
 </tr>
 </table>
 
 **The critical difference** (highlighted above):
-- **Policy Iteration** evaluates under the *current fixed policy* $\pi$: $V(s) \leftarrow \sum_{s',r} p(s',r \mid s, \pi(s))[r + \gamma V(s')]$ — it uses only the action that $\pi$ prescribes.
-- **Value Iteration** takes the *max over all actions*: $V(s) \leftarrow \max_a \sum_{s',r} p(s',r \mid s, a)[r + \gamma V(s')]$ — it combines evaluation and improvement into one step.
 
-Everything else (initialization, convergence check, state loop) is structurally identical. Policy Iteration separates "measure the current policy" from "improve the policy" into two explicit phases with an inner loop. Value Iteration collapses both into a single sweep by replacing $\sum_a \pi(a|s)(\cdots)$ with $\max_a(\cdots)$.
+Policy Iteration evaluates under the current fixed policy $\pi$:
+
+$$V(s) \leftarrow \sum_{s',r} p(s',r \mid s, \pi(s))\left[r + \gamma V(s')\right]$$
+
+It uses only the action that $\pi$ prescribes.
+
+Value Iteration takes the max over all actions:
+
+$$V(s) \leftarrow \max_a \sum_{s',r} p(s',r \mid s, a)\left[r + \gamma V(s')\right]$$
+
+It combines evaluation and improvement into one step.
+
+Everything else (initialization, convergence check, state loop) is structurally identical. Policy Iteration separates "measure the current policy" from "improve the policy" into two explicit phases with an inner loop. Value Iteration collapses both into a single sweep by replacing the weighted sum over $\pi$ with a $\max$ over actions.
 
 ### Example: Gambler's Problem (Sutton & Barto, Example 4.3)
 
