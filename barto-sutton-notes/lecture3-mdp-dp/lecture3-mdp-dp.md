@@ -808,88 +808,118 @@ Policy iteration converges from $\pi_0$ to the optimal policy $\pi_4$ in just **
 
 Consider the 4×4 gridworld (Example 4.1, Sutton & Barto). Terminal states are at top-left and bottom-right. Every non-terminal transition gives reward $-1$, $\gamma = 1$, under the equiprobable random policy. Policy evaluation produces successive approximations $V_k$:
 
-<table style="width:100%; border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:0.8em;">
+<table style="width:100%; border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:0.75em;">
 <tr style="border-bottom:2px solid #e2e8f0;">
-<th style="padding:6px 12px; text-align:left;">k</th>
-<th style="padding:6px 12px; text-align:left;">V<sub>k</sub></th>
-<th style="padding:6px 12px; text-align:left;">Greedy policy from V<sub>k</sub></th>
-<th style="padding:6px 12px; text-align:center;">Optimal?</th>
+<th style="padding:6px 8px; text-align:left;">k</th>
+<th style="padding:6px 8px; text-align:left;">V<sub>k</sub></th>
+<th style="padding:6px 8px; text-align:left;">q(s,a) = -1 + V<sub>k</sub>(s') for each action<br><span style="font-weight:normal; font-size:0.85em; color:#64748b;">state: q(↑) q(↓) q(←) q(→) → <b>max</b> → action</span></th>
+<th style="padding:6px 8px; text-align:left;">Greedy π</th>
+<th style="padding:6px 8px; text-align:center;"></th>
 </tr>
 <tr style="background:#fff;">
-<td style="padding:6px 12px; vertical-align:top; font-weight:bold;">0</td>
-<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> 0.0   0.0   0.0   0.0
- 0.0   0.0   0.0   0.0
- 0.0   0.0   0.0   0.0
- 0.0   0.0   0.0   0.0</pre></td>
-<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> *    .    .    .
- .    .    .    .
- .    .    .    .
- .    .    .    *</pre></td>
-<td style="padding:6px 12px; vertical-align:middle; text-align:center;">✗</td>
+<td style="padding:6px 8px; vertical-align:top; font-weight:bold;">0</td>
+<td style="padding:6px 8px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> 0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0</pre></td>
+<td style="padding:6px 8px; vertical-align:top; color:#64748b;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;">All q(s,a) = -1 + 0 = -1 for every
+state and action. All actions tied.</pre></td>
+<td style="padding:6px 8px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;">*  .  .  .
+.  .  .  .
+.  .  .  .
+.  .  .  *</pre></td>
+<td style="padding:6px 8px; vertical-align:middle; text-align:center;">✗</td>
 </tr>
 <tr style="background:#f8fafc;">
-<td style="padding:6px 12px; vertical-align:top; font-weight:bold;">1</td>
-<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> 0.0  -1.0  -1.0  -1.0
--1.0  -1.0  -1.0  -1.0
--1.0  -1.0  -1.0  -1.0
--1.0  -1.0  -1.0   0.0</pre></td>
-<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> *    ←    ←    ↓
- ↑   ←↑   ↓→   ↓
- ↑   ←↑   ↓→   ↓
- ↑    →    →    *</pre></td>
-<td style="padding:6px 12px; vertical-align:middle; text-align:center;">✗</td>
+<td style="padding:6px 8px; vertical-align:top; font-weight:bold;">1</td>
+<td style="padding:6px 8px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> 0.0 -1.0 -1.0 -1.0
+-1.0 -1.0 -1.0 -1.0
+-1.0 -1.0 -1.0 -1.0
+-1.0 -1.0 -1.0  0.0</pre></td>
+<td style="padding:6px 8px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> 1: <b>-1</b>  -2  <b>-1</b>  -2  → ←↑
+ 5: <b>-2</b>  -2  <b>-2</b>  <b>-2</b>  → all tied
+ 6: -2  -2  -2  <b>-2</b>  → all tied
+10: -2  <b>-2</b>  -2  <b>-2</b>  → all tied
+14: -2  <b>-1</b>  -2  -2  → ↓</pre></td>
+<td style="padding:6px 8px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;">*  ←  ←  ↓
+↑ ←↑ ↓→  ↓
+↑ ←↑ ↓→  ↓
+↑  →  →  *</pre></td>
+<td style="padding:6px 8px; vertical-align:middle; text-align:center;">✗</td>
 </tr>
 <tr style="background:#fff;">
-<td style="padding:6px 12px; vertical-align:top; font-weight:bold;">2</td>
-<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> 0.0  -1.7  -2.0  -2.0
--1.7  -2.0  -2.0  -2.0
--2.0  -2.0  -2.0  -1.7
--2.0  -2.0  -1.7   0.0</pre></td>
-<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> *    ←    ←    ↓
- ↑    ←   ←↓    ↓
- ↑   ↑→    →    ↓
- ↑    →    →    *</pre></td>
-<td style="padding:6px 12px; vertical-align:middle; text-align:center;">✗</td>
+<td style="padding:6px 8px; vertical-align:top; font-weight:bold;">2</td>
+<td style="padding:6px 8px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> 0.0 -1.7 -2.0 -2.0
+-1.7 -2.0 -2.0 -2.0
+-2.0 -2.0 -2.0 -1.7
+-2.0 -2.0 -1.7  0.0</pre></td>
+<td style="padding:6px 8px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> 1: <b>-1</b> -2.7 <b>-1</b> -3.0  → ←↑
+ 5: <b>-2.7</b> -3.0 -3.0 -3.0  → ↑
+ 6: -3.0 -3.0 -3.0 <b>-2.7</b>  → →
+10: -3.0 <b>-2.7</b> -3.0 <b>-2.7</b>  → ↓→
+14: -3.0 <b>-1</b> -3.0 -2.7  → ↓</pre></td>
+<td style="padding:6px 8px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;">*  ←  ←  ↓
+↑  ← ←↓  ↓
+↑ ↑→  →  ↓
+↑  →  →  *</pre></td>
+<td style="padding:6px 8px; vertical-align:middle; text-align:center;">✗</td>
 </tr>
 <tr style="background:#ecfdf5; border-left:4px solid #10b981;">
-<td style="padding:6px 12px; vertical-align:top; font-weight:bold; color:#065f46;">3 ✓</td>
-<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> 0.0  -2.4  -2.9  -3.0
--2.4  -2.9  -3.0  -2.9
--2.9  -3.0  -2.9  -2.4
--3.0  -2.9  -2.4   0.0</pre></td>
-<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0; color:#065f46; font-weight:bold;"> *    ←    ←    ↓
- ↑    ←    ←    ↓
- ↑    ↓    →    ↓
- ↑    →    →    *</pre></td>
-<td style="padding:6px 12px; vertical-align:middle; text-align:center; color:#065f46; font-weight:bold;">✓ optimal</td>
+<td style="padding:6px 8px; vertical-align:top; font-weight:bold; color:#065f46;">3 ✓</td>
+<td style="padding:6px 8px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> 0.0 -2.4 -2.9 -3.0
+-2.4 -2.9 -3.0 -2.9
+-2.9 -3.0 -2.9 -2.4
+-3.0 -2.9 -2.4  0.0</pre></td>
+<td style="padding:6px 8px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0; color:#065f46;"> 1: <b>-1</b> -3.9 <b>-1</b> -3.9  → ←↑
+ 5: <b>-3.4</b> -4.0 -4.0 -4.0  → ↑
+ 6: -3.9 <b>-3.9</b> -4.0 <b>-3.9</b>  → ↑↓→
+10: -4.0 <b>-3.4</b> -3.9 <b>-3.4</b>  → ↓→
+14: -3.9 <b>-1</b> -3.9 -3.4  → ↓</pre></td>
+<td style="padding:6px 8px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0; color:#065f46; font-weight:bold;">*  ←  ←  ↓
+↑  ←  ←  ↓
+↑  ↓  →  ↓
+↑  →  →  *</pre></td>
+<td style="padding:6px 8px; vertical-align:middle; text-align:center; color:#065f46; font-weight:bold;">✓</td>
 </tr>
 <tr style="background:#ecfdf5; border-left:4px solid #10b981;">
-<td style="padding:6px 12px; vertical-align:top; font-weight:bold; color:#065f46;">10 ✓</td>
-<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> 0.0  -14.  -20.  -22.
--14.  -18.  -20.  -20.
--20.  -20.  -18.  -14.
--22.  -20.  -14.   0.0</pre></td>
-<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0; color:#065f46; font-weight:bold;"> *    ←    ←    ↓
- ↑    ←    ←    ↓
- ↑    ↓    →    ↓
- ↑    →    →    *</pre></td>
-<td style="padding:6px 12px; vertical-align:middle; text-align:center; color:#065f46; font-weight:bold;">✓ optimal</td>
+<td style="padding:6px 8px; vertical-align:top; font-weight:bold; color:#065f46;">10 ✓</td>
+<td style="padding:6px 8px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> 0.0  -14  -20  -22
+ -14  -18  -20  -20
+ -20  -20  -18  -14
+ -22  -20  -14  0.0</pre></td>
+<td style="padding:6px 8px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0; color:#065f46;"> 1: <b>-1</b>  -19  <b>-1</b>  -21  → ←↑
+ 5: <b>-15</b> -21  -21  -21  → ↑
+ 6: -19  <b>-19</b> -21  -21  → ↑↓
+10: -21  <b>-15</b> -21  <b>-15</b>  → ↓→
+14: -21  <b>-1</b>  -21  -15  → ↓</pre></td>
+<td style="padding:6px 8px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0; color:#065f46; font-weight:bold;">*  ←  ←  ↓
+↑  ←  ←  ↓
+↑  ↓  →  ↓
+↑  →  →  *</pre></td>
+<td style="padding:6px 8px; vertical-align:middle; text-align:center; color:#065f46; font-weight:bold;">✓</td>
 </tr>
 <tr style="background:#ecfdf5; border-left:4px solid #10b981;">
-<td style="padding:6px 12px; vertical-align:top; font-weight:bold; color:#065f46;">∞ ✓</td>
-<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> 0.0  -14.  -20.  -22.
--14.  -18.  -20.  -20.
--20.  -20.  -18.  -14.
--22.  -20.  -14.   0.0</pre></td>
-<td style="padding:6px 12px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0; color:#065f46; font-weight:bold;"> *    ←    ←    ↓
- ↑    ←    ←    ↓
- ↑    ↓    →    ↓
- ↑    →    →    *</pre></td>
-<td style="padding:6px 12px; vertical-align:middle; text-align:center; color:#065f46; font-weight:bold;">✓ optimal</td>
+<td style="padding:6px 8px; vertical-align:top; font-weight:bold; color:#065f46;">∞ ✓</td>
+<td style="padding:6px 8px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0;"> 0.0  -14  -20  -22
+ -14  -18  -20  -20
+ -20  -20  -18  -14
+ -22  -20  -14  0.0</pre></td>
+<td style="padding:6px 8px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0; color:#065f46;"> 1: <b>-1</b>  -19  <b>-1</b>  -21  → ←↑
+ 5: <b>-15</b> -21  -21  -21  → ↑
+ 6: -19  <b>-19</b> -21  -21  → ↑↓
+10: -21  <b>-15</b> -21  <b>-15</b>  → ↓→
+14: -21  <b>-1</b>  -21  -15  → ↓</pre></td>
+<td style="padding:6px 8px; vertical-align:top;"><pre style="margin:0; font-size:1em; background:none; border:none; padding:0; color:#065f46; font-weight:bold;">*  ←  ←  ↓
+↑  ←  ←  ↓
+↑  ↓  →  ↓
+↑  →  →  *</pre></td>
+<td style="padding:6px 8px; vertical-align:middle; text-align:center; color:#065f46; font-weight:bold;">✓</td>
 </tr>
 </table>
 
-The greedy policies from $V_3$, $V_{10}$, and $V_\infty$ are **identical** — even though their value estimates are very different ($-3.0$ vs $-22.0$ for the same state). Sweeps beyond $k=3$ keep refining the values but **never change which action is best**.
+The Q-values column shows representative states (1, 5, 6, 10, 14) — the **bold** values are the max $q$ that determines the greedy action. Notice:
+- At k=3, the max q-values are small (e.g., $-3.4$ for state 5) but the **same action wins** as at k=∞ (where it's $-15$).
+- The gap between max and non-max widens with more sweeps (state 5: gap of $0.6$ at k=3 vs gap of $6.0$ at k=∞) but the ordering never flips after k=3.
 
 **How is the greedy policy extracted? — argmax over $q$, not $v$ directly.**
 
@@ -897,59 +927,9 @@ The greedy policy is $\pi'(s) = \arg\max_a q_\pi(s, a)$. To compute $q$ from $v$
 
 $$q(s, a) = \sum_{s', r} p(s', r \mid s, a)\left[r + \gamma\, V_k(s')\right]$$
 
-In this deterministic gridworld with $r = -1$ and $\gamma = 1$, this simplifies to $q(s, a) = -1 + V_k(s')$ where $s'$ is the state reached by action $a$ (bumping into a wall returns to the same state).
+In this deterministic gridworld with $r = -1$ and $\gamma = 1$, this simplifies to $q(s, a) = -1 + V_k(s')$ where $s'$ is the state reached by action $a$ (bumping into a wall returns to the same state). We take $\arg\max$ over $q(s,a)$, not over raw $V(s')$ values of neighbors. In this gridworld $r=-1$ is uniform across all actions, so $\arg\max_a q(s,a) = \arg\max_a V(s')$ happens to hold. But in general, different actions yield different rewards, and the full one-step lookahead $q(s,a) = r(s,a) + \gamma V(s')$ is necessary.
 
-**Full Q-value table at k=3** (states numbered 0–15, row-major; states 0 and 15 are terminal):
-
-```
-         V_3 =  [ 0.0, -2.4, -2.9, -3.0, -2.4, -2.9, -3.0, -2.9, -2.9, -3.0, -2.9, -2.4, -3.0, -2.9, -2.4,  0.0]
-
-State    q(↑)    q(↓)    q(←)    q(→)    max q    argmax → greedy action
-─────    ─────   ─────   ─────   ─────   ──────   ──────────────────────
-  1      -1.0    -3.9    -1.0    -3.9    -1.0     ← ↑  (tie: both toward terminal)
-  2      -3.4    -4.0    -3.4    -4.0    -3.4     ← ↑  (tie)
-  3      -3.9    -3.9    -3.9    -4.0    -3.9     ← ↑ ↓ (tie; ↓ toward terminal)
-  4      -1.0    -3.9    -3.4    -3.9    -1.0     ↑  (toward terminal)
-  5      -3.4    -4.0    -4.0    -4.0    -3.4     ↑
-  6      -3.9    -3.9    -4.0    -3.9    -3.9     ↑ ↓ → (tie)
-  7      -4.0    -3.4    -4.0    -4.0    -3.4     ↓  (toward terminal)
-  8      -3.4    -4.0    -3.9    -4.0    -3.4     ↑
-  9      -3.9    -3.9    -4.0    -3.9    -3.9     ↑ ↓ → (tie)
- 10      -4.0    -3.4    -3.9    -3.4    -3.4     ↓ → (tie)
- 11      -3.9    -1.0    -3.4    -3.4    -1.0     ↓  (toward terminal)
- 12      -3.9    -4.0    -3.9    -3.9    -3.9     ↑ ← → (tie; → toward terminal)
- 13      -4.0    -3.9    -4.0    -3.4    -3.4     →
- 14      -3.9    -1.0    -3.9    -3.4    -1.0     ↓  (toward terminal)
-```
-
-Now compare with the **Q-value table at k=∞** (converged values):
-
-```
-         V_∞ =  [ 0.0, -14, -20, -22, -14, -18, -20, -20, -20, -20, -18, -14, -22, -20, -14,  0.0]
-
-State    q(↑)    q(↓)    q(←)    q(→)    max q    argmax → greedy action
-─────    ─────   ─────   ─────   ─────   ──────   ──────────────────────
-  1      -1.0    -19.0   -1.0    -21.0   -1.0     ← ↑
-  2      -15.0   -21.0   -15.0   -23.0   -15.0    ← ↑
-  3      -21.0   -21.0   -21.0   -23.0   -21.0    ← ↑ ↓
-  4      -1.0    -19.0   -15.0   -19.0   -1.0     ↑
-  5      -15.0   -21.0   -21.0   -21.0   -15.0    ↑
-  6      -19.0   -19.0   -21.0   -21.0   -19.0    ↑ ↓
-  7      -21.0   -15.0   -21.0   -21.0   -15.0    ↓
-  8      -15.0   -21.0   -21.0   -21.0   -15.0    ↑
-  9      -19.0   -19.0   -21.0   -19.0   -19.0    ↑ ↓ →
- 10      -21.0   -15.0   -21.0   -15.0   -15.0    ↓ →
- 11      -21.0   -1.0    -19.0   -15.0   -1.0     ↓
- 12      -21.0   -23.0   -21.0   -21.0   -21.0    ↑ ← →
- 13      -21.0   -21.0   -23.0   -15.0   -15.0    →
- 14      -21.0   -1.0    -21.0   -15.0   -1.0     ↓
-```
-
-The **argmax column is identical** in both tables — the greedy action at every state is the same whether computed from $V_3$ or $V_\infty$. The absolute $q$-values are vastly different (e.g., state 5: $-3.4$ vs $-15.0$), but the **ranking** of actions within each state is already settled by $k=3$.
-
-**Why does this happen?** The greedy policy only needs the correct **relative ordering** of action-values. Once the $q$-values are separated enough that the best action is unambiguous, further precision in $V$ cannot change the argmax. In this gridworld, by $k=3$ every state's best action is already clearly dominant — the gap between the best and second-best $q$ only widens with more sweeps.
-
-Note: we take $\arg\max$ over $q(s,a)$, not over raw $V(s')$ values of neighbors. In this gridworld $r=-1$ is uniform across all actions, so $\arg\max_a q(s,a) = \arg\max_a V(s')$ happens to hold. But in general, different actions yield different rewards, and the full one-step lookahead $q(s,a) = r(s,a) + \gamma V(s')$ is necessary.
+**Why does the policy stabilize early?** The greedy policy only needs the correct **relative ordering** of action-values. Once the $q$-values are separated enough that the best action is unambiguous, further precision in $V$ cannot change the argmax. By $k=3$ every state's best action is already clearly dominant — the gap between best and second-best $q$ only widens with more sweeps.
 
 This reveals the inefficiency of full policy iteration: we spend many sweeps computing precise values, but the improvement step only needs the ordering to be correct. Once the best action is clear, further precision is wasted work.
 
