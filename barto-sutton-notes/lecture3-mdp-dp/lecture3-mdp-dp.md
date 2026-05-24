@@ -928,6 +928,89 @@ def value_iteration(env, gamma=1.0, theta=1e-8):
 | **Total work** | Often similar | Often similar |
 | **Conceptual** | Two distinct phases | Single combined update |
 
+### Side-by-Side Algorithm Comparison
+
+<table>
+<tr>
+<th>Policy Iteration</th>
+<th>Value Iteration</th>
+</tr>
+<tr>
+<td>
+
+```
+1. Initialization:
+   V(s) ∈ ℝ, π(s) ∈ A(s) arbitrarily
+
+2. Policy Evaluation:
+   Repeat:
+       Δ ← 0
+       For each s ∈ S:
+           v ← V(s)
+```
+<mark><strong>
+```
+           V(s) ← Σ_{s',r} p(s',r|s,π(s)) [r + γ V(s')]
+```
+</strong></mark>
+```
+           Δ ← max(Δ, |v - V(s)|)
+       Until Δ < θ
+
+3. Policy Improvement:
+   policy_stable ← true
+   For each s ∈ S:
+       old_action ← π(s)
+       π(s) ← argmax_a Σ_{s',r} p(s',r|s,a)
+                        [r + γ V(s')]
+       If old_action ≠ π(s): policy_stable ← false
+   If policy_stable: stop, return V, π
+   Else: go to step 2
+```
+
+</td>
+<td>
+
+```
+1. Initialization:
+   V(s) ∈ ℝ arbitrarily
+
+
+   Repeat:
+       Δ ← 0
+       For each s ∈ S:
+           v ← V(s)
+```
+<mark><strong>
+```
+           V(s) ← max_a Σ_{s',r} p(s',r|s,a) [r + γ V(s')]
+```
+</strong></mark>
+```
+           Δ ← max(Δ, |v - V(s)|)
+       Until Δ < θ
+
+2. Extract policy (once, at the end):
+   For each s ∈ S:
+       π(s) ← argmax_a Σ_{s',r} p(s',r|s,a)
+                        [r + γ V(s')]
+
+
+
+   Output: V ≈ v_*, π ≈ π_*
+
+```
+
+</td>
+</tr>
+</table>
+
+**The critical difference** (highlighted above):
+- **Policy Iteration** evaluates under the *current fixed policy* $\pi$: $V(s) \leftarrow \sum_{s',r} p(s',r \mid s, \pi(s))[r + \gamma V(s')]$ — it uses only the action that $\pi$ prescribes.
+- **Value Iteration** takes the *max over all actions*: $V(s) \leftarrow \max_a \sum_{s',r} p(s',r \mid s, a)[r + \gamma V(s')]$ — it combines evaluation and improvement into one step.
+
+Everything else (initialization, convergence check, state loop) is structurally identical. Policy Iteration separates "measure the current policy" from "improve the policy" into two explicit phases with an inner loop. Value Iteration collapses both into a single sweep by replacing $\sum_a \pi(a|s)(\cdots)$ with $\max_a(\cdots)$.
+
 ### Example: Gambler's Problem (Sutton & Barto, Example 4.3)
 
 A gambler bets on coin flips. If heads ($p_h = 0.4$), she wins her stake; if tails, she loses it. The goal is to reach \$100 starting from some initial capital.
