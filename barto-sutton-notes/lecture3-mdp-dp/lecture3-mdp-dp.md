@@ -806,30 +806,105 @@ Policy iteration converges from $\pi_0$ to the optimal policy $\pi_4$ in just **
 
 ### Motivation: Truncated Evaluation is Often Enough (Figure 4.1)
 
-Consider the 4×4 gridworld with the equiprobable random policy. Policy evaluation produces a sequence of value function approximations $V_k$ as $k$ increases:
+Consider the 4×4 gridworld (Example 4.1, Sutton & Barto). Terminal states are at top-left and bottom-right. Every non-terminal transition gives reward $-1$, $\gamma = 1$, under the equiprobable random policy. Policy evaluation produces successive approximations $V_k$:
 
 ```
-k=1                    k=2                    k=3                    k=10 (converged)
- 0.0 -1.0 -1.0 -1.0    0.0 -1.7 -2.0 -2.0    0.0 -2.2 -2.9 -3.2    0.0 -14 -20 -22
--1.0 -1.0 -1.0 -1.0   -1.7 -2.0 -2.0 -2.0   -2.2 -2.9 -3.2 -3.2   -14 -18 -20 -20
--1.0 -1.0 -1.0 -1.0   -2.0 -2.0 -2.0 -1.7   -2.9 -3.2 -2.9 -2.2   -20 -20 -18 -14
--1.0 -1.0 -1.0  0.0   -2.0 -2.0 -1.7  0.0   -3.2 -2.9 -2.2  0.0   -22 -20 -14  0.0
+         V_k                                          Greedy policy from V_k
+
+k=0:   0.0   0.0   0.0   0.0                         *    .    .    .
+       0.0   0.0   0.0   0.0                         .    .    .    .
+       0.0   0.0   0.0   0.0                         .    .    .    .
+       0.0   0.0   0.0   0.0                         .    .    .    *
+
+k=1:   0.0  -1.0  -1.0  -1.0                         *    ←    ←    ↓
+      -1.0  -1.0  -1.0  -1.0                         ↑   ←↑   ↓→   ↓
+      -1.0  -1.0  -1.0  -1.0                         ↑   ←↑   ↓→   ↓
+      -1.0  -1.0  -1.0   0.0                         ↑    →    →    *
+
+k=2:   0.0  -1.7  -2.0  -2.0                         *    ←    ←    ↓
+      -1.7  -2.0  -2.0  -2.0                         ↑    ←   ←↓    ↓
+      -2.0  -2.0  -2.0  -1.7                         ↑   ↑→    →    ↓
+      -2.0  -2.0  -1.7   0.0                         ↑    →    →    *
+
+k=3:   0.0  -2.4  -2.9  -3.0                         *    ←    ←    ↓
+      -2.4  -2.9  -3.0  -2.9                         ↑    ←    ←    ↓
+      -2.9  -3.0  -2.9  -2.4                         ↑    ↓    →    ↓
+      -3.0  -2.9  -2.4   0.0                         ↑    →    →    *
+
+k=10:  0.0 -14.0 -20.0 -22.0                         *    ←    ←    ↓
+     -14.0 -18.0 -20.0 -20.0                         ↑    ←    ←    ↓
+     -20.0 -20.0 -18.0 -14.0                         ↑    ↓    →    ↓
+     -22.0 -20.0 -14.0   0.0                         ↑    →    →    *
+
+k=∞:   0.0 -14.0 -20.0 -22.0                         *    ←    ←    ↓
+     -14.0 -18.0 -20.0 -20.0                         ↑    ←    ←    ↓
+     -20.0 -20.0 -18.0 -14.0                         ↑    ↓    →    ↓
+     -22.0 -20.0 -14.0   0.0                         ↑    →    →    *
 ```
 
-Now extract the greedy policy (argmax over actions) at each stage:
+The greedy policies from $V_3$, $V_{10}$, and $V_\infty$ are **identical** — even though their value estimates are very different ($-3.0$ vs $-22.0$ for the same state). Sweeps beyond $k=3$ keep refining the values but **never change which action is best**.
+
+**How is the greedy policy extracted? — argmax over $q$, not $v$ directly.**
+
+The greedy policy is $\pi'(s) = \arg\max_a q_\pi(s, a)$. To compute $q$ from $v$, we do a one-step lookahead:
+
+$$q(s, a) = \sum_{s', r} p(s', r \mid s, a)\left[r + \gamma\, V_k(s')\right]$$
+
+In this deterministic gridworld with $r = -1$ and $\gamma = 1$, this simplifies to $q(s, a) = -1 + V_k(s')$ where $s'$ is the state reached by action $a$ (bumping into a wall returns to the same state).
+
+**Full Q-value table at k=3** (states numbered 0–15, row-major; states 0 and 15 are terminal):
 
 ```
-Greedy policy from k=1:       Greedy policy from k=3:       Greedy policy from k=∞:
+         V_3 =  [ 0.0, -2.4, -2.9, -3.0, -2.4, -2.9, -3.0, -2.9, -2.9, -3.0, -2.9, -2.4, -3.0, -2.9, -2.4,  0.0]
 
-  *   ←   ←   ↓                *   ←   ←   ↓                *   ←   ←   ↓
-  ↑   ←↑  ←↓  ↓                ↑   ←   ←   ↓                ↑   ←   ←   ↓
-  ↑   ↑↓  →↓  ↓                ↑   ↑   ↓→  ↓                ↑   ↓   →   ↓
-  ↑   →   →   *                ↑   →   →   *                ↑   →   →   *
+State    q(↑)    q(↓)    q(←)    q(→)    max q    argmax → greedy action
+─────    ─────   ─────   ─────   ─────   ──────   ──────────────────────
+  1      -1.0    -3.9    -1.0    -3.9    -1.0     ← ↑  (tie: both toward terminal)
+  2      -3.4    -4.0    -3.4    -4.0    -3.4     ← ↑  (tie)
+  3      -3.9    -3.9    -3.9    -4.0    -3.9     ← ↑ ↓ (tie; ↓ toward terminal)
+  4      -1.0    -3.9    -3.4    -3.9    -1.0     ↑  (toward terminal)
+  5      -3.4    -4.0    -4.0    -4.0    -3.4     ↑
+  6      -3.9    -3.9    -4.0    -3.9    -3.9     ↑ ↓ → (tie)
+  7      -4.0    -3.4    -4.0    -4.0    -3.4     ↓  (toward terminal)
+  8      -3.4    -4.0    -3.9    -4.0    -3.4     ↑
+  9      -3.9    -3.9    -4.0    -3.9    -3.9     ↑ ↓ → (tie)
+ 10      -4.0    -3.4    -3.9    -3.4    -3.4     ↓ → (tie)
+ 11      -3.9    -1.0    -3.4    -3.4    -1.0     ↓  (toward terminal)
+ 12      -3.9    -4.0    -3.9    -3.9    -3.9     ↑ ← → (tie; → toward terminal)
+ 13      -4.0    -3.9    -4.0    -3.4    -3.4     →
+ 14      -3.9    -1.0    -3.9    -3.4    -1.0     ↓  (toward terminal)
 ```
 
-The greedy policy from $V_3$ is already **identical** to the greedy policy from the fully converged $V_\infty$. Sweeps 4, 5, ..., $\infty$ of policy evaluation refine the value estimates but **do not change the resulting greedy policy at all**.
+Now compare with the **Q-value table at k=∞** (converged values):
 
-This reveals a fundamental inefficiency in full policy iteration: we spend many sweeps computing precise values, but the policy improvement step only needs the values to be accurate enough to identify the correct **ordering** of actions — not their exact magnitudes. Once the best action in each state is clear, further precision is wasted work.
+```
+         V_∞ =  [ 0.0, -14, -20, -22, -14, -18, -20, -20, -20, -20, -18, -14, -22, -20, -14,  0.0]
+
+State    q(↑)    q(↓)    q(←)    q(→)    max q    argmax → greedy action
+─────    ─────   ─────   ─────   ─────   ──────   ──────────────────────
+  1      -1.0    -19.0   -1.0    -21.0   -1.0     ← ↑
+  2      -15.0   -21.0   -15.0   -23.0   -15.0    ← ↑
+  3      -21.0   -21.0   -21.0   -23.0   -21.0    ← ↑ ↓
+  4      -1.0    -19.0   -15.0   -19.0   -1.0     ↑
+  5      -15.0   -21.0   -21.0   -21.0   -15.0    ↑
+  6      -19.0   -19.0   -21.0   -21.0   -19.0    ↑ ↓
+  7      -21.0   -15.0   -21.0   -21.0   -15.0    ↓
+  8      -15.0   -21.0   -21.0   -21.0   -15.0    ↑
+  9      -19.0   -19.0   -21.0   -19.0   -19.0    ↑ ↓ →
+ 10      -21.0   -15.0   -21.0   -15.0   -15.0    ↓ →
+ 11      -21.0   -1.0    -19.0   -15.0   -1.0     ↓
+ 12      -21.0   -23.0   -21.0   -21.0   -21.0    ↑ ← →
+ 13      -21.0   -21.0   -23.0   -15.0   -15.0    →
+ 14      -21.0   -1.0    -21.0   -15.0   -1.0     ↓
+```
+
+The **argmax column is identical** in both tables — the greedy action at every state is the same whether computed from $V_3$ or $V_\infty$. The absolute $q$-values are vastly different (e.g., state 5: $-3.4$ vs $-15.0$), but the **ranking** of actions within each state is already settled by $k=3$.
+
+**Why does this happen?** The greedy policy only needs the correct **relative ordering** of action-values. Once the $q$-values are separated enough that the best action is unambiguous, further precision in $V$ cannot change the argmax. In this gridworld, by $k=3$ every state's best action is already clearly dominant — the gap between the best and second-best $q$ only widens with more sweeps.
+
+Note: we take $\arg\max$ over $q(s,a)$, not over raw $V(s')$ values of neighbors. In this gridworld $r=-1$ is uniform across all actions, so $\arg\max_a q(s,a) = \arg\max_a V(s')$ happens to hold. But in general, different actions yield different rewards, and the full one-step lookahead $q(s,a) = r(s,a) + \gamma V(s')$ is necessary.
+
+This reveals the inefficiency of full policy iteration: we spend many sweeps computing precise values, but the improvement step only needs the ordering to be correct. Once the best action is clear, further precision is wasted work.
 
 This motivates **truncating** policy evaluation. The extreme case — stopping after just **one sweep** — gives us value iteration:
 
