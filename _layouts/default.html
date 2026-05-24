@@ -203,10 +203,14 @@
     </div>
   </header>
 
-  <main class="w-full max-w-[1600px] mx-auto px-8 py-10">
+  <main class="w-full max-w-[1600px] mx-auto px-8 py-6">
+    {% if page.no_wrapper %}
+      {{ content }}
+    {% else %}
     <article class="markdown-content bg-white p-10 rounded-xl shadow-sm border border-slate-200">
       {{ content }}
     </article>
+    {% endif %}
   </main>
 
   <footer class="w-full max-w-[1600px] mx-auto px-8 py-12 text-center text-slate-400 text-xs font-medium border-t border-slate-100 uppercase tracking-widest">
