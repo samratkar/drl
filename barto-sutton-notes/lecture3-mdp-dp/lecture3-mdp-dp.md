@@ -937,9 +937,13 @@ This motivates **truncating** policy evaluation. The extreme case — stopping a
 
 Value iteration combines the evaluation and improvement steps into a single update:
 
-The policy evaluation step of policy iteration can be truncated in several ways without losing the convergence guarantees of policy iteration. One important special case is when policy evaluation is stopped after just one sweep (on update for each state). This algorithm is called value iteration. it can be written as a particular simple pudate operation that combines the policy improvement and truncated policy evaluation steps : 
+The policy evaluation step of policy iteration can be truncated in several ways without losing the convergence guarantees of policy iteration. One important special case is when policy evaluation is stopped after just one sweep (on update for each state). This algorithm is called value iteration. it can be written as a particular simple update operation that combines the policy improvement and truncated policy evaluation steps : 
 
 $$\boxed{V_{k+1}(s) = \max_a \sum_{s', r} p(s', r \mid s, a)\left[r + \gamma \, V_k(s')\right], \quad \forall s \in \mathcal{S}}$$
+
+Value iteration update is identical to the policy evaluation update except that it requires the maximum to be taken over all actions. 
+
+>value iteration effectively combines, in each of its sweeps, one sweep of policy evaluation and one sweep of policy improvement. 
 
 **Update Backup Diagram Comparison**:
 
@@ -1204,6 +1208,11 @@ The only point satisfying both is $(v_\ast, \pi_\ast)$. GPI zig-zags between the
 A major drawback of standard Dynamic Programming is that it involves **sweeps** over the entire state space. If the state space is large (e.g., millions of states), a single sweep can take an unacceptable amount of time.
 
 **Asynchronous DP** algorithms are in-place iterative DP algorithms that are not organized in terms of systematic sweeps. They update the values of states in whatever order, using whatever values of other states happen to be available.
+The values of some states may be updated several times before the values of others are updated once. 
+
+To converge correctly, however, an asynchronous algorithm must continue to update the values of all the states : it can't ignore any state after some point in the computation. Asynchronous DP algorithms allow great flexibility to selecting states to update. 
+
+>Asynchronous algorithms also make it easier to intermix computation with realtime interaction. To solve a given MDP, we can run an iterative DP algorithm at the same time that an agent is actually experiencing the MDP. An agent's experience can be used to determine the states to which the Dp algorithm applies its updates. At the same time, the latest value and policy information from the DP algorithm can guide the agent's decision making. 
 
 ### Core Mechanics
 - **Flexibility**: Some states can be updated many times before others are updated once.
