@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monte Carlo Methods – Interactive Step-by-Step</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.7rem;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-bottom: 24px;
+        }
+
+        /* Tab switcher */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin-bottom: 24px;
+        }
+
+        .tab-btn {
+            padding: 10px 24px;
+            border: 2px solid #334155;
+            border-radius: 8px;
+            background: #1e293b;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover { border-color: #64748b; color: #e2e8f0; }
+
+        .tab-btn.active-on {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+        }
+
+        .tab-btn.active-off {
+            border-color: #f97316;
+            background: rgba(249, 115, 22, 0.15);
+            color: #fb923c;
+        }
+
+        /* Given info */
+        .info-bar {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .info-chip {
+            background: #1e293b;
+            border-radius: 8px;
+            padding: 10px 14px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #94a3b8;
+            border: 1px solid #334155;
+        }
+
+        .info-chip strong {
+            display: block;
+            color: #e2e8f0;
+            font-size: 1rem;
+            margin-top: 2px;
+        }
+
+        /* State diagram */
+        .diagram-area {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            margin: 10px 0 20px;
+            background: #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .state-node {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #475569;
+            transition: all 0.4s ease;
+            top: 50px;
+        }
+
+        .state-node .label { font-weight: 700; font-size: 1rem; color: #fff; }
+        .state-node .q-val {
+            font-size: 0.72rem;
+            margin-top: 3px;
+            font-family: 'Courier New', monospace;
+            color: #94a3b8;
+            transition: all 0.3s;
+        }
+
+        .state-node.active {
+            border-color: #fbbf24;
+            box-shadow: 0 0 25px rgba(251, 191, 36, 0.4);
+            transform: scale(1.1);
+        }
+
+        .state-node.updating {
+            border-color: #22c55e;
+            box-shadow: 0 0 25px rgba(34, 197, 94, 0.5);
+            animation: glow 1s infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(34, 197, 94, 0.3); }
+            50% { box-shadow: 0 0 35px rgba(34, 197, 94, 0.6); }
+        }
+
+        .state-node.terminal { border-style: dashed; }
+
+        #sn0 { left: 8%; background: rgba(99, 102, 241, 0.2); }
+        #sn1 { left: 30%; background: rgba(59, 130, 246, 0.2); }
+        #sn2 { left: 52%; background: rgba(16, 185, 129, 0.2); }
+        #sn3 { left: 74%; background: rgba(239, 68, 68, 0.15); }
+
+        .arrow-line {
+            position: absolute;
+            top: 88px;
+            height: 3px;
+            background: #475569;
+            transition: all 0.4s;
+        }
+
+        .arrow-line.active { background: #fbbf24; height: 4px; }
+
+        .arrow-line::after {
+            content: '';
+            position: absolute;
+            right: -7px;
+            top: -4px;
+            border: 5px solid transparent;
+            border-left-color: inherit;
+        }
+
+        .arrow-line.active::after { border-left-color: #fbbf24; }
+
+        .arrow-label {
+            position: absolute;
+            top: 25px;
+            font-size: 0.7rem;
+            color: #64748b;
+            white-space: nowrap;
+        }
+
+        #ar0 { left: 17%; width: 13%; }
+        #ar1 { left: 39%; width: 13%; }
+        #ar2 { left: 61%; width: 13%; }
+        #al0 { left: 23%; }
+        #al1 { left: 45%; }
+        #al2 { left: 67%; }
+
+        /* Agent */
+        .agent {
+            position: absolute;
+            top: 15px;
+            width: 28px;
+            height: 28px;
+            background: #fbbf24;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            transition: left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
+            opacity: 0;
+        }
+
+        .agent.visible { opacity: 1; }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            margin: 20px 0;
+        }
+
+        button {
+            padding: 10px 22px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover:not(:disabled) { transform: translateY(-2px); }
+        button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        .btn-next { background: #22c55e; color: #000; }
+        .btn-next:hover:not(:disabled) { background: #16a34a; }
+        .btn-prev { background: #475569; color: #fff; }
+        .btn-prev:hover:not(:disabled) { background: #64748b; }
+        .btn-reset { background: #ef4444; color: #fff; }
+        .btn-reset:hover { background: #dc2626; }
+
+        .step-label {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            font-weight: 600;
+            min-width: 90px;
+            text-align: center;
+        }
+
+        /* Info panel */
+        .info-panel {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 22px;
+            margin: 16px 0;
+            border: 1px solid #334155;
+            min-height: 160px;
+            transition: border-color 0.3s;
+        }
+
+        .info-panel.on-mode { border-color: #10b981; }
+        .info-panel.off-mode { border-color: #f97316; }
+
+        .info-panel h3 {
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            color: #fbbf24;
+        }
+
+        .info-panel .desc {
+            color: #cbd5e1;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            margin-bottom: 14px;
+        }
+
+        .computation-display {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 14px 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.82rem;
+            color: #e2e8f0;
+            line-height: 1.9;
+            white-space: pre-wrap;
+        }
+
+        .computation-display .hl { color: #22c55e; font-weight: 700; }
+        .computation-display .dim { color: #4b5563; }
+        .computation-display .warn { color: #fb923c; font-weight: 700; }
+
+        /* Timeline */
+        .timeline-section h3 {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin: 24px 0 10px;
+        }
+
+        .timeline-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .timeline-table thead th {
+            background: #1e293b;
+            padding: 10px 12px;
+            text-align: center;
+            font-size: 0.78rem;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .timeline-table tbody td {
+            padding: 9px 12px;
+            text-align: center;
+            font-size: 0.82rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            font-family: 'Courier New', monospace;
+            background: #0f172a;
+            transition: all 0.3s;
+        }
+
+        .timeline-table tbody td:first-child {
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: 600;
+            color: #cbd5e1;
+        }
+
+        .timeline-table .row-active { background: #1e293b !important; }
+        .timeline-table .row-future { opacity: 0.3; }
+        .timeline-table .cell-changed { color: #22c55e; font-weight: 700; background: rgba(34, 197, 94, 0.08) !important; }
+        .timeline-table .cell-unchanged { color: #4b5563; }
+        .timeline-table .cell-hidden { color: transparent; }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 12px 0;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.yellow { background: #fbbf24; }
+        .legend-dot.green { background: #22c55e; }
+        .legend-dot.grey { background: #475569; }
+
+        /* Importance sampling display */
+        .rho-display {
+            display: flex;
+            gap: 10px;
+            margin: 12px 0;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .rho-chip {
+            background: rgba(249, 115, 22, 0.15);
+            border: 1px solid #f97316;
+            border-radius: 8px;
+            padding: 8px 14px;
+            text-align: center;
+            font-size: 0.78rem;
+            transition: all 0.3s;
+            opacity: 0.3;
+        }
+
+        .rho-chip.revealed { opacity: 1; }
+        .rho-chip .rho-label { color: #fb923c; font-weight: 600; display: block; }
+        .rho-chip .rho-val { color: #e2e8f0; font-family: monospace; margin-top: 2px; display: block; }
+
+        /* Footnote */
+        .footnote {
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-top: 20px;
+            border: 1px solid #334155;
+            font-size: 0.8rem;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+
+        .footnote strong { color: #fbbf24; }
+
+        /* Keyboard hint */
+        .kb-hint {
+            text-align: center;
+            font-size: 0.72rem;
+            color: #4b5563;
+            margin-top: 8px;
+        }
+
+        .kb-hint kbd {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 3px;
+            padding: 1px 5px;
+            font-size: 0.7rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Monte Carlo Methods – Interactive</h1>
+        <p class="subtitle">Step through On-Policy and Off-Policy MC updates to see how Q-values change</p>
+
+        <!-- Mode tabs -->
+        <div class="tabs">
+            <button class="tab-btn active-on" id="tabOn" onclick="switchMode('on')">On-Policy MC</button>
+            <button class="tab-btn" id="tabOff" onclick="switchMode('off')">Off-Policy MC (Importance Sampling)</button>
+        </div>
+
+        <!-- Given info -->
+        <div class="info-bar">
+            <div class="info-chip">γ (discount)<strong>0.9</strong></div>
+            <div class="info-chip">α (learning rate)<strong>0.5</strong></div>
+            <div class="info-chip">Initial Q-values<strong>All = 0</strong></div>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-item"><div class="legend-dot yellow"></div> Agent position</div>
+            <div class="legend-item"><div class="legend-dot green"></div> Q-value being updated</div>
+            <div class="legend-item"><div class="legend-dot grey"></div> Unchanged</div>
+        </div>
+
+        <!-- State diagram -->
+        <div class="diagram-area">
+            <div class="agent" id="agent">🤖</div>
+
+            <div class="state-node" id="sn0">
+                <span class="label">S₀</span>
+                <span class="q-val" id="qv0">Q(R)=0</span>
+            </div>
+            <div class="arrow-line" id="ar0"></div>
+            <span class="arrow-label" id="al0">R, r=+1</span>
+
+            <div class="state-node" id="sn1">
+                <span class="label">S₁</span>
+                <span class="q-val" id="qv1">Q(L)=0</span>
+            </div>
+            <div class="arrow-line" id="ar1"></div>
+            <span class="arrow-label" id="al1">L, r=+3</span>
+
+            <div class="state-node" id="sn2">
+                <span class="label">S₂</span>
+                <span class="q-val" id="qv2">Q(R)=0</span>
+            </div>
+            <div class="arrow-line" id="ar2"></div>
+            <span class="arrow-label" id="al2">R, r=+5</span>
+
+            <div class="state-node terminal" id="sn3">
+                <span class="label">S<sub>T</sub></span>
+                <span class="q-val">terminal</span>
+            </div>
+        </div>
+
+        <!-- Importance Sampling Ratios (off-policy only) -->
+        <div class="rho-display" id="rhoDisplay" style="display:none;">
+            <div class="rho-chip" id="rho0"><span class="rho-label">ρ₀ (S₀,R)</span><span class="rho-val">π/b = 1.0/0.8 = 1.25</span></div>
+            <div class="rho-chip" id="rho1"><span class="rho-label">ρ₁ (S₁,L)</span><span class="rho-val">π/b = 1.0/0.8 = 1.25</span></div>
+            <div class="rho-chip" id="rho2"><span class="rho-label">ρ₂ (S₂,R)</span><span class="rho-val">π/b = 1.0/0.8 = 1.25</span></div>
+            <div class="rho-chip" id="rhoCum"><span class="rho-label">Cumulative ρ</span><span class="rho-val" id="rhoCumVal">—</span></div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="btn-prev" id="prevBtn" disabled onclick="prevStep()">← Previous</button>
+            <span class="step-label" id="stepLabel">Step 0 / 5</span>
+            <button class="btn-next" id="nextBtn" onclick="nextStep()">Next Step →</button>
+            <button class="btn-reset" onclick="reset()">Reset</button>
+        </div>
+        <p class="kb-hint">Use <kbd>←</kbd> <kbd>→</kbd> arrow keys or <kbd>Space</kbd> to navigate</p>
+
+        <!-- Info Panel -->
+        <div class="info-panel on-mode" id="infoPanel">
+            <h3 id="infoTitle">Episode Generated</h3>
+            <p class="desc" id="infoDesc">The agent follows the behavior policy and generates an episode: S₀ →(R, +1)→ S₁ →(L, +3)→ S₂ →(R, +5)→ S_T. Now we'll compute returns and update Q-values.</p>
+            <div class="computation-display" id="infoComp">Episode: S₀ →(R, r=+1)→ S₁ →(L, r=+3)→ S₂ →(R, r=+5)→ Terminal
+
+Actions taken: R, L, R
+Rewards received: +1, +3, +5</div>
+        </div>
+
+        <!-- Timeline Table -->
+        <div class="timeline-section">
+            <h3>Q-Value History</h3>
+            <table class="timeline-table">
+                <thead>
+                    <tr>
+                        <th>Step</th>
+                        <th>Q(S₀, R)</th>
+                        <th>Q(S₁, L)</th>
+                        <th>Q(S₂, R)</th>
+                        <th>What Changed</th>
+                    </tr>
+                </thead>
+                <tbody id="timelineBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="footnote">
+            <strong>Key Observation:</strong> In Monte Carlo, we first generate the <em>entire episode</em>, then compute returns backwards, then update Q-values. Unlike TD methods, MC must wait until the episode ends. In off-policy mode, watch how the importance sampling ratio ρ scales the return — amplifying it when π would have taken the same actions more often than b did.
+        </div>
+    </div>
+
+    <script>
+        let mode = 'on'; // 'on' or 'off'
+        let currentStep = 0;
+
+        const gamma = 0.9;
+        const alpha = 0.5;
+
+        // Returns computed backwards
+        const G2 = 5;
+        const G1 = 3 + gamma * G2; // 7.5
+        const G0 = 1 + gamma * G1; // 7.75
+
+        // Importance sampling ratios
+        const rho_single = 1.25; // each π/b = 1.0/0.8
+        const rho_cum_2 = 1.25;
+        const rho_cum_1 = 1.25 * 1.25; // 1.5625
+        const rho_cum_0 = 1.25 * 1.25 * 1.25; // 1.953125
+
+        const onPolicySteps = [
+            {
+                title: "Episode Generated (t=0 to terminal)",
+                desc: "The agent follows behavior policy b (ε-greedy, ε=0.4) and generates a complete episode. MC cannot update until the episode <strong>finishes</strong>.",
+                comp: `Episode: S₀ →(R, r=+1)→ S₁ →(L, r=+3)→ S₂ →(R, r=+5)→ Terminal\n\nActions taken: R, L, R\nRewards received: +1, +3, +5\n\n<span class="dim">Now we compute returns backwards from terminal...</span>`,
+                qValues: [0, 0, 0],
+                agentPos: -1,
+                activeArrow: -1,
+                updatingState: -1,
+                rhoRevealed: [],
+                rhoCum: null
+            },
+            {
+                title: "Step 1: Compute Returns (backwards)",
+                desc: "We calculate the discounted return G at each time step, working <strong>backwards</strong> from the terminal state. This is why MC needs the full episode first.",
+                comp: `Computing returns backwards:\n\n<span class="hl">G₂</span> = r₃ = +5                           = <span class="hl">5.0</span>\n<span class="hl">G₁</span> = r₂ + γ·G₂ = 3 + 0.9×5 = 3 + 4.5  = <span class="hl">7.5</span>\n<span class="hl">G₀</span> = r₁ + γ·G₁ = 1 + 0.9×7.5 = 1 + 6.75 = <span class="hl">7.75</span>`,
+                qValues: [0, 0, 0],
+                agentPos: -1,
+                activeArrow: -1,
+                updatingState: -1,
+                rhoRevealed: [],
+                rhoCum: null
+            },
+            {
+                title: "Step 2: Update Q(S₂, R) — first visit at t=2",
+                desc: "Starting updates from the <strong>last</strong> visited state. G₂ = 5. The MC error is (G − Q) and we scale by α.",
+                comp: `Update Q(S₂, R):\n\nG₂ = 5.0\nCurrent Q(S₂, R) = 0\n\nMC error = G₂ − Q = 5.0 − 0 = <span class="hl">5.0</span>\nUpdate   = α × error = 0.5 × 5.0 = <span class="hl">2.5</span>\n\n<span class="hl">Q(S₂, R) = 0 + 2.5 = 2.5</span>  ✓`,
+                qValues: [0, 0, 2.5],
+                agentPos: 2,
+                activeArrow: 2,
+                updatingState: 2,
+                rhoRevealed: [],
+                rhoCum: null
+            },
+            {
+                title: "Step 3: Update Q(S₁, L) — first visit at t=1",
+                desc: "Next, update the previous state. G₁ = 7.5. Note Q(S₂,R) was already updated but that doesn't affect this — MC uses the <strong>same G</strong> computed earlier.",
+                comp: `Update Q(S₁, L):\n\nG₁ = 7.5\nCurrent Q(S₁, L) = 0\n\nMC error = G₁ − Q = 7.5 − 0 = <span class="hl">7.5</span>\nUpdate   = α × error = 0.5 × 7.5 = <span class="hl">3.75</span>\n\n<span class="hl">Q(S₁, L) = 0 + 3.75 = 3.75</span>  ✓\n\n<span class="dim">Q(S₂, R) = 2.5 (unchanged this step)</span>`,
+                qValues: [0, 3.75, 2.5],
+                agentPos: 1,
+                activeArrow: 1,
+                updatingState: 1,
+                rhoRevealed: [],
+                rhoCum: null
+            },
+            {
+                title: "Step 4: Update Q(S₀, R) — first visit at t=0",
+                desc: "Finally, update the starting state. G₀ = 7.75. After this, all first-visited state-action pairs have been updated.",
+                comp: `Update Q(S₀, R):\n\nG₀ = 7.75\nCurrent Q(S₀, R) = 0\n\nMC error = G₀ − Q = 7.75 − 0 = <span class="hl">7.75</span>\nUpdate   = α × error = 0.5 × 7.75 = <span class="hl">3.875</span>\n\n<span class="hl">Q(S₀, R) = 0 + 3.875 = 3.875</span>  ✓\n\n<span class="dim">Q(S₁, L) = 3.75 (unchanged)</span>\n<span class="dim">Q(S₂, R) = 2.5  (unchanged)</span>`,
+                qValues: [3.875, 3.75, 2.5],
+                agentPos: 0,
+                activeArrow: 0,
+                updatingState: 0,
+                rhoRevealed: [],
+                rhoCum: null
+            },
+            {
+                title: "Done! All Q-values updated (On-Policy)",
+                desc: "The episode is fully processed. These Q-values estimate Q<sup>b</sup> — the value under the <strong>behavior policy</strong> (which includes exploration). Over many episodes, they converge to the true Q<sup>b</sup>.",
+                comp: `Final Q-values (On-Policy MC):\n\n<span class="hl">Q(S₀, R) = 3.875</span>   (was 0, G₀ = 7.75)\n<span class="hl">Q(S₁, L) = 3.75</span>    (was 0, G₁ = 7.5)\n<span class="hl">Q(S₂, R) = 2.5</span>     (was 0, G₂ = 5.0)\n\nThese estimate Q^b (value under behavior policy).\nNo importance sampling needed — data matches policy.`,
+                qValues: [3.875, 3.75, 2.5],
+                agentPos: -1,
+                activeArrow: -1,
+                updatingState: -1,
+                rhoRevealed: [],
+                rhoCum: null
+            }
+        ];
+
+        const offPolicySteps = [
+            {
+                title: "Episode Generated (under behavior policy b)",
+                desc: "Same episode as on-policy, but now we want to evaluate the <strong>target policy π</strong> (deterministic greedy), not b. We need importance sampling to correct for the mismatch.",
+                comp: `Episode (generated by b): S₀ →(R, +1)→ S₁ →(L, +3)→ S₂ →(R, +5)→ Terminal\n\nBehavior policy b (ε-greedy, ε=0.4):\n  b(R|S₀)=0.8, b(L|S₁)=0.8, b(R|S₂)=0.8\n\nTarget policy π (deterministic greedy):\n  π(R|S₀)=1.0, π(L|S₁)=1.0, π(R|S₂)=1.0\n\n<span class="warn">π always picks these actions! ρ will be > 1 everywhere.</span>`,
+                qValues: [0, 0, 0],
+                agentPos: -1,
+                activeArrow: -1,
+                updatingState: -1,
+                rhoRevealed: [],
+                rhoCum: null
+            },
+            {
+                title: "Step 1: Compute Returns (same as on-policy)",
+                desc: "The returns G are the same regardless of method — they're computed from the actual rewards observed. The difference comes in <strong>how</strong> we use them.",
+                comp: `Returns (same episode, same rewards):\n\n<span class="hl">G₂</span> = 5.0\n<span class="hl">G₁</span> = 7.5\n<span class="hl">G₀</span> = 7.75\n\n<span class="dim">Same returns as on-policy — the episode happened the same way.</span>\n<span class="dim">The difference: we'll multiply by importance sampling ratio ρ.</span>`,
+                qValues: [0, 0, 0],
+                agentPos: -1,
+                activeArrow: -1,
+                updatingState: -1,
+                rhoRevealed: [],
+                rhoCum: null
+            },
+            {
+                title: "Step 2: Compute Importance Sampling Ratios",
+                desc: "For each step, compute π(a|s)/b(a|s). Since π is deterministic and b always has prob 0.8 for these actions, each single-step ratio is 1.0/0.8 = 1.25.",
+                comp: `Per-step ratios:\n\n  t=0: π(R|S₀)/b(R|S₀) = 1.0/0.8 = <span class="hl">1.25</span>\n  t=1: π(L|S₁)/b(L|S₁) = 1.0/0.8 = <span class="hl">1.25</span>\n  t=2: π(R|S₂)/b(R|S₂) = 1.0/0.8 = <span class="hl">1.25</span>\n\nCumulative products (from t to end):\n  ρ₂:₂ = 1.25                    = <span class="warn">1.25</span>\n  ρ₁:₂ = 1.25 × 1.25             = <span class="warn">1.5625</span>\n  ρ₀:₂ = 1.25 × 1.25 × 1.25      = <span class="warn">1.953125</span>\n\n<span class="dim">ρ > 1 means π favors these actions MORE than b → upweight returns</span>`,
+                qValues: [0, 0, 0],
+                agentPos: -1,
+                activeArrow: -1,
+                updatingState: -1,
+                rhoRevealed: [0, 1, 2],
+                rhoCum: "see per-step"
+            },
+            {
+                title: "Step 3: Update Q(S₂, R) — with ρ₂:₂ = 1.25",
+                desc: "Update Q(S₂,R) using the importance-weighted return. ρ is small here (only 1 step) so the effect is modest.",
+                comp: `Update Q(S₂, R) with importance sampling:\n\nG₂ = 5.0\nρ₂:₂ = <span class="warn">1.25</span>\nWeighted return = ρ × G₂ = 1.25 × 5.0 = <span class="warn">6.25</span>\n\nMC error = ρ·G − Q = 6.25 − 0 = <span class="hl">6.25</span>\nUpdate   = α × error = 0.5 × 6.25 = <span class="hl">3.125</span>\n\n<span class="hl">Q(S₂, R) = 0 + 3.125 = 3.125</span>  ✓\n\n<span class="dim">Compare on-policy: Q(S₂,R) = 2.5 (no ρ amplification)</span>`,
+                qValues: [0, 0, 3.125],
+                agentPos: 2,
+                activeArrow: 2,
+                updatingState: 2,
+                rhoRevealed: [0, 1, 2],
+                rhoCum: "ρ₂:₂ = 1.25"
+            },
+            {
+                title: "Step 4: Update Q(S₁, L) — with ρ₁:₂ = 1.5625",
+                desc: "Now ρ is the <strong>product of two steps</strong> — it grows multiplicatively. The return is amplified more.",
+                comp: `Update Q(S₁, L) with importance sampling:\n\nG₁ = 7.5\nρ₁:₂ = 1.25 × 1.25 = <span class="warn">1.5625</span>\nWeighted return = ρ × G₁ = 1.5625 × 7.5 = <span class="warn">11.719</span>\n\nMC error = ρ·G − Q = 11.719 − 0 = <span class="hl">11.719</span>\nUpdate   = α × error = 0.5 × 11.719 = <span class="hl">5.859</span>\n\n<span class="hl">Q(S₁, L) = 0 + 5.859 = 5.859</span>  ✓\n\n<span class="dim">Compare on-policy: Q(S₁,L) = 3.75 (ρ amplified by 56%)</span>`,
+                qValues: [0, 5.859, 3.125],
+                agentPos: 1,
+                activeArrow: 1,
+                updatingState: 1,
+                rhoRevealed: [0, 1, 2],
+                rhoCum: "ρ₁:₂ = 1.5625"
+            },
+            {
+                title: "Step 5: Update Q(S₀, R) — with ρ₀:₂ = 1.953",
+                desc: "The cumulative ρ is now the product of <strong>all three steps</strong>. Notice how it nearly doubles the return! This is the variance problem of off-policy MC.",
+                comp: `Update Q(S₀, R) with importance sampling:\n\nG₀ = 7.75\nρ₀:₂ = 1.25 × 1.25 × 1.25 = <span class="warn">1.953125</span>\nWeighted return = ρ × G₀ = 1.953 × 7.75 = <span class="warn">15.137</span>\n\nMC error = ρ·G − Q = 15.137 − 0 = <span class="hl">15.137</span>\nUpdate   = α × error = 0.5 × 15.137 = <span class="hl">7.568</span>\n\n<span class="hl">Q(S₀, R) = 0 + 7.568 = 7.568</span>  ✓\n\n<span class="warn">Compare on-policy: Q(S₀,R) = 3.875 — off-policy is 95% higher!</span>\n<span class="dim">This is because ρ nearly doubled the return (1.953× amplification)</span>`,
+                qValues: [7.568, 5.859, 3.125],
+                agentPos: 0,
+                activeArrow: 0,
+                updatingState: 0,
+                rhoRevealed: [0, 1, 2],
+                rhoCum: "ρ₀:₂ = 1.953"
+            },
+            {
+                title: "Done! All Q-values updated (Off-Policy)",
+                desc: "These Q-values estimate Q<sup>π</sup> — the value under the <strong>target policy</strong>. They're higher because π always takes these actions (no exploration waste), while b sometimes explores.",
+                comp: `Final Q-values (Off-Policy MC):\n\n<span class="hl">Q(S₀, R) = 7.568</span>   (ρ=1.953, amplified from G=7.75)\n<span class="hl">Q(S₁, L) = 5.859</span>   (ρ=1.5625, amplified from G=7.5)\n<span class="hl">Q(S₂, R) = 3.125</span>   (ρ=1.25, amplified from G=5.0)\n\nThese estimate Q^π (value under target policy).\n<span class="warn">Warning: ρ grows exponentially with episode length!</span>\nWith 50 steps: ρ = 1.25⁵⁰ = 8,882 — catastrophic variance.`,
+                qValues: [7.568, 5.859, 3.125],
+                agentPos: -1,
+                activeArrow: -1,
+                updatingState: -1,
+                rhoRevealed: [0, 1, 2],
+                rhoCum: "ρ₀:₂ = 1.953"
+            }
+        ];
+
+        function getSteps() {
+            return mode === 'on' ? onPolicySteps : offPolicySteps;
+        }
+
+        function getMaxStep() {
+            return getSteps().length - 1;
+        }
+
+        function switchMode(m) {
+            mode = m;
+            currentStep = 0;
+
+            document.getElementById('tabOn').className = 'tab-btn' + (m === 'on' ? ' active-on' : '');
+            document.getElementById('tabOff').className = 'tab-btn' + (m === 'off' ? ' active-off' : '');
+
+            document.getElementById('rhoDisplay').style.display = m === 'off' ? 'flex' : 'none';
+
+            const panel = document.getElementById('infoPanel');
+            panel.className = 'info-panel ' + (m === 'on' ? 'on-mode' : 'off-mode');
+
+            render();
+        }
+
+        function nextStep() {
+            if (currentStep < getMaxStep()) { currentStep++; render(); }
+        }
+
+        function prevStep() {
+            if (currentStep > 0) { currentStep--; render(); }
+        }
+
+        function reset() {
+            currentStep = 0;
+            render();
+        }
+
+        function render() {
+            const steps = getSteps();
+            const step = steps[currentStep];
+
+            // Step label
+            document.getElementById('stepLabel').textContent = `Step ${currentStep} / ${getMaxStep()}`;
+
+            // Buttons
+            document.getElementById('prevBtn').disabled = currentStep === 0;
+            document.getElementById('nextBtn').disabled = currentStep === getMaxStep();
+
+            // Info panel
+            document.getElementById('infoTitle').textContent = step.title;
+            document.getElementById('infoDesc').innerHTML = step.desc;
+            document.getElementById('infoComp').innerHTML = step.comp;
+
+            // State nodes
+            ['sn0', 'sn1', 'sn2', 'sn3'].forEach((id, i) => {
+                const node = document.getElementById(id);
+                node.classList.remove('active', 'updating');
+                if (i === step.agentPos) node.classList.add('active');
+                if (i === step.updatingState) node.classList.add('updating');
+            });
+
+            // Q-value displays
+            const actions = ['R', 'L', 'R'];
+            ['qv0', 'qv1', 'qv2'].forEach((id, i) => {
+                const el = document.getElementById(id);
+                const val = step.qValues[i];
+                el.textContent = `Q(${actions[i]})=${val % 1 === 0 ? val : val.toFixed(3)}`;
+                el.style.color = (currentStep > 0 && val !== 0 && val !== steps[currentStep - 1].qValues[i]) ? '#22c55e' : '#94a3b8';
+            });
+
+            // Arrows
+            ['ar0', 'ar1', 'ar2'].forEach((id, i) => {
+                document.getElementById(id).classList.toggle('active', i === step.activeArrow);
+            });
+
+            // Agent
+            const agent = document.getElementById('agent');
+            const positions = ['11%', '33%', '55%', '77%'];
+            if (step.agentPos >= 0) {
+                agent.classList.add('visible');
+                agent.style.left = positions[step.agentPos];
+            } else {
+                agent.classList.remove('visible');
+            }
+
+            // Rho chips (off-policy)
+            if (mode === 'off') {
+                [0, 1, 2].forEach(i => {
+                    document.getElementById(`rho${i}`).classList.toggle('revealed', step.rhoRevealed.includes(i));
+                });
+                const cumChip = document.getElementById('rhoCum');
+                cumChip.classList.toggle('revealed', step.rhoCum !== null);
+                document.getElementById('rhoCumVal').textContent = step.rhoCum || '—';
+            }
+
+            // Timeline table
+            renderTimeline(steps);
+        }
+
+        function renderTimeline(steps) {
+            const tbody = document.getElementById('timelineBody');
+            tbody.innerHTML = '';
+
+            const labels = [
+                'Init',
+                mode === 'on' ? 'Compute G' : 'Compute G',
+                mode === 'on' ? 'Update Q(S₂,R)' : 'Compute ρ',
+                mode === 'on' ? 'Update Q(S₁,L)' : 'Update Q(S₂,R)',
+                mode === 'on' ? 'Update Q(S₀,R)' : 'Update Q(S₁,L)',
+                mode === 'on' ? 'Final' : 'Update Q(S₀,R)',
+            ];
+
+            if (mode === 'off') labels.push('Final');
+
+            for (let i = 0; i <= getMaxStep(); i++) {
+                const row = document.createElement('tr');
+                const s = steps[i];
+                const prev = i > 0 ? steps[i - 1] : null;
+
+                const isActive = i === currentStep;
+                const isFuture = i > currentStep;
+
+                let cells = `<td>${labels[i] || `Step ${i}`}</td>`;
+
+                for (let q = 0; q < 3; q++) {
+                    let cls = '';
+                    let val = '';
+
+                    if (isFuture) {
+                        cls = 'cell-hidden';
+                        val = '?';
+                    } else {
+                        val = s.qValues[q] % 1 === 0 ? s.qValues[q] : s.qValues[q].toFixed(3);
+                        if (prev && s.qValues[q] !== prev.qValues[q]) {
+                            cls = 'cell-changed';
+                        } else if (i > 0) {
+                            cls = 'cell-unchanged';
+                        }
+                    }
+
+                    cells += `<td class="${cls}">${val}</td>`;
+                }
+
+                // What changed column
+                let whatChanged = '';
+                if (isFuture) {
+                    whatChanged = '<td class="cell-hidden">?</td>';
+                } else if (i === 0) {
+                    whatChanged = '<td style="font-family:sans-serif; color:#64748b;">All = 0</td>';
+                } else {
+                    let changes = [];
+                    for (let q = 0; q < 3; q++) {
+                        if (prev && s.qValues[q] !== prev.qValues[q]) {
+                            const names = ['Q(S₀,R)', 'Q(S₁,L)', 'Q(S₂,R)'];
+                            changes.push(`<span style="color:#22c55e">${names[q]}→${s.qValues[q].toFixed ? s.qValues[q].toFixed(3) : s.qValues[q]}</span>`);
+                        }
+                    }
+                    whatChanged = `<td style="font-family:sans-serif; font-size:0.78rem;">${changes.length ? changes.join(', ') : '<span style="color:#4b5563">—</span>'}</td>`;
+                }
+
+                cells += whatChanged;
+                row.innerHTML = cells;
+
+                if (isActive) row.style.background = '#1e293b';
+                if (isFuture) row.style.opacity = '0.3';
+
+                tbody.appendChild(row);
+            }
+        }
+
+        // Keyboard
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextStep(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevStep(); }
+        });
+
+        // Init
+        render();
+    </script>
+</body>
+</html>

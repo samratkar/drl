@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monte Carlo Methods – On-Policy & Off-Policy Worked Solution</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.9rem;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-bottom: 35px;
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            margin: 35px 0 15px;
+            color: #e2e8f0;
+        }
+
+        h3 {
+            font-size: 1.05rem;
+            color: #cbd5e1;
+            margin: 20px 0 10px;
+        }
+
+        /* Question section */
+        .question-box {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 30px;
+            border: 1px solid #e94560;
+        }
+
+        .question-box h2 {
+            color: #e94560;
+            margin-top: 0;
+            font-size: 1.3rem;
+        }
+
+        .question-box p {
+            color: #cbd5e1;
+            font-size: 0.92rem;
+            margin: 10px 0;
+        }
+
+        .question-box ul, .question-box ol {
+            color: #cbd5e1;
+            font-size: 0.92rem;
+            margin: 8px 0 16px 24px;
+        }
+
+        .question-box li { margin: 5px 0; }
+
+        .given-box {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 18px 22px;
+            margin: 16px 0;
+            border-left: 3px solid #6366f1;
+        }
+
+        .given-box p {
+            margin: 4px 0;
+        }
+
+        .episode-box {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid #6366f1;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin: 12px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.88rem;
+            color: #e2e8f0;
+        }
+
+        /* Diagram */
+        .diagram-container {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: #1e293b;
+            border-radius: 10px;
+        }
+
+        .state-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            flex-wrap: wrap;
+        }
+
+        .state-circle {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            border: 2px solid;
+        }
+
+        .state-circle.s0 { background: rgba(99, 102, 241, 0.2); border-color: #6366f1; }
+        .state-circle.s1 { background: rgba(59, 130, 246, 0.2); border-color: #3b82f6; }
+        .state-circle.s2 { background: rgba(16, 185, 129, 0.2); border-color: #10b981; }
+        .state-circle.terminal { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; border-style: dashed; }
+
+        .arrow-seg {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 8px;
+        }
+
+        .arrow-seg .arrow-line {
+            width: 50px;
+            height: 2px;
+            background: #64748b;
+            position: relative;
+        }
+
+        .arrow-seg .arrow-line::after {
+            content: '';
+            position: absolute;
+            right: -6px;
+            top: -4px;
+            border: 5px solid transparent;
+            border-left-color: #64748b;
+        }
+
+        .arrow-seg .arrow-info {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+
+        /* Formula boxes */
+        .formula-box {
+            background: #1e293b;
+            border-radius: 8px;
+            padding: 16px 24px;
+            margin: 16px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            border-left: 4px solid #6366f1;
+        }
+
+        .formula-box.green { border-left-color: #10b981; }
+        .formula-box.orange { border-left-color: #f97316; }
+        .formula-box.blue { border-left-color: #3b82f6; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 16px 0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        thead th {
+            background: #1e293b;
+            padding: 12px 14px;
+            text-align: left;
+            font-size: 0.82rem;
+            color: #94a3b8;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        tbody td {
+            padding: 11px 14px;
+            font-size: 0.87rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        tbody tr { background: #0f172a; }
+
+        /* Step colors */
+        .step-header td {
+            font-weight: 700;
+            font-size: 0.9rem;
+            padding: 9px 14px;
+        }
+
+        .on-policy-header td { background: #065f46; color: #fff; }
+        .on-policy td { background: rgba(6, 95, 70, 0.25); }
+        .on-policy-result td { background: #065f46; font-weight: 700; border-bottom: 3px solid #34d399; }
+
+        .off-policy-header td { background: #92400e; color: #fff; }
+        .off-policy td { background: rgba(146, 64, 14, 0.2); }
+        .off-policy-result td { background: #92400e; font-weight: 700; border-bottom: 3px solid #fb923c; }
+
+        .meaning-col { color: #cbd5e1; font-style: italic; }
+        .computation-col { font-family: 'Courier New', monospace; color: #e2e8f0; }
+        .result-value { color: #fbbf24; font-weight: 700; font-size: 1rem; }
+
+        /* Section cards */
+        .section-card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            border: 1px solid #334155;
+        }
+
+        .section-card.on-policy { border-color: #10b981; }
+        .section-card.off-policy { border-color: #f97316; }
+
+        .section-card h3 {
+            margin-top: 0;
+        }
+
+        .on-policy h3, .on-policy h2 { color: #34d399; }
+        .off-policy h3, .off-policy h2 { color: #fb923c; }
+
+        .section-card p {
+            color: #cbd5e1;
+            font-size: 0.88rem;
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .section-card ul {
+            color: #cbd5e1;
+            font-size: 0.87rem;
+            margin: 8px 0 12px 20px;
+        }
+
+        .section-card li { margin: 4px 0; }
+
+        /* Policy display */
+        .policy-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin: 16px 0;
+        }
+
+        .policy-card {
+            padding: 16px;
+            border-radius: 10px;
+        }
+
+        .policy-card h4 {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .policy-card.target {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid #10b981;
+        }
+
+        .policy-card.target h4 { color: #34d399; }
+
+        .policy-card.behavior {
+            background: rgba(249, 115, 22, 0.15);
+            border: 1px solid #f97316;
+        }
+
+        .policy-card.behavior h4 { color: #fb923c; }
+
+        .policy-card table {
+            box-shadow: none;
+            margin: 8px 0 0;
+        }
+
+        .policy-card table td, .policy-card table th {
+            padding: 6px 10px;
+            font-size: 0.8rem;
+        }
+
+        /* Comparison section */
+        .comparison-box {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            border: 1px solid #0f3460;
+        }
+
+        .comparison-box h3 {
+            color: #fbbf24;
+            margin-top: 0;
+        }
+
+        /* Rationale section */
+        .rationale-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .rationale-card {
+            padding: 18px;
+            border-radius: 10px;
+        }
+
+        .rationale-card h4 {
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .rationale-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .rationale-card li {
+            font-size: 0.82rem;
+            color: #cbd5e1;
+            padding: 4px 0 4px 16px;
+            position: relative;
+            line-height: 1.5;
+        }
+
+        .rationale-card li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #94a3b8;
+        }
+
+        .rationale-card.on-pol {
+            background: rgba(6, 95, 70, 0.2);
+            border: 1px solid #10b981;
+        }
+
+        .rationale-card.on-pol h4 { color: #34d399; }
+
+        .rationale-card.off-pol {
+            background: rgba(146, 64, 14, 0.15);
+            border: 1px solid #f97316;
+        }
+
+        .rationale-card.off-pol h4 { color: #fb923c; }
+
+        /* Key insight */
+        .key-insight {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid #6366f1;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin: 20px 0;
+        }
+
+        .key-insight p {
+            color: #e2e8f0;
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+
+        .key-insight strong { color: #fbbf24; }
+        .key-insight code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #a5b4fc;
+        }
+
+        /* Divider */
+        .section-divider {
+            text-align: center;
+            margin: 40px 0;
+            position: relative;
+        }
+
+        .section-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #334155;
+        }
+
+        .section-divider span {
+            position: relative;
+            background: #0f172a;
+            padding: 6px 20px;
+            font-weight: 700;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            border: 1px solid #334155;
+            border-radius: 20px;
+        }
+
+        /* Final values */
+        .final-table {
+            max-width: 500px;
+            margin: 16px auto;
+        }
+
+        .final-table td { text-align: center; }
+
+        .cell-green { color: #22c55e; font-weight: 700; }
+        .cell-orange { color: #fb923c; font-weight: 700; }
+        .cell-gold { color: #fbbf24; font-weight: 700; font-size: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Monte Carlo Methods – On-Policy & Off-Policy</h1>
+        <p class="subtitle">Complete worked solution with step-by-step computation tables</p>
+
+        <!-- ========== QUESTION ========== -->
+        <div class="question-box">
+            <h2>Question</h2>
+            <p>Consider an agent navigating through a simple episodic MDP with states S₀, S₁, S₂, and a terminal state S<sub>T</sub>. At each non-terminal state, the agent can take one of two actions: <strong>Left (L)</strong> or <strong>Right (R)</strong>.</p>
+
+            <div class="diagram-container">
+                <div class="state-diagram">
+                    <div class="state-circle s0">S₀</div>
+                    <div class="arrow-seg">
+                        <span class="arrow-info">R, r=+1</span>
+                        <div class="arrow-line"></div>
+                    </div>
+                    <div class="state-circle s1">S₁</div>
+                    <div class="arrow-seg">
+                        <span class="arrow-info">L, r=+3</span>
+                        <div class="arrow-line"></div>
+                    </div>
+                    <div class="state-circle s2">S₂</div>
+                    <div class="arrow-seg">
+                        <span class="arrow-info">R, r=+5</span>
+                        <div class="arrow-line"></div>
+                    </div>
+                    <div class="state-circle terminal">S<sub>T</sub></div>
+                </div>
+            </div>
+
+            <p>The agent generates the following episode under a <strong>behavior policy b</strong> (ε-greedy, ε=0.4):</p>
+
+            <div class="episode-box">
+                Episode: S₀ →(R, r=+1)→ S₁ →(L, r=+3)→ S₂ →(R, r=+5)→ S<sub>T</sub>
+            </div>
+
+            <div class="given-box">
+                <p><strong>Given:</strong></p>
+                <p>Discount factor: γ = 0.9</p>
+                <p>Learning rate: α = 0.5 (for constant-α MC)</p>
+                <p>Initial Q-values: All Q(s, a) = 0</p>
+                <p>&nbsp;</p>
+                <p><strong>Behavior Policy b (ε-greedy, ε = 0.4):</strong></p>
+                <p>At each state, the greedy action gets probability (1 − ε) + ε/2 = 0.6 + 0.2 = 0.8</p>
+                <p>The non-greedy action gets probability ε/2 = 0.2</p>
+                <p>&nbsp;</p>
+                <p><strong>Actions chosen by behavior policy in this episode:</strong></p>
+                <p>S₀: R (greedy under b) → b(R|S₀) = 0.8</p>
+                <p>S₁: L (non-greedy under b) → b(L|S₁) = 0.2</p>
+                <p>S₂: R (greedy under b) → b(R|S₂) = 0.8</p>
+                <p>&nbsp;</p>
+                <p><strong>Target Policy π (deterministic greedy):</strong></p>
+                <p>π(R|S₀) = 1.0, π(L|S₁) = 1.0, π(R|S₂) = 1.0</p>
+                <p>(For off-policy: the target policy always picks the action taken in this episode)</p>
+            </div>
+
+            <p><strong>Find:</strong></p>
+            <ol>
+                <li>Compute Q-value updates using <strong>On-Policy (first-visit) MC</strong> with constant-α</li>
+                <li>Compute Q-value updates using <strong>Off-Policy MC</strong> with ordinary importance sampling</li>
+                <li>Compare the results and explain the rationale for each approach</li>
+            </ol>
+        </div>
+
+        <!-- ========== PART 1: ON-POLICY MC ========== -->
+        <div class="section-divider"><span>PART 1: ON-POLICY MC</span></div>
+
+        <div class="section-card on-policy">
+            <h2>On-Policy Monte Carlo (First-Visit, Constant-α)</h2>
+
+            <h3>Method</h3>
+            <p>The agent follows <strong>one policy</strong> (the behavior policy b) and evaluates <strong>that same policy</strong>. No correction is needed since the data was generated by the policy we're evaluating.</p>
+
+            <div class="formula-box green">
+                Q(s,a) ← Q(s,a) + α [ G<sub>t</sub> − Q(s,a) ]
+            </div>
+
+            <p>Where G<sub>t</sub> is the actual discounted return from time t until the end of the episode.</p>
+
+            <h3>Step 1: Compute Returns from Each State-Action Pair</h3>
+            <p>We work <strong>backwards</strong> from the terminal state to compute G<sub>t</sub> at each time step.</p>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Step</th>
+                    <th>Meaning</th>
+                    <th>Computation</th>
+                    <th>Result</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="on-policy-header">
+                    <td colspan="4">Computing Returns (backwards from terminal)</td>
+                </tr>
+                <tr class="on-policy">
+                    <td>1.1</td>
+                    <td class="meaning-col">Return from S₂ (last step before terminal): G₂</td>
+                    <td class="computation-col">r₃ = +5 (no future rewards)</td>
+                    <td>5</td>
+                </tr>
+                <tr class="on-policy">
+                    <td>1.2</td>
+                    <td class="meaning-col">Return from S₁: G₁ = r₂ + γ·G₂</td>
+                    <td class="computation-col">3 + 0.9 × 5 = 3 + 4.5</td>
+                    <td>7.5</td>
+                </tr>
+                <tr class="on-policy">
+                    <td>1.3</td>
+                    <td class="meaning-col">Return from S₀: G₀ = r₁ + γ·G₁</td>
+                    <td class="computation-col">1 + 0.9 × 7.5 = 1 + 6.75</td>
+                    <td>7.75</td>
+                </tr>
+                <tr class="on-policy-header">
+                    <td colspan="4">Update Q(S₀, R) — First visit at t=0</td>
+                </tr>
+                <tr class="on-policy">
+                    <td>2.1</td>
+                    <td class="meaning-col">Current Q-value: Q(S₀, R)</td>
+                    <td class="computation-col">—</td>
+                    <td>0</td>
+                </tr>
+                <tr class="on-policy">
+                    <td>2.2</td>
+                    <td class="meaning-col">Return observed: G₀</td>
+                    <td class="computation-col">—</td>
+                    <td>7.75</td>
+                </tr>
+                <tr class="on-policy">
+                    <td>2.3</td>
+                    <td class="meaning-col">MC error: G₀ − Q(S₀,R)</td>
+                    <td class="computation-col">7.75 − 0</td>
+                    <td>7.75</td>
+                </tr>
+                <tr class="on-policy">
+                    <td>2.4</td>
+                    <td class="meaning-col">Scaled update: α × error</td>
+                    <td class="computation-col">0.5 × 7.75</td>
+                    <td>3.875</td>
+                </tr>
+                <tr class="on-policy-result">
+                    <td>2.5</td>
+                    <td>New Q(S₀, R) = Q + α(G − Q)</td>
+                    <td class="computation-col">0 + 3.875</td>
+                    <td><span class="result-value">3.875</span></td>
+                </tr>
+                <tr class="on-policy-header">
+                    <td colspan="4">Update Q(S₁, L) — First visit at t=1</td>
+                </tr>
+                <tr class="on-policy">
+                    <td>3.1</td>
+                    <td class="meaning-col">Current Q-value: Q(S₁, L)</td>
+                    <td class="computation-col">—</td>
+                    <td>0</td>
+                </tr>
+                <tr class="on-policy">
+                    <td>3.2</td>
+                    <td class="meaning-col">Return observed: G₁</td>
+                    <td class="computation-col">—</td>
+                    <td>7.5</td>
+                </tr>
+                <tr class="on-policy">
+                    <td>3.3</td>
+                    <td class="meaning-col">MC error: G₁ − Q(S₁,L)</td>
+                    <td class="computation-col">7.5 − 0</td>
+                    <td>7.5</td>
+                </tr>
+                <tr class="on-policy">
+                    <td>3.4</td>
+                    <td class="meaning-col">Scaled update: α × error</td>
+                    <td class="computation-col">0.5 × 7.5</td>
+                    <td>3.75</td>
+                </tr>
+                <tr class="on-policy-result">
+                    <td>3.5</td>
+                    <td>New Q(S₁, L) = Q + α(G − Q)</td>
+                    <td class="computation-col">0 + 3.75</td>
+                    <td><span class="result-value">3.75</span></td>
+                </tr>
+                <tr class="on-policy-header">
+                    <td colspan="4">Update Q(S₂, R) — First visit at t=2</td>
+                </tr>
+                <tr class="on-policy">
+                    <td>4.1</td>
+                    <td class="meaning-col">Current Q-value: Q(S₂, R)</td>
+                    <td class="computation-col">—</td>
+                    <td>0</td>
+                </tr>
+                <tr class="on-policy">
+                    <td>4.2</td>
+                    <td class="meaning-col">Return observed: G₂</td>
+                    <td class="computation-col">—</td>
+                    <td>5</td>
+                </tr>
+                <tr class="on-policy">
+                    <td>4.3</td>
+                    <td class="meaning-col">MC error: G₂ − Q(S₂,R)</td>
+                    <td class="computation-col">5 − 0</td>
+                    <td>5</td>
+                </tr>
+                <tr class="on-policy">
+                    <td>4.4</td>
+                    <td class="meaning-col">Scaled update: α × error</td>
+                    <td class="computation-col">0.5 × 5</td>
+                    <td>2.5</td>
+                </tr>
+                <tr class="on-policy-result">
+                    <td>4.5</td>
+                    <td>New Q(S₂, R) = Q + α(G − Q)</td>
+                    <td class="computation-col">0 + 2.5</td>
+                    <td><span class="result-value">2.5</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="section-card on-policy">
+            <h3>On-Policy Results</h3>
+            <table class="final-table">
+                <thead>
+                    <tr>
+                        <th>State-Action</th>
+                        <th>Initial Q</th>
+                        <th>Return G</th>
+                        <th>Updated Q</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Q(S₀, R)</td>
+                        <td>0</td>
+                        <td>7.75</td>
+                        <td class="cell-green">3.875</td>
+                    </tr>
+                    <tr>
+                        <td>Q(S₁, L)</td>
+                        <td>0</td>
+                        <td>7.5</td>
+                        <td class="cell-green">3.75</td>
+                    </tr>
+                    <tr>
+                        <td>Q(S₂, R)</td>
+                        <td>0</td>
+                        <td>5.0</td>
+                        <td class="cell-green">2.5</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="key-insight">
+                <p><strong>Note:</strong> On-policy MC evaluates the behavior policy b. These Q-values reflect what happens when following b (which sometimes explores with ε=0.4). The Q-values are estimates of Q<sup>b</sup>, not Q<sup>*</sup>.</p>
+            </div>
+        </div>
+
+        <!-- ========== PART 2: OFF-POLICY MC ========== -->
+        <div class="section-divider"><span>PART 2: OFF-POLICY MC</span></div>
+
+        <div class="section-card off-policy">
+            <h2>Off-Policy Monte Carlo (Ordinary Importance Sampling)</h2>
+
+            <h3>Method</h3>
+            <p>The agent follows the <strong>behavior policy b</strong> to collect data, but evaluates a different <strong>target policy π</strong>. Since the data comes from b but we want Q<sup>π</sup>, we must correct for the distributional mismatch using <strong>importance sampling</strong>.</p>
+
+            <div class="formula-box orange">
+                Q(s,a) ← Q(s,a) + α [ ρ · G<sub>t</sub> − Q(s,a) ]
+            </div>
+
+            <p>Where ρ is the <strong>importance sampling ratio</strong> — it re-weights the return to account for the probability difference between π and b:</p>
+
+            <div class="formula-box orange">
+                ρ<sub>t:T-1</sub> = ∏<sub>k=t</sub><sup>T-1</sup> π(A<sub>k</sub>|S<sub>k</sub>) / b(A<sub>k</sub>|S<sub>k</sub>)
+            </div>
+
+            <h3>Policies</h3>
+            <div class="policy-grid">
+                <div class="policy-card target">
+                    <h4>Target Policy π (deterministic greedy)</h4>
+                    <table>
+                        <thead><tr><th>State</th><th>π(R|s)</th><th>π(L|s)</th></tr></thead>
+                        <tbody>
+                            <tr><td>S₀</td><td>1.0</td><td>0.0</td></tr>
+                            <tr><td>S₁</td><td>0.0</td><td>1.0</td></tr>
+                            <tr><td>S₂</td><td>1.0</td><td>0.0</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="policy-card behavior">
+                    <h4>Behavior Policy b (ε-greedy, ε=0.4)</h4>
+                    <table>
+                        <thead><tr><th>State</th><th>b(R|s)</th><th>b(L|s)</th></tr></thead>
+                        <tbody>
+                            <tr><td>S₀</td><td>0.8</td><td>0.2</td></tr>
+                            <tr><td>S₁</td><td>0.2</td><td>0.8</td></tr>
+                            <tr><td>S₂</td><td>0.8</td><td>0.2</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <h3>Step 1: Compute Importance Sampling Ratios</h3>
+            <p>For each state-action pair, we compute the ratio from that point forward to the end of the episode.</p>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Step</th>
+                    <th>Meaning</th>
+                    <th>Computation</th>
+                    <th>Result</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="off-policy-header">
+                    <td colspan="4">Computing Importance Sampling Ratios</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>1.1</td>
+                    <td class="meaning-col">Ratio at t=0 (S₀, action=R): π(R|S₀)/b(R|S₀)</td>
+                    <td class="computation-col">1.0 / 0.8</td>
+                    <td>1.25</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>1.2</td>
+                    <td class="meaning-col">Ratio at t=1 (S₁, action=L): π(L|S₁)/b(L|S₁)</td>
+                    <td class="computation-col">1.0 / 0.8</td>
+                    <td>1.25</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>1.3</td>
+                    <td class="meaning-col">Ratio at t=2 (S₂, action=R): π(R|S₂)/b(R|S₂)</td>
+                    <td class="computation-col">1.0 / 0.8</td>
+                    <td>1.25</td>
+                </tr>
+                <tr class="off-policy-header">
+                    <td colspan="4">Cumulative Ratios (product from t to T−1)</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>1.4</td>
+                    <td class="meaning-col">ρ₂:₂ for Q(S₂,R): only t=2</td>
+                    <td class="computation-col">1.25</td>
+                    <td>1.25</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>1.5</td>
+                    <td class="meaning-col">ρ₁:₂ for Q(S₁,L): t=1 to t=2</td>
+                    <td class="computation-col">1.25 × 1.25</td>
+                    <td>1.5625</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>1.6</td>
+                    <td class="meaning-col">ρ₀:₂ for Q(S₀,R): t=0 to t=2</td>
+                    <td class="computation-col">1.25 × 1.25 × 1.25</td>
+                    <td>1.953125</td>
+                </tr>
+                <tr class="off-policy-header">
+                    <td colspan="4">Update Q(S₀, R) — with importance sampling</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>2.1</td>
+                    <td class="meaning-col">Current Q-value: Q(S₀, R)</td>
+                    <td class="computation-col">—</td>
+                    <td>0</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>2.2</td>
+                    <td class="meaning-col">Return observed: G₀</td>
+                    <td class="computation-col">—</td>
+                    <td>7.75</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>2.3</td>
+                    <td class="meaning-col">Importance ratio: ρ₀:₂</td>
+                    <td class="computation-col">—</td>
+                    <td>1.953125</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>2.4</td>
+                    <td class="meaning-col">Weighted return: ρ × G₀</td>
+                    <td class="computation-col">1.953125 × 7.75</td>
+                    <td>15.137</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>2.5</td>
+                    <td class="meaning-col">MC error: ρ·G₀ − Q(S₀,R)</td>
+                    <td class="computation-col">15.137 − 0</td>
+                    <td>15.137</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>2.6</td>
+                    <td class="meaning-col">Scaled update: α × error</td>
+                    <td class="computation-col">0.5 × 15.137</td>
+                    <td>7.568</td>
+                </tr>
+                <tr class="off-policy-result">
+                    <td>2.7</td>
+                    <td>New Q(S₀, R) = Q + α(ρ·G − Q)</td>
+                    <td class="computation-col">0 + 7.568</td>
+                    <td><span class="result-value">7.568</span></td>
+                </tr>
+                <tr class="off-policy-header">
+                    <td colspan="4">Update Q(S₁, L) — with importance sampling</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>3.1</td>
+                    <td class="meaning-col">Current Q-value: Q(S₁, L)</td>
+                    <td class="computation-col">—</td>
+                    <td>0</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>3.2</td>
+                    <td class="meaning-col">Return observed: G₁</td>
+                    <td class="computation-col">—</td>
+                    <td>7.5</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>3.3</td>
+                    <td class="meaning-col">Importance ratio: ρ₁:₂</td>
+                    <td class="computation-col">—</td>
+                    <td>1.5625</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>3.4</td>
+                    <td class="meaning-col">Weighted return: ρ × G₁</td>
+                    <td class="computation-col">1.5625 × 7.5</td>
+                    <td>11.719</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>3.5</td>
+                    <td class="meaning-col">MC error: ρ·G₁ − Q(S₁,L)</td>
+                    <td class="computation-col">11.719 − 0</td>
+                    <td>11.719</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>3.6</td>
+                    <td class="meaning-col">Scaled update: α × error</td>
+                    <td class="computation-col">0.5 × 11.719</td>
+                    <td>5.859</td>
+                </tr>
+                <tr class="off-policy-result">
+                    <td>3.7</td>
+                    <td>New Q(S₁, L) = Q + α(ρ·G − Q)</td>
+                    <td class="computation-col">0 + 5.859</td>
+                    <td><span class="result-value">5.859</span></td>
+                </tr>
+                <tr class="off-policy-header">
+                    <td colspan="4">Update Q(S₂, R) — with importance sampling</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>4.1</td>
+                    <td class="meaning-col">Current Q-value: Q(S₂, R)</td>
+                    <td class="computation-col">—</td>
+                    <td>0</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>4.2</td>
+                    <td class="meaning-col">Return observed: G₂</td>
+                    <td class="computation-col">—</td>
+                    <td>5</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>4.3</td>
+                    <td class="meaning-col">Importance ratio: ρ₂:₂</td>
+                    <td class="computation-col">—</td>
+                    <td>1.25</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>4.4</td>
+                    <td class="meaning-col">Weighted return: ρ × G₂</td>
+                    <td class="computation-col">1.25 × 5</td>
+                    <td>6.25</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>4.5</td>
+                    <td class="meaning-col">MC error: ρ·G₂ − Q(S₂,R)</td>
+                    <td class="computation-col">6.25 − 0</td>
+                    <td>6.25</td>
+                </tr>
+                <tr class="off-policy">
+                    <td>4.6</td>
+                    <td class="meaning-col">Scaled update: α × error</td>
+                    <td class="computation-col">0.5 × 6.25</td>
+                    <td>3.125</td>
+                </tr>
+                <tr class="off-policy-result">
+                    <td>4.7</td>
+                    <td>New Q(S₂, R) = Q + α(ρ·G − Q)</td>
+                    <td class="computation-col">0 + 3.125</td>
+                    <td><span class="result-value">3.125</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="section-card off-policy">
+            <h3>Off-Policy Results</h3>
+            <table class="final-table">
+                <thead>
+                    <tr>
+                        <th>State-Action</th>
+                        <th>Initial Q</th>
+                        <th>Return G</th>
+                        <th>ρ</th>
+                        <th>ρ·G</th>
+                        <th>Updated Q</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Q(S₀, R)</td>
+                        <td>0</td>
+                        <td>7.75</td>
+                        <td>1.953</td>
+                        <td>15.137</td>
+                        <td class="cell-orange">7.568</td>
+                    </tr>
+                    <tr>
+                        <td>Q(S₁, L)</td>
+                        <td>0</td>
+                        <td>7.5</td>
+                        <td>1.5625</td>
+                        <td>11.719</td>
+                        <td class="cell-orange">5.859</td>
+                    </tr>
+                    <tr>
+                        <td>Q(S₂, R)</td>
+                        <td>0</td>
+                        <td>5.0</td>
+                        <td>1.25</td>
+                        <td>6.25</td>
+                        <td class="cell-orange">3.125</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="key-insight">
+                <p><strong>Note:</strong> Off-policy MC evaluates the target policy π using data from b. The importance ratios ρ > 1 here because π is deterministic while b has exploration noise — so π would have taken these exact actions with higher probability, making the returns more relevant (upweighted).</p>
+            </div>
+        </div>
+
+        <!-- ========== COMPARISON ========== -->
+        <div class="section-divider"><span>COMPARISON</span></div>
+
+        <div class="comparison-box">
+            <h3>Side-by-Side Comparison</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>State-Action</th>
+                        <th>Return G</th>
+                        <th style="background: #065f46;">On-Policy Q</th>
+                        <th style="background: #92400e;">Off-Policy Q</th>
+                        <th>Difference</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Q(S₀, R)</td>
+                        <td>7.75</td>
+                        <td class="cell-green">3.875</td>
+                        <td class="cell-orange">7.568</td>
+                        <td>+3.693</td>
+                    </tr>
+                    <tr>
+                        <td>Q(S₁, L)</td>
+                        <td>7.5</td>
+                        <td class="cell-green">3.75</td>
+                        <td class="cell-orange">5.859</td>
+                        <td>+2.109</td>
+                    </tr>
+                    <tr>
+                        <td>Q(S₂, R)</td>
+                        <td>5.0</td>
+                        <td class="cell-green">2.5</td>
+                        <td class="cell-orange">3.125</td>
+                        <td>+0.625</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="margin-top: 14px; color: #94a3b8; font-size: 0.85rem;">
+                Off-policy values are <strong>higher</strong> because ρ > 1: the target policy π would always choose these actions (probability 1.0), while the behavior policy b sometimes explores elsewhere (probability &lt; 1.0). The importance ratio amplifies the return to reflect what π would experience.
+            </p>
+        </div>
+
+        <!-- ========== WHY THE DIFFERENCE? ========== -->
+        <h2>Why Are The Values Different?</h2>
+
+        <div class="section-card" style="border-color: #6366f1;">
+            <h3 style="color: #a5b4fc;">The Core Issue: What Question Are We Answering?</h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Aspect</th>
+                        <th style="background: #065f46;">On-Policy MC</th>
+                        <th style="background: #92400e;">Off-Policy MC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Question answered</strong></td>
+                        <td>"How good is action a at state s <em>under policy b</em>?"</td>
+                        <td>"How good is action a at state s <em>under policy π</em>?"</td>
+                    </tr>
+                    <tr>
+                        <td><strong>What it estimates</strong></td>
+                        <td>Q<sup>b</sup>(s,a) — value under behavior</td>
+                        <td>Q<sup>π</sup>(s,a) — value under target</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Future behavior assumed</strong></td>
+                        <td>Will keep exploring (ε=0.4)</td>
+                        <td>Will follow π perfectly (no exploration)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Why different?</strong></td>
+                        <td>Exploration sometimes leads to suboptimal actions → lower value</td>
+                        <td>Assumes optimal actions always → higher value</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Correction needed?</strong></td>
+                        <td>No — data matches what we're evaluating</td>
+                        <td>Yes — importance sampling corrects mismatch</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ========== RATIONALE ========== -->
+        <h2>Rationale: When to Use Each</h2>
+
+        <div class="rationale-grid">
+            <div class="rationale-card on-pol">
+                <h4>On-Policy MC — Use When:</h4>
+                <ul>
+                    <li><strong>Safety matters:</strong> Q-values reflect actual behavior including exploration mistakes (e.g., robotics, medical)</li>
+                    <li><strong>Simplicity:</strong> No importance sampling means no high-variance ratios</li>
+                    <li><strong>Policy is what you'll deploy:</strong> If you'll run the same ε-greedy policy in production</li>
+                    <li><strong>Exploration is part of the cost:</strong> Want Q-values that account for future exploratory actions</li>
+                </ul>
+                <p style="margin-top: 12px; font-size: 0.82rem; color: #94a3b8;"><strong>Trade-off:</strong> Can only learn about the current policy. To find the optimal policy, must slowly reduce ε (GLIE condition).</p>
+            </div>
+
+            <div class="rationale-card off-pol">
+                <h4>Off-Policy MC — Use When:</h4>
+                <ul>
+                    <li><strong>Want optimal policy:</strong> Learn Q<sup>*</sup> while exploring freely with any behavior policy</li>
+                    <li><strong>Reuse old data:</strong> Can learn from demonstrations, replay buffers, or other agents' data</li>
+                    <li><strong>Separate exploration from evaluation:</strong> Explore aggressively (high ε) while evaluating a greedy target</li>
+                    <li><strong>Multiple targets:</strong> Can evaluate many policies from a single stream of experience</li>
+                </ul>
+                <p style="margin-top: 12px; font-size: 0.82rem; color: #94a3b8;"><strong>Trade-off:</strong> Importance sampling can have very high variance. Long episodes → ρ products can explode or vanish, making learning unstable.</p>
+            </div>
+        </div>
+
+        <!-- ========== IMPORTANCE SAMPLING INTUITION ========== -->
+        <h2>Why Does Importance Sampling Work?</h2>
+
+        <div class="section-card" style="border-color: #6366f1;">
+            <h3 style="color: #a5b4fc;">Intuition</h3>
+            <p>The behavior policy b generates episodes that are "wrong" for evaluating π. Some episodes happen <strong>more often</strong> under b than π (ρ &lt; 1), and some happen <strong>less often</strong> (ρ &gt; 1).</p>
+            <p style="margin-top: 12px;">Importance sampling says: <em>"If this episode would happen more often under π than b, it's more relevant — give it more weight. If it would happen less often, downweight it."</em></p>
+
+            <h3 style="margin-top: 20px;">In This Problem</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Action</th>
+                        <th>π prob</th>
+                        <th>b prob</th>
+                        <th>Ratio</th>
+                        <th>Meaning</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>t=0</td>
+                        <td>R at S₀</td>
+                        <td>1.0</td>
+                        <td>0.8</td>
+                        <td>1.25</td>
+                        <td>π would do this more often → upweight</td>
+                    </tr>
+                    <tr>
+                        <td>t=1</td>
+                        <td>L at S₁</td>
+                        <td>1.0</td>
+                        <td>0.8</td>
+                        <td>1.25</td>
+                        <td>π would do this more often → upweight</td>
+                    </tr>
+                    <tr>
+                        <td>t=2</td>
+                        <td>R at S₂</td>
+                        <td>1.0</td>
+                        <td>0.8</td>
+                        <td>1.25</td>
+                        <td>π would do this more often → upweight</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="margin-top: 12px; color: #94a3b8; font-size: 0.85rem;">Since π is deterministic and always chooses these exact actions, while b only does so with probability 0.8, every ratio is > 1. The cumulative ρ grows multiplicatively — this is why long episodes can cause variance issues.</p>
+        </div>
+
+        <!-- ========== VARIANCE PROBLEM ========== -->
+        <h2>The Variance Problem with Off-Policy MC</h2>
+
+        <div class="section-card" style="border-color: #ef4444;">
+            <h3 style="color: #f87171;">Why Ordinary IS Can Be Dangerous</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Episode Length</th>
+                        <th>ρ product (if each ratio = 1.25)</th>
+                        <th>Effect on update</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>3 steps</td>
+                        <td>1.25³ = 1.95</td>
+                        <td>Return doubled — manageable</td>
+                    </tr>
+                    <tr>
+                        <td>10 steps</td>
+                        <td>1.25¹⁰ = 9.31</td>
+                        <td>Return multiplied by 9 — very noisy</td>
+                    </tr>
+                    <tr>
+                        <td>20 steps</td>
+                        <td>1.25²⁰ = 86.7</td>
+                        <td>Return multiplied by 87 — explosive</td>
+                    </tr>
+                    <tr>
+                        <td>50 steps</td>
+                        <td>1.25⁵⁰ = 8,882</td>
+                        <td>Practically useless — one sample dominates all learning</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="margin-top: 20px; color: #fbbf24;">Solutions to High Variance</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>How it helps</th>
+                        <th>Trade-off</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Weighted IS</strong></td>
+                        <td>Normalizes ratios: Σ(ρᵢGᵢ)/Σ(ρᵢ) — bounded</td>
+                        <td>Introduces bias (but consistent)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Per-decision IS</strong></td>
+                        <td>Applies ratio only for relevant future steps, not all</td>
+                        <td>More complex to implement</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Use TD instead</strong></td>
+                        <td>Q-learning: off-policy without any IS needed!</td>
+                        <td>Introduces bootstrapping bias</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Truncate ratios</strong></td>
+                        <td>Cap ρ at some max value (e.g., 5)</td>
+                        <td>Introduces bias from capping</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ========== SUMMARY ========== -->
+        <div class="section-divider"><span>SUMMARY</span></div>
+
+        <div class="comparison-box">
+            <h3>Complete Method Comparison</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Aspect</th>
+                        <th style="background: #065f46;">On-Policy MC</th>
+                        <th style="background: #92400e;">Off-Policy MC (Ordinary IS)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Formula</strong></td>
+                        <td style="font-family: monospace; font-size: 0.8rem;">Q ← Q + α[G − Q]</td>
+                        <td style="font-family: monospace; font-size: 0.8rem;">Q ← Q + α[ρ·G − Q]</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Evaluates</strong></td>
+                        <td>Q<sup>b</sup> (behavior policy)</td>
+                        <td>Q<sup>π</sup> (target policy)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Correction</strong></td>
+                        <td>None needed</td>
+                        <td>Importance sampling ratio ρ</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Bias</strong></td>
+                        <td>Unbiased</td>
+                        <td>Unbiased (ordinary IS)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Variance</strong></td>
+                        <td>Lower (no ρ multiplication)</td>
+                        <td>Higher (ρ can explode)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Data efficiency</strong></td>
+                        <td>Low — only uses on-policy data</td>
+                        <td>High — can reuse any data</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Convergence</strong></td>
+                        <td>To Q<sup>b</sup> (need GLIE for Q<sup>*</sup>)</td>
+                        <td>To Q<sup>π</sup> directly</td>
+                    </tr>
+                    <tr>
+                        <td><strong>In this problem</strong></td>
+                        <td>Q(S₀,R) = 3.875</td>
+                        <td>Q(S₀,R) = 7.568</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="key-insight" style="margin-top: 20px;">
+                <p><strong>Key Takeaway:</strong> On-policy MC is simpler and more stable but can only learn about its own behavior. Off-policy MC can learn the optimal policy from exploratory data, but importance sampling introduces variance that grows exponentially with episode length. This is precisely why <strong>Q-learning</strong> (off-policy TD) is so popular — it achieves off-policy learning <em>without</em> importance sampling by bootstrapping with <code>max Q(s',a')</code>.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

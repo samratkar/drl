@@ -349,6 +349,12 @@ $$V(s) = \frac{\sum_{t \in \mathcal{T}(s)} \rho_{t:T(t)-1} G_t}{\sum_{t \in \mat
 | **Variance** | High/Infinite | Lower/Stable |
 | **Practicality** | Low | High |
 
+#### Worked Numerical Example: OIS in Action
+
+For a concrete step-by-step numerical demonstration of ordinary importance sampling applied to a 3-state episode, see the **[On-Policy vs Off-Policy MC Worked Solution](./assets/mc-on-off-policy-solution.html)**. It shows exactly how ρ is computed at each time step, how cumulative ρ products amplify returns, and why off-policy estimates differ from on-policy estimates — with full computation tables.
+
+For an interactive version where you can step through the computation one click at a time (toggling between on-policy and off-policy modes), see the **[Interactive MC App](./assets/mc-interactive.html)**.
+
 #### Example 5.5: Infinite Variance
 Ordinary importance sampling can have **infinite variance**. If the importance-sampling ratio has a mean greater than 1, its variance can grow without bound.
 
@@ -362,6 +368,35 @@ Weighted importance sampling can be implemented incrementally:
 $$W_{n+1} \doteq W_n + \rho_n$$
 $$V_{n+1} \doteq V_n + \frac{\rho_n}{C_n} [G_n - V_n]$$
 Where $C_n$ is the cumulative sum of weights.
+
+### Worked Example: On-Policy vs Off-Policy MC (Step-by-Step)
+
+To solidify the difference between on-policy and off-policy MC, the following worked solution walks through a complete numerical example where the same episode is processed using both methods side-by-side.
+
+**Problem Setup:** An agent navigates S₀ → S₁ → S₂ → S_T under a behavior policy b (ε-greedy, ε=0.4). We compute Q-value updates using:
+1. **On-Policy MC** (constant-α, first-visit) — evaluates the behavior policy b itself
+2. **Off-Policy MC** (ordinary importance sampling) — evaluates a deterministic target policy π using data from b
+
+The solution shows:
+- How returns G are computed backwards from terminal (same for both methods)
+- How on-policy directly uses G in the update: $Q \leftarrow Q + \alpha[G - Q]$
+- How off-policy multiplies G by the importance sampling ratio ρ: $Q \leftarrow Q + \alpha[\rho \cdot G - Q]$
+- Why off-policy values are higher (ρ > 1 amplifies returns when π is more deterministic than b)
+- The variance problem: ρ products grow exponentially with episode length
+
+**[View Full Worked Solution (HTML)](./assets/mc-on-off-policy-solution.html)** — Detailed tables showing every computation step with color-coded on-policy (green) and off-policy (orange) sections.
+
+**[Interactive Step-Through App](./assets/mc-interactive.html)** — A JavaScript application where you can:
+- Toggle between On-Policy and Off-Policy modes
+- Click "Next Step" to advance through the computation one step at a time
+- Watch the agent move through states and see which Q-value gets updated
+- In off-policy mode, see importance sampling ratios ρ revealed progressively and how they amplify returns
+- Compare how both methods produce different Q-values from the same episode
+
+> **Key Takeaway from the Worked Example:**
+> - On-policy Q(S₀, R) = 3.875 — estimates value under behavior policy (includes exploration cost)
+> - Off-policy Q(S₀, R) = 7.568 — estimates value under target policy (no exploration, hence higher)
+> - The difference (95% higher for off-policy) comes entirely from ρ₀:₂ = 1.953, which nearly doubles the return because π would always choose these actions while b only does so 80% of the time.
 
 ### Code Examples 
 
