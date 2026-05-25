@@ -26,6 +26,7 @@ deliveries : []
   - [Sarsa: On-policy TD Control](#sarsa-on-policy-td-control)
     - [Algorithm: Sarsa](#algorithm-sarsa)
     - [Backup Diagram for Sarsa](#backup-diagram-for-sarsa)
+    - [Derivation of the SARSA Update Rule from First Principles](#derivation-of-the-sarsa-update-rule-from-first-principles)
   - [Q-learning: Off-policy TD Control](#q-learning-off-policy-td-control)
     - [Algorithm: Q-learning](#algorithm-q-learning)
     - [Backup Diagram for Q-learning](#backup-diagram-for-q-learning)
@@ -337,6 +338,215 @@ graph TD
 ```
 
 The update uses the **specific** next action $A_{t+1}$ that was actually selected by the policy. This is what makes it on-policy.
+
+---
+
+### Derivation of the SARSA Update Rule from First Principles
+
+The SARSA update rule is not arbitrary — it emerges necessarily from three foundational components:
+
+1. The **Bellman equation** for action-values (what we want to estimate)
+2. **Sampling** (replacing the intractable expectation with a single observed transition)
+3. **Stochastic approximation** (the Robbins-Monro framework for iterative convergence)
+
+Below we derive the rule rigorously, showing exactly where each piece of the formula comes from.
+
+---
+
+#### Foundation 1: The Action-Value Function
+
+The action-value function under policy $\pi$ is defined as:
+
+$$Q^\pi(s, a) \doteq \mathbb{E}_\pi\left[G_t \mid S_t = s, A_t = a\right]$$
+
+where $G_t$ is the infinite-horizon discounted return:
+
+$$G_t = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \cdots = \sum_{k=0}^{\infty} \gamma^k R_{t+k+1}$$
+
+This is the quantity we wish to estimate. It tells us: "If I'm in state $s$, I take action $a$, and then follow $\pi$ forever — what is the expected cumulative discounted reward?"
+
+---
+
+#### Foundation 2: The Bellman Equation for Q
+
+We decompose $G_t$ by separating the first reward from the rest:
+
+$$G_t = R_{t+1} + \gamma G_{t+1}$$
+
+Substituting into the definition of $Q^\pi$:
+
+$$Q^\pi(s, a) = \mathbb{E}_\pi\left[R_{t+1} + \gamma G_{t+1} \mid S_t = s, A_t = a\right]$$
+
+Now, $G_{t+1}$ depends on the next state $S_{t+1}$ and the next action $A_{t+1}$ chosen by $\pi$. By the tower property of conditional expectation:
+
+$$G_{t+1} \text{ given } S_{t+1} = s', A_{t+1} = a' \text{ has expectation } Q^\pi(s', a')$$
+
+Therefore:
+
+$$\boxed{Q^\pi(s, a) = \mathbb{E}_\pi\left[R_{t+1} + \gamma\, Q^\pi(S_{t+1}, A_{t+1}) \mid S_t = s, A_t = a\right]}$$
+
+This is the **Bellman equation for the action-value function**. It is exact — if we could solve it, we'd have the true $Q^\pi$.
+
+**What this equation says:** The value of being in $(s, a)$ equals the expected immediate reward plus the discounted value of wherever you end up next and whatever action you take there.
+
+**Expanding the expectation explicitly** (showing what makes this intractable):
+
+$$Q^\pi(s, a) = \sum_{s', r} p(s', r \mid s, a) \left[ r + \gamma \sum_{a'} \pi(a' \mid s')\, Q^\pi(s', a') \right]$$
+
+This requires:
+- The transition model $p(s', r \mid s, a)$ — which we don't have (model-free setting)
+- Summation over all possible next states — which may be enormous or continuous
+
+---
+
+#### Foundation 3: From Expectation to Sampling
+
+Since we cannot compute the expectation (no model, potentially infinite state space), we replace it with a **single sample**. This is the key step from DP → TD.
+
+At time $t$, the agent experiences one actual transition:
+
+$$(S_t, A_t) \xrightarrow{} R_{t+1}, S_{t+1} \xrightarrow{\pi} A_{t+1}$$
+
+This gives us ONE realization of what's inside the expectation. We form the **sample-based target**:
+
+$$\hat{q}_t \doteq R_{t+1} + \gamma\, Q(S_{t+1}, A_{t+1})$$
+
+**Why is this a valid estimator?** Under the Bellman equation:
+
+$$\mathbb{E}\left[\hat{q}_t \mid S_t = s, A_t = a\right] = Q^\pi(s, a)$$
+
+provided $Q = Q^\pi$. So $\hat{q}_t$ is an **unbiased estimate** of the true Q-value (when Q is converged). During learning, it's biased (since Q is itself an estimate — this is the bootstrapping bias), but it still gives a useful learning signal.
+
+**The relationship to DP:**
+
+| Quantity | What it computes | Requires |
+|----------|-----------------|----------|
+| DP target: $\sum_{s',r} p(s',r\mid s,a)[r + \gamma \sum_{a'} \pi(a'\mid s') Q(s',a')]$ | Full expectation | Model $p$ |
+| TD target: $R_{t+1} + \gamma\, Q(S_{t+1}, A_{t+1})$ | Single sample | One transition |
+
+The TD target is a **Monte Carlo sample** of the DP target. Each individual sample is noisy, but on average (over many visits to $(s, a)$) it equals the DP target.
+
+---
+
+#### Foundation 4: Stochastic Approximation (Robbins-Monro)
+
+We now have a noisy estimate $\hat{q}_t$ of the true $Q^\pi(s,a)$. How do we iteratively converge to the correct value?
+
+The **Robbins-Monro stochastic approximation** theorem (1951) provides the answer. Given:
+- A quantity $\theta^*$ we want to find
+- Noisy observations $X_n$ such that $\mathbb{E}[X_n \mid \theta_n] = f(\theta_n)$ where $f(\theta^*) = 0$
+
+The iterative scheme:
+
+$$\theta_{n+1} = \theta_n + \alpha_n\, X_n$$
+
+converges to $\theta^*$ provided:
+1. $\sum_{n} \alpha_n = \infty$ (step sizes are large enough to eventually reach any value)
+2. $\sum_{n} \alpha_n^2 < \infty$ (step sizes decrease fast enough to dampen noise)
+
+**Applying this to our problem:**
+
+We want to find $Q^\pi(s,a)$ such that $\mathbb{E}[\hat{q}_t - Q(s,a)] = 0$ (the error is zero on average when Q is correct).
+
+Let $X_n = \hat{q}_t - Q(S_t, A_t)$ be the "error signal." Then:
+
+$$Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha\, \underbrace{\left[\hat{q}_t - Q(S_t, A_t)\right]}_{\text{error signal}}$$
+
+Expanding $\hat{q}_t$:
+
+$$\boxed{Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma\, Q(S_{t+1}, A_{t+1}) - Q(S_t, A_t) \right]}$$
+
+This is the **SARSA update rule**.
+
+---
+
+#### Anatomy of the Final Formula
+
+$$Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ \underbrace{R_{t+1} + \gamma\, Q(S_{t+1}, A_{t+1})}_{\text{TD target (where we should be)}} - \underbrace{Q(S_t, A_t)}_{\text{current estimate (where we are)}} \right]$$
+
+| Component | Origin | Role |
+|-----------|--------|------|
+| $Q(S_t, A_t)$ | Current estimate | Starting point — what we currently believe |
+| $R_{t+1}$ | Observed reward | One step of ground truth from the environment |
+| $\gamma\, Q(S_{t+1}, A_{t+1})$ | Bootstrapped future | Estimated value of what comes next (from the Bellman equation) |
+| $R_{t+1} + \gamma Q(S_{t+1}, A_{t+1})$ | TD target | Sample-based estimate of the true $Q^\pi(S_t, A_t)$ |
+| $\delta_t = \text{target} - Q(S_t, A_t)$ | TD error | How wrong we are — the surprise signal |
+| $\alpha$ | Learning rate | How much to trust the new evidence vs. old belief |
+| $\alpha\, \delta_t$ | Increment | The actual adjustment to our estimate |
+
+---
+
+#### Why Each Piece is Necessary
+
+**Without $R_{t+1}$ (no real experience):** We'd be updating estimates from estimates alone — no grounding in reality. The update would circulate in a self-reinforcing loop.
+
+**Without $\gamma Q(S_{t+1}, A_{t+1})$ (no bootstrapping):** We'd need to wait for the entire return $G_t$ — this becomes Monte Carlo. Bootstrapping lets us update at every step.
+
+**Without $-Q(S_t, A_t)$ (no error term):** The update would always add to Q regardless of whether the current estimate is already correct. The error term ensures convergence: when $Q = Q^\pi$, the expected error is zero and updates average out.
+
+**Without $\alpha$ (full replacement):** A single noisy sample would completely overwrite the estimate. With stochastic transitions, consecutive samples from the same $(s,a)$ give different targets. $\alpha < 1$ smooths across samples.
+
+---
+
+#### The Derivation Chain (Summary)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ WHAT WE WANT                                                     │
+│   Q^π(s,a) = E_π[R + γQ^π(S',A') | s, a]   (Bellman equation) │
+└─────────────────────────────────┬───────────────────────────────┘
+                                  │
+                                  ▼ PROBLEM: Can't compute E[...] 
+                                  │          (no model, huge state space)
+                                  │
+┌─────────────────────────────────┴───────────────────────────────┐
+│ APPROXIMATION 1: Replace expectation with single sample          │
+│   Target ≈ r + γQ(s', a')    where (s,a,r,s',a') is observed   │
+└─────────────────────────────────┬───────────────────────────────┘
+                                  │
+                                  ▼ PROBLEM: Single sample is noisy.
+                                  │          Can't just set Q = target.
+                                  │
+┌─────────────────────────────────┴───────────────────────────────┐
+│ APPROXIMATION 2: Robbins-Monro stochastic approximation          │
+│   Move Q partway toward sample target:                           │
+│   Q(s,a) ← Q(s,a) + α [target - Q(s,a)]                       │
+└─────────────────────────────────┬───────────────────────────────┘
+                                  │
+                                  ▼ RESULT
+                                  │
+┌─────────────────────────────────┴───────────────────────────────┐
+│ SARSA UPDATE RULE:                                               │
+│   Q(S,A) ← Q(S,A) + α [R + γQ(S',A') - Q(S,A)]               │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+#### Convergence Guarantee
+
+Under the following conditions, SARSA converges to $Q^\pi$ (for a fixed $\pi$) or to $Q^*$ (with GLIE policy):
+
+1. **All state-action pairs visited infinitely often:** Every $(s,a)$ must be sampled enough times for the law of large numbers to take effect.
+
+2. **Step-size conditions (Robbins-Monro):**
+   $$\sum_{t=1}^{\infty} \alpha_t(s,a) = \infty \quad \text{and} \quad \sum_{t=1}^{\infty} \alpha_t^2(s,a) < \infty$$
+
+3. **GLIE condition** (for convergence to $Q^*$): The policy must be Greedy in the Limit with Infinite Exploration — e.g., $\varepsilon$-greedy with $\varepsilon_t \to 0$.
+
+With a **constant** $\alpha$ (standard practice), exact convergence is not guaranteed, but the algorithm converges in the mean and tracks non-stationary targets — which is often more useful in practice.
+
+---
+
+#### Historical Context
+
+The SARSA algorithm was first described by Rummery & Niranjan (1994) as "Modified Connectionist Q-learning" and later named SARSA by Sutton (1996). It is the natural on-policy counterpart to Q-learning (Watkins, 1989), which replaces $A_{t+1}$ with $\arg\max_a Q(S_{t+1}, a)$ — a single change that makes the algorithm off-policy.
+
+The derivation above applies identically to Q-learning — the only difference is what we substitute for the next action:
+- **SARSA**: $A_{t+1} \sim \pi(\cdot \mid S_{t+1})$ (actual action taken)
+- **Q-learning**: $A_{t+1} = \arg\max_a Q(S_{t+1}, a)$ (hypothetical best action)
+
+Both are instances of the same Bellman equation + sampling + stochastic approximation framework. The choice of $A_{t+1}$ determines whether we estimate $Q^\pi$ (on-policy) or $Q^*$ (off-policy).
 
 ---
 
