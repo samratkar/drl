@@ -76,7 +76,7 @@ Monte Carlo (MC) methods learn from **experience**—sample sequences of states,
 To understand Monte Carlo, we must contrast it with the Dynamic Programming (DP) methods from the previous lecture. The transition from DP to MC represents the move from **Planning** (using a model) to **Learning** (using experience).
 
 ### 1. The Model Requirement (Model-Free vs. Model-Based)
-*   **DP (Model-Based):** Requires a full environment model ($P(s'|s,a)$ and $R(s,a)$). It \"computes\" the value function by knowing exactly where every action leads.
+*   **DP (Model-Based):** Requires a full environment model ($P(s' \mid s,a)$ and $R(s,a)$). It \"computes\" the value function by knowing exactly where every action leads.
 *   **MC (Model-Free):** Requires only **experience**. It doesn't know $P$. Instead, it takes an action and \"sees\" what happens. The environment's physics replace the mathematical model.
 
 #### Concrete Example: What does a "Model" look like?
