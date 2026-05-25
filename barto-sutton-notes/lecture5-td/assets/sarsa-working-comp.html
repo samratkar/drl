@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SARSA Update Rule – Worked Solution</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            margin: 30px 0 15px;
+            color: #ccc;
+        }
+
+        .problem-info {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+            border: 1px solid #0f3460;
+        }
+
+        .problem-info p {
+            margin: 6px 0;
+            font-size: 0.95rem;
+        }
+
+        .problem-info strong {
+            color: #e94560;
+        }
+
+        .formula-box {
+            background: #0f3460;
+            border-radius: 8px;
+            padding: 16px 24px;
+            margin: 20px 0 30px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-family: 'Courier New', monospace;
+            border-left: 4px solid #e94560;
+        }
+
+        .diagram {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .diagram img {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 20px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        thead th {
+            background: #0f3460;
+            color: #fff;
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tbody td {
+            padding: 12px 16px;
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Step 1 - Blue theme */
+        .step1-header td {
+            background: #1b4965;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.95rem;
+            padding: 10px 16px;
+        }
+
+        .step1 td {
+            background: #1b4965aa;
+        }
+
+        .step1:hover td {
+            background: #1b4965;
+        }
+
+        /* Step 2 - Purple theme */
+        .step2-header td {
+            background: #5b2a86;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.95rem;
+            padding: 10px 16px;
+        }
+
+        .step2 td {
+            background: #5b2a86aa;
+        }
+
+        .step2:hover td {
+            background: #5b2a86;
+        }
+
+        /* Step 3 - Green theme */
+        .step3-header td {
+            background: #1e6f50;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.95rem;
+            padding: 10px 16px;
+        }
+
+        .step3 td {
+            background: #1e6f50aa;
+        }
+
+        .step3:hover td {
+            background: #1e6f50;
+        }
+
+        /* Result rows */
+        .step1-result td,
+        .step2-result td,
+        .step3-result td {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .step1-result td {
+            background: #1b4965;
+            border-bottom: 3px solid #5fa8d3;
+        }
+
+        .step2-result td {
+            background: #5b2a86;
+            border-bottom: 3px solid #a855f7;
+        }
+
+        .step3-result td {
+            background: #1e6f50;
+            border-bottom: 3px solid #34d399;
+        }
+
+        .result-value {
+            color: #fbbf24;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .meaning-col {
+            color: #cbd5e1;
+            font-style: italic;
+        }
+
+        .computation-col {
+            font-family: 'Courier New', monospace;
+            color: #e2e8f0;
+        }
+
+        /* Final Q-values table */
+        .final-table {
+            max-width: 400px;
+            margin: 20px auto;
+        }
+
+        .final-table td {
+            text-align: center;
+            padding: 12px 24px;
+        }
+
+        .final-table .q-val {
+            color: #fbbf24;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        /* Bootstrapping section */
+        .bootstrap-section {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 30px;
+            border: 1px solid #0f3460;
+        }
+
+        .bootstrap-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px 16px;
+            border-radius: 8px;
+        }
+
+        .bootstrap-item.yes {
+            background: rgba(239, 68, 68, 0.15);
+            border-left: 3px solid #ef4444;
+        }
+
+        .bootstrap-item.no {
+            background: rgba(34, 197, 94, 0.15);
+            border-left: 3px solid #22c55e;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        .badge-yes {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .badge-no {
+            background: #22c55e;
+            color: #fff;
+        }
+
+        /* Question section */
+        .question-section {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 30px;
+            border: 1px solid #e94560;
+        }
+
+        .question-section p {
+            margin: 10px 0;
+            font-size: 0.95rem;
+            color: #d1d5db;
+        }
+
+        .question-section ul,
+        .question-section ol {
+            margin: 8px 0 16px 24px;
+            color: #d1d5db;
+            font-size: 0.95rem;
+        }
+
+        .question-section li {
+            margin: 4px 0;
+        }
+
+        .question-givens {
+            background: #0f3460;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+
+        .question-givens p {
+            margin: 8px 0 4px;
+        }
+
+        .question-givens ul {
+            margin: 4px 0 12px 24px;
+        }
+
+        /* Comparison table */
+        .comparison-table {
+            max-width: 100%;
+        }
+
+        .comparison-table thead th {
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        .comparison-table thead th.dp-col {
+            background: #92400e;
+        }
+
+        .comparison-table thead th.mc-col {
+            background: #1e3a5f;
+        }
+
+        .comparison-table thead th.td-col {
+            background: #065f46;
+        }
+
+        .comparison-table tbody td {
+            font-size: 0.85rem;
+            vertical-align: top;
+        }
+
+        .comparison-table tbody td.dp-col {
+            background: rgba(146, 64, 14, 0.2);
+        }
+
+        .comparison-table tbody td.mc-col {
+            background: rgba(30, 58, 95, 0.3);
+        }
+
+        .comparison-table tbody td.td-col {
+            background: rgba(6, 95, 70, 0.25);
+        }
+
+        /* Comparison summary */
+        .comparison-summary {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 20px;
+            border: 1px solid #0f3460;
+        }
+
+        .comparison-summary h3 {
+            color: #fbbf24;
+            margin-bottom: 16px;
+            font-size: 1.1rem;
+        }
+
+        .insight-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        .insight-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 12px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .dp-card {
+            background: rgba(146, 64, 14, 0.3);
+            border: 1px solid #b45309;
+        }
+
+        .mc-card {
+            background: rgba(30, 58, 95, 0.4);
+            border: 1px solid #3b82f6;
+        }
+
+        .td-card {
+            background: rgba(6, 95, 70, 0.35);
+            border: 1px solid #10b981;
+        }
+
+        .insight-label {
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 6px;
+        }
+
+        .dp-card .insight-label { color: #fbbf24; }
+        .mc-card .insight-label { color: #60a5fa; }
+        .td-card .insight-label { color: #34d399; }
+
+        .insight-desc {
+            font-size: 0.85rem;
+            color: #e2e8f0;
+            margin-bottom: 6px;
+        }
+
+        .insight-note {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        /* Formula comparison section */
+        .formula-comparison-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .formula-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .formula-card {
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .formula-card h3 {
+            margin-bottom: 12px;
+            font-size: 1rem;
+        }
+
+        .dp-formula {
+            background: rgba(146, 64, 14, 0.2);
+            border: 1px solid #b45309;
+        }
+
+        .dp-formula h3 { color: #fbbf24; }
+
+        .mc-formula {
+            background: rgba(30, 58, 95, 0.3);
+            border: 1px solid #3b82f6;
+        }
+
+        .mc-formula h3 { color: #60a5fa; }
+
+        .td-formula {
+            background: rgba(6, 95, 70, 0.25);
+            border: 1px solid #10b981;
+        }
+
+        .td-formula h3 { color: #34d399; }
+
+        .formula-card .formula-text {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+
+        .formula-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .formula-card li {
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            padding: 4px 0;
+            padding-left: 16px;
+            position: relative;
+        }
+
+        .formula-card li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #94a3b8;
+        }
+
+        .formula-shared {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            border: 1px solid #0f3460;
+        }
+
+        .formula-shared h3 {
+            color: #e2e8f0;
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .formula-shared p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .formula-shared .formula-text {
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 14px;
+            border-radius: 6px;
+            color: #fbbf24;
+            display: inline-block;
+        }
+
+        .formula-diff-table {
+            width: 100%;
+            margin-top: 12px;
+            box-shadow: none;
+        }
+
+        .formula-diff-table thead th {
+            background: #0f3460;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+        }
+
+        .formula-diff-table tbody td {
+            padding: 10px 14px;
+            font-size: 0.85rem;
+        }
+
+        .formula-example {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            border: 1px solid #0f3460;
+        }
+
+        .formula-example h3 {
+            color: #e2e8f0;
+            font-size: 1rem;
+            margin-bottom: 12px;
+        }
+
+        /* Alpha / G_t vs TD section */
+        .alpha-section {
+            margin-top: 20px;
+        }
+
+        .alpha-answer {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 20px;
+            border: 1px solid #e94560;
+        }
+
+        .alpha-answer h3 {
+            color: #e94560;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+
+        .alpha-answer p {
+            color: #cbd5e1;
+            font-size: 0.9rem;
+        }
+
+        .alpha-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .alpha-note {
+            color: #cbd5e1;
+            font-size: 0.85rem;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+
+        .alpha-example {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            border: 1px solid #0f3460;
+        }
+
+        .alpha-example h3 {
+            color: #e2e8f0;
+            font-size: 1rem;
+            margin-bottom: 12px;
+        }
+
+        .alpha-explanation {
+            margin-top: 14px;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        .alpha-when-equal {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid #fbbf24;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin: 20px 0;
+        }
+
+        .alpha-when-equal h3 {
+            color: #fbbf24;
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+        }
+
+        .alpha-when-equal p {
+            color: #cbd5e1;
+            font-size: 0.85rem;
+        }
+
+        .alpha-table tbody td {
+            vertical-align: top;
+        }
+
+        .alpha-why-needed {
+            margin-top: 24px;
+        }
+
+        .alpha-why-needed h3 {
+            color: #e2e8f0;
+            font-size: 1rem;
+            margin-bottom: 12px;
+        }
+
+        .alpha-reason-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .alpha-reason {
+            padding: 16px;
+            border-radius: 10px;
+        }
+
+        .alpha-reason h4 {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .mc-formula .alpha-reason h4,
+        .alpha-reason.mc-formula h4 { color: #60a5fa; }
+        .alpha-reason.td-formula h4 { color: #34d399; }
+
+        .alpha-reason p {
+            color: #cbd5e1;
+            font-size: 0.83rem;
+            line-height: 1.5;
+        }
+
+        .alpha-key-insight {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid #6366f1;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-top: 24px;
+        }
+
+        .alpha-key-insight p {
+            color: #e2e8f0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .alpha-key-insight code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #fbbf24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SARSA Update Rule – Worked Solution</h1>
+
+        <!-- Question Section -->
+        <div class="question-section">
+            <h2 style="color: #e94560; margin-top: 0;">Question</h2>
+            <p>Consider the following state transition diagram where an agent moves through states S₁ → S₂ → S₃ → S₄ (terminal) by taking action <strong>Right (R)</strong> at each state.</p>
+
+            <div class="diagram">
+                <img src="./sarsa-td-dia.png" alt="SARSA State Transition Diagram">
+            </div>
+
+            <p>Apply the <strong>SARSA update rule</strong> to compute iterative updates for the Q-values in the order they occur during the state transitions shown in the diagram.</p>
+
+            <div class="question-givens">
+                <p><strong>Given:</strong></p>
+                <ul>
+                    <li>Discount factor: γ = 0.8</li>
+                    <li>Learning rate: α = 0.5</li>
+                </ul>
+
+                <p><strong>Initial Q-values:</strong></p>
+                <ul>
+                    <li>Q(S₁, R) = 10</li>
+                    <li>Q(S₂, R) = 20</li>
+                    <li>Q(S₃, R) = 30</li>
+                    <li>Q(S₄, ·) = 0 (Terminal state)</li>
+                </ul>
+
+                <p><strong>Rewards:</strong></p>
+                <ul>
+                    <li>S₁ → S₂ : reward = −2</li>
+                    <li>S₂ → S₃ : reward = +4</li>
+                    <li>S₃ → S₄ : reward = +10</li>
+                </ul>
+            </div>
+
+            <p><strong>Find:</strong></p>
+            <ol>
+                <li>Compute the updated Q-values after applying the SARSA update rule at each transition.</li>
+                <li>Does bootstrapping influence these updates? Explain.</li>
+            </ol>
+        </div>
+
+        <!-- Solution Section -->
+        <h2 style="color: #5fa8d3; border-bottom: 2px solid #5fa8d3; padding-bottom: 8px;">Solution</h2>
+
+        <div class="problem-info">
+            <p><strong>Given:</strong> γ = 0.8, α = 0.5</p>
+            <p><strong>Initial Q-values:</strong> Q(S₁,R) = 10, Q(S₂,R) = 20, Q(S₃,R) = 30, Q(S₄) = 0 (terminal)</p>
+            <p><strong>Rewards:</strong> S₁→S₂: −2, S₂→S₃: +4, S₃→S₄: +10</p>
+        </div>
+
+        <div class="formula-box">
+            Q(s,a) ← Q(s,a) + α [ r + γ Q(s',a') − Q(s,a) ]
+        </div>
+
+        <h2>Step-by-Step Computation</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Step</th>
+                    <th>Meaning</th>
+                    <th>Computation</th>
+                    <th>Result</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Step 1 -->
+                <tr class="step1-header">
+                    <td colspan="4">Update 1: S₁ →(R)→ S₂</td>
+                </tr>
+                <tr class="step1">
+                    <td>1.1</td>
+                    <td class="meaning-col">Current Q-value: Q(s,a) = Q(S₁,R)</td>
+                    <td class="computation-col">—</td>
+                    <td>10</td>
+                </tr>
+                <tr class="step1">
+                    <td>1.2</td>
+                    <td class="meaning-col">Next state Q-value: Q(s',a') = Q(S₂,R)</td>
+                    <td class="computation-col">—</td>
+                    <td>20</td>
+                </tr>
+                <tr class="step1">
+                    <td>1.3</td>
+                    <td class="meaning-col">Reward in current state: r</td>
+                    <td class="computation-col">—</td>
+                    <td>−2</td>
+                </tr>
+                <tr class="step1">
+                    <td>1.4</td>
+                    <td class="meaning-col">One-step lookahead (TD target): r + γQ(s',a')</td>
+                    <td class="computation-col">−2 + 0.8 × 20 = −2 + 16</td>
+                    <td>14</td>
+                </tr>
+                <tr class="step1">
+                    <td>1.5</td>
+                    <td class="meaning-col">TD error (target − current): [r + γQ(s',a')] − Q(s,a)</td>
+                    <td class="computation-col">14 − 10</td>
+                    <td>4</td>
+                </tr>
+                <tr class="step1">
+                    <td>1.6</td>
+                    <td class="meaning-col">Scaled update: α × TD error</td>
+                    <td class="computation-col">0.5 × 4</td>
+                    <td>2</td>
+                </tr>
+                <tr class="step1-result">
+                    <td>1.7</td>
+                    <td>New Q(S₁,R): Q(s,a) + α × TD error</td>
+                    <td class="computation-col">10 + 2</td>
+                    <td><span class="result-value">12</span></td>
+                </tr>
+
+                <!-- Step 2 -->
+                <tr class="step2-header">
+                    <td colspan="4">Update 2: S₂ →(R)→ S₃</td>
+                </tr>
+                <tr class="step2">
+                    <td>2.1</td>
+                    <td class="meaning-col">Current Q-value: Q(s,a) = Q(S₂,R)</td>
+                    <td class="computation-col">—</td>
+                    <td>20</td>
+                </tr>
+                <tr class="step2">
+                    <td>2.2</td>
+                    <td class="meaning-col">Next state Q-value: Q(s',a') = Q(S₃,R)</td>
+                    <td class="computation-col">—</td>
+                    <td>30</td>
+                </tr>
+                <tr class="step2">
+                    <td>2.3</td>
+                    <td class="meaning-col">Reward in current state: r</td>
+                    <td class="computation-col">—</td>
+                    <td>+4</td>
+                </tr>
+                <tr class="step2">
+                    <td>2.4</td>
+                    <td class="meaning-col">One-step lookahead (TD target): r + γQ(s',a')</td>
+                    <td class="computation-col">4 + 0.8 × 30 = 4 + 24</td>
+                    <td>28</td>
+                </tr>
+                <tr class="step2">
+                    <td>2.5</td>
+                    <td class="meaning-col">TD error (target − current): [r + γQ(s',a')] − Q(s,a)</td>
+                    <td class="computation-col">28 − 20</td>
+                    <td>8</td>
+                </tr>
+                <tr class="step2">
+                    <td>2.6</td>
+                    <td class="meaning-col">Scaled update: α × TD error</td>
+                    <td class="computation-col">0.5 × 8</td>
+                    <td>4</td>
+                </tr>
+                <tr class="step2-result">
+                    <td>2.7</td>
+                    <td>New Q(S₂,R): Q(s,a) + α × TD error</td>
+                    <td class="computation-col">20 + 4</td>
+                    <td><span class="result-value">24</span></td>
+                </tr>
+
+                <!-- Step 3 -->
+                <tr class="step3-header">
+                    <td colspan="4">Update 3: S₃ →(R)→ S₄ (terminal)</td>
+                </tr>
+                <tr class="step3">
+                    <td>3.1</td>
+                    <td class="meaning-col">Current Q-value: Q(s,a) = Q(S₃,R)</td>
+                    <td class="computation-col">—</td>
+                    <td>30</td>
+                </tr>
+                <tr class="step3">
+                    <td>3.2</td>
+                    <td class="meaning-col">Next state Q-value: Q(s',a') = Q(S₄) [terminal]</td>
+                    <td class="computation-col">—</td>
+                    <td>0</td>
+                </tr>
+                <tr class="step3">
+                    <td>3.3</td>
+                    <td class="meaning-col">Reward in current state: r</td>
+                    <td class="computation-col">—</td>
+                    <td>+10</td>
+                </tr>
+                <tr class="step3">
+                    <td>3.4</td>
+                    <td class="meaning-col">One-step lookahead (TD target): r + γQ(s',a')</td>
+                    <td class="computation-col">10 + 0.8 × 0 = 10 + 0</td>
+                    <td>10</td>
+                </tr>
+                <tr class="step3">
+                    <td>3.5</td>
+                    <td class="meaning-col">TD error (target − current): [r + γQ(s',a')] − Q(s,a)</td>
+                    <td class="computation-col">10 − 30</td>
+                    <td>−20</td>
+                </tr>
+                <tr class="step3">
+                    <td>3.6</td>
+                    <td class="meaning-col">Scaled update: α × TD error</td>
+                    <td class="computation-col">0.5 × (−20)</td>
+                    <td>−10</td>
+                </tr>
+                <tr class="step3-result">
+                    <td>3.7</td>
+                    <td>New Q(S₃,R): Q(s,a) + α × TD error</td>
+                    <td class="computation-col">30 + (−10)</td>
+                    <td><span class="result-value">20</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Final Q-values</h2>
+
+        <table class="final-table">
+            <thead>
+                <tr>
+                    <th>State</th>
+                    <th>Initial</th>
+                    <th>Final</th>
+                    <th>Change</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>S₁</td>
+                    <td>10</td>
+                    <td class="q-val">12</td>
+                    <td style="color: #22c55e;">+2</td>
+                </tr>
+                <tr>
+                    <td>S₂</td>
+                    <td>20</td>
+                    <td class="q-val">24</td>
+                    <td style="color: #22c55e;">+4</td>
+                </tr>
+                <tr>
+                    <td>S₃</td>
+                    <td>30</td>
+                    <td class="q-val">20</td>
+                    <td style="color: #ef4444;">−10</td>
+                </tr>
+                <tr>
+                    <td>S₄</td>
+                    <td>0</td>
+                    <td class="q-val">0</td>
+                    <td style="color: #94a3b8;">0</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="bootstrap-section">
+            <h2 style="margin-top: 0;">Bootstrapping</h2>
+            <p style="margin-bottom: 15px; color: #94a3b8;">SARSA bootstraps because it uses estimated Q(s',a') rather than waiting for the true return.</p>
+
+            <div class="bootstrap-item yes">
+                <span><strong>S₁ update:</strong> Bootstraps from Q(S₂,R) = 20</span>
+                <span class="badge badge-yes">YES</span>
+            </div>
+            <div class="bootstrap-item yes">
+                <span><strong>S₂ update:</strong> Bootstraps from Q(S₃,R) = 30</span>
+                <span class="badge badge-yes">YES</span>
+            </div>
+            <div class="bootstrap-item no">
+                <span><strong>S₃ update:</strong> S₄ is terminal, Q = 0</span>
+                <span class="badge badge-no">NO</span>
+            </div>
+        </div>
+
+        <!-- Comparison: DP vs MC vs TD -->
+        <h2 style="margin-top: 40px;">Comparison: DP vs Monte Carlo vs TD (SARSA)</h2>
+
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Aspect</th>
+                    <th class="dp-col">Dynamic Programming (DP)</th>
+                    <th class="mc-col">Monte Carlo (MC)</th>
+                    <th class="td-col">TD / SARSA</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Model requirement</strong></td>
+                    <td class="dp-col">Requires full model (transition probabilities)</td>
+                    <td class="mc-col">Model-free (learns from experience)</td>
+                    <td class="td-col">Model-free (learns from experience)</td>
+                </tr>
+                <tr>
+                    <td><strong>Update timing</strong></td>
+                    <td class="dp-col">Sweeps over all states (full backup)</td>
+                    <td class="mc-col">After complete episode ends</td>
+                    <td class="td-col">After each single step (online)</td>
+                </tr>
+                <tr>
+                    <td><strong>Bootstrapping</strong></td>
+                    <td class="dp-col">Yes — uses estimates of successor states</td>
+                    <td class="mc-col">No — uses actual complete return</td>
+                    <td class="td-col">Yes — uses estimate of next state</td>
+                </tr>
+                <tr>
+                    <td><strong>Sampling</strong></td>
+                    <td class="dp-col">No — computes expected value over all transitions</td>
+                    <td class="mc-col">Yes — uses sampled episodes</td>
+                    <td class="td-col">Yes — uses sampled transitions</td>
+                </tr>
+                <tr>
+                    <td><strong>Needs episodes to end?</strong></td>
+                    <td class="dp-col">No</td>
+                    <td class="mc-col">Yes (episodic tasks only)</td>
+                    <td class="td-col">No (works for continuing tasks too)</td>
+                </tr>
+                <tr>
+                    <td><strong>Update target</strong></td>
+                    <td class="dp-col">Σ p(s',r) [r + γV(s')]</td>
+                    <td class="mc-col">G<sub>t</sub> (actual return)</td>
+                    <td class="td-col">r + γQ(s',a') (estimated return)</td>
+                </tr>
+                <tr>
+                    <td><strong>Bias / Variance</strong></td>
+                    <td class="dp-col">Low bias (exact model)</td>
+                    <td class="mc-col">Zero bias, high variance</td>
+                    <td class="td-col">Some bias (bootstrap), low variance</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="comparison-summary">
+            <h3>Key Insight</h3>
+            <div class="insight-grid">
+                <div class="insight-card dp-card">
+                    <span class="insight-label">DP</span>
+                    <span class="insight-desc">Bootstraps + No Sampling</span>
+                    <span class="insight-note">Needs the model</span>
+                </div>
+                <div class="insight-card mc-card">
+                    <span class="insight-label">MC</span>
+                    <span class="insight-desc">No Bootstrapping + Sampling</span>
+                    <span class="insight-note">Needs complete episodes</span>
+                </div>
+                <div class="insight-card td-card">
+                    <span class="insight-label">TD</span>
+                    <span class="insight-desc">Bootstraps + Sampling</span>
+                    <span class="insight-note">Best of both — no model, no episode end needed</span>
+                </div>
+            </div>
+            <p style="margin-top: 16px; color: #94a3b8; font-size: 0.9rem;">
+                In this problem, SARSA uses Q(S₂,R)=20 as an <em>estimate</em> (bootstrapping) from a <em>single sampled transition</em> (sampling), without needing transition probabilities (model-free) or waiting for the episode to finish.
+            </p>
+        </div>
+
+        <!-- Formula Comparison: DP vs MC vs TD -->
+        <h2 style="margin-top: 40px;">Formula Comparison: DP vs MC vs TD</h2>
+
+        <div class="formula-comparison-3">
+            <div class="formula-card dp-formula">
+                <h3>DP (Dynamic Programming)</h3>
+                <div class="formula-text">Q(s,a) = Σ p(s',r|s,a) [ r + γ Q(s',a') ]</div>
+                <ul>
+                    <li>Directly <strong>assigns</strong> the expected value</li>
+                    <li>Sums over <strong>all possible</strong> next states weighted by p(s',r|s,a)</li>
+                    <li>No learning rate — replaces old value entirely</li>
+                    <li>Requires knowing the model (transition probabilities)</li>
+                    <li><strong>Bootstraps:</strong> uses Q(s',a') estimate</li>
+                </ul>
+            </div>
+
+            <div class="formula-card mc-formula">
+                <h3>Monte Carlo (MC)</h3>
+                <div class="formula-text">Q(s,a) ← Q(s,a) + α [ G<sub>t</sub> − Q(s,a) ]</div>
+                <ul>
+                    <li>Incrementally <strong>blends</strong> old estimate with actual return using α</li>
+                    <li>G<sub>t</sub> = actual total discounted return from episode</li>
+                    <li>Must <strong>wait until episode ends</strong> to compute G<sub>t</sub></li>
+                    <li>Model-free — only needs experience</li>
+                    <li><strong>No bootstrapping:</strong> uses real return, not estimates</li>
+                </ul>
+            </div>
+
+            <div class="formula-card td-formula">
+                <h3>TD / SARSA</h3>
+                <div class="formula-text">Q(s,a) ← Q(s,a) + α [ r + γ Q(s',a') − Q(s,a) ]</div>
+                <ul>
+                    <li>Incrementally <strong>blends</strong> old estimate with TD target using α</li>
+                    <li>Uses a <strong>single sampled</strong> transition (one s', one r)</li>
+                    <li>Can update <strong>after every step</strong> (no waiting)</li>
+                    <li>Model-free — only needs experience</li>
+                    <li><strong>Bootstraps:</strong> uses Q(s',a') estimate</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="formula-shared">
+            <h3>What's Shared Between MC and TD</h3>
+            <p>Both use the same <strong>incremental update structure</strong>:</p>
+            <div class="formula-text" style="margin: 12px 0;">Q(s,a) ← Q(s,a) + α [ Target − Q(s,a) ]</div>
+            <p>The difference is what they use as the <strong>Target</strong>:</p>
+
+            <table class="formula-diff-table" style="margin-top: 16px;">
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Target</th>
+                        <th>What it means</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="mc-col"><strong>MC</strong></td>
+                        <td class="mc-col" style="font-family: 'Courier New', monospace;">G<sub>t</sub> = r₁ + γr₂ + γ²r₃ + ...</td>
+                        <td class="mc-col">Actual complete return (wait till end)</td>
+                    </tr>
+                    <tr>
+                        <td class="td-col"><strong>TD</strong></td>
+                        <td class="td-col" style="font-family: 'Courier New', monospace;">r + γ Q(s',a')</td>
+                        <td class="td-col">One-step lookahead (bootstrap estimate)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="margin-top: 24px;">Full Comparison</h3>
+            <table class="formula-diff-table">
+                <thead>
+                    <tr>
+                        <th>Aspect</th>
+                        <th class="dp-col">DP</th>
+                        <th class="mc-col">MC</th>
+                        <th class="td-col">TD / SARSA</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Target used</td>
+                        <td class="dp-col">Σ p(s',r)[r + γQ(s',a')]</td>
+                        <td class="mc-col">G<sub>t</sub> (actual return)</td>
+                        <td class="td-col">r + γQ(s',a')</td>
+                    </tr>
+                    <tr>
+                        <td>How many next states?</td>
+                        <td class="dp-col">All (weighted sum)</td>
+                        <td class="mc-col">One (sampled episode)</td>
+                        <td class="td-col">One (sampled step)</td>
+                    </tr>
+                    <tr>
+                        <td>Update mechanism</td>
+                        <td class="dp-col">Full replacement: Q = target</td>
+                        <td class="mc-col">Blended: Q = Q + α(G − Q)</td>
+                        <td class="td-col">Blended: Q = Q + α(target − Q)</td>
+                    </tr>
+                    <tr>
+                        <td>Learning rate α?</td>
+                        <td class="dp-col">Not needed</td>
+                        <td class="mc-col">Required</td>
+                        <td class="td-col">Required</td>
+                    </tr>
+                    <tr>
+                        <td>Bootstrapping?</td>
+                        <td class="dp-col">Yes</td>
+                        <td class="mc-col">No</td>
+                        <td class="td-col">Yes</td>
+                    </tr>
+                    <tr>
+                        <td>When can it update?</td>
+                        <td class="dp-col">Anytime (needs model)</td>
+                        <td class="mc-col">Only after episode ends</td>
+                        <td class="td-col">After each step</td>
+                    </tr>
+                    <tr>
+                        <td>Bias</td>
+                        <td class="dp-col">None (exact)</td>
+                        <td class="mc-col">None (true return)</td>
+                        <td class="td-col">Some (bootstrapped)</td>
+                    </tr>
+                    <tr>
+                        <td>Variance</td>
+                        <td class="dp-col">None</td>
+                        <td class="mc-col">High (full episode noise)</td>
+                        <td class="td-col">Low (single step)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="formula-example">
+            <h3>Example from This Problem (S₁ update)</h3>
+            <table class="formula-diff-table">
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Target</th>
+                        <th>Computation</th>
+                        <th>New Q(S₁,R)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="dp-col"><strong>DP</strong></td>
+                        <td class="dp-col">Σp[r + γQ(s',a')]</td>
+                        <td class="dp-col">1.0 × [−2 + 0.8 × 20] = 14</td>
+                        <td class="dp-col" style="font-weight:700; color: #fbbf24;">14</td>
+                    </tr>
+                    <tr>
+                        <td class="mc-col"><strong>MC</strong></td>
+                        <td class="mc-col">G<sub>t</sub> = −2 + 0.8(4) + 0.64(10)</td>
+                        <td class="mc-col">10 + 0.5 × [7.6 − 10] = 10 + (−1.2)</td>
+                        <td class="mc-col" style="font-weight:700; color: #fbbf24;">8.8</td>
+                    </tr>
+                    <tr>
+                        <td class="td-col"><strong>TD</strong></td>
+                        <td class="td-col">r + γQ(s',a')</td>
+                        <td class="td-col">10 + 0.5 × [14 − 10] = 10 + 2</td>
+                        <td class="td-col" style="font-weight:700; color: #fbbf24;">12</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="margin-top: 12px; color: #94a3b8; font-size: 0.85rem;">
+                <strong>DP</strong> jumps directly to target (14) — no blending.<br>
+                <strong>MC</strong> uses actual return G=7.6 and blends: moves from 10 toward 7.6 → gets 8.8.<br>
+                <strong>TD</strong> uses bootstrapped target (14) and blends: moves from 10 toward 14 → gets 12.<br><br>
+                Note: MC and TD use the same α-blending mechanism but disagree on the target. TD's target (14) is inflated because Q(S₂,R)=20 is an overestimate — bootstrapping bias. MC's target (7.6) is the true return — no bias, but noisier over many episodes.
+            </p>
+        </div>
+
+        <!-- Is G_t the same as TD target when α=1? -->
+        <h2 style="margin-top: 40px;">Is G<sub>t</sub> the Same as the TD Target When α = 1?</h2>
+
+        <div class="alpha-section">
+            <div class="alpha-answer">
+                <h3>No. They are fundamentally different targets.</h3>
+                <p>Setting α = 1 makes both formulas "fully replace the old value with the target" — but the targets themselves are different things:</p>
+            </div>
+
+            <div class="alpha-comparison">
+                <div class="formula-card td-formula">
+                    <h3>TD with α = 1</h3>
+                    <div class="formula-text">Q(s,a) = r + γ Q(s',a')</div>
+                    <p class="alpha-note">Still uses an <strong>ESTIMATE</strong> Q(s',a') for all future rewards.<br>Only looks <strong>one step</strong> ahead, then trusts the estimate.</p>
+                </div>
+
+                <div class="formula-card mc-formula">
+                    <h3>MC with α = 1</h3>
+                    <div class="formula-text">Q(s,a) = G<sub>t</sub> = r₁ + γr₂ + γ²r₃ + ...</div>
+                    <p class="alpha-note">Uses ALL <strong>ACTUAL</strong> rewards experienced until episode ends.<br>No estimates involved — pure ground truth from that episode.</p>
+                </div>
+            </div>
+
+            <div class="alpha-example">
+                <h3>Why They Differ — This Problem</h3>
+                <table class="formula-diff-table">
+                    <thead>
+                        <tr>
+                            <th>Method (α = 1)</th>
+                            <th>Target for S₁</th>
+                            <th>Computation</th>
+                            <th>New Q(S₁,R)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="td-col"><strong>TD (α=1)</strong></td>
+                            <td class="td-col">r + γQ(S₂,R)</td>
+                            <td class="td-col">−2 + 0.8 × 20 = <strong>14</strong></td>
+                            <td class="td-col" style="font-weight:700; color: #fbbf24;">14</td>
+                        </tr>
+                        <tr>
+                            <td class="mc-col"><strong>MC (α=1)</strong></td>
+                            <td class="mc-col">G<sub>t</sub> = r₁ + γr₂ + γ²r₃</td>
+                            <td class="mc-col">−2 + 0.8(4) + 0.64(10) = <strong>7.6</strong></td>
+                            <td class="mc-col" style="font-weight:700; color: #fbbf24;">7.6</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="alpha-explanation">
+                    They give <strong>14 vs 7.6</strong> — very different!<br>
+                    TD says "future is worth 20" (because Q(S₂,R)=20 — an overestimate).<br>
+                    MC says "future was actually worth 4 + 0.8×10 = 12" (real rewards experienced).
+                </p>
+            </div>
+
+            <div class="alpha-when-equal">
+                <h3>When Would They Be Equal?</h3>
+                <p>Only when Q(s',a') perfectly equals the true future return — i.e., when learning is already complete and all Q-values are converged. During learning, they almost always differ.</p>
+            </div>
+
+            <h3 style="margin-top: 24px;">Significance of α (Learning Rate)</h3>
+            <table class="formula-diff-table alpha-table">
+                <thead>
+                    <tr>
+                        <th>α value</th>
+                        <th>Effect</th>
+                        <th>When useful</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="color: #ef4444; font-weight: 700;">α = 1</td>
+                        <td>Completely replace old estimate with new target</td>
+                        <td>Dangerous — forgets all past learning instantly</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #fbbf24; font-weight: 700;">α = 0.5</td>
+                        <td>Move halfway from old value toward target</td>
+                        <td>Balanced — used in this problem</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #22c55e; font-weight: 700;">α = 0.1</td>
+                        <td>Move only 10% toward target</td>
+                        <td>Stable but slow learning</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #94a3b8; font-weight: 700;">α → 0</td>
+                        <td>Barely move from old estimate</td>
+                        <td>Too slow — effectively stops learning</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="alpha-why-needed">
+                <h3>Why α Matters for Each Method</h3>
+                <div class="alpha-reason-grid">
+                    <div class="alpha-reason mc-formula">
+                        <h4>MC needs α because:</h4>
+                        <p>G<sub>t</sub> is <strong>noisy</strong> — each episode gives a different return due to stochastic transitions. Without α &lt; 1, you'd just remember the last episode and forget everything else. α averages across many episodes.</p>
+                    </div>
+                    <div class="alpha-reason td-formula">
+                        <h4>TD needs α because:</h4>
+                        <p>The target r + γQ(s',a') is both <strong>noisy</strong> (sampled transition) and <strong>biased</strong> (bootstrapped estimate). α smooths out sampling noise AND prevents over-committing to a biased estimate.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alpha-key-insight">
+                <p><strong>Key Insight:</strong> The shared structure <code>Q + α[Target − Q]</code> is just a "move toward target" operator. The fundamental difference between MC and TD is <em>what</em> the target is (real return vs bootstrapped estimate) — not the α mechanism itself.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
