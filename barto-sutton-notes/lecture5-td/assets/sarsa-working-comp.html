@@ -677,6 +677,254 @@
             font-family: 'Courier New', monospace;
             color: #fbbf24;
         }
+
+        /* On-Policy vs Off-Policy section */
+        .policy-intro {
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin: 20px 0;
+            border-left: 4px solid #e94560;
+        }
+
+        .policy-intro p {
+            color: #cbd5e1;
+            font-size: 0.9rem;
+        }
+
+        .policy-section {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 28px;
+            margin: 20px 0;
+        }
+
+        .on-policy-section {
+            border: 1px solid #10b981;
+        }
+
+        .on-policy-section h3 {
+            color: #34d399;
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+        }
+
+        .off-policy-section {
+            border: 1px solid #f97316;
+        }
+
+        .off-policy-section h3 {
+            color: #fb923c;
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+        }
+
+        .policy-desc {
+            margin-bottom: 20px;
+        }
+
+        .policy-desc p {
+            color: #cbd5e1;
+            font-size: 0.9rem;
+            margin: 6px 0;
+        }
+
+        .policy-analogy {
+            margin-top: 10px !important;
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            font-style: italic;
+        }
+
+        .policy-methods-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin: 16px 0;
+        }
+
+        .policy-method-card {
+            padding: 16px;
+            border-radius: 10px;
+        }
+
+        .policy-method-card h4 {
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .policy-method-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .policy-method-card li {
+            font-size: 0.8rem;
+            color: #cbd5e1;
+            padding: 3px 0 3px 14px;
+            position: relative;
+        }
+
+        .policy-method-card li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #94a3b8;
+        }
+
+        .mc-offpolicy {
+            background: rgba(30, 58, 95, 0.3);
+            border: 1px solid #3b82f6;
+        }
+
+        .mc-offpolicy h4 { color: #60a5fa; }
+
+        .qlearning-card {
+            background: rgba(249, 115, 22, 0.15);
+            border: 1px solid #f97316;
+        }
+
+        .qlearning-card h4 { color: #fb923c; }
+
+        .policy-rationale {
+            margin: 20px 0;
+            padding: 16px 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .policy-rationale h4 {
+            color: #fbbf24;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .policy-rationale ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .policy-rationale li {
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            padding: 5px 0 5px 16px;
+            position: relative;
+            line-height: 1.5;
+        }
+
+        .policy-rationale li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #94a3b8;
+        }
+
+        .policy-this-problem {
+            padding: 14px 18px;
+            border-radius: 8px;
+            border: 1px dashed #10b981;
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .policy-this-problem h4 {
+            color: #e2e8f0;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+
+        .policy-this-problem p {
+            color: #94a3b8;
+            font-size: 0.83rem;
+            line-height: 1.5;
+        }
+
+        .policy-divider {
+            text-align: center;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .policy-divider span {
+            background: #0f172a;
+            padding: 8px 20px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #94a3b8;
+            border-radius: 20px;
+            border: 2px solid #334155;
+        }
+
+        /* SARSA vs Q-Learning */
+        .sarsa-vs-qlearning {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 30px 0;
+            border: 1px solid #334155;
+        }
+
+        .sarsa-vs-qlearning h3 {
+            color: #e2e8f0;
+            font-size: 1.05rem;
+            margin-bottom: 16px;
+        }
+
+        .qlearn-col {
+            background: rgba(249, 115, 22, 0.15);
+        }
+
+        .formula-diff-table thead th.qlearn-col {
+            background: #92400e;
+        }
+
+        .cliff-example {
+            margin-top: 20px;
+            padding: 16px 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            border-left: 3px solid #fbbf24;
+        }
+
+        .cliff-example h4 {
+            color: #fbbf24;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .cliff-example p {
+            color: #cbd5e1;
+            font-size: 0.83rem;
+            line-height: 1.6;
+            margin: 6px 0;
+        }
+
+        .cliff-insight {
+            margin-top: 10px !important;
+            color: #94a3b8 !important;
+            font-style: italic;
+        }
+
+        /* Policy summary */
+        .policy-summary {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 30px 0;
+            border: 1px solid #0f3460;
+        }
+
+        .policy-summary h3 {
+            color: #e2e8f0;
+            font-size: 1.05rem;
+            margin-bottom: 16px;
+        }
+
+        .policy-summary small {
+            color: #64748b;
+            display: block;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
@@ -1314,6 +1562,184 @@
             <div class="alpha-key-insight">
                 <p><strong>Key Insight:</strong> The shared structure <code>Q + α[Target − Q]</code> is just a "move toward target" operator. The fundamental difference between MC and TD is <em>what</em> the target is (real return vs bootstrapped estimate) — not the α mechanism itself.</p>
             </div>
+        </div>
+
+        <!-- On-Policy vs Off-Policy -->
+        <h2 style="margin-top: 50px; border-bottom: 2px solid #e94560; padding-bottom: 8px;">On-Policy vs Off-Policy Methods</h2>
+
+        <div class="policy-intro">
+            <p>The comparison above (DP vs MC vs TD) is for <strong>on-policy</strong> methods. SARSA is on-policy. But there's a parallel world of <strong>off-policy</strong> methods that solve a different problem.</p>
+        </div>
+
+        <div class="policy-section on-policy-section">
+            <h3>On-Policy: Learn About the Policy You're Following</h3>
+            <div class="policy-desc">
+                <p>The agent uses <strong>one policy</strong> for everything — it follows this policy to collect experience, and evaluates this same policy.</p>
+                <p class="policy-analogy"><strong>Analogy:</strong> A chef who only tastes their own cooking to improve their recipes.</p>
+            </div>
+
+            <div class="policy-methods-grid">
+                <div class="policy-method-card mc-formula">
+                    <h4>MC On-Policy</h4>
+                    <div class="formula-text">Q(s,a) ← Q(s,a) + α [ G<sub>t</sub> − Q(s,a) ]</div>
+                    <ul>
+                        <li>Generate episode using policy π</li>
+                        <li>G<sub>t</sub> comes from rewards under π</li>
+                        <li>Update Q for the policy π that generated the data</li>
+                    </ul>
+                </div>
+
+                <div class="policy-method-card td-formula">
+                    <h4>TD On-Policy (SARSA)</h4>
+                    <div class="formula-text">Q(s,a) ← Q(s,a) + α [ r + γQ(s',<strong>a'</strong>) − Q(s,a) ]</div>
+                    <ul>
+                        <li>a' = action actually taken by policy π at s'</li>
+                        <li>The second "A" in <strong>S-A-R-S-A</strong></li>
+                        <li>Evaluates exactly what the policy does</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="policy-rationale">
+                <h4>Why On-Policy?</h4>
+                <ul>
+                    <li><strong>Simplicity:</strong> One policy does everything — no correction needed</li>
+                    <li><strong>Safety:</strong> Learns about what it actually does, including mistakes — good for risk-sensitive tasks</li>
+                    <li><strong>Convergence:</strong> Guaranteed to converge to the optimal policy for the behavior being followed</li>
+                    <li><strong>Exploration-aware:</strong> If ε-greedy, Q-values reflect the cost of exploratory actions (sometimes choosing suboptimally)</li>
+                </ul>
+            </div>
+
+            <div class="policy-this-problem">
+                <h4>In This Problem</h4>
+                <p>SARSA uses Q(S₂, <strong>R</strong>) in step 1 because R is the action the policy <em>actually chose</em> at S₂. If the policy had sometimes chosen Left at S₂, the Q-value would reflect that mixed behavior.</p>
+            </div>
+        </div>
+
+        <div class="policy-divider">
+            <span>vs</span>
+        </div>
+
+        <div class="policy-section off-policy-section">
+            <h3>Off-Policy: Learn About One Policy While Following Another</h3>
+            <div class="policy-desc">
+                <p>The agent uses <strong>two policies</strong>: a <em>behavior policy</em> (b) to explore and collect data, and a <em>target policy</em> (π) that it wants to learn about and improve.</p>
+                <p class="policy-analogy"><strong>Analogy:</strong> Learning to cook by watching YouTube chefs (behavior ≠ target). You follow their recipes (behavior policy) but evaluate what the ideal recipe should be (target policy).</p>
+            </div>
+
+            <div class="policy-methods-grid">
+                <div class="policy-method-card mc-offpolicy">
+                    <h4>MC Off-Policy</h4>
+                    <div class="formula-text">Q(s,a) ← Q(s,a) + α [ ρ · G<sub>t</sub> − Q(s,a) ]</div>
+                    <ul>
+                        <li>ρ = importance sampling ratio = π(a|s) / b(a|s)</li>
+                        <li>Corrects for the fact that episodes came from b, not π</li>
+                        <li>Can have very high variance due to ρ products</li>
+                    </ul>
+                </div>
+
+                <div class="policy-method-card qlearning-card">
+                    <h4>TD Off-Policy (Q-Learning)</h4>
+                    <div class="formula-text">Q(s,a) ← Q(s,a) + α [ r + γ <strong>max<sub>a'</sub></strong> Q(s',a') − Q(s,a) ]</div>
+                    <ul>
+                        <li>Uses <strong>max</strong> over all actions — not the action actually taken</li>
+                        <li>Target policy is greedy (always pick best), behavior can be anything</li>
+                        <li>No importance sampling needed!</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="policy-rationale">
+                <h4>Why Off-Policy?</h4>
+                <ul>
+                    <li><strong>Exploration freedom:</strong> Behavior policy can explore wildly (random, ε-greedy with high ε) while learning the optimal policy</li>
+                    <li><strong>Learns optimal policy directly:</strong> Q-learning converges to Q* regardless of how the agent explores</li>
+                    <li><strong>Reuse data:</strong> Can learn from old data, other agents, or human demonstrations</li>
+                    <li><strong>Experience replay:</strong> Store and relearn from past transitions (key to DQN/deep RL)</li>
+                </ul>
+            </div>
+
+            <div class="policy-this-problem" style="border-color: #f97316;">
+                <h4>If This Problem Used Q-Learning Instead</h4>
+                <p>At S₁, instead of using Q(S₂, R) where R is the chosen action, Q-learning would use <strong>max<sub>a</sub> Q(S₂, a)</strong> — the best possible action at S₂ regardless of what the agent actually does. This learns the optimal policy even if the agent sometimes explores randomly.</p>
+            </div>
+        </div>
+
+        <!-- Key difference: SARSA vs Q-Learning -->
+        <div class="sarsa-vs-qlearning">
+            <h3>SARSA vs Q-Learning: The Critical Difference</h3>
+            <table class="formula-diff-table">
+                <thead>
+                    <tr>
+                        <th>Aspect</th>
+                        <th class="td-col">SARSA (On-Policy)</th>
+                        <th class="qlearn-col">Q-Learning (Off-Policy)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Formula</td>
+                        <td class="td-col">Q(s,a) + α[r + γQ(s', <strong>a'</strong>) − Q(s,a)]</td>
+                        <td class="qlearn-col">Q(s,a) + α[r + γ<strong>max<sub>a'</sub></strong>Q(s',a') − Q(s,a)]</td>
+                    </tr>
+                    <tr>
+                        <td>Next action</td>
+                        <td class="td-col">a' = action policy <em>actually takes</em></td>
+                        <td class="qlearn-col">max = best action <em>regardless of policy</em></td>
+                    </tr>
+                    <tr>
+                        <td>Learns about</td>
+                        <td class="td-col">Current behavior (including exploration mistakes)</td>
+                        <td class="qlearn-col">Optimal policy (ignoring exploration)</td>
+                    </tr>
+                    <tr>
+                        <td>Safe exploration?</td>
+                        <td class="td-col">Yes — accounts for risks of exploration</td>
+                        <td class="qlearn-col">No — assumes you'll always act optimally in the future</td>
+                    </tr>
+                    <tr>
+                        <td>Convergence</td>
+                        <td class="td-col">Converges to Q<sup>π</sup> (policy value)</td>
+                        <td class="qlearn-col">Converges to Q<sup>*</sup> (optimal value)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="cliff-example">
+                <h4>Classic Example: Cliff Walking</h4>
+                <p><strong>SARSA</strong> (on-policy) learns the <em>safe path</em> — it knows that ε-greedy exploration might push it off the cliff, so it stays away from the edge.</p>
+                <p><strong>Q-Learning</strong> (off-policy) learns the <em>optimal path</em> right along the cliff edge — it assumes future behavior will be optimal (no random exploration), so the cliff edge is "fine."</p>
+                <p class="cliff-insight">This is why on-policy methods are preferred in safety-critical domains (robotics, autonomous driving) — they account for the agent's actual imperfect behavior.</p>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="policy-summary">
+            <h3>Complete Picture</h3>
+            <table class="formula-diff-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th class="mc-col">Monte Carlo</th>
+                        <th class="td-col">TD Learning</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>On-Policy</strong></td>
+                        <td class="mc-col">MC: Q ← Q + α[G<sub>t</sub> − Q]<br><small>G from followed policy</small></td>
+                        <td class="td-col">SARSA: Q ← Q + α[r + γQ(s',a') − Q]<br><small>a' from followed policy</small></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Off-Policy</strong></td>
+                        <td class="mc-col">MC + IS: Q ← Q + α[ρ·G<sub>t</sub> − Q]<br><small>ρ corrects for different policy</small></td>
+                        <td class="qlearn-col">Q-Learning: Q ← Q + α[r + γ max Q(s',a') − Q]<br><small>max ignores actual policy</small></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="margin-top: 16px; color: #94a3b8; font-size: 0.85rem; text-align: center;">
+                This problem uses <strong>SARSA</strong> = on-policy TD. The MC comparison above is also on-policy for a fair comparison.
+            </p>
         </div>
     </div>
 </body>
