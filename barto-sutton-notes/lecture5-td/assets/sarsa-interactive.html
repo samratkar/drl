@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SARSA Step-by-Step Interactive</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+        }
+
+        /* State diagram */
+        .diagram-area {
+            position: relative;
+            width: 100%;
+            height: 220px;
+            margin: 20px 0 30px;
+        }
+
+        .state-node {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #475569;
+            transition: all 0.5s ease;
+            top: 60px;
+        }
+
+        .state-node.active {
+            border-color: #fbbf24;
+            box-shadow: 0 0 30px rgba(251, 191, 36, 0.4);
+            transform: scale(1.1);
+        }
+
+        .state-node.updating {
+            border-color: #22c55e;
+            box-shadow: 0 0 30px rgba(34, 197, 94, 0.5);
+            animation: pulse 1s infinite;
+        }
+
+        .state-node.terminal {
+            border-style: dashed;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(34, 197, 94, 0.6); }
+        }
+
+        .state-node .state-label {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #fff;
+        }
+
+        .state-node .q-value {
+            font-size: 0.85rem;
+            margin-top: 4px;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+        }
+
+        .q-value.changed {
+            color: #22c55e;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .q-value.unchanged {
+            color: #94a3b8;
+        }
+
+        #state1 { left: 5%; background: rgba(27, 73, 101, 0.5); }
+        #state2 { left: 30%; background: rgba(91, 42, 134, 0.5); }
+        #state3 { left: 55%; background: rgba(30, 111, 80, 0.5); }
+        #state4 { left: 80%; background: rgba(71, 85, 105, 0.3); }
+
+        /* Arrows */
+        .arrow {
+            position: absolute;
+            top: 105px;
+            height: 3px;
+            background: #475569;
+            transition: all 0.5s ease;
+        }
+
+        .arrow.active {
+            background: #fbbf24;
+            height: 4px;
+        }
+
+        .arrow::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: -5px;
+            border: 6px solid transparent;
+            border-left-color: inherit;
+        }
+
+        .arrow.active::after {
+            border-left-color: #fbbf24;
+        }
+
+        #arrow1 { left: 14%; width: 16%; }
+        #arrow2 { left: 39%; width: 16%; }
+        #arrow3 { left: 64%; width: 16%; }
+
+        .arrow-label {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            color: #94a3b8;
+            white-space: nowrap;
+            transition: color 0.3s;
+        }
+
+        .arrow.active .arrow-label {
+            color: #fbbf24;
+            font-weight: 600;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin: 30px 0;
+        }
+
+        button {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        #nextBtn {
+            background: #22c55e;
+            color: #000;
+        }
+
+        #nextBtn:hover:not(:disabled) {
+            background: #16a34a;
+        }
+
+        #prevBtn {
+            background: #475569;
+            color: #fff;
+        }
+
+        #prevBtn:hover:not(:disabled) {
+            background: #64748b;
+        }
+
+        #resetBtn {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        #resetBtn:hover:not(:disabled) {
+            background: #dc2626;
+        }
+
+        .step-indicator {
+            font-size: 1rem;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        /* Info panel */
+        .info-panel {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            border: 1px solid #334155;
+            min-height: 180px;
+            transition: all 0.3s;
+        }
+
+        .info-panel h3 {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            color: #fbbf24;
+        }
+
+        .info-panel .description {
+            color: #cbd5e1;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .computation-box {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 14px 18px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #e2e8f0;
+            line-height: 1.8;
+        }
+
+        .computation-box .highlight {
+            color: #22c55e;
+            font-weight: 700;
+        }
+
+        .computation-box .dim {
+            color: #64748b;
+        }
+
+        /* Q-value timeline table */
+        .timeline-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 20px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .timeline-table thead th {
+            background: #1e293b;
+            padding: 12px 16px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            font-weight: 600;
+            border-bottom: 2px solid #334155;
+        }
+
+        .timeline-table tbody td {
+            padding: 12px 16px;
+            text-align: center;
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+        }
+
+        .timeline-table tbody tr {
+            background: #0f172a;
+        }
+
+        .timeline-table tbody tr.active-row {
+            background: #1e293b;
+        }
+
+        .timeline-table tbody tr.future-row {
+            opacity: 0.3;
+        }
+
+        .timeline-table .cell-changed {
+            color: #22c55e;
+            font-weight: 700;
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .timeline-table .cell-unchanged {
+            color: #64748b;
+        }
+
+        .timeline-table .cell-current {
+            color: #fbbf24;
+            font-weight: 700;
+        }
+
+        .timeline-table td:first-child {
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: 600;
+            color: #cbd5e1;
+        }
+
+        /* Agent position indicator */
+        .agent-marker {
+            position: absolute;
+            top: 20px;
+            width: 30px;
+            height: 30px;
+            background: #fbbf24;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            transition: left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.5);
+        }
+
+        .agent-marker.hidden {
+            opacity: 0;
+            transform: scale(0);
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            margin: 16px 0;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.active { background: #fbbf24; }
+        .legend-dot.updating { background: #22c55e; }
+        .legend-dot.unchanged { background: #475569; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SARSA: Q-Value Updates Step by Step</h1>
+        <p class="subtitle">Click "Next Step" to see how only ONE Q-value changes at each time step</p>
+
+        <div class="legend">
+            <div class="legend-item"><div class="legend-dot active"></div> Agent position</div>
+            <div class="legend-item"><div class="legend-dot updating"></div> Q-value being updated</div>
+            <div class="legend-item"><div class="legend-dot unchanged"></div> Q-value unchanged</div>
+        </div>
+
+        <!-- State Diagram -->
+        <div class="diagram-area">
+            <div class="agent-marker hidden" id="agent">🤖</div>
+
+            <div class="state-node" id="state1">
+                <span class="state-label">S₁</span>
+                <span class="q-value" id="q1">Q=10</span>
+            </div>
+
+            <div class="arrow" id="arrow1">
+                <span class="arrow-label">R, r=−2</span>
+            </div>
+
+            <div class="state-node" id="state2">
+                <span class="state-label">S₂</span>
+                <span class="q-value" id="q2">Q=20</span>
+            </div>
+
+            <div class="arrow" id="arrow2">
+                <span class="arrow-label">R, r=+4</span>
+            </div>
+
+            <div class="state-node" id="state3">
+                <span class="state-label">S₃</span>
+                <span class="q-value" id="q3">Q=30</span>
+            </div>
+
+            <div class="arrow" id="arrow3">
+                <span class="arrow-label">R, r=+10</span>
+            </div>
+
+            <div class="state-node terminal" id="state4">
+                <span class="state-label">S₄</span>
+                <span class="q-value" id="q4">Q=0</span>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button id="prevBtn" disabled>← Previous</button>
+            <span class="step-indicator" id="stepIndicator">Step 0 / 3</span>
+            <button id="nextBtn">Next Step →</button>
+            <button id="resetBtn">Reset</button>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="info-panel" id="infoPanel">
+            <h3 id="infoTitle">Initialization (t = 0)</h3>
+            <p class="description" id="infoDesc">
+                All Q-values are set to their <strong>initial given values</strong>. The agent is about to start at S₁ and will move right through all states.
+            </p>
+            <div class="computation-box" id="infoComputation">
+                Q(S₁, R) = 10    ← given
+                Q(S₂, R) = 20    ← given
+                Q(S₃, R) = 30    ← given
+                Q(S₄)   = 0     ← terminal (always 0)
+            </div>
+        </div>
+
+        <!-- Timeline Table -->
+        <h3 style="margin-top: 30px; color: #94a3b8; font-size: 0.9rem;">Q-Value History Across Time Steps</h3>
+        <table class="timeline-table">
+            <thead>
+                <tr>
+                    <th>Time Step</th>
+                    <th>Q(S₁, R)</th>
+                    <th>Q(S₂, R)</th>
+                    <th>Q(S₃, R)</th>
+                    <th>Q(S₄)</th>
+                    <th>What Changed</th>
+                </tr>
+            </thead>
+            <tbody id="timelineBody">
+                <tr class="active-row" id="row0">
+                    <td>t=0 (init)</td>
+                    <td class="cell-current">10</td>
+                    <td class="cell-current">20</td>
+                    <td class="cell-current">30</td>
+                    <td class="cell-current">0</td>
+                    <td style="font-family: sans-serif; color: #94a3b8;">Initial values</td>
+                </tr>
+                <tr class="future-row" id="row1">
+                    <td>t=1 (S₁→S₂)</td>
+                    <td id="cell1_1">?</td>
+                    <td id="cell1_2">?</td>
+                    <td id="cell1_3">?</td>
+                    <td id="cell1_4">?</td>
+                    <td id="cell1_what" style="font-family: sans-serif;">?</td>
+                </tr>
+                <tr class="future-row" id="row2">
+                    <td>t=2 (S₂→S₃)</td>
+                    <td id="cell2_1">?</td>
+                    <td id="cell2_2">?</td>
+                    <td id="cell2_3">?</td>
+                    <td id="cell2_4">?</td>
+                    <td id="cell2_what" style="font-family: sans-serif;">?</td>
+                </tr>
+                <tr class="future-row" id="row3">
+                    <td>t=3 (S₃→S₄)</td>
+                    <td id="cell3_1">?</td>
+                    <td id="cell3_2">?</td>
+                    <td id="cell3_3">?</td>
+                    <td id="cell3_4">?</td>
+                    <td id="cell3_what" style="font-family: sans-serif;">?</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div style="background: #1e293b; border-radius: 10px; padding: 16px 20px; margin-top: 20px; border: 1px solid #334155;">
+            <p style="color: #94a3b8; font-size: 0.85rem; line-height: 1.6;">
+                <strong style="color: #fbbf24;">Key Observation:</strong> At each time step, SARSA only updates the Q-value of the state the agent is <em>leaving</em>. All other Q-values remain exactly the same. This is because SARSA learns from the single transition (s, a, r, s', a') it just experienced.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const gamma = 0.8;
+        const alpha = 0.5;
+
+        let currentStep = 0;
+
+        const steps = [
+            {
+                title: "Initialization (t = 0)",
+                desc: "All Q-values are set to their <strong>initial given values</strong>. The agent is about to start at S₁ and will move right through all states.",
+                computation: `Q(S₁, R) = 10    ← given\nQ(S₂, R) = 20    ← given\nQ(S₃, R) = 30    ← given\nQ(S₄)   = 0     ← terminal (always 0)`,
+                qValues: [10, 20, 30, 0],
+                agentPos: 0,
+                activeArrow: -1,
+                updatingState: -1,
+                activeState: 0
+            },
+            {
+                title: "Step 1 (t = 1): Update Q(S₁, R) — Agent transitions S₁ → S₂",
+                desc: "Agent takes action R at S₁, receives reward −2, lands in S₂. <strong>Only Q(S₁,R) is updated.</strong> Q(S₂,R) and Q(S₃,R) stay the same.",
+                computation: `SARSA update for Q(S₁, R):\n\nTarget  = r + γ·Q(S₂,R) = −2 + 0.8×20 = <span class="highlight">14</span>\nTD Error = Target − Q(S₁,R) = 14 − 10 = <span class="highlight">4</span>\nUpdate  = α × TD Error = 0.5 × 4 = <span class="highlight">2</span>\n\nQ(S₁,R) = 10 + 2 = <span class="highlight">12</span>  ✓ UPDATED\n<span class="dim">Q(S₂,R) = 20          (unchanged)</span>\n<span class="dim">Q(S₃,R) = 30          (unchanged)</span>\n<span class="dim">Q(S₄)   = 0           (unchanged)</span>`,
+                qValues: [12, 20, 30, 0],
+                agentPos: 1,
+                activeArrow: 0,
+                updatingState: 0,
+                activeState: 1
+            },
+            {
+                title: "Step 2 (t = 2): Update Q(S₂, R) — Agent transitions S₂ → S₃",
+                desc: "Agent takes action R at S₂, receives reward +4, lands in S₃. <strong>Only Q(S₂,R) is updated.</strong> Q(S₁,R) stays at 12, Q(S₃,R) stays at 30.",
+                computation: `SARSA update for Q(S₂, R):\n\nTarget  = r + γ·Q(S₃,R) = 4 + 0.8×30 = <span class="highlight">28</span>\nTD Error = Target − Q(S₂,R) = 28 − 20 = <span class="highlight">8</span>\nUpdate  = α × TD Error = 0.5 × 8 = <span class="highlight">4</span>\n\n<span class="dim">Q(S₁,R) = 12          (unchanged)</span>\nQ(S₂,R) = 20 + 4 = <span class="highlight">24</span>  ✓ UPDATED\n<span class="dim">Q(S₃,R) = 30          (unchanged)</span>\n<span class="dim">Q(S₄)   = 0           (unchanged)</span>`,
+                qValues: [12, 24, 30, 0],
+                agentPos: 2,
+                activeArrow: 1,
+                updatingState: 1,
+                activeState: 2
+            },
+            {
+                title: "Step 3 (t = 3): Update Q(S₃, R) — Agent transitions S₃ → S₄ (terminal)",
+                desc: "Agent takes action R at S₃, receives reward +10, lands in S₄ (terminal). <strong>Only Q(S₃,R) is updated.</strong> Q(S₁,R) stays at 12, Q(S₂,R) stays at 24.",
+                computation: `SARSA update for Q(S₃, R):\n\nTarget  = r + γ·Q(S₄) = 10 + 0.8×0 = <span class="highlight">10</span>\nTD Error = Target − Q(S₃,R) = 10 − 30 = <span class="highlight">−20</span>\nUpdate  = α × TD Error = 0.5 × (−20) = <span class="highlight">−10</span>\n\n<span class="dim">Q(S₁,R) = 12          (unchanged)</span>\n<span class="dim">Q(S₂,R) = 24          (unchanged)</span>\nQ(S₃,R) = 30 + (−10) = <span class="highlight">20</span>  ✓ UPDATED\n<span class="dim">Q(S₄)   = 0           (unchanged, terminal)</span>`,
+                qValues: [12, 24, 20, 0],
+                agentPos: 3,
+                activeArrow: 2,
+                updatingState: 2,
+                activeState: 3
+            }
+        ];
+
+        const prevQValues = [
+            [10, 20, 30, 0],
+            [10, 20, 30, 0],
+            [12, 20, 30, 0],
+            [12, 24, 30, 0]
+        ];
+
+        function updateDisplay() {
+            const step = steps[currentStep];
+
+            // Update info panel
+            document.getElementById('infoTitle').textContent = step.title;
+            document.getElementById('infoDesc').innerHTML = step.desc;
+            document.getElementById('infoComputation').innerHTML = step.computation;
+
+            // Update step indicator
+            document.getElementById('stepIndicator').textContent = `Step ${currentStep} / 3`;
+
+            // Update buttons
+            document.getElementById('prevBtn').disabled = currentStep === 0;
+            document.getElementById('nextBtn').disabled = currentStep === 3;
+
+            // Update state nodes
+            const stateNodes = ['state1', 'state2', 'state3', 'state4'];
+            stateNodes.forEach((id, i) => {
+                const node = document.getElementById(id);
+                node.classList.remove('active', 'updating');
+                if (i === step.activeState) node.classList.add('active');
+                if (i === step.updatingState) node.classList.add('updating');
+            });
+
+            // Update Q-value displays
+            const qIds = ['q1', 'q2', 'q3', 'q4'];
+            qIds.forEach((id, i) => {
+                const el = document.getElementById(id);
+                el.textContent = `Q=${step.qValues[i]}`;
+                el.classList.remove('changed', 'unchanged');
+                if (currentStep > 0) {
+                    if (step.qValues[i] !== prevQValues[currentStep][i]) {
+                        el.classList.add('changed');
+                    } else {
+                        el.classList.add('unchanged');
+                    }
+                }
+            });
+
+            // Update arrows
+            const arrows = ['arrow1', 'arrow2', 'arrow3'];
+            arrows.forEach((id, i) => {
+                const arrow = document.getElementById(id);
+                arrow.classList.remove('active');
+                if (i === step.activeArrow) arrow.classList.add('active');
+            });
+
+            // Update agent marker
+            const agent = document.getElementById('agent');
+            const positions = ['8%', '33%', '58%', '83%'];
+            if (currentStep === 0) {
+                agent.classList.add('hidden');
+            } else {
+                agent.classList.remove('hidden');
+                agent.style.left = positions[step.agentPos];
+            }
+
+            // Update timeline table
+            for (let row = 0; row <= 3; row++) {
+                const rowEl = document.getElementById(`row${row}`);
+                rowEl.classList.remove('active-row', 'future-row');
+                if (row === currentStep) {
+                    rowEl.classList.add('active-row');
+                } else if (row > currentStep) {
+                    rowEl.classList.add('future-row');
+                }
+            }
+
+            // Fill in revealed timeline cells
+            for (let row = 1; row <= currentStep; row++) {
+                const qVals = steps[row].qValues;
+                const prevQ = prevQValues[row];
+                for (let col = 1; col <= 4; col++) {
+                    const cell = document.getElementById(`cell${row}_${col}`);
+                    cell.textContent = qVals[col - 1];
+                    cell.className = '';
+                    if (qVals[col - 1] !== prevQ[col - 1]) {
+                        cell.className = 'cell-changed';
+                    } else {
+                        cell.className = 'cell-unchanged';
+                    }
+                }
+                const whatCell = document.getElementById(`cell${row}_what`);
+                whatCell.style.fontFamily = 'sans-serif';
+                if (row === 1) {
+                    whatCell.innerHTML = '<span style="color:#22c55e;">Q(S₁,R): 10→12</span>';
+                } else if (row === 2) {
+                    whatCell.innerHTML = '<span style="color:#22c55e;">Q(S₂,R): 20→24</span>';
+                } else if (row === 3) {
+                    whatCell.innerHTML = '<span style="color:#22c55e;">Q(S₃,R): 30→20</span>';
+                }
+            }
+        }
+
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (currentStep < 3) {
+                currentStep++;
+                updateDisplay();
+            }
+        });
+
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (currentStep > 0) {
+                currentStep--;
+                updateDisplay();
+            }
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            currentStep = 0;
+            // Reset future cells
+            for (let row = 1; row <= 3; row++) {
+                for (let col = 1; col <= 4; col++) {
+                    const cell = document.getElementById(`cell${row}_${col}`);
+                    cell.textContent = '?';
+                    cell.className = '';
+                }
+                const whatCell = document.getElementById(`cell${row}_what`);
+                whatCell.textContent = '?';
+            }
+            updateDisplay();
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                if (currentStep < 3) {
+                    currentStep++;
+                    updateDisplay();
+                }
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                if (currentStep > 0) {
+                    currentStep--;
+                    updateDisplay();
+                }
+            }
+        });
+
+        // Initialize
+        updateDisplay();
+    </script>
+</body>
+</html>
