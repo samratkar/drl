@@ -10,7 +10,7 @@ layout: post
 
 An agent generates the following episode in a 4-state environment:
 
-![Q1 Diagram](./diagrams/q1-return.svg)
+![Q1 Diagram](./images/q1-return.svg)
 
 **Episode:** S₁ →(a₁, r=+3)→ S₂ →(a₂, r=−2)→ S₃ →(a₁, r=+6)→ Terminal
 
@@ -24,7 +24,7 @@ Compute the return $G_t$ from each state, working backwards from the terminal st
 
 An agent generates a single episode in a 3-state environment where state B is visited twice:
 
-![Q2 Diagram](./diagrams/q2-firstvisit.svg)
+![Q2 Diagram](./images/q2-firstvisit.svg)
 
 **Episode:** A →(Right, r=+1)→ B →(Up, r=−1)→ A →(Right, r=+2)→ B →(Down, r=+4)→ Terminal
 
@@ -44,7 +44,7 @@ An agent generates a single episode in a 3-state environment where state B is vi
 
 An agent following an ε-greedy policy generates three episodes:
 
-![Q3 Diagram](./diagrams/q3-onpolicy-q.svg)
+![Q3 Diagram](./images/q3-onpolicy-q.svg)
 
 **Episode 1:** S₁ →(Left, r=+2)→ S₂ →(Right, r=+4)→ Terminal
 **Episode 2:** S₁ →(Left, r=+2)→ S₂ →(Left, r=−3)→ Terminal
@@ -85,7 +85,7 @@ An agent uses constant-α MC to update Q-values after each episode.
 
 An agent operates in a 3-state environment. One episode is generated under behavior policy b:
 
-![Q5 Diagram](./diagrams/q5-is-ratio.svg)
+![Q5 Diagram](./images/q5-is-ratio.svg)
 
 **Episode:** S₁ →(a₁, r=+5)→ S₂ →(a₂, r=+3)→ S₃ →(a₁, r=+2)→ Terminal
 
@@ -107,7 +107,7 @@ An agent operates in a 3-state environment. One episode is generated under behav
 
 An agent generates one episode under behavior policy b:
 
-![Q6 Diagram](./diagrams/q6-offpolicy-ois.svg)
+![Q6 Diagram](./images/q6-offpolicy-ois.svg)
 
 **Episode:** X →(a₁, r=+4)→ Y →(a₂, r=+6)→ Terminal
 
@@ -168,7 +168,7 @@ After running MC prediction, an agent has the following Q-table:
 
 An agent generates an episode where it loops through a state before reaching terminal:
 
-![Q9 Diagram](./diagrams/q9-loop.svg)
+![Q9 Diagram](./images/q9-loop.svg)
 
 **Episode:** A →(r=+1)→ B →(r=+2)→ A →(r=+1)→ B →(r=+3)→ Terminal
 
@@ -215,7 +215,7 @@ by computing V₁, V₂, V₃, V₄ step by step.
 
 An agent generates an episode in a 3-state chain:
 
-![Q12 Diagram](./diagrams/q12-mc-vs-td.svg)
+![Q12 Diagram](./images/q12-mc-vs-td.svg)
 
 **Episode:** S₁ →(r=+2)→ S₂ →(r=+4)→ S₃ →(r=+1)→ Terminal
 
@@ -357,7 +357,7 @@ An agent visits state S in consecutive episodes with returns: G₁=10, G₂=2, G
 
 An agent generates two episodes starting from state S under behavior policy b:
 
-![Q20 Diagram](./diagrams/q20-offpolicy-state.svg)
+![Q20 Diagram](./images/q20-offpolicy-state.svg)
 
 **Episode 1:** S →(a₁, r=+4)→ S' →(a₂, r=+6)→ Terminal
 **Episode 2:** S →(a₂, r=+8)→ Terminal
@@ -416,7 +416,7 @@ An agent generates an episode of length 6 with constant reward r=+1 at each step
 
 An agent generates one episode where state S is visited twice:
 
-![Q23 Diagram](./diagrams/q23-everyvisit-offpolicy.svg)
+![Q23 Diagram](./images/q23-everyvisit-offpolicy.svg)
 
 **Episode:** S →(a₁, r=+2)→ T →(a₁, r=+1)→ S →(a₂, r=+5)→ Terminal
 
@@ -454,7 +454,7 @@ An agent has run N episodes from state S, obtaining returns that average to $\ba
 
 An agent generates one episode under behavior policy b:
 
-![Q25 Diagram](./diagrams/q25-on-vs-off.svg)
+![Q25 Diagram](./images/q25-on-vs-off.svg)
 
 **Episode:** P →(a₁, r=+3)→ Q →(a₁, r=+9)→ Terminal
 
