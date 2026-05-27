@@ -8,6 +8,8 @@ layout:
 deliveries : []
 ---
 ## Table of Contents
+- [Context: V(s) vs Q(s,a) — Prediction vs Control](#context-vs-vs-qsa--prediction-vs-control)
+- [Unified Comparison: DP, MC, and TD Update Rules](#unified-comparison-dp-mc-and-td-update-rules)
 - [TD Prediction](#td-prediction)
   - [The TD(0) Update](#the-td0-update)
   - [TD Error](#td-error)
@@ -54,6 +56,58 @@ Temporal-Difference (TD) learning is the central and most novel idea in reinforc
 - From **Dynamic Programming**: update estimates based on other learned estimates (bootstrapping) without waiting for a final outcome.
 
 The key innovation: TD methods update their value estimates **at every time step**, using the observed reward and the estimated value of the next state — rather than waiting until the end of an episode to compute the actual return.
+
+---
+
+## Context: V(s) vs Q(s,a) — Prediction vs Control
+
+Before diving into TD, it's important to understand **why** this lecture starts with V(s) and later moves to Q(s,a).
+
+**The fundamental problem:** In model-free RL, an agent cannot improve its policy using V(s) alone. To pick the best action at state s, you'd need to compute:
+
+$$\pi(s) = \arg\max_a \sum_{s',r} p(s',r \mid s,a)\left[r + \gamma V(s')\right]$$
+
+This requires the transition model p(s',r∣s,a), which we don't have. That's why all model-free **control** methods (SARSA, Q-learning) estimate Q(s,a) — you can directly pick argmax_a Q(s,a) without any model.
+
+**So why learn V(s) at all?**
+
+1. **Pedagogical clarity** — the TD bootstrapping idea is easier to grasp with V before introducing the (s,a) pair indexing
+2. **Actor-Critic methods** — the critic learns V(s) via TD, and the TD error δ = R + γV(S') − V(S) serves as an advantage signal for the actor (used in A2C, PPO, etc.)
+3. **With a known model** — if you do have p, you can do DP-style policy improvement over TD-learned V(s)
+
+**The journey through this lecture:**
+- **TD Prediction (V):** Learn the core idea — bootstrapping from one-step experience
+- **TD Control (Q):** Apply the same idea to Q(s,a) → SARSA, Q-learning — now you can act optimally without a model
+
+---
+
+## Unified Comparison: DP, MC, and TD Update Rules
+
+The table below shows how all major methods relate. They differ in: (1) what they estimate, (2) whether they need a model, (3) whether they bootstrap, and (4) how they do policy evaluation and improvement.
+
+| Method | Estimates | Policy Evaluation (update rule) | Policy Improvement | Needs Model? | Bootstraps? |
+|--------|-----------|--------------------------------|-------------------|:---:|:---:|
+| **DP (Policy Eval)** | V(s) | $V(s) \leftarrow \sum_{s',r} p(s',r \mid s,\pi(s))[r + \gamma V(s')]$ | $\pi(s) \leftarrow \arg\max_a \sum_{s',r} p(s',r \mid s,a)[r + \gamma V(s')]$ | Yes | Yes |
+| **MC On-Policy** | Q(s,a) | $Q(s,a) \leftarrow Q(s,a) + \alpha[G_t - Q(s,a)]$ | $\pi(s) \leftarrow \arg\max_a Q(s,a)$ with ε-greedy | No | No |
+| **MC Off-Policy (OIS)** | Q(s,a) | $Q(s,a) \leftarrow Q(s,a) + \alpha[\rho \cdot G_t - Q(s,a)]$ | $\pi(s) \leftarrow \arg\max_a Q(s,a)$ (greedy) | No | No |
+| **TD(0) Prediction** | V(s) | $V(S) \leftarrow V(S) + \alpha[R + \gamma V(S') - V(S)]$ | Cannot improve without model (used in Actor-Critic as critic) | No | Yes |
+| **SARSA (On-policy TD)** | Q(s,a) | $Q(S,A) \leftarrow Q(S,A) + \alpha[R + \gamma Q(S',A') - Q(S,A)]$ | $\pi(s) \leftarrow \arg\max_a Q(s,a)$ with ε-greedy | No | Yes |
+| **Q-learning (Off-policy TD)** | Q(s,a) | $Q(S,A) \leftarrow Q(S,A) + \alpha[R + \gamma \max_a Q(S',a) - Q(S,A)]$ | $\pi(s) \leftarrow \arg\max_a Q(s,a)$ (greedy, built into update) | No | Yes |
+| **TD + Model (Dyna-style)** | V(s) | $V(S) \leftarrow V(S) + \alpha[R + \gamma V(S') - V(S)]$ | $\pi(s) \leftarrow \arg\max_a \sum_{s',r} p(s',r \mid s,a)[r + \gamma V(s')]$ | Yes (learned or given) | Yes |
+
+**Key observations:**
+
+1. **DP uses V(s) because it has the model** — it can enumerate all actions and their outcomes via p(s',r∣s,a), so V(s) is sufficient for both evaluation and improvement. The improvement step explicitly needs p to compute the argmax over actions.
+
+2. **MC and TD control use Q(s,a) because they are model-free** — without p, you cannot determine which action leads where from V(s) alone. With Q(s,a), improvement is trivial: just pick argmax_a Q(s,a) — no model needed.
+
+3. **TD(0) prediction uses V(s) but cannot do improvement alone** — it teaches bootstrapping. On its own, V(s) cannot drive policy improvement without a model. However, it's essential in Actor-Critic architectures where the actor selects actions and the critic (V) provides the TD error δ as an advantage signal.
+
+4. **Q-learning merges evaluation and improvement** — the max in its update target means it's always evaluating the greedy (optimal) policy, regardless of what the behavior policy does. Evaluation and improvement happen simultaneously in every update.
+
+5. **The update structure is identical across all methods** — whether V or Q, the pattern is always: estimate ← estimate + α[target − estimate]. Only the target and the improvement mechanism change.
+
+6. **TD + Model is the hybrid (Dyna)** — uses TD's efficient sample-based evaluation (no need for full sweeps over all states), but leverages the model for DP-style improvement. The model can be *given* (game rules, physics simulator) or *learned* from experience. This gives: fast evaluation from TD + exact improvement from model. Examples: Dyna-Q (Sutton Ch.8), AlphaGo (known game rules + TD-learned value function), robotics with physics simulators.
 
 ---
 
@@ -433,14 +487,14 @@ The TD target is a **Monte Carlo sample** of the DP target. Each individual samp
 We now have a noisy estimate $\hat{q}_t$ of the true $Q^\pi(s,a)$. How do we iteratively converge to the correct value?
 
 The **Robbins-Monro stochastic approximation** theorem (1951) provides the answer. Given:
-- A quantity $\theta^*$ we want to find
-- Noisy observations $X_n$ such that $\mathbb{E}[X_n \mid \theta_n] = f(\theta_n)$ where $f(\theta^*) = 0$
+- A quantity $\theta^\ast$ we want to find
+- Noisy observations $X_n$ such that $\mathbb{E}[X_n \mid \theta_n] = f(\theta_n)$ where $f(\theta^\ast) = 0$
 
 The iterative scheme:
 
 $$\theta_{n+1} = \theta_n + \alpha_n\, X_n$$
 
-converges to $\theta^*$ provided:
+converges to $\theta^\ast$ provided:
 1. $\sum_{n} \alpha_n = \infty$ (step sizes are large enough to eventually reach any value)
 2. $\sum_{n} \alpha_n^2 < \infty$ (step sizes decrease fast enough to dampen noise)
 
@@ -525,14 +579,14 @@ $$Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ \underbrace{R_{t+1} + \gamm
 
 #### Convergence Guarantee
 
-Under the following conditions, SARSA converges to $Q^\pi$ (for a fixed $\pi$) or to $Q^*$ (with GLIE policy):
+Under the following conditions, SARSA converges to $Q^\pi$ (for a fixed $\pi$) or to $Q^\ast$ (with GLIE policy):
 
 1. **All state-action pairs visited infinitely often:** Every $(s,a)$ must be sampled enough times for the law of large numbers to take effect.
 
 2. **Step-size conditions (Robbins-Monro):**
    $$\sum_{t=1}^{\infty} \alpha_t(s,a) = \infty \quad \text{and} \quad \sum_{t=1}^{\infty} \alpha_t^2(s,a) < \infty$$
 
-3. **GLIE condition** (for convergence to $Q^*$): The policy must be Greedy in the Limit with Infinite Exploration — e.g., $\varepsilon$-greedy with $\varepsilon_t \to 0$.
+3. **GLIE condition** (for convergence to $Q^\ast$): The policy must be Greedy in the Limit with Infinite Exploration — e.g., $\varepsilon$-greedy with $\varepsilon_t \to 0$.
 
 With a **constant** $\alpha$ (standard practice), exact convergence is not guaranteed, but the algorithm converges in the mean and tracks non-stationary targets — which is often more useful in practice.
 
@@ -546,13 +600,13 @@ The derivation above applies identically to Q-learning — the only difference i
 - **SARSA**: $A_{t+1} \sim \pi(\cdot \mid S_{t+1})$ (actual action taken)
 - **Q-learning**: $A_{t+1} = \arg\max_a Q(S_{t+1}, a)$ (hypothetical best action)
 
-Both are instances of the same Bellman equation + sampling + stochastic approximation framework. The choice of $A_{t+1}$ determines whether we estimate $Q^\pi$ (on-policy) or $Q^*$ (off-policy).
+Both are instances of the same Bellman equation + sampling + stochastic approximation framework. The choice of $A_{t+1}$ determines whether we estimate $Q^\pi$ (on-policy) or $Q^\ast$ (off-policy).
 
 ---
 
 ## Q-learning: Off-policy TD Control
 
-One of the most important breakthroughs in RL (Watkins, 1989). Q-learning learns $q_*$ directly — the optimal action-value function — regardless of what policy is being followed:
+One of the most important breakthroughs in RL (Watkins, 1989). Q-learning learns $q_\ast$ directly — the optimal action-value function — regardless of what policy is being followed:
 
 $$\boxed{Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma\, \max_a Q(S_{t+1}, a) - Q(S_t, A_t) \right]}$$
 
@@ -696,7 +750,7 @@ S . . . . . . . . . . G     S . . . . . . . . . . . G
 
 ## The Problem: Maximization Bias
 
-Consider a state $s$ where all true action values are zero: $q_*(s, a) = 0$ for all $a$. If we estimate these from noisy samples, some estimates will be positive and some negative due to noise. Taking $\max_a Q(s,a)$ will select a positive value — but this is **noise, not signal**.
+Consider a state $s$ where all true action values are zero: $q_\ast(s, a) = 0$ for all $a$. If we estimate these from noisy samples, some estimates will be positive and some negative due to noise. Taking $\max_a Q(s,a)$ will select a positive value — but this is **noise, not signal**.
 
 $$\mathbb{E}\left[\max_a Q(s,a)\right] \geq \max_a \mathbb{E}\left[Q(s,a)\right] = 0$$
 
@@ -724,8 +778,8 @@ But Q-learning with $\max_a Q(B,a)$ picks the highest of many noisy estimates at
 
 $$Q_1(S, A) \leftarrow Q_1(S, A) + \alpha \left[ R + \gamma\, Q_2\!\left(S', \arg\max_a Q_1(S', a)\right) - Q_1(S, A) \right]$$
 
-- **$Q_1$ selects** the best action: $A^* = \arg\max_a Q_1(S', a)$
-- **$Q_2$ evaluates** that action: $Q_2(S', A^*)$
+- **$Q_1$ selects** the best action: $A^\ast = \arg\max_a Q_1(S', a)$
+- **$Q_2$ evaluates** that action: $Q_2(S', A^\ast)$
 
 Since $Q_1$ and $Q_2$ are learned from different experience (or updated on alternate steps), the selection is unbiased by the evaluation's noise.
 
@@ -870,10 +924,10 @@ graph TD
 | Algorithm | Converges to | Conditions |
 |-----------|-------------|------------|
 | TD(0) | $v_\pi$ | Decreasing $\alpha$ (Robbins-Monro) or constant $\alpha$ (in the mean) |
-| Sarsa | $q_*$ | All state-action pairs visited $\infty$ often, GLIE policy |
-| Q-learning | $q_*$ | All state-action pairs visited $\infty$ often |
-| Expected Sarsa | $q_*$ (if target greedy) | Same as Q-learning |
-| Double Q-learning | $q_*$ | Same as Q-learning |
+| Sarsa | $q_\ast$ | All state-action pairs visited $\infty$ often, GLIE policy |
+| Q-learning | $q_\ast$ | All state-action pairs visited $\infty$ often |
+| Expected Sarsa | $q_\ast$ (if target greedy) | Same as Q-learning |
+| Double Q-learning | $q_\ast$ | Same as Q-learning |
 
 ---
 
