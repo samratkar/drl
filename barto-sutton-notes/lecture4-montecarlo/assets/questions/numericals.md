@@ -91,7 +91,7 @@ An agent operates in a 3-state environment. One episode is generated under behav
 
 **Policy probabilities:**
 
-| State | Action taken | π(a|s) | b(a|s) |
+| State | Action taken | π(a∣s) | b(a∣s) |
 |-------|-------------|--------|--------|
 | S₁    | a₁          | 0.9    | 0.5    |
 | S₂    | a₂          | 0.6    | 0.4    |
@@ -114,8 +114,8 @@ An agent generates one episode under behavior policy b:
 **Given:**
 - γ = 0.9, α = 0.5 (constant-α MC)
 - Initial Q(X, a₁) = 2, Q(Y, a₂) = 1
-- π(a₁|X) = 1.0, b(a₁|X) = 0.6
-- π(a₂|Y) = 0.8, b(a₂|Y) = 0.5
+- π(a₁∣X) = 1.0, b(a₁∣X) = 0.6
+- π(a₂∣Y) = 0.8, b(a₂∣Y) = 0.5
 
 **(a)** [1 mark] Compute the return G from each state.
 
@@ -156,9 +156,9 @@ After running MC prediction, an agent has the following Q-table:
 
 **Given:** ε = 0.2, 3 actions available
 
-**(a)** [2 marks] Compute the ε-greedy policy π(a|S₁) for each action.
+**(a)** [2 marks] Compute the ε-greedy policy π(a∣S₁) for each action.
 
-**(b)** [2 marks] Compute the ε-greedy policy π(a|S₂) for each action.
+**(b)** [2 marks] Compute the ε-greedy policy π(a∣S₂) for each action.
 
 **(c)** [1 mark] If ε is decreased to 0, what is the resulting policy? What problem might this cause for MC methods?
 
@@ -188,7 +188,7 @@ An agent generates an episode under behavior policy b:
 
 **Policy probabilities:**
 
-| State | Action | π(a|s) | b(a|s) |
+| State | Action | π(a∣s) | b(a∣s) |
 |-------|--------|--------|--------|
 | S₁    | a₂     | 0.0    | 0.4    |
 | S₂    | a₁     | 1.0    | 0.6    |
@@ -240,8 +240,8 @@ An agent uses a stochastic target policy π (not fully greedy):
 **Given:**
 - γ = 1.0, α = 0.4
 - Initial Q(S₁, a₁) = 0, Q(S₂, a₂) = 0
-- π(a₁|S₁) = 0.7, b(a₁|S₁) = 0.5
-- π(a₂|S₂) = 0.6, b(a₂|S₂) = 0.8
+- π(a₁∣S₁) = 0.7, b(a₁∣S₁) = 0.5
+- π(a₂∣S₂) = 0.6, b(a₂∣S₂) = 0.8
 
 **(a)** [1 mark] Compute returns from each state.
 
@@ -310,7 +310,7 @@ Rewards: r₁=+2, r₂=+1, r₃=+3, r₄=+5
 
 **Policy probabilities:**
 
-| Time | Action | π(a|s) | b(a|s) |
+| Time | Action | π(a∣s) | b(a∣s) |
 |------|--------|--------|--------|
 | t=0  | a₁     | 0.8    | 0.4    |
 | t=1  | a₃     | 0.0    | 0.3    |
@@ -335,7 +335,7 @@ After 100 episodes starting from this state:
 
 **(a)** [2 marks] What are the MC estimates Q(state, Hit) and Q(state, Stand)?
 
-**(b)** [2 marks] Under an ε-greedy policy with ε=0.1, what is π(Hit|state) and π(Stand|state)?
+**(b)** [2 marks] Under an ε-greedy policy with ε=0.1, what is π(Hit∣state) and π(Stand∣state)?
 
 **(c)** [1 mark] If we now switch to greedy policy, which action is chosen? Does the agent ever explore Hit again?
 
@@ -367,14 +367,14 @@ An agent generates two episodes starting from state S under behavior policy b:
 
 **Policies at state S:**
 
-| Action | π(a|S) | b(a|S) |
+| Action | π(a∣S) | b(a∣S) |
 |--------|--------|--------|
 | a₁     | 0.7    | 0.5    |
 | a₂     | 0.3    | 0.5    |
 
 **Policies at state S':**
 
-| Action | π(a|S') | b(a|S') |
+| Action | π(a∣S') | b(a∣S') |
 |--------|---------|---------|
 | a₂     | 1.0     | 0.6     |
 
@@ -426,7 +426,7 @@ An agent generates one episode where state S is visited twice:
 
 **Policy probabilities:**
 
-| State | Action | π(a|s) | b(a|s) |
+| State | Action | π(a∣s) | b(a∣s) |
 |-------|--------|--------|--------|
 | S (t=0) | a₁  | 0.8    | 0.5    |
 | T (t=1) | a₁  | 1.0    | 0.6    |
@@ -461,8 +461,8 @@ An agent generates one episode under behavior policy b:
 **Given:**
 - γ = 0.95, α = 0.3
 - Initial Q(P, a₁) = 4, Q(Q, a₁) = 2
-- π(a₁|P) = 1.0, b(a₁|P) = 0.4
-- π(a₁|Q) = 0.8, b(a₁|Q) = 0.5
+- π(a₁∣P) = 1.0, b(a₁∣P) = 0.4
+- π(a₁∣Q) = 0.8, b(a₁∣Q) = 0.5
 
 **(a)** [1 mark] Compute returns from each state.
 
@@ -555,9 +555,9 @@ An agent processes 4 returns for state S: G₁=10, G₂=6, G₃=8, G₄=12.
 
 ## Question 31: Off-Policy MC — Behavior Policy Design [4 marks]
 
-A target policy π is deterministic: π(Left|S)=1.0. You need to design a behavior policy b for off-policy MC.
+A target policy π is deterministic: π(Left∣S)=1.0. You need to design a behavior policy b for off-policy MC.
 
-**(a)** [2 marks] If b(Left|S) = 0.9, what is the IS ratio for each episode that takes Left at S? If b(Left|S) = 0.5?
+**(a)** [2 marks] If b(Left∣S) = 0.9, what is the IS ratio for each episode that takes Left at S? If b(Left∣S) = 0.5?
 
 **(b)** [2 marks] Which behavior policy will produce lower variance in the IS estimate? Explain intuitively using the concept of coverage.
 
