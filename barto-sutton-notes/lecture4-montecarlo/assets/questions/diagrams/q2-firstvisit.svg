@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 200" font-family="Segoe UI, Arial, sans-serif">
+  <text x="350" y="25" text-anchor="middle" font-size="14" font-weight="bold" fill="#333">Q2: First-Visit vs Every-Visit — State B Visited Twice</text>
+  <circle cx="80" cy="90" r="28" fill="#d1fae5" stroke="#065f46" stroke-width="2"/>
+  <text x="80" y="88" text-anchor="middle" font-size="12" font-weight="bold" fill="#065f46">A</text>
+  <text x="80" y="103" text-anchor="middle" font-size="9" fill="#065f46">t=0</text>
+  <circle cx="210" cy="90" r="28" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+  <text x="210" y="88" text-anchor="middle" font-size="12" font-weight="bold" fill="#7c3aed">B</text>
+  <text x="210" y="103" text-anchor="middle" font-size="9" fill="#7c3aed">t=1</text>
+  <circle cx="340" cy="90" r="28" fill="#d1fae5" stroke="#065f46" stroke-width="2"/>
+  <text x="340" y="88" text-anchor="middle" font-size="12" font-weight="bold" fill="#065f46">A</text>
+  <text x="340" y="103" text-anchor="middle" font-size="9" fill="#065f46">t=2</text>
+  <circle cx="470" cy="90" r="28" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+  <text x="470" y="88" text-anchor="middle" font-size="12" font-weight="bold" fill="#7c3aed">B</text>
+  <text x="470" y="103" text-anchor="middle" font-size="9" fill="#7c3aed">t=3</text>
+  <circle cx="600" cy="90" r="28" fill="#fee2e2" stroke="#dc2626" stroke-width="2" stroke-dasharray="5,3"/>
+  <text x="600" y="93" text-anchor="middle" font-size="11" fill="#dc2626">Term</text>
+  <line x1="108" y1="90" x2="177" y2="90" stroke="#475569" stroke-width="2" marker-end="url(#a2)"/>
+  <text x="143" y="78" text-anchor="middle" font-size="10" fill="#059669">Right, r=+1</text>
+  <line x1="238" y1="90" x2="307" y2="90" stroke="#475569" stroke-width="2" marker-end="url(#a2)"/>
+  <text x="273" y="78" text-anchor="middle" font-size="10" fill="#059669">Up, r=−1</text>
+  <line x1="368" y1="90" x2="437" y2="90" stroke="#475569" stroke-width="2" marker-end="url(#a2)"/>
+  <text x="403" y="78" text-anchor="middle" font-size="10" fill="#059669">Right, r=+2</text>
+  <line x1="498" y1="90" x2="567" y2="90" stroke="#475569" stroke-width="2" marker-end="url(#a2)"/>
+  <text x="533" y="78" text-anchor="middle" font-size="10" fill="#059669">Down, r=+4</text>
+  <rect x="40" y="140" width="620" height="40" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="1"/>
+  <text x="350" y="157" text-anchor="middle" font-size="10" fill="#92400e">Note: State A visited at t=0 and t=2; State B visited at t=1 and t=3</text>
+  <text x="350" y="172" text-anchor="middle" font-size="10" fill="#92400e">γ = 1.0 (undiscounted) | Initial V(s) = 0 for all states</text>
+  <defs><marker id="a2" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#475569"/></marker></defs>
+</svg>

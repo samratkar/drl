@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 650 150" font-family="Segoe UI, Arial, sans-serif">
+  <text x="325" y="25" text-anchor="middle" font-size="14" font-weight="bold" fill="#333">Q12: MC vs TD(0) on Same Episode</text>
+  <circle cx="100" cy="80" r="28" fill="#dbeafe" stroke="#1e40af" stroke-width="2"/>
+  <text x="100" y="78" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e40af">S₁</text>
+  <text x="100" y="94" text-anchor="middle" font-size="9" fill="#1e40af">V=0</text>
+  <circle cx="270" cy="80" r="28" fill="#dbeafe" stroke="#1e40af" stroke-width="2"/>
+  <text x="270" y="78" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e40af">S₂</text>
+  <text x="270" y="94" text-anchor="middle" font-size="9" fill="#1e40af">V=0</text>
+  <circle cx="440" cy="80" r="28" fill="#dbeafe" stroke="#1e40af" stroke-width="2"/>
+  <text x="440" y="78" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e40af">S₃</text>
+  <text x="440" y="94" text-anchor="middle" font-size="9" fill="#1e40af">V=0</text>
+  <circle cx="590" cy="80" r="28" fill="#fee2e2" stroke="#dc2626" stroke-width="2" stroke-dasharray="5,3"/>
+  <text x="590" y="83" text-anchor="middle" font-size="10" fill="#dc2626">Terminal</text>
+  <line x1="128" y1="80" x2="237" y2="80" stroke="#475569" stroke-width="2" marker-end="url(#a12)"/>
+  <text x="183" y="68" text-anchor="middle" font-size="10" fill="#059669">r=+2</text>
+  <line x1="298" y1="80" x2="407" y2="80" stroke="#475569" stroke-width="2" marker-end="url(#a12)"/>
+  <text x="353" y="68" text-anchor="middle" font-size="10" fill="#059669">r=+4</text>
+  <line x1="468" y1="80" x2="557" y2="80" stroke="#475569" stroke-width="2" marker-end="url(#a12)"/>
+  <text x="513" y="68" text-anchor="middle" font-size="10" fill="#059669">r=+1</text>
+  <rect x="80" y="120" width="490" height="22" rx="4" fill="#f1f5f9" stroke="#e2e8f0"/>
+  <text x="325" y="135" text-anchor="middle" font-size="10" fill="#64748b">γ = 0.9 | α = 0.5 | Compare MC (full return) vs TD(0) (one-step bootstrap)</text>
+  <defs><marker id="a12" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#475569"/></marker></defs>
+</svg>
