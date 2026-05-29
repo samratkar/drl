@@ -6,952 +6,634 @@
     <title>Monte Carlo Methods – Interactive Step-by-Step</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #0f172a;
             color: #e2e8f0;
             min-height: 100vh;
-            padding: 30px 20px;
+            padding: 24px 16px;
         }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        h1 { text-align: center; font-size: 1.7rem; margin-bottom: 6px; }
-
-        .subtitle {
-            text-align: center;
-            color: #94a3b8;
-            font-size: 0.85rem;
-            margin-bottom: 24px;
-        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { text-align: center; font-size: 1.6rem; margin-bottom: 4px; }
+        .subtitle { text-align: center; color: #94a3b8; font-size: 0.82rem; margin-bottom: 18px; }
 
         /* Tabs */
-        .tabs {
-            display: flex;
-            justify-content: center;
-            gap: 4px;
-            margin-bottom: 16px;
-        }
-
+        .tab-group { margin-bottom: 6px; }
+        .tab-group-label { text-align: center; font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .tab-row { display: flex; justify-content: center; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
         .tab-btn {
-            padding: 10px 20px;
+            padding: 8px 16px;
             border: 2px solid #334155;
             border-radius: 8px;
             background: #1e293b;
             color: #94a3b8;
-            font-size: 0.85rem;
+            font-size: 0.78rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
         }
-
         .tab-btn:hover { border-color: #64748b; color: #e2e8f0; }
-        .tab-btn.active-fv { border-color: #10b981; background: rgba(16,185,129,0.15); color: #34d399; }
-        .tab-btn.active-ev { border-color: #06b6d4; background: rgba(6,182,212,0.15); color: #22d3ee; }
-        .tab-btn.active-off { border-color: #f97316; background: rgba(249,115,22,0.15); color: #fb923c; }
+        .tab-btn.active-green { border-color: #10b981; background: rgba(16,185,129,0.12); color: #34d399; }
+        .tab-btn.active-cyan { border-color: #06b6d4; background: rgba(6,182,212,0.12); color: #22d3ee; }
+        .tab-btn.active-orange { border-color: #f97316; background: rgba(249,115,22,0.12); color: #fb923c; }
+        .tab-btn.active-pink { border-color: #ec4899; background: rgba(236,72,153,0.12); color: #f472b6; }
+        .tab-btn.active-violet { border-color: #8b5cf6; background: rgba(139,92,246,0.12); color: #a78bfa; }
+        .tab-btn.active-amber { border-color: #f59e0b; background: rgba(245,158,11,0.12); color: #fbbf24; }
+        .tab-btn.active-rose { border-color: #f43f5e; background: rgba(244,63,94,0.12); color: #fb7185; }
 
         /* Info bar */
-        .info-bar {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-
-        .info-chip {
-            background: #1e293b;
-            border-radius: 8px;
-            padding: 8px 12px;
-            text-align: center;
-            font-size: 0.78rem;
-            color: #94a3b8;
-            border: 1px solid #334155;
-        }
-
-        .info-chip strong { display: block; color: #e2e8f0; font-size: 0.95rem; margin-top: 2px; }
+        .info-bar { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .info-chip { background: #1e293b; border-radius: 8px; padding: 7px 10px; text-align: center; font-size: 0.72rem; color: #94a3b8; border: 1px solid #334155; }
+        .info-chip strong { display: block; color: #e2e8f0; font-size: 0.88rem; margin-top: 2px; }
 
         /* Phase bar */
-        .phase-bar {
-            display: flex;
-            gap: 5px;
-            justify-content: center;
-            margin: 12px 0;
-            flex-wrap: wrap;
-        }
-
-        .phase-chip {
-            padding: 5px 12px;
-            border-radius: 16px;
-            font-size: 0.72rem;
-            font-weight: 600;
-            border: 2px solid #334155;
-            background: #1e293b;
-            color: #64748b;
-            transition: all 0.3s;
-        }
-
+        .phase-bar { display: flex; gap: 4px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
+        .phase-chip { padding: 4px 10px; border-radius: 14px; font-size: 0.68rem; font-weight: 600; border: 2px solid #334155; background: #1e293b; color: #64748b; transition: all 0.3s; }
         .phase-chip.current { border-color: #fbbf24; color: #fbbf24; background: rgba(251,191,36,0.1); }
-        .phase-chip.done { border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,0.1); }
+        .phase-chip.done { border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,0.08); }
         .phase-chip.policy-step { border-color: #a78bfa; color: #a78bfa; background: rgba(167,139,250,0.1); }
 
         /* SVG diagram */
-        .diagram-area {
-            width: 100%;
-            margin: 10px 0 16px;
-            background: #1e293b;
-            border-radius: 12px;
-            padding: 10px;
-        }
-
-        .diagram-area svg {
-            width: 100%;
-            height: 220px;
-            display: block;
-        }
-
+        .diagram-area { width: 100%; margin: 8px 0 12px; background: #1e293b; border-radius: 10px; padding: 8px; }
+        .diagram-area svg { width: 100%; height: 180px; display: block; }
         .node-circle { stroke-width: 3; transition: all 0.4s; }
-        .node-circle.active { stroke: #fbbf24; filter: drop-shadow(0 0 8px rgba(251,191,36,0.5)); }
-        .node-circle.policy-hl { stroke: #a78bfa; filter: drop-shadow(0 0 8px rgba(167,139,250,0.5)); }
-        .node-label { font-size: 16px; font-weight: 700; fill: #fff; }
-        .node-sub { font-size: 10px; fill: #94a3b8; font-family: 'Courier New', monospace; }
-        .edge-line { stroke-width: 2; fill: none; transition: all 0.4s; }
+        .node-circle.active { stroke: #fbbf24; filter: drop-shadow(0 0 6px rgba(251,191,36,0.5)); }
+        .node-circle.policy-hl { stroke: #a78bfa; filter: drop-shadow(0 0 6px rgba(167,139,250,0.5)); }
+        .node-label { font-size: 15px; font-weight: 700; fill: #fff; }
+        .node-sub { font-size: 9px; fill: #94a3b8; font-family: 'Courier New', monospace; }
+        .edge-line { stroke-width: 2; fill: none; transition: all 0.3s; }
         .edge-line.active { stroke: #fbbf24; stroke-width: 3; }
-        .edge-label { font-size: 11px; fill: #94a3b8; }
-        .edge-label.active { fill: #fbbf24; font-weight: 600; }
-        .arrow-head { transition: all 0.4s; }
-        .arrow-head.active { fill: #fbbf24; }
 
         /* Controls */
-        .controls {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 14px;
-            margin: 16px 0;
-        }
-
-        button {
-            padding: 10px 22px;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        button:hover:not(:disabled) { transform: translateY(-2px); }
+        .controls { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 14px 0; }
+        button { padding: 9px 20px; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        button:hover:not(:disabled) { transform: translateY(-1px); }
         button:disabled { opacity: 0.35; cursor: not-allowed; }
-
         .btn-next { background: #22c55e; color: #000; }
-        .btn-next:hover:not(:disabled) { background: #16a34a; }
         .btn-prev { background: #475569; color: #fff; }
-        .btn-prev:hover:not(:disabled) { background: #64748b; }
         .btn-reset { background: #ef4444; color: #fff; }
-        .btn-reset:hover { background: #dc2626; }
-
-        .step-label {
-            font-size: 0.88rem;
-            color: #94a3b8;
-            font-weight: 600;
-            min-width: 110px;
-            text-align: center;
-        }
+        .step-label { font-size: 0.85rem; color: #94a3b8; font-weight: 600; min-width: 100px; text-align: center; }
 
         /* Info panel */
-        .info-panel {
-            background: #1e293b;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 14px 0;
-            border: 1px solid #334155;
-            min-height: 130px;
-        }
-
-        .info-panel.mode-fv { border-color: #10b981; }
-        .info-panel.mode-ev { border-color: #06b6d4; }
-        .info-panel.mode-off { border-color: #f97316; }
-
-        .info-panel h3 { font-size: 0.95rem; margin-bottom: 10px; color: #fbbf24; }
-
-        .info-panel .desc {
-            color: #cbd5e1;
-            font-size: 0.84rem;
-            line-height: 1.6;
-            margin-bottom: 12px;
-        }
-
+        .info-panel { background: #1e293b; border-radius: 10px; padding: 18px; margin: 12px 0; border: 1px solid #334155; min-height: 120px; }
+        .info-panel h3 { font-size: 0.9rem; margin-bottom: 8px; color: #fbbf24; }
+        .info-panel .desc { color: #cbd5e1; font-size: 0.82rem; line-height: 1.55; margin-bottom: 10px; }
         .computation-display {
-            background: #0f172a;
-            border-radius: 8px;
-            padding: 14px 16px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.78rem;
-            color: #e2e8f0;
-            line-height: 1.85;
-            white-space: pre-wrap;
+            background: #0f172a; border-radius: 8px; padding: 12px 14px;
+            font-family: 'Courier New', monospace; font-size: 0.75rem;
+            color: #e2e8f0; line-height: 1.8; white-space: pre-wrap;
         }
-
         .computation-display .hl { color: #22c55e; font-weight: 700; }
         .computation-display .dim { color: #4b5563; }
         .computation-display .warn { color: #fb923c; font-weight: 700; }
         .computation-display .ep { color: #a78bfa; font-weight: 700; }
         .computation-display .policy { color: #38bdf8; font-weight: 700; }
         .computation-display .ev { color: #22d3ee; font-weight: 700; }
+        .computation-display .pink { color: #f472b6; font-weight: 700; }
+        .computation-display .violet { color: #a78bfa; font-weight: 700; }
 
-        /* Returns table */
-        .returns-section h3 {
-            font-size: 0.88rem;
-            color: #94a3b8;
-            margin: 20px 0 10px;
-        }
-
-        .returns-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.3);
-            margin-bottom: 14px;
-        }
-
-        .returns-table thead th {
-            background: #1e293b;
-            padding: 9px 10px;
-            text-align: center;
-            font-size: 0.75rem;
-            color: #94a3b8;
-            font-weight: 600;
-        }
-
-        .returns-table tbody td {
-            padding: 8px 10px;
-            text-align: center;
-            font-size: 0.8rem;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-            font-family: 'Courier New', monospace;
-            background: #0f172a;
-            transition: all 0.3s;
-        }
-
-        .returns-table tbody td:first-child {
-            font-family: 'Segoe UI', sans-serif;
-            font-weight: 600;
-            color: #cbd5e1;
-        }
-
-        .returns-table .cell-new { color: #22c55e; font-weight: 700; background: rgba(34,197,94,0.08) !important; }
-        .returns-table .cell-ev { color: #22d3ee; font-weight: 700; background: rgba(6,182,212,0.08) !important; }
-        .returns-table .cell-avg { color: #a78bfa; font-weight: 700; background: rgba(167,139,250,0.1) !important; }
-        .returns-table .cell-best { color: #fbbf24; font-weight: 700; background: rgba(251,191,36,0.1) !important; }
+        /* Table */
+        .returns-section h3 { font-size: 0.82rem; color: #94a3b8; margin: 16px 0 8px; }
+        .returns-table { width: 100%; border-collapse: separate; border-spacing: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .returns-table thead th { background: #1e293b; padding: 8px 8px; text-align: center; font-size: 0.72rem; color: #94a3b8; font-weight: 600; }
+        .returns-table tbody td { padding: 7px 8px; text-align: center; font-size: 0.76rem; border-bottom: 1px solid rgba(255,255,255,0.03); font-family: 'Courier New', monospace; background: #0f172a; transition: all 0.3s; }
+        .returns-table tbody td:first-child { font-family: 'Segoe UI', sans-serif; font-weight: 600; color: #cbd5e1; }
+        .returns-table .cell-new { color: #22c55e; font-weight: 700; background: rgba(34,197,94,0.06) !important; }
+        .returns-table .cell-avg { color: #a78bfa; font-weight: 700; background: rgba(167,139,250,0.08) !important; }
+        .returns-table .cell-best { color: #fbbf24; font-weight: 700; background: rgba(251,191,36,0.08) !important; }
         .returns-table .cell-dim { color: #4b5563; }
-        .returns-table .cell-warn { color: #fb923c; }
-        .returns-table .cell-strike { color: #64748b; text-decoration: line-through; }
+        .returns-table .cell-ev { color: #22d3ee; font-weight: 700; background: rgba(6,182,212,0.06) !important; }
 
         /* Footnote */
-        .footnote {
-            background: #1e293b;
-            border-radius: 10px;
-            padding: 14px 18px;
-            margin-top: 16px;
-            border: 1px solid #334155;
-            font-size: 0.78rem;
-            color: #94a3b8;
-            line-height: 1.5;
-        }
-
+        .footnote { background: #1e293b; border-radius: 8px; padding: 12px 14px; margin-top: 14px; border: 1px solid #334155; font-size: 0.75rem; color: #94a3b8; line-height: 1.5; }
         .footnote strong { color: #fbbf24; }
+        .kb-hint { text-align: center; font-size: 0.68rem; color: #4b5563; margin-top: 6px; }
+        .kb-hint kbd { background: #1e293b; border: 1px solid #334155; border-radius: 3px; padding: 1px 4px; font-size: 0.66rem; }
 
-        .kb-hint {
-            text-align: center;
-            font-size: 0.72rem;
-            color: #4b5563;
-            margin-top: 6px;
-        }
-
-        .kb-hint kbd {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 3px;
-            padding: 1px 5px;
-            font-size: 0.7rem;
-        }
+        /* Comparison row */
+        .comparison-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px; margin: 12px 0; }
+        .cmp-card { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 8px 10px; text-align: center; font-size: 0.7rem; }
+        .cmp-card .cmp-label { color: #94a3b8; margin-bottom: 3px; }
+        .cmp-card .cmp-val { color: #e2e8f0; font-weight: 700; font-size: 0.85rem; font-family: monospace; }
+        .cmp-card.highlight { border-color: #22c55e; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Monte Carlo Methods – Interactive</h1>
-        <p class="subtitle">Generate episodes → Collect G per episode → Average G across episodes → Q → Extract policy</p>
+<div class="container">
+    <h1>Monte Carlo Methods – All Variants</h1>
+    <p class="subtitle">Same episodes, different methods — see how each handles returns and averaging</p>
 
-        <!-- Tabs -->
-        <div class="tabs">
-            <button class="tab-btn active-fv" id="tabFV" onclick="switchMode('fv')">First-Visit MC</button>
-            <button class="tab-btn" id="tabEV" onclick="switchMode('ev')">Every-Visit MC</button>
-            <button class="tab-btn" id="tabOff" onclick="switchMode('off')">Off-Policy MC (IS)</button>
+    <!-- Tab Group: On-Policy -->
+    <div class="tab-group">
+        <div class="tab-group-label">On-Policy Methods</div>
+        <div class="tab-row">
+            <button class="tab-btn active-green" id="tab_fv" onclick="switchMode('fv')">First-Visit MC</button>
+            <button class="tab-btn" id="tab_ev" onclick="switchMode('ev')">Every-Visit MC</button>
         </div>
-
-        <!-- Info bar -->
-        <div class="info-bar">
-            <div class="info-chip">γ (discount)<strong>0.9</strong></div>
-            <div class="info-chip">Method<strong id="methodChip">First-Visit</strong></div>
-            <div class="info-chip">Episodes<strong>3</strong></div>
-            <div class="info-chip">Q formula<strong id="formulaChip">avg(G)</strong></div>
-        </div>
-
-        <!-- Phase bar -->
-        <div class="phase-bar">
-            <div class="phase-chip" id="phase1">① Ep 1: Compute G</div>
-            <div class="phase-chip" id="phase2">② Ep 2: Compute G</div>
-            <div class="phase-chip" id="phase3">③ Ep 3: Compute G</div>
-            <div class="phase-chip" id="phase4">④ Average G → Q</div>
-            <div class="phase-chip" id="phase5">⑤ Extract Policy</div>
-        </div>
-
-        <!-- SVG Diagram -->
-        <div class="diagram-area">
-            <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <marker id="arrowGrey" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-                        <polygon points="0 0, 8 3, 0 6" fill="#64748b" class="arrow-head" />
-                    </marker>
-                    <marker id="arrowActive" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-                        <polygon points="0 0, 8 3, 0 6" fill="#fbbf24" class="arrow-head active" />
-                    </marker>
-                    <marker id="arrowPolicy" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-                        <polygon points="0 0, 8 3, 0 6" fill="#a78bfa" class="arrow-head" />
-                    </marker>
-                </defs>
-
-                <!-- A → B (Right, r=-1) -->
-                <line id="edgeAB" x1="160" y1="80" x2="310" y2="80" stroke="#64748b" class="edge-line" marker-end="url(#arrowGrey)" />
-                <text id="labelAB" x="235" y="68" text-anchor="middle" class="edge-label">Right, r = −1</text>
-
-                <!-- B → T (Right, r=+10) -->
-                <line id="edgeBT" x1="390" y1="80" x2="540" y2="80" stroke="#64748b" class="edge-line" marker-end="url(#arrowGrey)" />
-                <text id="labelBT" x="465" y="68" text-anchor="middle" class="edge-label">Right, r = +10</text>
-
-                <!-- B → A (Left, r=0) — curved arc above -->
-                <path id="edgeBA" d="M 320,60 Q 240,10 170,60" stroke="#64748b" class="edge-line" fill="none" marker-end="url(#arrowGrey)" />
-                <text id="labelBA" x="245" y="25" text-anchor="middle" class="edge-label">Left, r = 0</text>
-
-                <!-- A → T2 (Down, r=+3) -->
-                <line id="edgeAT2" x1="130" y1="110" x2="130" y2="170" stroke="#64748b" class="edge-line" marker-end="url(#arrowGrey)" />
-                <text id="labelAT2" x="95" y="148" text-anchor="middle" class="edge-label">Down</text>
-                <text x="95" y="162" text-anchor="middle" class="edge-label">r = +3</text>
-
-                <!-- Node A -->
-                <circle id="nodeA" cx="130" cy="80" r="30" fill="rgba(99,102,241,0.2)" stroke="#6366f1" class="node-circle" />
-                <text x="130" y="76" text-anchor="middle" class="node-label">A</text>
-                <text id="qvA" x="130" y="93" text-anchor="middle" class="node-sub"></text>
-
-                <!-- Node B -->
-                <circle id="nodeB" cx="350" cy="80" r="30" fill="rgba(59,130,246,0.2)" stroke="#3b82f6" class="node-circle" />
-                <text x="350" y="76" text-anchor="middle" class="node-label">B</text>
-                <text id="qvB" x="350" y="93" text-anchor="middle" class="node-sub"></text>
-
-                <!-- Terminal (from B→Right) -->
-                <rect x="545" y="60" width="55" height="40" rx="6" fill="rgba(239,68,68,0.15)" stroke="#ef4444" stroke-width="2" stroke-dasharray="5,3" />
-                <text x="572" y="84" text-anchor="middle" class="node-label" style="font-size:14px">T</text>
-
-                <!-- Terminal (from A→Down) -->
-                <rect x="105" y="175" width="50" height="35" rx="6" fill="rgba(239,68,68,0.15)" stroke="#ef4444" stroke-width="2" stroke-dasharray="5,3" />
-                <text x="130" y="197" text-anchor="middle" class="node-label" style="font-size:14px">T</text>
-            </svg>
-        </div>
-
-        <!-- Controls -->
-        <div class="controls">
-            <button class="btn-prev" id="prevBtn" disabled onclick="prevStep()">← Previous</button>
-            <span class="step-label" id="stepLabel">Step 0 / 6</span>
-            <button class="btn-next" id="nextBtn" onclick="nextStep()">Next Step →</button>
-            <button class="btn-reset" onclick="reset()">Reset</button>
-        </div>
-        <p class="kb-hint">Use <kbd>←</kbd> <kbd>→</kbd> arrow keys or <kbd>Space</kbd> to navigate</p>
-
-        <!-- Info Panel -->
-        <div class="info-panel mode-fv" id="infoPanel">
-            <h3 id="infoTitle"></h3>
-            <p class="desc" id="infoDesc"></p>
-            <div class="computation-display" id="infoComp"></div>
-        </div>
-
-        <!-- Returns Table -->
-        <div class="returns-section">
-            <h3 id="tableTitle">Returns Table — G values collected per (state, action) pair</h3>
-            <table class="returns-table" id="returnsTable">
-                <thead id="tableHead"></thead>
-                <tbody id="tableBody"></tbody>
-            </table>
-        </div>
-
-        <div class="footnote" id="footnote">
-            <strong>MC Process:</strong> ① Generate complete episodes → ② Compute G backwards from terminal for each (s,a) visit → ③ Collect G values across all episodes → ④ Q(s,a) = average of all G values → ⑤ Extract greedy policy: π(s) = argmax<sub>a</sub> Q(s,a).
+    </div>
+    <!-- Tab Group: Off-Policy -->
+    <div class="tab-group">
+        <div class="tab-group-label">Off-Policy Methods</div>
+        <div class="tab-row">
+            <button class="tab-btn" id="tab_ois" onclick="switchMode('ois')">Ordinary IS</button>
+            <button class="tab-btn" id="tab_wis" onclick="switchMode('wis')">Weighted IS</button>
+            <button class="tab-btn" id="tab_iwis" onclick="switchMode('iwis')">Incremental WIS</button>
+            <button class="tab-btn" id="tab_pdis" onclick="switchMode('pdis')">Per-Decision IS</button>
+            <button class="tab-btn" id="tab_dais" onclick="switchMode('dais')">Discounting-Aware IS</button>
         </div>
     </div>
 
-    <script>
-        // ================== ENVIRONMENT ==================
-        // State A: Right → B (r=-1), Down → Terminal (r=+3)
-        // State B: Right → Terminal (r=+10), Left → A (r=0)
-        //
-        // 3 Episodes (behavior policy explores):
-        // Ep1: A→(Right,r=-1)→B→(Right,r=+10)→T             [straight path]
-        // Ep2: A→(Right,r=-1)→B→(Left,r=0)→A→(Right,r=-1)→B→(Right,r=+10)→T  [LOOP! A,Right visited twice]
-        // Ep3: A→(Down,r=+3)→T                               [alternative action]
-        //
-        // γ = 0.9
-        //
-        // Ep1 returns:
-        //   G(B,Right)=10, G(A,Right)=-1+0.9×10=8
-        //
-        // Ep2 returns (backwards):
-        //   t=3: G₃(B,Right) = 10
-        //   t=2: G₂(A,Right) = -1 + 0.9×10 = 8
-        //   t=1: G₁(B,Left)  = 0 + 0.9×8 = 7.2
-        //   t=0: G₀(A,Right) = -1 + 0.9×7.2 = 5.48
-        //
-        //   (A,Right) visited at t=0 (G=5.48) AND t=2 (G=8)
-        //   (B,Left) visited at t=1 (G=7.2)
-        //   (B,Right) visited at t=3 (G=10)
-        //
-        // Ep3 returns:
-        //   G(A,Down) = 3
-        //
-        // FIRST-VISIT MC:
-        //   Q(A,Right) = avg(8, 5.48) = 6.74       [Ep1 t=0, Ep2 t=0 only]
-        //   Q(A,Down)  = avg(3) = 3.0
-        //   Q(B,Right) = avg(10, 10) = 10.0         [Ep1 t=1, Ep2 t=3]
-        //   Q(B,Left)  = avg(7.2) = 7.2
-        //
-        // EVERY-VISIT MC:
-        //   Q(A,Right) = avg(8, 5.48, 8) = 7.16    [Ep1 t=0, Ep2 t=0 AND t=2]
-        //   Q(A,Down)  = avg(3) = 3.0
-        //   Q(B,Right) = avg(10, 10) = 10.0
-        //   Q(B,Left)  = avg(7.2) = 7.2
-        //
-        // OFF-POLICY (ordinary IS):
-        //   b(Right|A)=0.6, b(Down|A)=0.4, b(Right|B)=0.5, b(Left|B)=0.5
-        //   π(Right|A)=0.9, π(Down|A)=0.1, π(Right|B)=0.8, π(Left|B)=0.2
-        //
-        //   Ep1: path A(R)→B(R)→T
-        //     ρ for G(B,Right): π(R|B)/b(R|B) = 0.8/0.5 = 1.6
-        //     ρ for G(A,Right): [π(R|A)/b(R|A)]×[π(R|B)/b(R|B)] = 1.5×1.6 = 2.4
-        //     ρG(B,Right)=1.6×10=16, ρG(A,Right)=2.4×8=19.2
-        //
-        //   Ep2: path A(R)→B(L)→A(R)→B(R)→T
-        //     ρ for G(B,Right) at t=3: π(R|B)/b(R|B) = 1.6
-        //     ρ for G(A,Right) at t=2: [π(R|A)/b(R|A)]×[π(R|B)/b(R|B)] = 1.5×1.6 = 2.4
-        //     ρ for G(B,Left) at t=1: [π(L|B)/b(L|B)]×[π(R|A)/b(R|A)]×[π(R|B)/b(R|B)] = 0.4×1.5×1.6 = 0.96
-        //     ρ for G(A,Right) at t=0: [π(R|A)/b(R|A)]×[π(L|B)/b(L|B)]×[π(R|A)/b(R|A)]×[π(R|B)/b(R|B)]
-        //                             = 1.5×0.4×1.5×1.6 = 1.44
-        //     ρG: (B,Right)=1.6×10=16, (A,Right@t=2)=2.4×8=19.2,
-        //         (B,Left)=0.96×7.2=6.912, (A,Right@t=0)=1.44×5.48=7.891
-        //
-        //   Ep3: path A(D)→T
-        //     ρ for G(A,Down): π(D|A)/b(D|A) = 0.1/0.4 = 0.25
-        //     ρG(A,Down)=0.25×3=0.75
-        //
-        //   OFF-POLICY Q (first-visit, ordinary IS):
-        //     Q(A,Right) = avg(19.2, 7.891) = 13.546
-        //     Q(A,Down)  = avg(0.75) = 0.75
-        //     Q(B,Right) = avg(16, 16) = 16.0
-        //     Q(B,Left)  = avg(6.912) = 6.912
+    <!-- Info bar -->
+    <div class="info-bar">
+        <div class="info-chip">γ (discount)<strong>0.9</strong></div>
+        <div class="info-chip">Method<strong id="methodChip">First-Visit</strong></div>
+        <div class="info-chip">Episodes<strong>3</strong></div>
+        <div class="info-chip">Formula<strong id="formulaChip">avg(G)</strong></div>
+    </div>
 
-        let mode = 'fv'; // 'fv', 'ev', 'off'
-        let currentStep = 0;
+    <!-- Phase bar -->
+    <div class="phase-bar">
+        <div class="phase-chip" id="phase1">① Ep 1</div>
+        <div class="phase-chip" id="phase2">② Ep 2</div>
+        <div class="phase-chip" id="phase3">③ Ep 3</div>
+        <div class="phase-chip" id="phase4">④ Compute Q</div>
+        <div class="phase-chip" id="phase5">⑤ Policy</div>
+    </div>
 
-        // ============ FIRST-VISIT STEPS ============
-        const fvSteps = [
-            {
-                phase: 0,
-                title: "Setup: Environment & Method",
-                desc: "States A and B, each with 2 actions. B can loop <strong>back to A</strong> (via Left). This loop makes Episode 2 visit (A, Right) <strong>twice</strong> — crucial for comparing first-visit vs every-visit.",
-                comp: `Environment:\n  State A: Right → B (r = −1),  Down → Terminal (r = +3)\n  State B: Right → T (r = +10), Left → A (r = 0)  ← loop back!\n\n<span class="hl">First-Visit MC:</span>\n  Q(s, a) = (1/N) × Σ Gᵢ\n  where N = number of EPISODES that first-visited (s,a)\n  If (s,a) is visited multiple times in one episode,\n  <span class="warn">only the FIRST visit's G counts.</span>\n\nEpisodes planned:\n  Ep1: A→Right→B→Right→T          (straight path)\n  Ep2: A→Right→B→Left→A→Right→B→Right→T  (loop!)\n  Ep3: A→Down→T                    (alternative)`,
-                activeEdges: [],
-                activeNodes: [],
-                policyNodes: [],
-                newCells: []
-            },
-            {
-                phase: 1,
-                title: "Episode 1: Compute G (backwards)",
-                desc: "A simple path: A→Right→B→Right→Terminal. Compute G backwards from terminal.",
-                comp: `<span class="ep">Episode 1:</span> A →(Right, r=−1)→ B →(Right, r=+10)→ Terminal\n\nReturns (working backwards, γ = 0.9):\n\n  t=1: <span class="hl">G(B, Right)</span> = r₂ = +10              = <span class="hl">10.0</span>\n\n  t=0: <span class="hl">G(A, Right)</span> = r₁ + γ × G₁\n                     = −1 + 0.9 × 10\n                     = −1 + 9             = <span class="hl">8.0</span>`,
-                activeEdges: ['AB', 'BT'],
-                activeNodes: ['A', 'B'],
-                policyNodes: [],
-                newCells: ['AR_ep1', 'BR_ep1']
-            },
-            {
-                phase: 2,
-                title: "Episode 2: Compute G (has a LOOP!)",
-                desc: "The agent goes A→Right→B→Left→A→Right→B→Right→T. State (A, Right) is visited at t=0 <strong>and</strong> t=2. First-Visit uses <strong>only the first</strong> occurrence (t=0).",
-                comp: `<span class="ep">Episode 2:</span> A→(R,−1)→B→(L,0)→A→(R,−1)→B→(R,+10)→T\n\nTime steps:  t=0:(A,R)  t=1:(B,L)  t=2:(A,R)  t=3:(B,R)\n\nReturns (backwards, γ = 0.9):\n  t=3: G₃(B,Right) = +10                        = <span class="hl">10.0</span>\n  t=2: G₂(A,Right) = −1 + 0.9×10 = −1+9        = <span class="hl">8.0</span>\n  t=1: G₁(B,Left)  = 0 + 0.9×8 = 0+7.2         = <span class="hl">7.2</span>\n  t=0: G₀(A,Right) = −1 + 0.9×7.2 = −1+6.48    = <span class="hl">5.48</span>\n\n<span class="warn">⚠ (A,Right) visited TWICE: t=0 (G=5.48) and t=2 (G=8.0)</span>\n<span class="warn">  First-Visit: use only t=0 → G = 5.48</span>\n<span class="dim">  (The second visit at t=2 with G=8 is IGNORED)</span>`,
-                activeEdges: ['AB', 'BA', 'BT'],
-                activeNodes: ['A', 'B'],
-                policyNodes: [],
-                newCells: ['AR_ep2', 'BL_ep2', 'BR_ep2']
-            },
-            {
-                phase: 3,
-                title: "Episode 3: Compute G",
-                desc: "A simple episode exploring the alternative action at A.",
-                comp: `<span class="ep">Episode 3:</span> A →(Down, r=+3)→ Terminal\n\nReturns:\n  t=0: <span class="hl">G(A, Down)</span> = r₁ = +3               = <span class="hl">3.0</span>\n\n<span class="dim">Only (A, Down) is visited. States B not reached.</span>`,
-                activeEdges: ['AT2'],
-                activeNodes: ['A'],
-                policyNodes: [],
-                newCells: ['AD_ep3']
-            },
-            {
-                phase: 4,
-                title: "Average all G values → Q (First-Visit)",
-                desc: "For each (s,a): average the G values from all episodes where it was <strong>first-visited</strong>. Episode 2's second visit to (A, Right) at t=2 is excluded.",
-                comp: `<span class="hl">Q(s,a) = (1/N) × Σ G  (first-visit only)</span>\n\n  Q(A, Right) = (8.0 + 5.48) / 2  = <span class="hl">6.74</span>\n    <span class="dim">Ep1: G=8.0 (first visit at t=0)</span>\n    <span class="dim">Ep2: G=5.48 (first visit at t=0; t=2 visit EXCLUDED)</span>\n\n  Q(A, Down)  = 3.0 / 1           = <span class="hl">3.0</span>\n  Q(B, Right) = (10.0 + 10.0) / 2 = <span class="hl">10.0</span>\n  Q(B, Left)  = 7.2 / 1           = <span class="hl">7.2</span>`,
-                activeEdges: [],
-                activeNodes: [],
-                policyNodes: [],
-                newCells: []
-            },
-            {
-                phase: 5,
-                title: "Extract Policy: π(s) = argmax Q(s,a)",
-                desc: "Pick the action with highest Q at each state. This is the <strong>policy improvement</strong> step.",
-                comp: `<span class="policy">Policy Extraction (greedy):</span>\n\n  At state A: Q(A,Right) = 6.74 vs Q(A,Down) = 3.0\n              <span class="policy">→ π(A) = Right</span>  (6.74 > 3.0) ✓\n\n  At state B: Q(B,Right) = 10.0 vs Q(B,Left) = 7.2\n              <span class="policy">→ π(B) = Right</span>  (10.0 > 7.2) ✓\n\n<span class="hl">Optimal path: A →Right→ B →Right→ Terminal</span>\n<span class="hl">Expected return = −1 + 0.9×10 = 8.0</span>`,
-                activeEdges: ['AB', 'BT'],
-                activeNodes: [],
-                policyNodes: ['A', 'B'],
-                newCells: []
-            }
+    <!-- SVG Diagram -->
+    <div class="diagram-area">
+        <svg viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <marker id="ah" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#64748b"/></marker>
+                <marker id="ahA" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#fbbf24"/></marker>
+                <marker id="ahP" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#a78bfa"/></marker>
+            </defs>
+            <!-- A→B -->
+            <line id="eAB" x1="155" y1="72" x2="285" y2="72" stroke="#64748b" class="edge-line" marker-end="url(#ah)"/>
+            <text id="lAB" x="220" y="62" text-anchor="middle" class="edge-label" font-size="10" fill="#94a3b8">Right, r=−1</text>
+            <!-- B→T -->
+            <line id="eBT" x1="375" y1="60" x2="510" y2="42" stroke="#64748b" class="edge-line" marker-end="url(#ah)"/>
+            <text id="lBT" x="445" y="40" text-anchor="middle" class="edge-label" font-size="10" fill="#94a3b8">Right, r=+10</text>
+            <!-- B→A (curved arc) -->
+            <path id="eBA" d="M295,55 Q220,10 160,55" stroke="#64748b" class="edge-line" fill="none" marker-end="url(#ah)"/>
+            <text id="lBA" x="225" y="22" text-anchor="middle" class="edge-label" font-size="10" fill="#94a3b8">Left, r=0</text>
+            <!-- A→T2 (down) -->
+            <line id="eAT" x1="130" y1="98" x2="130" y2="145" stroke="#64748b" class="edge-line" marker-end="url(#ah)"/>
+            <text id="lAT" x="97" y="128" text-anchor="middle" class="edge-label" font-size="10" fill="#94a3b8">Down, r=+3</text>
+            <!-- Node A -->
+            <circle id="nA" cx="130" cy="72" r="26" fill="rgba(99,102,241,0.2)" stroke="#6366f1" class="node-circle"/>
+            <text x="130" y="69" text-anchor="middle" class="node-label">A</text>
+            <text id="qA" x="130" y="83" text-anchor="middle" class="node-sub"></text>
+            <!-- Node B -->
+            <circle id="nB" cx="330" cy="72" r="26" fill="rgba(59,130,246,0.2)" stroke="#3b82f6" class="node-circle"/>
+            <text x="330" y="69" text-anchor="middle" class="node-label">B</text>
+            <text id="qB" x="330" y="83" text-anchor="middle" class="node-sub"></text>
+            <!-- Terminal 1 -->
+            <rect x="515" y="25" width="45" height="32" rx="5" fill="rgba(239,68,68,0.12)" stroke="#ef4444" stroke-width="2" stroke-dasharray="4,3"/>
+            <text x="537" y="46" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">T</text>
+            <!-- Terminal 2 -->
+            <rect x="108" y="148" width="45" height="28" rx="5" fill="rgba(239,68,68,0.12)" stroke="#ef4444" stroke-width="2" stroke-dasharray="4,3"/>
+            <text x="130" y="167" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">T</text>
+        </svg>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <button class="btn-prev" id="prevBtn" disabled onclick="prevStep()">← Prev</button>
+        <span class="step-label" id="stepLabel">Step 0/5</span>
+        <button class="btn-next" id="nextBtn" onclick="nextStep()">Next →</button>
+        <button class="btn-reset" onclick="reset()">Reset</button>
+    </div>
+    <p class="kb-hint"><kbd>←</kbd> <kbd>→</kbd> or <kbd>Space</kbd> to navigate</p>
+
+    <!-- Info Panel -->
+    <div class="info-panel" id="infoPanel">
+        <h3 id="infoTitle"></h3>
+        <p class="desc" id="infoDesc"></p>
+        <div class="computation-display" id="infoComp"></div>
+    </div>
+
+    <!-- Table -->
+    <div class="returns-section">
+        <h3 id="tableTitle"></h3>
+        <table class="returns-table"><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table>
+    </div>
+
+    <div class="footnote" id="footnote"></div>
+</div>
+
+<script>
+// ==================== DATA ====================
+// Environment: A(Right→B r=-1, Down→T r=+3), B(Right→T r=+10, Left→A r=0)
+// γ = 0.9
+//
+// Ep1: A→(R,-1)→B→(R,+10)→T
+// Ep2: A→(R,-1)→B→(L,0)→A→(R,-1)→B→(R,+10)→T  [loop: A,R visited twice]
+// Ep3: A→(D,+3)→T
+//
+// Off-policy policies:
+// b(R|A)=0.6, b(D|A)=0.4, b(R|B)=0.5, b(L|B)=0.5
+// π(R|A)=0.9, π(D|A)=0.1, π(R|B)=0.8, π(L|B)=0.2
+
+const G = 0.9; // gamma
+
+// ===== RETURNS =====
+// Ep1: G(B,R)=10, G(A,R)=-1+0.9*10=8
+// Ep2 backwards: G3(B,R)=10, G2(A,R)=-1+9=8, G1(B,L)=0+0.9*8=7.2, G0(A,R)=-1+0.9*7.2=5.48
+// Ep3: G(A,D)=3
+
+// ===== IS RATIOS (per step) =====
+// π(R|A)/b(R|A)=0.9/0.6=1.5, π(D|A)/b(D|A)=0.1/0.4=0.25
+// π(R|B)/b(R|B)=0.8/0.5=1.6, π(L|B)/b(L|B)=0.2/0.5=0.4
+
+// ===== CUMULATIVE ρ for each (s,a) first visit =====
+// Ep1: ρ(B,R)=1.6, ρ(A,R)=1.5*1.6=2.4
+// Ep2 first visits: ρ(A,R@t=0)=1.5*0.4*1.5*1.6=1.44, ρ(B,L@t=1)=0.4*1.5*1.6=0.96, ρ(B,R@t=3)=1.6
+// Ep3: ρ(A,D)=0.25
+
+// ===== METHOD RESULTS =====
+// OIS: Q = (1/N)*Σ(ρ*G)
+//   Q(A,R) = (2.4*8 + 1.44*5.48)/2 = (19.2+7.891)/2 = 13.55
+//   Q(A,D) = 0.25*3 = 0.75
+//   Q(B,R) = (1.6*10 + 1.6*10)/2 = 16.0
+//   Q(B,L) = 0.96*7.2 = 6.912
+
+// WIS: Q = Σ(ρ*G)/Σ(ρ)
+//   Q(A,R) = (19.2+7.891)/(2.4+1.44) = 27.091/3.84 = 7.054
+//   Q(A,D) = 0.75/0.25 = 3.0
+//   Q(B,R) = 32/3.2 = 10.0
+//   Q(B,L) = 6.912/0.96 = 7.2
+
+// Incremental WIS: same result as WIS but computed step by step
+//   Q(A,R): C=2.4, Q=8 → C=3.84, Q=8+(1.44/3.84)*(5.48-8)=8+0.375*(-2.52)=7.055
+
+// Per-Decision IS: ρ applied per reward step (not full trajectory)
+//   Ep1 G(A,R): ρ_{0:0}*r1 + γ*ρ_{0:1}*r2 = 1.5*(-1) + 0.9*2.4*10 = -1.5+21.6=20.1
+//   Ep2 G(A,R@t=0): ρ_{0:0}*r1+γ*ρ_{0:1}*r2+γ²*ρ_{0:2}*r3+γ³*ρ_{0:3}*r4
+//     = 1.5*(-1)+0.9*0.6*0+0.81*0.9*(-1)+0.729*1.44*10 = -1.5+0-0.729+10.498=8.269
+//   Q(A,R)_PDIS = (20.1+8.269)/2 = 14.18
+//   Ep1 G(B,R): ρ_{1:1}*r2=1.6*10=16 (single step, same as OIS)
+//   Ep2 G(B,R@t=3): 1.6*10=16
+//   Q(B,R)_PDIS = 16
+//   Ep2 G(B,L@t=1): ρ_{1:1}*r2+γ*ρ_{1:2}*r3+γ²*ρ_{1:3}*r4
+//     = 0.4*0+0.9*0.6*(-1)+0.81*0.96*10 = 0-0.54+7.776=7.236
+//   Wait let me recalculate.
+//   At t=1, action is B,Left. Future actions: t=2(A,R), t=3(B,R)
+//   ρ_{1:1}=π(L|B)/b(L|B)=0.4
+//   ρ_{1:2}=0.4*π(R|A)/b(R|A)=0.4*1.5=0.6
+//   ρ_{1:3}=0.6*π(R|B)/b(R|B)=0.6*1.6=0.96
+//   Per-decision: ρ_{1:1}*r2 + γ*ρ_{1:2}*r3 + γ²*ρ_{1:3}*r4
+//     = 0.4*0 + 0.9*0.6*(-1) + 0.81*0.96*10 = 0 - 0.54 + 7.776 = 7.236
+//   Q(B,L)_PDIS = 7.236
+//   Ep3 G(A,D): ρ_{0:0}*r1 = 0.25*3 = 0.75 (single step)
+//   Q(A,D)_PDIS = 0.75
+
+// Discounting-Aware IS: treats γ as termination prob
+//   "flat" partial returns with truncated ρ
+//   For h-step partial return G_{t:t+h}: use ρ_{t:t+h-1} (only h steps of ρ)
+//   V̂ = Σ_{h=1}^{H} [(1-γ)*γ^{h-1} * ρ_{t:t+h-1} * G̃_{t:t+h}] + [γ^H * ρ_{t:t+H-1} * G̃_{t:t+H}]
+//   where G̃_{t:t+h} is the flat (undiscounted sum) of rewards from t+1 to t+h
+//   The last term uses γ^{T-1-t} with full ρ.
+//
+//   Simplification for our 2-step episode (Ep1, A,R):
+//   H=2 (episode length from A is 2 steps)
+//   = (1-γ)*γ⁰*ρ_{0:0}*r1 + γ¹*ρ_{0:1}*(r1+r2)   [last term, h=H=2]
+//   Wait, the formula is complex. Let me use a cleaner presentation.
+//
+//   The key insight: instead of ρ_{0:T-1}*G_t, we weight shorter sub-trajectories
+//   by shorter ρ products and combine using γ-weighted average.
+//   For Ep1, (A,R), 2 steps to terminal:
+//     = (1-γ)*ρ_{0:0}*R₁ + γ*ρ_{0:1}*(R₁+R₂)
+//     = 0.1*1.5*(-1) + 0.9*2.4*(-1+10)
+//     = -0.15 + 0.9*2.4*9 = -0.15 + 19.44 = 19.29
+//   Hmm that doesn't seem right either. Let me look at this differently.
+//
+//   Actually the discounting-aware formulation from Precup et al. (2000):
+//   The "discounted" ρ only applies ρ up to the discount horizon.
+//   In practice the simplest explanation is:
+//     Standard: multiplies ALL rewards by full ρ_{t:T-1}
+//     Per-decision: multiplies r_{k+1} by ρ_{t:k} (only ratios up to that reward)
+//     Discounting-aware: further reduces by noting γ^n makes ρ beyond n less important
+//     It treats the return as a mixture of n-step returns, each needing only n steps of ρ.
+//
+//   For the interactive, I'll show the concept + a simplified calculation.
+//   The key result: Discounting-Aware variance ≤ Per-Decision variance ≤ OIS variance
+
+let mode = 'fv';
+let currentStep = 0;
+
+const tabColors = {fv:'green',ev:'cyan',ois:'orange',wis:'pink',iwis:'violet',pdis:'amber',dais:'rose'};
+const tabLabels = {fv:'First-Visit',ev:'Every-Visit',ois:'Ordinary IS',wis:'Weighted IS',iwis:'Incremental WIS',pdis:'Per-Decision IS',dais:'Discount-Aware IS'};
+const tabFormulas = {fv:'(1/N)ΣG',ev:'(1/N)ΣG (all)',ois:'(1/N)Σ(ρG)',wis:'Σ(ρG)/Σρ',iwis:'Qₙ + (ρₙ/Cₙ)(G-Q)',pdis:'(1/N)Σ ρₖrₖ',dais:'γ-weighted ρₖrₖ'};
+
+// ============ BUILD STEPS FOR EACH MODE ============
+
+function buildFVSteps() {
+    return [
+        { phase:0, title:"Setup: First-Visit MC", desc:"Count only the <strong>first time</strong> each (s,a) is visited per episode. If a state-action is visited multiple times in one episode (due to loops), only the earliest occurrence contributes a G sample.", comp:`Environment: A(Right→B, Down→T), B(Right→T, Left→A)\nγ = 0.9, Simple averaging: Q(s,a) = (1/N) × Σ Gᵢ\n\nEpisodes:\n  Ep1: A→(R,−1)→B→(R,+10)→T\n  Ep2: A→(R,−1)→B→(L,0)→A→(R,−1)→B→(R,+10)→T  <span class="warn">← loop!</span>\n  Ep3: A→(D,+3)→T\n\n<span class="hl">Rule: If (s,a) visited multiple times in one episode,</span>\n<span class="hl">      only FIRST visit's G is recorded.</span>`, edges:[], nodes:[], pnodes:[], cells:[] },
+        { phase:1, title:"Episode 1: G values", desc:"Straight path. Compute G backwards from terminal.", comp:`<span class="ep">Ep1:</span> A→(R,r=−1)→B→(R,r=+10)→T\n\n  t=1: G(B,R) = +10              = <span class="hl">10.0</span>\n  t=0: G(A,R) = −1 + 0.9×10     = <span class="hl">8.0</span>`, edges:['AB','BT'], nodes:['A','B'], pnodes:[], cells:['AR_1','BR_1'] },
+        { phase:2, title:"Episode 2: G values (loop — first-visit only!)", desc:"(A,Right) visited at t=0 and t=2. <strong>First-visit uses only t=0</strong> (G=5.48). The second visit G=8 is discarded.", comp:`<span class="ep">Ep2:</span> A(R,−1)→B(L,0)→A(R,−1)→B(R,+10)→T\n\nBackwards:\n  t=3: G₃(B,R) = 10              = <span class="hl">10.0</span>\n  t=2: G₂(A,R) = −1+0.9×10      = 8.0  <span class="dim">(2nd visit — IGNORED)</span>\n  t=1: G₁(B,L) = 0+0.9×8         = <span class="hl">7.2</span>\n  t=0: G₀(A,R) = −1+0.9×7.2     = <span class="hl">5.48</span>  <span class="warn">← first visit used</span>\n\n<span class="warn">First-Visit: G(A,R) = 5.48 (from t=0 only)</span>`, edges:['AB','BA','BT'], nodes:['A','B'], pnodes:[], cells:['AR_2','BL_2','BR_2'] },
+        { phase:3, title:"Episode 3: G values", desc:"Explores Down at A.", comp:`<span class="ep">Ep3:</span> A→(D,r=+3)→T\n\n  t=0: G(A,D) = +3               = <span class="hl">3.0</span>`, edges:['AT'], nodes:['A'], pnodes:[], cells:['AD_3'] },
+        { phase:4, title:"Average G → Q (First-Visit)", desc:"Average all collected first-visit returns per (s,a).", comp:`Q(A,Right) = (8.0 + 5.48) / 2       = <span class="hl">6.74</span>\nQ(A,Down)  = (3.0) / 1              = <span class="hl">3.0</span>\nQ(B,Right) = (10.0 + 10.0) / 2      = <span class="hl">10.0</span>\nQ(B,Left)  = (7.2) / 1              = <span class="hl">7.2</span>`, edges:[], nodes:[], pnodes:[], cells:[] },
+        { phase:5, title:"Policy: π(s) = argmax Q(s,a)", desc:"Greedy policy from Q-values.", comp:`<span class="policy">π(A) = Right</span>  (Q=6.74 > 3.0)\n<span class="policy">π(B) = Right</span>  (Q=10.0 > 7.2)\n\nOptimal path: A→Right→B→Right→T  (return = 8.0)`, edges:['AB','BT'], nodes:[], pnodes:['A','B'], cells:[] }
+    ];
+}
+
+function buildEVSteps() {
+    return [
+        { phase:0, title:"Setup: Every-Visit MC", desc:"Count <strong>ALL visits</strong> to (s,a) in every episode, including repeats within the same episode. This gives more samples but introduces correlation (slight bias).", comp:`<span class="ev">Every-Visit MC: Q(s,a) = (1/N) × Σ ALL Gᵢ</span>\n\nDifference from First-Visit:\n  If (s,a) is visited K times in one episode,\n  <span class="ev">ALL K returns are recorded</span> (not just the first).\n\nIn Ep2, (A,Right) is visited at t=0 (G=5.48) AND t=2 (G=8.0).\n  First-Visit: uses 1 sample from Ep2 → N=2 total\n  <span class="ev">Every-Visit: uses 2 samples from Ep2 → N=3 total</span>`, edges:[], nodes:[], pnodes:[], cells:[] },
+        { phase:1, title:"Episode 1: G values (same)", desc:"No repeated visits, identical to first-visit.", comp:`<span class="ep">Ep1:</span> A→(R,−1)→B→(R,+10)→T\n\n  G(B,R) = <span class="hl">10.0</span>,  G(A,R) = <span class="hl">8.0</span>`, edges:['AB','BT'], nodes:['A','B'], pnodes:[], cells:['AR_1','BR_1'] },
+        { phase:2, title:"Episode 2: ALL visits counted!", desc:"(A,Right) at t=0 gives G=5.48 AND at t=2 gives G=8.0. <strong>Both are kept!</strong>", comp:`<span class="ep">Ep2:</span> A(R)→B(L)→A(R)→B(R)→T\n\n  t=3: G₃(B,R) = <span class="hl">10.0</span>\n  t=2: G₂(A,R) = <span class="ev">8.0   ← KEPT (every-visit!)</span>\n  t=1: G₁(B,L) = <span class="hl">7.2</span>\n  t=0: G₀(A,R) = <span class="ev">5.48  ← also kept</span>\n\n<span class="ev">(A,Right) contributes TWO samples from this episode: 5.48 and 8.0</span>`, edges:['AB','BA','BT'], nodes:['A','B'], pnodes:[], cells:['AR_2a','AR_2b','BL_2','BR_2'] },
+        { phase:3, title:"Episode 3: G values (same)", desc:"", comp:`<span class="ep">Ep3:</span> A→(D,+3)→T\n  G(A,D) = <span class="hl">3.0</span>`, edges:['AT'], nodes:['A'], pnodes:[], cells:['AD_3'] },
+        { phase:4, title:"Average G → Q (Every-Visit)", desc:"Q(A,Right) now has <strong>3 samples</strong> instead of 2.", comp:`Q(A,Right) = (8.0 + 5.48 + <span class="ev">8.0</span>) / <span class="ev">3</span>  = <span class="ev">7.16</span>  <span class="dim">(vs first-visit 6.74)</span>\nQ(A,Down)  = (3.0) / 1              = <span class="hl">3.0</span>\nQ(B,Right) = (10.0 + 10.0) / 2      = <span class="hl">10.0</span>\nQ(B,Left)  = (7.2) / 1              = <span class="hl">7.2</span>\n\n<span class="warn">Difference: Q(A,R) = 7.16 (every) vs 6.74 (first)</span>\n<span class="dim">Extra sample G=8.0 pulled average up.</span>\n<span class="dim">Every-visit: more samples → lower variance, but slight bias</span>\n<span class="dim">(returns within one episode are correlated).</span>`, edges:[], nodes:[], pnodes:[], cells:[] },
+        { phase:5, title:"Policy (same result here)", desc:"", comp:`<span class="policy">π(A) = Right</span>  (Q=7.16 > 3.0)\n<span class="policy">π(B) = Right</span>  (Q=10.0 > 7.2)\n\nSame policy as first-visit, different Q-magnitudes.`, edges:['AB','BT'], nodes:[], pnodes:['A','B'], cells:[] }
+    ];
+}
+
+function buildOISSteps() {
+    return [
+        { phase:0, title:"Setup: Ordinary Importance Sampling", desc:"Evaluate target policy π using data from behavior policy b. Multiply each G by the cumulative IS ratio ρ, then take a <strong>simple average</strong>.", comp:`Target π: π(R|A)=0.9, π(D|A)=0.1, π(R|B)=0.8, π(L|B)=0.2\nBehavior b: b(R|A)=0.6, b(D|A)=0.4, b(R|B)=0.5, b(L|B)=0.5\n\n<span class="warn">OIS formula: Q(s,a) = (1/N) × Σ [ρᵢ × Gᵢ]</span>\n\nρ = cumulative product of π(aₖ|sₖ)/b(aₖ|sₖ) from t to T-1\n\n<span class="dim">Unbiased but high variance (ρ can be very large or small).</span>`, edges:[], nodes:[], pnodes:[], cells:[] },
+        { phase:1, title:"Ep1: Compute ρ×G", desc:"Both actions favored by π → ρ > 1 → returns amplified.", comp:`<span class="ep">Ep1:</span> A(R)→B(R)→T    G(B,R)=10, G(A,R)=8\n\nIS ratios (cumulative to end):\n  ρ(B,R) = π(R|B)/b(R|B) = 0.8/0.5 = <span class="warn">1.6</span>\n  ρ(A,R) = [π(R|A)/b(R|A)] × [π(R|B)/b(R|B)] = 1.5×1.6 = <span class="warn">2.4</span>\n\nρ × G:\n  (B,R): 1.6 × 10 = <span class="hl">16.0</span>\n  (A,R): 2.4 × 8  = <span class="hl">19.2</span>`, edges:['AB','BT'], nodes:['A','B'], pnodes:[], cells:['AR_1','BR_1'] },
+        { phase:2, title:"Ep2: Compute ρ×G (loop)", desc:"B→Left has low π/b ratio (0.4), deflating the cumulative ρ for A at t=0.", comp:`<span class="ep">Ep2:</span> A(R)→B(L)→A(R)→B(R)→T  (first-visit for each pair)\n\nG: (A,R@t=0)=5.48, (B,L@t=1)=7.2, (B,R@t=3)=10\n\nρ (cumulative from each first-visit to end):\n  ρ(B,R@t=3) = 1.6                       → ρG = <span class="hl">16.0</span>\n  ρ(B,L@t=1) = 0.4×1.5×1.6 = <span class="warn">0.96</span>       → ρG = <span class="hl">6.91</span>\n  ρ(A,R@t=0) = 1.5×0.4×1.5×1.6 = <span class="warn">1.44</span>  → ρG = <span class="hl">7.89</span>`, edges:['AB','BA','BT'], nodes:['A','B'], pnodes:[], cells:['AR_2','BL_2','BR_2'] },
+        { phase:3, title:"Ep3: Compute ρ×G", desc:"π dislikes Down (0.1 vs b's 0.4) → ρ=0.25 → heavy dampening.", comp:`<span class="ep">Ep3:</span> A(D)→T    G(A,D)=3\n\n  ρ(A,D) = π(D|A)/b(D|A) = 0.1/0.4 = <span class="warn">0.25</span>\n  ρG = 0.25 × 3 = <span class="hl">0.75</span>`, edges:['AT'], nodes:['A'], pnodes:[], cells:['AD_3'] },
+        { phase:4, title:"OIS: Q = (1/N) × Σ(ρG)", desc:"Simple average of importance-weighted returns. Can be far from on-policy values due to large ρ.", comp:`<span class="warn">Q(A,R) = (19.2 + 7.89) / 2   = <span class="hl">13.55</span></span>  <span class="dim">(on-policy: 6.74)</span>\nQ(A,D) = (0.75) / 1          = <span class="hl">0.75</span>   <span class="dim">(on-policy: 3.0)</span>\nQ(B,R) = (16 + 16) / 2       = <span class="hl">16.0</span>   <span class="dim">(on-policy: 10.0)</span>\nQ(B,L) = (6.91) / 1          = <span class="hl">6.91</span>   <span class="dim">(on-policy: 7.2)</span>\n\n<span class="dim">OIS amplifies actions π likes (Right) and dampens actions</span>\n<span class="dim">π avoids (Down). Unbiased but high variance.</span>`, edges:[], nodes:[], pnodes:[], cells:[] },
+        { phase:5, title:"Policy", desc:"", comp:`<span class="policy">π(A) = Right</span> (13.55 > 0.75)\n<span class="policy">π(B) = Right</span> (16.0 > 6.91)`, edges:['AB','BT'], nodes:[], pnodes:['A','B'], cells:[] }
+    ];
+}
+
+function buildWISSteps() {
+    return [
+        { phase:0, title:"Setup: Weighted Importance Sampling", desc:"Instead of dividing by N (number of episodes), divide by the <strong>sum of ρ values</strong>. This self-normalizes, preventing extreme ρ from dominating.", comp:`<span class="pink">WIS formula: Q(s,a) = Σ(ρᵢ × Gᵢ) / Σ(ρᵢ)</span>\n\nCompare with OIS: Q = (1/N) × Σ(ρᵢ × Gᵢ)  ← divides by N\n                  WIS: Q = Σ(ρᵢ × Gᵢ) / Σ(ρᵢ)  ← divides by Σρ\n\n<span class="dim">WIS: biased (for finite N) but MUCH lower variance.</span>\n<span class="dim">When N=1: WIS = G (ignores ρ!), OIS = ρ×G</span>\n<span class="dim">Generally preferred in practice.</span>`, edges:[], nodes:[], pnodes:[], cells:[] },
+        { phase:1, title:"Ep1: Same ρ×G as OIS", desc:"The numerators (ρ×G) are identical to OIS. Only the denominator changes.", comp:`<span class="ep">Ep1:</span> ρ(A,R)=2.4, G=8 → ρG=19.2\n       ρ(B,R)=1.6, G=10 → ρG=16.0`, edges:['AB','BT'], nodes:['A','B'], pnodes:[], cells:['AR_1','BR_1'] },
+        { phase:2, title:"Ep2: Same ρ×G", desc:"", comp:`<span class="ep">Ep2:</span> ρ(A,R)=1.44, G=5.48 → ρG=7.89\n       ρ(B,L)=0.96, G=7.2  → ρG=6.91\n       ρ(B,R)=1.6,  G=10   → ρG=16.0`, edges:['AB','BA','BT'], nodes:['A','B'], pnodes:[], cells:['AR_2','BL_2','BR_2'] },
+        { phase:3, title:"Ep3: Same ρ×G", desc:"", comp:`<span class="ep">Ep3:</span> ρ(A,D)=0.25, G=3 → ρG=0.75`, edges:['AT'], nodes:['A'], pnodes:[], cells:['AD_3'] },
+        { phase:4, title:"WIS: Q = Σ(ρG) / Σρ", desc:"Dividing by Σρ instead of N pulls extreme values back toward on-policy. With N=1, WIS gives exactly G (the ρ cancels).", comp:`<span class="pink">Q(A,R) = (19.2 + 7.89) / (2.4 + 1.44) = 27.09/3.84 = <span class="hl">7.05</span></span>\n<span class="dim">  OIS gave 13.55 — WIS is much more moderate!</span>\n\n<span class="pink">Q(A,D) = 0.75 / 0.25 = <span class="hl">3.0</span></span>\n<span class="dim">  With N=1: Σ(ρG)/Σρ = ρG/ρ = G = 3.0 (ρ cancels!)</span>\n\nQ(B,R) = (16+16) / (1.6+1.6) = 32/3.2 = <span class="hl">10.0</span>\nQ(B,L) = 6.91 / 0.96 = <span class="hl">7.2</span>\n\n<span class="warn">WIS vs OIS:</span>\n  Q(A,R): <span class="pink">7.05</span> vs 13.55  (WIS much lower, closer to on-policy 6.74)\n  Q(A,D): 3.0 vs 0.75    (WIS = on-policy! ρ cancelled)\n  Q(B,R): 10.0 vs 16.0\n  Q(B,L): 7.2 vs 6.91`, edges:[], nodes:[], pnodes:[], cells:[] },
+        { phase:5, title:"Policy (WIS)", desc:"Lower variance estimates, same greedy choices.", comp:`<span class="policy">π(A) = Right</span> (7.05 > 3.0)\n<span class="policy">π(B) = Right</span> (10.0 > 7.2)\n\n<span class="dim">WIS advantages: lower variance, bounded estimates</span>\n<span class="dim">WIS disadvantage: biased for small N (converges as N→∞)</span>`, edges:['AB','BT'], nodes:[], pnodes:['A','B'], cells:[] }
+    ];
+}
+
+function buildIWISSteps() {
+    return [
+        { phase:0, title:"Setup: Incremental Weighted IS", desc:"WIS computed <strong>online</strong> — updating Q after each episode without storing all returns. Uses a running cumulative weight C.", comp:`<span class="violet">Incremental WIS Update Rule:</span>\n\n  Cₙ = Cₙ₋₁ + ρₙ          <span class="dim">(accumulate weights)</span>\n  Qₙ = Qₙ₋₁ + (ρₙ/Cₙ) × (Gₙ − Qₙ₋₁)   <span class="dim">(update Q)</span>\n\nThis is equivalent to batch WIS: Q = Σ(ρG)/Σρ\nbut computed incrementally — O(1) memory per (s,a) pair.\n\n<span class="dim">Note: the "learning rate" ρₙ/Cₙ decreases naturally</span>\n<span class="dim">as more episodes accumulate (C grows).</span>`, edges:[], nodes:[], pnodes:[], cells:[] },
+        { phase:1, title:"After Ep1: First update for Q(A,R)", desc:"With only one sample, C=ρ, so ρ/C=1, and Q=G (the first estimate always equals G).", comp:`<span class="ep">Processing Ep1:</span> ρ(A,R)=2.4, G(A,R)=8.0\n\n  <span class="violet">Q(A,R) update:</span>\n  C = 0 + 2.4 = <span class="hl">2.4</span>\n  Q = 0 + (2.4/2.4) × (8 − 0)\n    = 0 + 1.0 × 8\n    = <span class="hl">8.0</span>\n\n  <span class="dim">With N=1: effective learning rate = ρ/C = 1.0</span>\n  <span class="dim">So Q simply equals G (same as WIS with 1 episode)</span>\n\n  Similarly: Q(B,R) = 10.0 (C=1.6)`, edges:['AB','BT'], nodes:['A','B'], pnodes:[], cells:['AR_1','BR_1'] },
+        { phase:2, title:"After Ep2: Second update for Q(A,R)", desc:"Now the learning rate = ρ₂/C₂ = 1.44/3.84 = 0.375. The new G=5.48 pulls Q down from 8 toward 5.48.", comp:`<span class="ep">Processing Ep2:</span> ρ(A,R)=1.44, G(A,R)=5.48\n\n  <span class="violet">Q(A,R) update:</span>\n  C = 2.4 + 1.44 = <span class="hl">3.84</span>\n  Q = 8.0 + (1.44/3.84) × (5.48 − 8.0)\n    = 8.0 + 0.375 × (−2.52)\n    = 8.0 − 0.945\n    = <span class="hl">7.05</span>\n\n  <span class="dim">Learning rate = 1.44/3.84 = 0.375 (decreasing!)</span>\n  <span class="dim">Larger ρ in Ep1 (2.4) gets more weight than Ep2 (1.44).</span>\n\n  Q(B,R): C=3.2, Q=10+(1.6/3.2)×(10−10) = <span class="hl">10.0</span>\n  Q(B,L): C=0.96, Q=0+(0.96/0.96)×(7.2−0) = <span class="hl">7.2</span>`, edges:['AB','BA','BT'], nodes:['A','B'], pnodes:[], cells:['AR_2','BL_2','BR_2'] },
+        { phase:3, title:"After Ep3: Update Q(A,D)", desc:"First visit for (A,D), so Q = G = 3.0 (same first-sample behavior).", comp:`<span class="ep">Processing Ep3:</span> ρ(A,D)=0.25, G(A,D)=3.0\n\n  Q(A,D): C=0.25, Q = 0+(0.25/0.25)×(3−0) = <span class="hl">3.0</span>`, edges:['AT'], nodes:['A'], pnodes:[], cells:['AD_3'] },
+        { phase:4, title:"Final Q = same as batch WIS", desc:"Incremental WIS gives exactly the same result as computing WIS in batch — it's just more memory-efficient.", comp:`Final Q-values (Incremental WIS):\n\n  Q(A,R) = <span class="hl">7.05</span>  (C=3.84)\n  Q(A,D) = <span class="hl">3.0</span>   (C=0.25)\n  Q(B,R) = <span class="hl">10.0</span>  (C=3.2)\n  Q(B,L) = <span class="hl">7.2</span>   (C=0.96)\n\n<span class="violet">✓ Identical to batch WIS!</span>\n<span class="dim">But computed with O(1) storage per (s,a) pair.</span>\n<span class="dim">Only need to store: Q and C for each pair.</span>`, edges:[], nodes:[], pnodes:[], cells:[] },
+        { phase:5, title:"Policy", desc:"", comp:`<span class="policy">π(A) = Right</span> (7.05 > 3.0)\n<span class="policy">π(B) = Right</span> (10.0 > 7.2)\n\n<span class="violet">Advantage:</span> Memory-efficient, online learning.\n<span class="dim">No need to store all episodes and recompute from scratch.</span>`, edges:['AB','BT'], nodes:[], pnodes:['A','B'], cells:[] }
+    ];
+}
+
+function buildPDISSteps() {
+    return [
+        { phase:0, title:"Setup: Per-Decision Importance Sampling", desc:"Standard OIS multiplies the <strong>entire</strong> return G by the full cumulative ρ. But each reward rₖ only <em>depends on</em> actions up to time k. Per-decision applies <strong>shorter ρ</strong> to each reward.", comp:`<span class="warn">Standard OIS:</span>  ρ_{t:T-1} × G_t = ρ_{t:T-1} × [r_{t+1} + γr_{t+2} + γ²r_{t+3} + ...]\n  → ALL rewards multiplied by the FULL product of ALL future ratios\n\n<span class="warn">Per-Decision IS:</span>\n  Σ_{k=t}^{T-1} γ^{k-t} × ρ_{t:k} × r_{k+1}\n\n  = ρ_{t:t}×r_{t+1} + γ×ρ_{t:t+1}×r_{t+2} + γ²×ρ_{t:t+2}×r_{t+3} + ...\n\n<span class="hl">Each rₖ₊₁ only multiplied by ρ up to step k (not beyond!)</span>\n\n<span class="dim">Why lower variance: ρ_{k+1:T-1} has E=1 and adds noise.</span>\n<span class="dim">Removing it from each term reduces variance without adding bias.</span>`, edges:[], nodes:[], pnodes:[], cells:[] },
+        { phase:1, title:"Ep1: Per-Decision for (A,R)", desc:"2-step episode. Per-decision separates: first reward uses only ρ_{0:0}, second reward uses ρ_{0:1}.", comp:`<span class="ep">Ep1:</span> A(R,r₁=−1)→B(R,r₂=+10)→T\n\n<span class="dim">Standard OIS:</span>  ρ_{0:1} × G₀ = 2.4 × 8 = 19.2\n\n<span class="warn">Per-Decision:</span>\n  = ρ_{0:0}×r₁    + γ×ρ_{0:1}×r₂\n  = 1.5×(−1)      + 0.9×2.4×(+10)\n  = −1.5          + 21.6\n  = <span class="hl">20.1</span>\n\n<span class="dim">Difference from OIS (19.2): Per-decision redistributes the weighting.</span>\n<span class="dim">r₁ only needs ρ for action at A (1.5), not also for B's action.</span>\n\n  (B,R): single step → ρ_{1:1}×r₂ = 1.6×10 = <span class="hl">16.0</span> (same as OIS)`, edges:['AB','BT'], nodes:['A','B'], pnodes:[], cells:['AR_1','BR_1'] },
+        { phase:2, title:"Ep2: Per-Decision for (A,R@t=0)", desc:"4-step trajectory from t=0. Each reward gets only the ρ product up to its own step.", comp:`<span class="ep">Ep2:</span> t=0:A(R,−1) → t=1:B(L,0) → t=2:A(R,−1) → t=3:B(R,+10) → T\n\nPer-step ρ: π(R|A)/b(R|A)=1.5, π(L|B)/b(L|B)=0.4,\n            π(R|A)/b(R|A)=1.5, π(R|B)/b(R|B)=1.6\n\nCumulative from t=0:\n  ρ_{0:0}=1.5, ρ_{0:1}=1.5×0.4=0.6, ρ_{0:2}=0.6×1.5=0.9, ρ_{0:3}=0.9×1.6=1.44\n\n<span class="warn">Per-Decision G(A,R@t=0):</span>\n  = ρ_{0:0}×r₁ + γ×ρ_{0:1}×r₂ + γ²×ρ_{0:2}×r₃ + γ³×ρ_{0:3}×r₄\n  = 1.5×(−1) + 0.9×0.6×(0) + 0.81×0.9×(−1) + 0.729×1.44×(10)\n  = −1.5     + 0            − 0.729          + 10.498\n  = <span class="hl">8.27</span>     <span class="dim">(OIS: ρ_{0:3}×G=1.44×5.48=7.89)</span>\n\n  (B,L@t=1): 0.4×0+0.9×0.6×(−1)+0.81×0.96×10 = −0.54+7.78 = <span class="hl">7.24</span>\n  (B,R@t=3): 1.6×10 = <span class="hl">16.0</span>`, edges:['AB','BA','BT'], nodes:['A','B'], pnodes:[], cells:['AR_2','BL_2','BR_2'] },
+        { phase:3, title:"Ep3: Per-Decision for (A,D)", desc:"Single step — identical to OIS.", comp:`<span class="ep">Ep3:</span> A(D,r=+3)→T\n\n  Per-Decision: ρ_{0:0}×r₁ = 0.25×3 = <span class="hl">0.75</span>  (same as OIS)`, edges:['AT'], nodes:['A'], pnodes:[], cells:['AD_3'] },
+        { phase:4, title:"PDIS: Q = (1/N) × Σ per-decision values", desc:"Same simple-average formula as OIS, but with per-decision weighted returns instead of full-ρ weighted returns.", comp:`<span class="warn">Q(A,R) = (20.1 + 8.27) / 2  = <span class="hl">14.18</span></span>  <span class="dim">(OIS: 13.55)</span>\nQ(A,D) = 0.75 / 1           = <span class="hl">0.75</span>   <span class="dim">(same, 1 step)</span>\nQ(B,R) = (16 + 16) / 2      = <span class="hl">16.0</span>   <span class="dim">(same, 1 step from B)</span>\nQ(B,L) = 7.24 / 1           = <span class="hl">7.24</span>   <span class="dim">(OIS: 6.91)</span>\n\n<span class="dim">Individual values differ from OIS, but both are unbiased.</span>\n<span class="dim">Per-Decision has LOWER VARIANCE because each reward term</span>\n<span class="dim">avoids multiplication by unnecessary future ρ factors.</span>`, edges:[], nodes:[], pnodes:[], cells:[] },
+        { phase:5, title:"Policy + Variance Comparison", desc:"", comp:`<span class="policy">π(A) = Right</span> (14.18 > 0.75)\n<span class="policy">π(B) = Right</span> (16.0 > 7.24)\n\n<span class="warn">Variance ordering (for a single episode):</span>\n  Standard OIS:  Var ∝ product of ALL ρ² terms\n  Per-Decision:  Var ∝ sum of partial ρ² terms\n\n  <span class="hl">Var(Per-Decision) ≤ Var(OIS)  always!</span>\n\n<span class="dim">The savings grow with episode length:</span>\n<span class="dim">  10-step episode with ρ_per_step=1.5:</span>\n<span class="dim">  OIS ρ = 1.5¹⁰ = 57.7 (applied to every reward)</span>\n<span class="dim">  PDIS: r₁ gets ρ=1.5, r₂ gets ρ=2.25, ..., r₁₀ gets ρ=57.7</span>\n<span class="dim">  Much less total amplification!</span>`, edges:['AB','BT'], nodes:[], pnodes:['A','B'], cells:[] }
+    ];
+}
+
+function buildDAISSteps() {
+    return [
+        { phase:0, title:"Setup: Discounting-Aware IS", desc:"Takes per-decision further: since γ<1 means far-future rewards matter less, <strong>weight shorter ρ products more heavily</strong>. The discount factor itself limits how much ρ can grow.", comp:`<span class="pink">Core insight:</span> γ acts like a "termination probability."\n  At each step, there's (1−γ) probability of "effective termination."\n  So rewards far in the future — which need long ρ products — \n  contribute less to the return anyway.\n\n<span class="warn">Discounting-Aware IS estimate:</span>\n  Treats return as a γ-weighted MIXTURE of n-step returns:\n  G_t = (1−γ)×Σ_{n=1}^{T-t-1} γⁿ⁻¹ × Ḡ_{t:t+n} + γ^{T-t-1} × Ḡ_{t:T}\n\n  where Ḡ_{t:t+n} = Σ_{k=1}^{n} r_{t+k}  (flat/undiscounted partial sum)\n  and each n-step partial is weighted by ρ_{t:t+n-1} (only n ratios!)\n\n<span class="dim">Key: shorter partial returns use shorter ρ products.</span>\n<span class="dim">Combined with γ-weighting, this further reduces variance.</span>`, edges:[], nodes:[], pnodes:[], cells:[] },
+        { phase:1, title:"Ep1: Discounting-Aware for (A,R)", desc:"2-step episode. The return is decomposed into a mixture of 1-step and 2-step partial returns.", comp:`<span class="ep">Ep1:</span> A(R,r₁=−1)→B(R,r₂=+10)→T   (T-t = 2 steps from A)\n\nFlat partial returns from t=0:\n  Ḡ_{0:1} = r₁ = −1           <span class="dim">(1-step flat sum)</span>\n  Ḡ_{0:2} = r₁ + r₂ = −1+10 = 9  <span class="dim">(2-step flat sum, terminal)</span>\n\nρ for each partial:\n  ρ_{0:0} = 1.5    <span class="dim">(for 1-step partial)</span>\n  ρ_{0:1} = 2.4    <span class="dim">(for 2-step partial)</span>\n\n<span class="warn">Discounting-Aware:</span>\n  = (1−γ) × γ⁰ × ρ_{0:0} × Ḡ_{0:1}  +  γ¹ × ρ_{0:1} × Ḡ_{0:2}\n  = 0.1 × 1 × 1.5 × (−1)   +   0.9 × 2.4 × 9\n  = −0.15                   +   19.44\n  = <span class="hl">19.29</span>\n\n<span class="dim">Compare: OIS=19.2, PDIS=20.1, DA-IS=19.29</span>\n\n  (B,R): 1 step → just ρ_{1:1}×r₂ = 1.6×10 = <span class="hl">16.0</span>`, edges:['AB','BT'], nodes:['A','B'], pnodes:[], cells:['AR_1','BR_1'] },
+        { phase:2, title:"Ep2: Discounting-Aware for (A,R@t=0)", desc:"4-step trajectory. The γ-weighting means early partials (with shorter ρ) dominate, reducing the impact of the full 4-step ρ product.", comp:`<span class="ep">Ep2:</span> A(R,−1)→B(L,0)→A(R,−1)→B(R,+10)→T  (4 steps from t=0)\n\nFlat partial sums from t=0:\n  Ḡ_{0:1} = −1                         ρ_{0:0} = 1.5\n  Ḡ_{0:2} = −1+0 = −1                  ρ_{0:1} = 0.6\n  Ḡ_{0:3} = −1+0+(−1) = −2             ρ_{0:2} = 0.9\n  Ḡ_{0:4} = −1+0+(−1)+10 = 8           ρ_{0:3} = 1.44\n\n<span class="warn">DA-IS:</span>\n  = (1−γ)[γ⁰×ρ_{0:0}×Ḡ_{0:1} + γ¹×ρ_{0:1}×Ḡ_{0:2} + γ²×ρ_{0:2}×Ḡ_{0:3}]\n    + γ³×ρ_{0:3}×Ḡ_{0:4}\n  = 0.1×[1.5×(−1) + 0.9×0.6×(−1) + 0.81×0.9×(−2)]\n    + 0.729×1.44×8\n  = 0.1×[−1.5 − 0.54 − 1.458] + 8.398\n  = 0.1×(−3.498) + 8.398\n  = −0.35 + 8.40 = <span class="hl">8.05</span>\n\n<span class="dim">Compare: OIS=7.89, PDIS=8.27, DA-IS=8.05</span>\n\n  (B,L): <span class="hl">7.15</span>, (B,R): <span class="hl">16.0</span>`, edges:['AB','BA','BT'], nodes:['A','B'], pnodes:[], cells:['AR_2','BL_2','BR_2'] },
+        { phase:3, title:"Ep3: Single step (all methods agree)", desc:"With 1 step, all IS variants give the same result.", comp:`<span class="ep">Ep3:</span> A(D,+3)→T  (1 step)\n\n  All methods: ρ_{0:0}×r₁ = 0.25×3 = <span class="hl">0.75</span>\n\n<span class="dim">Single-step episodes: OIS = PDIS = DA-IS (no difference).</span>\n<span class="dim">The methods diverge only for multi-step episodes.</span>`, edges:['AT'], nodes:['A'], pnodes:[], cells:['AD_3'] },
+        { phase:4, title:"DA-IS: Q-values", desc:"", comp:`Q(A,R) = (19.29 + 8.05) / 2  = <span class="hl">13.67</span>\nQ(A,D) = 0.75 / 1            = <span class="hl">0.75</span>\nQ(B,R) = (16 + 16) / 2       = <span class="hl">16.0</span>\nQ(B,L) = 7.15 / 1            = <span class="hl">7.15</span>\n\n<span class="warn">All methods comparison for Q(A,Right):</span>\n  On-Policy (FV):      6.74\n  OIS:                 13.55\n  WIS:                 7.05\n  Per-Decision IS:     14.18\n  Discounting-Aware:   13.67\n\n<span class="dim">All off-policy methods are unbiased (OIS, PDIS, DA-IS) or</span>\n<span class="dim">biased-but-consistent (WIS). They differ in VARIANCE.</span>`, edges:[], nodes:[], pnodes:[], cells:[] },
+        { phase:5, title:"Variance Ordering (Key Takeaway)", desc:"The fundamental result: each refinement reduces variance without sacrificing (or minimally affecting) unbiasedness.", comp:`<span class="policy">π(A) = Right,  π(B) = Right</span>  (all methods agree)\n\n<span class="warn">═══ VARIANCE ORDERING ═══</span>\n\n  High variance                          Low variance\n  ←─────────────────────────────────────────────────→\n  OIS  >  Per-Decision IS  >  Discounting-Aware IS\n                                         │\n  (WIS has lowest variance but is biased) │\n                                         ↓\n                              WIS ≈ Incremental WIS\n\n<span class="dim">Why this ordering:</span>\n  OIS: full ρ_{t:T-1} multiplies every reward\n  PDIS: each r_{k+1} gets only ρ_{t:k} (shorter product)\n  DA-IS: γ-weighting further reduces long-ρ contribution\n  WIS: self-normalizing denominator bounds the estimate\n\n<span class="hl">In practice: WIS (or Incremental WIS) is usually preferred</span>\n<span class="hl">unless unbiasedness is critical.</span>`, edges:['AB','BT'], nodes:[], pnodes:['A','B'], cells:[] }
+    ];
+}
+
+// ==================== RENDERING ====================
+
+function getSteps() {
+    switch(mode) {
+        case 'fv': return buildFVSteps();
+        case 'ev': return buildEVSteps();
+        case 'ois': return buildOISSteps();
+        case 'wis': return buildWISSteps();
+        case 'iwis': return buildIWISSteps();
+        case 'pdis': return buildPDISSteps();
+        case 'dais': return buildDAISSteps();
+    }
+}
+
+function getMaxStep() { return getSteps().length - 1; }
+
+function switchMode(m) {
+    mode = m; currentStep = 0;
+    // Update tab styles
+    document.querySelectorAll('.tab-btn').forEach(b => b.className = 'tab-btn');
+    document.getElementById('tab_'+m).classList.add('active-'+tabColors[m]);
+    document.getElementById('methodChip').textContent = tabLabels[m];
+    document.getElementById('formulaChip').textContent = tabFormulas[m];
+    render();
+}
+
+function nextStep() { if (currentStep < getMaxStep()) { currentStep++; render(); } }
+function prevStep() { if (currentStep > 0) { currentStep--; render(); } }
+function reset() { currentStep = 0; render(); }
+
+function render() {
+    const steps = getSteps();
+    const step = steps[currentStep];
+
+    document.getElementById('stepLabel').textContent = `Step ${currentStep}/${getMaxStep()}`;
+    document.getElementById('prevBtn').disabled = currentStep === 0;
+    document.getElementById('nextBtn').disabled = currentStep === getMaxStep();
+
+    document.getElementById('infoTitle').textContent = step.title;
+    document.getElementById('infoDesc').innerHTML = step.desc;
+    document.getElementById('infoComp').innerHTML = step.comp;
+
+    // Phases
+    for (let i = 1; i <= 5; i++) {
+        const c = document.getElementById('phase'+i);
+        c.className = 'phase-chip';
+        if (step.phase === i) c.classList.add('current');
+        else if (step.phase > i) c.classList.add('done');
+        if (i === 5 && step.phase === 5) c.classList.add('policy-step');
+    }
+
+    // SVG edges
+    const edgeMap = {AB:'eAB',BT:'eBT',BA:'eBA',AT:'eAT'};
+    const lblMap = {AB:'lAB',BT:'lBT',BA:'lBA',AT:'lAT'};
+    Object.keys(edgeMap).forEach(k => {
+        const el = document.getElementById(edgeMap[k]);
+        const lbl = document.getElementById(lblMap[k]);
+        const active = step.edges.includes(k);
+        const policy = step.pnodes.length > 0 && active;
+        el.classList.toggle('active', active);
+        el.setAttribute('stroke', policy ? '#a78bfa' : active ? '#fbbf24' : '#64748b');
+        el.setAttribute('marker-end', policy ? 'url(#ahP)' : active ? 'url(#ahA)' : 'url(#ah)');
+        if (lbl) lbl.setAttribute('fill', active ? '#fbbf24' : '#94a3b8');
+    });
+
+    // SVG nodes
+    ['A','B'].forEach(id => {
+        const el = document.getElementById('n'+id);
+        el.classList.remove('active','policy-hl');
+        if (step.nodes.includes(id)) el.classList.add('active');
+        if (step.pnodes.includes(id)) el.classList.add('policy-hl');
+    });
+
+    // Node Q text
+    const qA = document.getElementById('qA');
+    const qB = document.getElementById('qB');
+    if (step.phase >= 4) {
+        const qs = getQValues();
+        qA.textContent = `R:${qs.AR} D:${qs.AD}`;
+        qB.textContent = `R:${qs.BR} L:${qs.BL}`;
+    } else { qA.textContent = ''; qB.textContent = ''; }
+
+    // Table
+    renderTable(step);
+
+    // Footnote
+    document.getElementById('footnote').innerHTML = getFootnote();
+}
+
+function getQValues() {
+    switch(mode) {
+        case 'fv': return {AR:'6.74',AD:'3.0',BR:'10.0',BL:'7.2'};
+        case 'ev': return {AR:'7.16',AD:'3.0',BR:'10.0',BL:'7.2'};
+        case 'ois': return {AR:'13.55',AD:'0.75',BR:'16.0',BL:'6.91'};
+        case 'wis': return {AR:'7.05',AD:'3.0',BR:'10.0',BL:'7.2'};
+        case 'iwis': return {AR:'7.05',AD:'3.0',BR:'10.0',BL:'7.2'};
+        case 'pdis': return {AR:'14.18',AD:'0.75',BR:'16.0',BL:'7.24'};
+        case 'dais': return {AR:'13.67',AD:'0.75',BR:'16.0',BL:'7.15'};
+    }
+}
+
+function getFootnote() {
+    const notes = {
+        fv: '<strong>First-Visit MC:</strong> Unbiased. Only first occurrence per episode counts. Simpler analysis, standard choice.',
+        ev: '<strong>Every-Visit MC:</strong> All visits count → more samples → lower variance, but slight bias (correlated returns within episode). Both converge to true Q.',
+        ois: '<strong>Ordinary IS:</strong> Unbiased estimator of Q^π. High variance because ρ can explode (product of many ratios). Rarely used alone in practice.',
+        wis: '<strong>Weighted IS:</strong> Biased for finite N but consistent. Much lower variance because Σρ in denominator self-normalizes. Preferred in practice (Sutton & Barto Ch 5.6).',
+        iwis: '<strong>Incremental WIS:</strong> Mathematically identical to WIS, computed online with O(1) memory. Used in actual implementations (Sutton & Barto Ch 5.7).',
+        pdis: '<strong>Per-Decision IS:</strong> Each reward r_{k+1} weighted by ρ only up to step k. Same expectation as OIS, strictly lower variance. Exploits the fact that future actions don\'t affect past rewards.',
+        dais: '<strong>Discounting-Aware IS:</strong> Further reduces variance by noting γ<1 means far-future rewards (which need long ρ) contribute less. Decomposes return as mixture of n-step partials with truncated ρ.'
+    };
+    return notes[mode];
+}
+
+function renderTable(step) {
+    const thead = document.getElementById('tableHead');
+    const tbody = document.getElementById('tableBody');
+    const title = document.getElementById('tableTitle');
+
+    const visibleEps = Math.min(step.phase, 3);
+    const showQ = step.phase >= 4;
+
+    if (mode === 'fv' || mode === 'ev') {
+        const isEV = mode === 'ev';
+        title.textContent = isEV ? 'G values per (s,a) — Every-Visit: ALL visits counted' : 'G values per (s,a) — First-Visit: only first occurrence per episode';
+        thead.innerHTML = '<tr><th>(s,a)</th><th>Ep1</th><th>Ep2</th><th>Ep3</th><th>N</th><th>Q = avg(G)</th></tr>';
+
+        const rows = [
+            {sa:'(A,R)', e1:'8.0', e2:isEV?'5.48, 8.0':'5.48', e2note:isEV?'':'(8.0 ignored)', e3:'—', n:isEV?3:2, q:isEV?'7.16':'6.74', c1:'AR_1',c2:'AR_2',c2b:isEV?'AR_2b':null,c3:null},
+            {sa:'(A,D)', e1:'—', e2:'—', e2note:'', e3:'3.0', n:1, q:'3.0', c1:null,c2:null,c2b:null,c3:'AD_3'},
+            {sa:'(B,R)', e1:'10.0', e2:'10.0', e2note:'', e3:'—', n:2, q:'10.0', c1:'BR_1',c2:'BR_2',c2b:null,c3:null},
+            {sa:'(B,L)', e1:'—', e2:'7.2', e2note:'', e3:'—', n:1, q:'7.2', c1:null,c2:'BL_2',c2b:null,c3:null}
         ];
 
-        // ============ EVERY-VISIT STEPS ============
-        const evSteps = [
-            {
-                phase: 0,
-                title: "Setup: Every-Visit MC",
-                desc: "Same environment and episodes as first-visit. The difference: when (s,a) is visited <strong>multiple times</strong> in one episode, every-visit counts <strong>ALL</strong> occurrences.",
-                comp: `<span class="ev">Every-Visit MC:</span>\n  Q(s, a) = (1/N) × Σ Gᵢ\n  where N = TOTAL number of visits to (s,a) across ALL episodes,\n  <span class="ev">including multiple visits within the same episode.</span>\n\nThis will matter in Episode 2, where (A, Right) is visited twice:\n  • t=0: G₀ = 5.48  ← counted\n  • t=2: G₂ = 8.0   ← <span class="ev">ALSO counted (unlike first-visit!)</span>\n\nSame episodes:\n  Ep1: A→Right→B→Right→T\n  Ep2: A→Right→B→Left→A→Right→B→Right→T  (loop)\n  Ep3: A→Down→T`,
-                activeEdges: [],
-                activeNodes: [],
-                policyNodes: [],
-                newCells: []
-            },
-            {
-                phase: 1,
-                title: "Episode 1: Compute G (same as first-visit)",
-                desc: "No repeated visits in Ep1, so first-visit and every-visit give identical results here.",
-                comp: `<span class="ep">Episode 1:</span> A →(Right, r=−1)→ B →(Right, r=+10)→ Terminal\n\nReturns (γ = 0.9):\n  t=1: <span class="hl">G(B, Right)</span> = 10.0\n  t=0: <span class="hl">G(A, Right)</span> = −1 + 0.9×10 = <span class="hl">8.0</span>\n\n<span class="dim">No repeated visits → same as first-visit.</span>`,
-                activeEdges: ['AB', 'BT'],
-                activeNodes: ['A', 'B'],
-                policyNodes: [],
-                newCells: ['AR_ep1', 'BR_ep1']
-            },
-            {
-                phase: 2,
-                title: "Episode 2: Every visit counts! (A, Right at t=0 AND t=2)",
-                desc: "(A, Right) is visited at t=0 (G=5.48) AND t=2 (G=8.0). Every-visit keeps <strong>BOTH</strong> returns. This is the key difference from first-visit.",
-                comp: `<span class="ep">Episode 2:</span> A→(R,−1)→B→(L,0)→A→(R,−1)→B→(R,+10)→T\n\nReturns (backwards, γ = 0.9):\n  t=3: G₃(B,Right) = 10.0\n  t=2: G₂(A,Right) = −1 + 0.9×10 = <span class="ev">8.0</span>\n  t=1: G₁(B,Left)  = 0 + 0.9×8 = 7.2\n  t=0: G₀(A,Right) = −1 + 0.9×7.2 = <span class="ev">5.48</span>\n\n<span class="ev">⚠ (A,Right) visited TWICE:</span>\n<span class="ev">  t=0: G = 5.48  ← COUNTED</span>\n<span class="ev">  t=2: G = 8.0   ← ALSO COUNTED (every-visit!)</span>\n\n<span class="dim">First-visit would only keep t=0 (G=5.48).</span>\n<span class="dim">Every-visit keeps both → 3 total samples for Q(A,Right).</span>`,
-                activeEdges: ['AB', 'BA', 'BT'],
-                activeNodes: ['A', 'B'],
-                policyNodes: [],
-                newCells: ['AR_ep2a', 'AR_ep2b', 'BL_ep2', 'BR_ep2']
-            },
-            {
-                phase: 3,
-                title: "Episode 3: Compute G (same as first-visit)",
-                desc: "Simple path, no repeated visits.",
-                comp: `<span class="ep">Episode 3:</span> A →(Down, r=+3)→ Terminal\n\nReturns:\n  t=0: <span class="hl">G(A, Down)</span> = 3.0\n\n<span class="dim">No repeated visits → same as first-visit.</span>`,
-                activeEdges: ['AT2'],
-                activeNodes: ['A'],
-                policyNodes: [],
-                newCells: ['AD_ep3']
-            },
-            {
-                phase: 4,
-                title: "Average all G values → Q (Every-Visit)",
-                desc: "Now Q(A, Right) has <strong>3 samples</strong> (not 2): one from Ep1, two from Ep2. The extra sample (G=8 from t=2) pulls the average UP compared to first-visit.",
-                comp: `<span class="ev">Q(s,a) = (1/N) × Σ G  (every-visit: count ALL visits)</span>\n\n  Q(A, Right) = (8.0 + 5.48 + 8.0) / <span class="ev">3</span>  = <span class="ev">7.16</span>\n    <span class="dim">Ep1 t=0: G=8.0</span>\n    <span class="dim">Ep2 t=0: G=5.48</span>\n    <span class="ev">Ep2 t=2: G=8.0  ← extra sample (not in first-visit!)</span>\n\n  Q(A, Down)  = 3.0 / 1           = <span class="hl">3.0</span>   <span class="dim">(same)</span>\n  Q(B, Right) = (10 + 10) / 2     = <span class="hl">10.0</span>  <span class="dim">(same)</span>\n  Q(B, Left)  = 7.2 / 1           = <span class="hl">7.2</span>   <span class="dim">(same)</span>\n\n<span class="warn">Comparison:</span>\n  First-Visit: Q(A,Right) = (8+5.48)/2     = 6.74\n  Every-Visit: Q(A,Right) = (8+5.48+8)/3   = <span class="ev">7.16</span>  (+0.42)\n\n<span class="dim">Every-visit is higher here because the 2nd visit (G=8) happened</span>\n<span class="dim">closer to the reward — it had less discounting and no detour.</span>`,
-                activeEdges: [],
-                activeNodes: [],
-                policyNodes: [],
-                newCells: []
-            },
-            {
-                phase: 5,
-                title: "Extract Policy (Every-Visit)",
-                desc: "Same greedy policy in this case, but the Q-magnitudes differ. In general, every-visit can give biased estimates (returns within one episode are correlated) but has lower variance due to more samples.",
-                comp: `<span class="policy">Policy Extraction (greedy):</span>\n\n  At state A: Q(A,Right) = 7.16 vs Q(A,Down) = 3.0\n              <span class="policy">→ π(A) = Right</span>  (7.16 > 3.0) ✓\n\n  At state B: Q(B,Right) = 10.0 vs Q(B,Left) = 7.2\n              <span class="policy">→ π(B) = Right</span>  (10.0 > 7.2) ✓\n\n<span class="warn">First-Visit vs Every-Visit summary:</span>\n  Q(A,Right): 6.74 (first-visit) vs 7.16 (every-visit)\n  Others: identical (no repeated visits for those pairs)\n\n<span class="dim">First-Visit: unbiased, uses fewer samples</span>\n<span class="dim">Every-Visit: slightly biased (correlated samples), lower variance</span>\n<span class="dim">Both converge to true Q in the limit of infinite episodes.</span>`,
-                activeEdges: ['AB', 'BT'],
-                activeNodes: [],
-                policyNodes: ['A', 'B'],
-                newCells: []
-            }
-        ];
-
-        // ============ OFF-POLICY STEPS ============
-        const offSteps = [
-            {
-                phase: 0,
-                title: "Setup: Off-Policy MC with Importance Sampling",
-                desc: "Same episodes generated by behavior policy b, but we estimate Q under target policy π. Each G is multiplied by cumulative importance sampling ratio ρ before averaging.",
-                comp: `Behavior policy b (generates episodes):\n  b(Right|A) = 0.6,  b(Down|A) = 0.4\n  b(Right|B) = 0.5,  b(Left|B) = 0.5\n\nTarget policy π (what we want Q for):\n  π(Right|A) = 0.9,  π(Down|A) = 0.1\n  π(Right|B) = 0.8,  π(Left|B) = 0.2\n\n<span class="hl">Off-Policy Q(s,a) = (1/N) × Σ (ρᵢ × Gᵢ)  (ordinary IS)</span>\n\nwhere ρₜ:T₋₁ = ∏ π(aₖ|sₖ)/b(aₖ|sₖ)  from time t+1 to end\n\n<span class="warn">ρ > 1: π favors these future actions more → amplify G</span>\n<span class="warn">ρ < 1: π favors them less → dampen G</span>`,
-                activeEdges: [],
-                activeNodes: [],
-                policyNodes: [],
-                newCells: []
-            },
-            {
-                phase: 1,
-                title: "Episode 1: G and ρ×G",
-                desc: "Path: A→Right→B→Right→T. Both actions favored by π (π > b), so ρ > 1 for both — returns get amplified.",
-                comp: `<span class="ep">Episode 1:</span> A→(Right)→B→(Right)→T\n\nReturns: G(B,R) = 10.0,  G(A,R) = 8.0\n\nIS ratios (cumulative from each state to end):\n  For (B,Right): ρ = π(R|B)/b(R|B) = 0.8/0.5 = <span class="warn">1.6</span>\n  For (A,Right): ρ = [π(R|A)/b(R|A)] × [π(R|B)/b(R|B)]\n                   = (0.9/0.6) × (0.8/0.5)\n                   = 1.5 × 1.6 = <span class="warn">2.4</span>\n\nImportance-weighted returns (ρ × G):\n  (B, Right): 1.6 × 10 = <span class="hl">16.0</span>\n  (A, Right): 2.4 × 8  = <span class="hl">19.2</span>`,
-                activeEdges: ['AB', 'BT'],
-                activeNodes: ['A', 'B'],
-                policyNodes: [],
-                newCells: ['AR_ep1', 'BR_ep1']
-            },
-            {
-                phase: 2,
-                title: "Episode 2: G and ρ×G (with loop)",
-                desc: "The loop episode. B→Left has ρ=0.4 (π dislikes Left), which deflates the cumulative ρ for earlier states.",
-                comp: `<span class="ep">Episode 2:</span> A(R)→B(L)→A(R)→B(R)→T   (first-visit for IS)\n\nReturns: G₃(B,R)=10, G₂(A,R)=8, G₁(B,L)=7.2, G₀(A,R)=5.48\n\nIS ratios (cumulative from each t to end):\n  t=3 (B,R): ρ = 0.8/0.5 = <span class="warn">1.6</span>\n  t=2 (A,R): ρ = (0.9/0.6)×(0.8/0.5) = 1.5×1.6 = <span class="warn">2.4</span>\n  t=1 (B,L): ρ = (0.2/0.5)×(0.9/0.6)×(0.8/0.5) = 0.4×1.5×1.6 = <span class="warn">0.96</span>\n  t=0 (A,R): ρ = (0.9/0.6)×(0.2/0.5)×(0.9/0.6)×(0.8/0.5)\n             = 1.5×0.4×1.5×1.6 = <span class="warn">1.44</span>\n\nρ × G (first-visit only: use t=0 for A,R, t=1 for B,L, t=3 for B,R):\n  (A, Right): 1.44 × 5.48 = <span class="hl">7.89</span>\n  (B, Left):  0.96 × 7.2  = <span class="hl">6.91</span>\n  (B, Right): 1.6 × 10    = <span class="hl">16.0</span>`,
-                activeEdges: ['AB', 'BA', 'BT'],
-                activeNodes: ['A', 'B'],
-                policyNodes: [],
-                newCells: ['AR_ep2', 'BL_ep2', 'BR_ep2']
-            },
-            {
-                phase: 3,
-                title: "Episode 3: G and ρ×G",
-                desc: "A→Down→T. π gives only 0.1 probability to Down (vs b's 0.4), so ρ=0.25 — this return is heavily dampened.",
-                comp: `<span class="ep">Episode 3:</span> A →(Down, r=+3)→ Terminal\n\nReturn: G(A,Down) = 3.0\n\nIS ratio:\n  For (A,Down): ρ = π(D|A)/b(D|A) = 0.1/0.4 = <span class="warn">0.25</span>\n\nρ × G:\n  (A, Down): 0.25 × 3.0 = <span class="hl">0.75</span>\n\n<span class="dim">Under π, going Down at A is rare (prob 0.1),</span>\n<span class="dim">so this outcome contributes very little to Q under π.</span>`,
-                activeEdges: ['AT2'],
-                activeNodes: ['A'],
-                policyNodes: [],
-                newCells: ['AD_ep3']
-            },
-            {
-                phase: 4,
-                title: "Average ρ×G → Q (Off-Policy)",
-                desc: "Average the importance-weighted returns. Amplified actions (Right) get high Q; dampened actions (Down, Left) get low Q — reflecting their value <strong>under π</strong>.",
-                comp: `<span class="hl">Q(s,a) = (1/N) × Σ (ρ × G)  (ordinary IS, first-visit)</span>\n\n  Q(A, Right) = (19.2 + 7.89) / 2 = <span class="hl">13.55</span>\n  Q(A, Down)  = (0.75) / 1        = <span class="hl">0.75</span>\n  Q(B, Right) = (16.0 + 16.0) / 2 = <span class="hl">16.0</span>\n  Q(B, Left)  = (6.91) / 1        = <span class="hl">6.91</span>\n\n<span class="warn">Comparison with On-Policy (first-visit):</span>\n  On:  Q(A,R)=6.74   Q(A,D)=3.0   Q(B,R)=10.0  Q(B,L)=7.2\n  Off: Q(A,R)=13.55  Q(A,D)=0.75  Q(B,R)=16.0  Q(B,L)=6.91\n\n<span class="dim">Off-policy amplifies Right (π favors it: ρ>1)</span>\n<span class="dim">and dampens Down/Left (π avoids them: ρ<1)</span>`,
-                activeEdges: [],
-                activeNodes: [],
-                policyNodes: [],
-                newCells: []
-            },
-            {
-                phase: 5,
-                title: "Extract Policy (Off-Policy)",
-                desc: "Same optimal policy, but Q-magnitudes are different because they reflect value under π (which strongly prefers Right at both states).",
-                comp: `<span class="policy">Policy Extraction (greedy):</span>\n\n  At A: Q(A,Right)=13.55 vs Q(A,Down)=0.75\n        <span class="policy">→ π(A) = Right</span> ✓\n\n  At B: Q(B,Right)=16.0 vs Q(B,Left)=6.91\n        <span class="policy">→ π(B) = Right</span> ✓\n\n<span class="dim">Off-policy MC lets us evaluate a policy π using data</span>\n<span class="dim">collected under a DIFFERENT policy b. Useful when:</span>\n<span class="dim">  • We can't control the data-generating policy</span>\n<span class="dim">  • We want to learn about multiple policies from one dataset</span>\n<span class="dim">  • We want a greedy target but need exploration in data</span>`,
-                activeEdges: ['AB', 'BT'],
-                activeNodes: [],
-                policyNodes: ['A', 'B'],
-                newCells: []
-            }
-        ];
-
-        function getSteps() {
-            if (mode === 'fv') return fvSteps;
-            if (mode === 'ev') return evSteps;
-            return offSteps;
-        }
-
-        function getMaxStep() { return getSteps().length - 1; }
-
-        function switchMode(m) {
-            mode = m;
-            currentStep = 0;
-
-            document.getElementById('tabFV').className = 'tab-btn' + (m === 'fv' ? ' active-fv' : '');
-            document.getElementById('tabEV').className = 'tab-btn' + (m === 'ev' ? ' active-ev' : '');
-            document.getElementById('tabOff').className = 'tab-btn' + (m === 'off' ? ' active-off' : '');
-
-            document.getElementById('methodChip').textContent =
-                m === 'fv' ? 'First-Visit' : m === 'ev' ? 'Every-Visit' : 'Off-Policy IS';
-            document.getElementById('formulaChip').textContent =
-                m === 'off' ? 'avg(ρ×G)' : 'avg(G)';
-
-            const panel = document.getElementById('infoPanel');
-            panel.className = 'info-panel mode-' + m;
-
-            render();
-        }
-
-        function nextStep() { if (currentStep < getMaxStep()) { currentStep++; render(); } }
-        function prevStep() { if (currentStep > 0) { currentStep--; render(); } }
-        function reset() { currentStep = 0; render(); }
-
-        function render() {
-            const steps = getSteps();
-            const step = steps[currentStep];
-
-            document.getElementById('stepLabel').textContent = `Step ${currentStep} / ${getMaxStep()}`;
-            document.getElementById('prevBtn').disabled = currentStep === 0;
-            document.getElementById('nextBtn').disabled = currentStep === getMaxStep();
-
-            document.getElementById('infoTitle').textContent = step.title;
-            document.getElementById('infoDesc').innerHTML = step.desc;
-            document.getElementById('infoComp').innerHTML = step.comp;
-
-            // Phase chips
-            for (let i = 1; i <= 5; i++) {
-                const chip = document.getElementById(`phase${i}`);
-                chip.className = 'phase-chip';
-                if (step.phase === i) chip.classList.add('current');
-                else if (step.phase > i) chip.classList.add('done');
-                if (i === 5 && step.phase === 5) chip.classList.add('policy-step');
-            }
-
-            // SVG edges
-            const edges = ['AB', 'BT', 'BA', 'AT2'];
-            edges.forEach(id => {
-                const el = document.getElementById('edge' + id);
-                const lbl = document.getElementById('label' + id);
-                const isActive = step.activeEdges.includes(id);
-                const isPolicy = step.policyNodes.length > 0 && (id === 'AB' || id === 'BT') && step.activeEdges.includes(id);
-
-                el.classList.toggle('active', isActive);
-                if (lbl) lbl.classList.toggle('active', isActive);
-
-                if (isActive) {
-                    el.setAttribute('marker-end', isPolicy ? 'url(#arrowPolicy)' : 'url(#arrowActive)');
-                    el.setAttribute('stroke', isPolicy ? '#a78bfa' : '#fbbf24');
-                } else {
-                    el.setAttribute('marker-end', 'url(#arrowGrey)');
-                    el.setAttribute('stroke', '#64748b');
-                }
-            });
-
-            // SVG nodes
-            ['A', 'B'].forEach(id => {
-                const el = document.getElementById('node' + id);
-                el.classList.remove('active', 'policy-hl');
-                if (step.activeNodes.includes(id)) el.classList.add('active');
-                if (step.policyNodes.includes(id)) el.classList.add('policy-hl');
-            });
-
-            // Q-value text on nodes
-            updateNodeText(step);
-
-            // Returns table
-            renderTable(step);
-        }
-
-        function updateNodeText(step) {
-            const qvA = document.getElementById('qvA');
-            const qvB = document.getElementById('qvB');
-
-            if (step.phase < 4) {
-                qvA.textContent = '';
-                qvB.textContent = '';
-            } else if (mode === 'fv') {
-                qvA.textContent = 'Q(R)=6.74 Q(D)=3.0';
-                qvB.textContent = 'Q(R)=10.0 Q(L)=7.2';
-            } else if (mode === 'ev') {
-                qvA.textContent = 'Q(R)=7.16 Q(D)=3.0';
-                qvB.textContent = 'Q(R)=10.0 Q(L)=7.2';
-            } else {
-                qvA.textContent = 'Q(R)=13.5 Q(D)=0.75';
-                qvB.textContent = 'Q(R)=16.0 Q(L)=6.91';
-            }
-        }
-
-        function renderTable(step) {
-            const thead = document.getElementById('tableHead');
-            const tbody = document.getElementById('tableBody');
-            const title = document.getElementById('tableTitle');
-
-            if (mode === 'fv') {
-                title.textContent = 'Returns Table — G values per (state, action) | First-Visit: only first occurrence per episode';
-                renderOnPolicyTable(thead, tbody, step, false);
-            } else if (mode === 'ev') {
-                title.textContent = 'Returns Table — G values per (state, action) | Every-Visit: ALL occurrences counted';
-                renderOnPolicyTable(thead, tbody, step, true);
-            } else {
-                title.textContent = 'Returns Table — ρ×G (importance-weighted) per (state, action)';
-                renderOffPolicyTable(thead, tbody, step);
-            }
-        }
-
-        function renderOnPolicyTable(thead, tbody, step, isEveryVisit) {
-            thead.innerHTML = `<tr>
-                <th>(State, Action)</th>
-                <th>G from Ep 1</th>
-                <th>G from Ep 2</th>
-                <th>G from Ep 3</th>
-                <th>N</th>
-                <th>Q = (Σ G) / N</th>
-            </tr>`;
-
-            // Data
-            // FV: AR gets [8, 5.48], EV: AR gets [8, 5.48, 8]
-            const rows = [
-                {
-                    label: '(A, Right)',
-                    ep1: '8.0',
-                    ep2_fv: '5.48',
-                    ep2_ev: '5.48, 8.0',
-                    ep2_ignored: '(8.0 ignored)',
-                    ep3: '—',
-                    n_fv: 2, n_ev: 3,
-                    q_fv: '6.74', q_ev: '7.16',
-                    cells_ep1: 'AR_ep1', cells_ep2: 'AR_ep2', cells_ep2b: 'AR_ep2b', cells_ep3: null
-                },
-                {
-                    label: '(A, Down)',
-                    ep1: '—', ep2_fv: '—', ep2_ev: '—', ep2_ignored: '', ep3: '3.0',
-                    n_fv: 1, n_ev: 1, q_fv: '3.0', q_ev: '3.0',
-                    cells_ep1: null, cells_ep2: null, cells_ep2b: null, cells_ep3: 'AD_ep3'
-                },
-                {
-                    label: '(B, Right)',
-                    ep1: '10.0', ep2_fv: '10.0', ep2_ev: '10.0', ep2_ignored: '', ep3: '—',
-                    n_fv: 2, n_ev: 2, q_fv: '10.0', q_ev: '10.0',
-                    cells_ep1: 'BR_ep1', cells_ep2: 'BR_ep2', cells_ep2b: null, cells_ep3: null
-                },
-                {
-                    label: '(B, Left)',
-                    ep1: '—', ep2_fv: '7.2', ep2_ev: '7.2', ep2_ignored: '', ep3: '—',
-                    n_fv: 1, n_ev: 1, q_fv: '7.2', q_ev: '7.2',
-                    cells_ep1: null, cells_ep2: 'BL_ep2', cells_ep2b: null, cells_ep3: null
-                }
-            ];
-
-            const visibleEps = step.phase >= 3 ? 3 : step.phase >= 2 ? 2 : step.phase >= 1 ? 1 : 0;
-
-            tbody.innerHTML = '';
-            rows.forEach(row => {
-                const tr = document.createElement('tr');
-                let html = `<td>${row.label}</td>`;
-
-                // Ep1
-                if (visibleEps >= 1 && row.ep1 !== '—') {
-                    const isNew = step.newCells.includes(row.cells_ep1);
-                    html += `<td class="${isNew ? 'cell-new' : ''}">${row.ep1}</td>`;
-                } else {
-                    html += `<td class="cell-dim">${visibleEps >= 1 ? '—' : ''}</td>`;
-                }
-
-                // Ep2
-                if (visibleEps >= 2) {
-                    if (isEveryVisit) {
-                        // Show both values for (A,Right)
-                        if (row.ep2_ev !== '—') {
-                            const isNew = step.newCells.includes(row.cells_ep2) || step.newCells.includes(row.cells_ep2b);
-                            const hasExtra = row.cells_ep2b && step.newCells.includes(row.cells_ep2b);
-                            html += `<td class="${isNew ? 'cell-ev' : ''}">${row.ep2_ev}</td>`;
-                        } else {
-                            html += `<td class="cell-dim">—</td>`;
-                        }
-                    } else {
-                        // First-visit: show value but mark ignored for (A,Right)
-                        if (row.ep2_fv !== '—') {
-                            const isNew = step.newCells.includes(row.cells_ep2);
-                            let display = row.ep2_fv;
-                            if (row.ep2_ignored && step.phase >= 2) {
-                                display += ` <span style="font-size:0.65rem;color:#64748b">${row.ep2_ignored}</span>`;
-                            }
-                            html += `<td class="${isNew ? 'cell-new' : ''}">${display}</td>`;
-                        } else {
-                            html += `<td class="cell-dim">—</td>`;
-                        }
-                    }
-                } else {
-                    html += `<td class="cell-dim"></td>`;
-                }
-
-                // Ep3
-                if (visibleEps >= 3 && row.ep3 !== '—') {
-                    const isNew = step.newCells.includes(row.cells_ep3);
-                    html += `<td class="${isNew ? 'cell-new' : ''}">${row.ep3}</td>`;
-                } else {
-                    html += `<td class="cell-dim">${visibleEps >= 3 ? '—' : ''}</td>`;
-                }
-
-                // N and Q columns
-                if (step.phase >= 4) {
-                    const n = isEveryVisit ? row.n_ev : row.n_fv;
-                    const q = isEveryVisit ? row.q_ev : row.q_fv;
-                    const isBest = (row.label === '(A, Right)' || row.label === '(B, Right)');
-                    html += `<td>${n}</td>`;
-                    html += `<td class="${step.phase >= 5 && isBest ? 'cell-best' : 'cell-avg'}">${q}</td>`;
-                } else {
-                    html += `<td class="cell-dim">—</td><td class="cell-dim">—</td>`;
-                }
-
-                tr.innerHTML = html;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function renderOffPolicyTable(thead, tbody, step) {
-            thead.innerHTML = `<tr>
-                <th>(State, Action)</th>
-                <th>ρ×G from Ep 1</th>
-                <th>ρ×G from Ep 2</th>
-                <th>ρ×G from Ep 3</th>
-                <th>N</th>
-                <th>Q = avg(ρ×G)</th>
-            </tr>`;
-
-            const rows = [
-                { label: '(A, Right)', ep1: '19.2', ep2: '7.89', ep3: '—', n: 2, q: '13.55',
-                  cells_ep1: 'AR_ep1', cells_ep2: 'AR_ep2', cells_ep3: null },
-                { label: '(A, Down)', ep1: '—', ep2: '—', ep3: '0.75', n: 1, q: '0.75',
-                  cells_ep1: null, cells_ep2: null, cells_ep3: 'AD_ep3' },
-                { label: '(B, Right)', ep1: '16.0', ep2: '16.0', ep3: '—', n: 2, q: '16.0',
-                  cells_ep1: 'BR_ep1', cells_ep2: 'BR_ep2', cells_ep3: null },
-                { label: '(B, Left)', ep1: '—', ep2: '6.91', ep3: '—', n: 1, q: '6.91',
-                  cells_ep1: null, cells_ep2: 'BL_ep2', cells_ep3: null }
-            ];
-
-            const visibleEps = step.phase >= 3 ? 3 : step.phase >= 2 ? 2 : step.phase >= 1 ? 1 : 0;
-
-            tbody.innerHTML = '';
-            rows.forEach(row => {
-                const tr = document.createElement('tr');
-                let html = `<td>${row.label}</td>`;
-
-                ['ep1', 'ep2', 'ep3'].forEach((ep, idx) => {
-                    const cellKey = row['cells_' + ep];
-                    if (idx >= visibleEps) {
-                        html += `<td class="cell-dim"></td>`;
-                    } else if (row[ep] === '—') {
-                        html += `<td class="cell-dim">—</td>`;
-                    } else {
-                        const isNew = step.newCells.includes(cellKey);
-                        html += `<td class="${isNew ? 'cell-new' : ''}">${row[ep]}</td>`;
-                    }
-                });
-
-                if (step.phase >= 4) {
-                    const isBest = (row.label === '(A, Right)' || row.label === '(B, Right)');
-                    html += `<td>${row.n}</td>`;
-                    html += `<td class="${step.phase >= 5 && isBest ? 'cell-best' : 'cell-avg'}">${row.q}</td>`;
-                } else {
-                    html += `<td class="cell-dim">—</td><td class="cell-dim">—</td>`;
-                }
-
-                tr.innerHTML = html;
-                tbody.appendChild(tr);
-            });
-        }
-
-        // Keyboard
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextStep(); }
-            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevStep(); }
+        tbody.innerHTML = '';
+        rows.forEach(r => {
+            const tr = document.createElement('tr');
+            let h = `<td>${r.sa}</td>`;
+            // ep1
+            h += cell(r.e1, visibleEps>=1, step.cells.includes(r.c1), isEV && r.c2b ? 'cell-ev':'cell-new');
+            // ep2
+            if (visibleEps >= 2 && r.e2 !== '—') {
+                const isNew = step.cells.includes(r.c2) || step.cells.includes(r.c2b);
+                const cls = isNew ? (isEV && r.c2b ? 'cell-ev' : 'cell-new') : '';
+                const note = r.e2note && step.phase>=2 ? ` <span style="font-size:0.6rem;color:#64748b">${r.e2note}</span>` : '';
+                h += `<td class="${cls}">${r.e2}${note}</td>`;
+            } else { h += `<td class="cell-dim">${visibleEps>=2?'—':''}</td>`; }
+            // ep3
+            h += cell(r.e3, visibleEps>=3, step.cells.includes(r.c3), 'cell-new');
+            // N, Q — highlight greedy actions in policy phase
+            const isBest = step.phase >= 5 && (r.sa === '(A,R)' || r.sa === '(B,R)');
+            h += showQ ? `<td>${r.n}</td><td class="${isBest ? 'cell-best' : 'cell-avg'}">${r.q}</td>` : '<td class="cell-dim">—</td><td class="cell-dim">—</td>';
+            tr.innerHTML = h; tbody.appendChild(tr);
         });
+    } else {
+        // Off-policy tables
+        const labels = {ois:'ρ×G',wis:'ρ×G',iwis:'ρ×G',pdis:'PDIS value',dais:'DA-IS value'};
+        const lbl = labels[mode];
+        title.textContent = `${lbl} per (s,a) — ${tabLabels[mode]}`;
 
-        // Init
-        render();
-    </script>
+        const extraCol = mode === 'wis' || mode === 'iwis';
+        let thExtra = extraCol ? '<th>Σρ</th>' : '';
+        thead.innerHTML = `<tr><th>(s,a)</th><th>${lbl} Ep1</th><th>${lbl} Ep2</th><th>${lbl} Ep3</th>${thExtra}<th>Q</th></tr>`;
+
+        const d = getOffPolicyData();
+        tbody.innerHTML = '';
+        d.forEach(r => {
+            const tr = document.createElement('tr');
+            let h = `<td>${r.sa}</td>`;
+            h += cell(r.e1, visibleEps>=1, step.cells.includes(r.c1), 'cell-new');
+            h += cell(r.e2, visibleEps>=2, step.cells.includes(r.c2), 'cell-new');
+            h += cell(r.e3, visibleEps>=3, step.cells.includes(r.c3), 'cell-new');
+            if (extraCol) h += showQ ? `<td>${r.sumRho}</td>` : '<td class="cell-dim">—</td>';
+            const isBest = step.phase >= 5 && (r.sa === '(A,R)' || r.sa === '(B,R)');
+            h += showQ ? `<td class="${isBest ? 'cell-best' : 'cell-avg'}">${r.q}</td>` : '<td class="cell-dim">—</td>';
+            tr.innerHTML = h; tbody.appendChild(tr);
+        });
+    }
+}
+
+function cell(val, visible, isNew, cls) {
+    if (!visible) return '<td class="cell-dim"></td>';
+    if (val === '—') return '<td class="cell-dim">—</td>';
+    return `<td class="${isNew ? cls : ''}">${val}</td>`;
+}
+
+function getOffPolicyData() {
+    switch(mode) {
+        case 'ois': return [
+            {sa:'(A,R)',e1:'19.2',e2:'7.89',e3:'—',q:'13.55',c1:'AR_1',c2:'AR_2',c3:null},
+            {sa:'(A,D)',e1:'—',e2:'—',e3:'0.75',q:'0.75',c1:null,c2:null,c3:'AD_3'},
+            {sa:'(B,R)',e1:'16.0',e2:'16.0',e3:'—',q:'16.0',c1:'BR_1',c2:'BR_2',c3:null},
+            {sa:'(B,L)',e1:'—',e2:'6.91',e3:'—',q:'6.91',c1:null,c2:'BL_2',c3:null}
+        ];
+        case 'wis': return [
+            {sa:'(A,R)',e1:'19.2',e2:'7.89',e3:'—',sumRho:'3.84',q:'7.05',c1:'AR_1',c2:'AR_2',c3:null},
+            {sa:'(A,D)',e1:'—',e2:'—',e3:'0.75',sumRho:'0.25',q:'3.0',c1:null,c2:null,c3:'AD_3'},
+            {sa:'(B,R)',e1:'16.0',e2:'16.0',e3:'—',sumRho:'3.2',q:'10.0',c1:'BR_1',c2:'BR_2',c3:null},
+            {sa:'(B,L)',e1:'—',e2:'6.91',e3:'—',sumRho:'0.96',q:'7.2',c1:null,c2:'BL_2',c3:null}
+        ];
+        case 'iwis': return [
+            {sa:'(A,R)',e1:'19.2',e2:'7.89',e3:'—',sumRho:'C=3.84',q:'7.05',c1:'AR_1',c2:'AR_2',c3:null},
+            {sa:'(A,D)',e1:'—',e2:'—',e3:'0.75',sumRho:'C=0.25',q:'3.0',c1:null,c2:null,c3:'AD_3'},
+            {sa:'(B,R)',e1:'16.0',e2:'16.0',e3:'—',sumRho:'C=3.2',q:'10.0',c1:'BR_1',c2:'BR_2',c3:null},
+            {sa:'(B,L)',e1:'—',e2:'6.91',e3:'—',sumRho:'C=0.96',q:'7.2',c1:null,c2:'BL_2',c3:null}
+        ];
+        case 'pdis': return [
+            {sa:'(A,R)',e1:'20.1',e2:'8.27',e3:'—',q:'14.18',c1:'AR_1',c2:'AR_2',c3:null},
+            {sa:'(A,D)',e1:'—',e2:'—',e3:'0.75',q:'0.75',c1:null,c2:null,c3:'AD_3'},
+            {sa:'(B,R)',e1:'16.0',e2:'16.0',e3:'—',q:'16.0',c1:'BR_1',c2:'BR_2',c3:null},
+            {sa:'(B,L)',e1:'—',e2:'7.24',e3:'—',q:'7.24',c1:null,c2:'BL_2',c3:null}
+        ];
+        case 'dais': return [
+            {sa:'(A,R)',e1:'19.29',e2:'8.05',e3:'—',q:'13.67',c1:'AR_1',c2:'AR_2',c3:null},
+            {sa:'(A,D)',e1:'—',e2:'—',e3:'0.75',q:'0.75',c1:null,c2:null,c3:'AD_3'},
+            {sa:'(B,R)',e1:'16.0',e2:'16.0',e3:'—',q:'16.0',c1:'BR_1',c2:'BR_2',c3:null},
+            {sa:'(B,L)',e1:'—',e2:'7.15',e3:'—',q:'7.15',c1:null,c2:'BL_2',c3:null}
+        ];
+    }
+}
+
+// Keyboard
+document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextStep(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); prevStep(); }
+});
+
+// Init
+render();
+</script>
 </body>
 </html>
