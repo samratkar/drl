@@ -16,7 +16,7 @@
         }
 
         .container {
-            max-width: 1100px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
@@ -70,7 +70,7 @@
         /* Given info */
         .info-bar {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
             gap: 10px;
             margin-bottom: 20px;
         }
@@ -96,7 +96,7 @@
         .diagram-area {
             position: relative;
             width: 100%;
-            height: 180px;
+            height: 200px;
             margin: 10px 0 20px;
             background: #1e293b;
             border-radius: 12px;
@@ -114,96 +114,73 @@
             justify-content: center;
             border: 3px solid #475569;
             transition: all 0.4s ease;
-            top: 50px;
         }
 
         .state-node .label { font-weight: 700; font-size: 1rem; color: #fff; }
         .state-node .q-val {
-            font-size: 0.72rem;
-            margin-top: 3px;
+            font-size: 0.68rem;
+            margin-top: 2px;
             font-family: 'Courier New', monospace;
             color: #94a3b8;
             transition: all 0.3s;
+            text-align: center;
+            line-height: 1.3;
         }
 
         .state-node.active {
             border-color: #fbbf24;
             box-shadow: 0 0 25px rgba(251, 191, 36, 0.4);
-            transform: scale(1.1);
+            transform: scale(1.05);
         }
 
-        .state-node.updating {
-            border-color: #22c55e;
-            box-shadow: 0 0 25px rgba(34, 197, 94, 0.5);
-            animation: glow 1s infinite;
-        }
-
-        @keyframes glow {
-            0%, 100% { box-shadow: 0 0 15px rgba(34, 197, 94, 0.3); }
-            50% { box-shadow: 0 0 35px rgba(34, 197, 94, 0.6); }
+        .state-node.policy-extracted {
+            border-color: #a78bfa;
+            box-shadow: 0 0 25px rgba(167, 139, 250, 0.5);
         }
 
         .state-node.terminal { border-style: dashed; }
 
-        #sn0 { left: 8%; background: rgba(99, 102, 241, 0.2); }
-        #sn1 { left: 30%; background: rgba(59, 130, 246, 0.2); }
-        #sn2 { left: 52%; background: rgba(16, 185, 129, 0.2); }
-        #sn3 { left: 74%; background: rgba(239, 68, 68, 0.15); }
+        /* Node positions */
+        #snA { left: 10%; top: 60px; background: rgba(99, 102, 241, 0.2); }
+        #snB { left: 42%; top: 60px; background: rgba(59, 130, 246, 0.2); }
+        #snT1 { left: 74%; top: 25px; background: rgba(239, 68, 68, 0.15); }
+        #snT2 { left: 74%; top: 110px; background: rgba(239, 68, 68, 0.15); }
+        #snT3 { left: 10%; top: 140px; background: rgba(239, 68, 68, 0.15); width: 60px; height: 40px; border-radius: 8px; }
 
-        .arrow-line {
+        /* Arrows */
+        .arrow {
             position: absolute;
-            top: 88px;
-            height: 3px;
-            background: #475569;
+            font-size: 0.72rem;
+            color: #64748b;
             transition: all 0.4s;
         }
 
-        .arrow-line.active { background: #fbbf24; height: 4px; }
+        .arrow.active { color: #fbbf24; font-weight: 700; }
 
-        .arrow-line::after {
-            content: '';
+        .arrow-path {
             position: absolute;
-            right: -7px;
-            top: -4px;
-            border: 5px solid transparent;
-            border-left-color: inherit;
+            background: #475569;
+            height: 3px;
+            transition: all 0.4s;
         }
 
-        .arrow-line.active::after { border-left-color: #fbbf24; }
+        .arrow-path.active { background: #fbbf24; height: 4px; }
 
-        .arrow-label {
-            position: absolute;
-            top: 25px;
-            font-size: 0.7rem;
-            color: #64748b;
-            white-space: nowrap;
-        }
+        /* A → B (horizontal) */
+        #arAB { left: 19%; top: 98px; width: 23%; }
+        #alAB { left: 25%; top: 80px; }
 
-        #ar0 { left: 17%; width: 13%; }
-        #ar1 { left: 39%; width: 13%; }
-        #ar2 { left: 61%; width: 13%; }
-        #al0 { left: 23%; }
-        #al1 { left: 45%; }
-        #al2 { left: 67%; }
+        /* B → T1 (upper right) */
+        #arBT1 { left: 54%; top: 58px; width: 20%; transform: rotate(-15deg); }
+        #alBT1 { left: 58%; top: 30px; }
 
-        /* Agent */
-        .agent {
-            position: absolute;
-            top: 15px;
-            width: 28px;
-            height: 28px;
-            background: #fbbf24;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.85rem;
-            transition: left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-            box-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
-            opacity: 0;
-        }
+        /* B → T2 (lower right) */
+        #arBT2 { left: 54%; top: 120px; width: 20%; transform: rotate(15deg); }
+        #alBT2 { left: 58%; top: 132px; }
 
-        .agent.visible { opacity: 1; }
+        /* A → T3 (down) */
+        #arAT3 { left: 14%; top: 142px; width: 3px; height: 18px; }
+        #alAT3 { left: 3%; top: 148px; }
 
         /* Controls */
         .controls {
@@ -238,9 +215,33 @@
             font-size: 0.9rem;
             color: #94a3b8;
             font-weight: 600;
-            min-width: 90px;
+            min-width: 110px;
             text-align: center;
         }
+
+        /* Phase indicator */
+        .phase-bar {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin: 12px 0;
+            flex-wrap: wrap;
+        }
+
+        .phase-chip {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            border: 2px solid #334155;
+            background: #1e293b;
+            color: #64748b;
+            transition: all 0.3s;
+        }
+
+        .phase-chip.current { border-color: #fbbf24; color: #fbbf24; background: rgba(251, 191, 36, 0.1); }
+        .phase-chip.done { border-color: #22c55e; color: #22c55e; background: rgba(34, 197, 94, 0.1); }
+        .phase-chip.policy-step { border-color: #a78bfa; color: #a78bfa; background: rgba(167, 139, 250, 0.1); }
 
         /* Info panel */
         .info-panel {
@@ -249,7 +250,7 @@
             padding: 22px;
             margin: 16px 0;
             border: 1px solid #334155;
-            min-height: 160px;
+            min-height: 140px;
             transition: border-color 0.3s;
         }
 
@@ -274,7 +275,7 @@
             border-radius: 8px;
             padding: 14px 16px;
             font-family: 'Courier New', monospace;
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             color: #e2e8f0;
             line-height: 1.9;
             white-space: pre-wrap;
@@ -283,24 +284,27 @@
         .computation-display .hl { color: #22c55e; font-weight: 700; }
         .computation-display .dim { color: #4b5563; }
         .computation-display .warn { color: #fb923c; font-weight: 700; }
+        .computation-display .ep { color: #a78bfa; font-weight: 700; }
+        .computation-display .policy { color: #38bdf8; font-weight: 700; }
 
-        /* Timeline */
-        .timeline-section h3 {
-            font-size: 0.85rem;
+        /* Returns Table (the main pedagogical table) */
+        .returns-section h3 {
+            font-size: 0.9rem;
             color: #94a3b8;
             margin: 24px 0 10px;
         }
 
-        .timeline-table {
+        .returns-table {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+            margin-bottom: 16px;
         }
 
-        .timeline-table thead th {
+        .returns-table thead th {
             background: #1e293b;
             padding: 10px 12px;
             text-align: center;
@@ -309,7 +313,7 @@
             font-weight: 600;
         }
 
-        .timeline-table tbody td {
+        .returns-table tbody td {
             padding: 9px 12px;
             text-align: center;
             font-size: 0.82rem;
@@ -319,17 +323,17 @@
             transition: all 0.3s;
         }
 
-        .timeline-table tbody td:first-child {
+        .returns-table tbody td:first-child {
             font-family: 'Segoe UI', sans-serif;
             font-weight: 600;
             color: #cbd5e1;
         }
 
-        .timeline-table .row-active { background: #1e293b !important; }
-        .timeline-table .row-future { opacity: 0.3; }
-        .timeline-table .cell-changed { color: #22c55e; font-weight: 700; background: rgba(34, 197, 94, 0.08) !important; }
-        .timeline-table .cell-unchanged { color: #4b5563; }
-        .timeline-table .cell-hidden { color: transparent; }
+        .returns-table .cell-new { color: #22c55e; font-weight: 700; background: rgba(34, 197, 94, 0.08) !important; }
+        .returns-table .cell-avg { color: #a78bfa; font-weight: 700; background: rgba(167, 139, 250, 0.1) !important; }
+        .returns-table .cell-best { color: #fbbf24; font-weight: 700; background: rgba(251, 191, 36, 0.1) !important; }
+        .returns-table .cell-dim { color: #4b5563; }
+        .returns-table .cell-warn { color: #fb923c; }
 
         /* Legend */
         .legend {
@@ -356,31 +360,8 @@
 
         .legend-dot.yellow { background: #fbbf24; }
         .legend-dot.green { background: #22c55e; }
+        .legend-dot.purple { background: #a78bfa; }
         .legend-dot.grey { background: #475569; }
-
-        /* Importance sampling display */
-        .rho-display {
-            display: flex;
-            gap: 10px;
-            margin: 12px 0;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .rho-chip {
-            background: rgba(249, 115, 22, 0.15);
-            border: 1px solid #f97316;
-            border-radius: 8px;
-            padding: 8px 14px;
-            text-align: center;
-            font-size: 0.78rem;
-            transition: all 0.3s;
-            opacity: 0.3;
-        }
-
-        .rho-chip.revealed { opacity: 1; }
-        .rho-chip .rho-label { color: #fb923c; font-weight: 600; display: block; }
-        .rho-chip .rho-val { color: #e2e8f0; font-family: monospace; margin-top: 2px; display: block; }
 
         /* Footnote */
         .footnote {
@@ -411,12 +392,51 @@
             padding: 1px 5px;
             font-size: 0.7rem;
         }
+
+        /* Policy arrow overlay */
+        .policy-arrow {
+            position: absolute;
+            font-size: 1.4rem;
+            color: #a78bfa;
+            opacity: 0;
+            transition: opacity 0.5s;
+            text-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
+        }
+
+        .policy-arrow.visible { opacity: 1; }
+
+        #policyA { left: 22%; top: 65px; }
+        #policyB { left: 54%; top: 38px; }
+
+        /* IS ratios display */
+        .rho-display {
+            display: flex;
+            gap: 10px;
+            margin: 12px 0;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .rho-chip {
+            background: rgba(249, 115, 22, 0.15);
+            border: 1px solid #f97316;
+            border-radius: 8px;
+            padding: 8px 14px;
+            text-align: center;
+            font-size: 0.73rem;
+            transition: all 0.3s;
+            opacity: 0.3;
+        }
+
+        .rho-chip.revealed { opacity: 1; }
+        .rho-chip .rho-label { color: #fb923c; font-weight: 600; display: block; }
+        .rho-chip .rho-val { color: #e2e8f0; font-family: monospace; margin-top: 2px; display: block; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Monte Carlo Methods – Interactive</h1>
-        <p class="subtitle">Step through On-Policy and Off-Policy MC updates to see how Q-values change</p>
+        <p class="subtitle">Generate episodes → Collect returns G → Average G to get Q → Extract policy</p>
 
         <!-- Mode tabs -->
         <div class="tabs">
@@ -427,60 +447,83 @@
         <!-- Given info -->
         <div class="info-bar">
             <div class="info-chip">γ (discount)<strong>0.9</strong></div>
-            <div class="info-chip">α (learning rate)<strong>0.5</strong></div>
-            <div class="info-chip">Initial Q-values<strong>All = 0</strong></div>
+            <div class="info-chip">Method<strong id="methodChip">First-Visit MC</strong></div>
+            <div class="info-chip">Episodes<strong>3</strong></div>
+            <div class="info-chip">Q formula<strong id="formulaChip">avg(G)</strong></div>
+        </div>
+
+        <!-- Phase progress -->
+        <div class="phase-bar">
+            <div class="phase-chip" id="phase1">① Ep 1: Compute G</div>
+            <div class="phase-chip" id="phase2">② Ep 2: Compute G</div>
+            <div class="phase-chip" id="phase3">③ Ep 3: Compute G</div>
+            <div class="phase-chip" id="phase4">④ Average G → Q</div>
+            <div class="phase-chip" id="phase5">⑤ Extract Policy</div>
         </div>
 
         <!-- Legend -->
         <div class="legend">
-            <div class="legend-item"><div class="legend-dot yellow"></div> Agent position</div>
-            <div class="legend-item"><div class="legend-dot green"></div> Q-value being updated</div>
-            <div class="legend-item"><div class="legend-dot grey"></div> Unchanged</div>
+            <div class="legend-item"><div class="legend-dot yellow"></div> Current episode path</div>
+            <div class="legend-item"><div class="legend-dot green"></div> New G value added</div>
+            <div class="legend-item"><div class="legend-dot purple"></div> Q computed / Policy</div>
         </div>
 
         <!-- State diagram -->
         <div class="diagram-area">
-            <div class="agent" id="agent">🤖</div>
-
-            <div class="state-node" id="sn0">
-                <span class="label">S₀</span>
-                <span class="q-val" id="qv0">Q(R)=0</span>
+            <div class="state-node" id="snA">
+                <span class="label">A</span>
+                <span class="q-val" id="qvA"></span>
             </div>
-            <div class="arrow-line" id="ar0"></div>
-            <span class="arrow-label" id="al0">R, r=+1</span>
 
-            <div class="state-node" id="sn1">
-                <span class="label">S₁</span>
-                <span class="q-val" id="qv1">Q(L)=0</span>
+            <div class="state-node" id="snB">
+                <span class="label">B</span>
+                <span class="q-val" id="qvB"></span>
             </div>
-            <div class="arrow-line" id="ar1"></div>
-            <span class="arrow-label" id="al1">L, r=+3</span>
 
-            <div class="state-node" id="sn2">
-                <span class="label">S₂</span>
-                <span class="q-val" id="qv2">Q(R)=0</span>
-            </div>
-            <div class="arrow-line" id="ar2"></div>
-            <span class="arrow-label" id="al2">R, r=+5</span>
-
-            <div class="state-node terminal" id="sn3">
-                <span class="label">S<sub>T</sub></span>
+            <div class="state-node terminal" id="snT1">
+                <span class="label">T</span>
                 <span class="q-val">terminal</span>
             </div>
+
+            <div class="state-node terminal" id="snT2">
+                <span class="label">T</span>
+                <span class="q-val">terminal</span>
+            </div>
+
+            <div class="state-node terminal" id="snT3">
+                <span class="label">T</span>
+            </div>
+
+            <!-- Arrows -->
+            <div class="arrow-path" id="arAB"></div>
+            <span class="arrow" id="alAB">Right, r=−1</span>
+
+            <div class="arrow-path" id="arBT1"></div>
+            <span class="arrow" id="alBT1">Right, r=+10</span>
+
+            <div class="arrow-path" id="arBT2"></div>
+            <span class="arrow" id="alBT2">Down, r=+2</span>
+
+            <div class="arrow-path" id="arAT3"></div>
+            <span class="arrow" id="alAT3">Down, r=+3</span>
+
+            <!-- Policy arrows (shown at end) -->
+            <span class="policy-arrow" id="policyA">→</span>
+            <span class="policy-arrow" id="policyB">→</span>
         </div>
 
-        <!-- Importance Sampling Ratios (off-policy only) -->
+        <!-- IS ratios (off-policy only) -->
         <div class="rho-display" id="rhoDisplay" style="display:none;">
-            <div class="rho-chip" id="rho0"><span class="rho-label">ρ₀ (S₀,R)</span><span class="rho-val">π/b = 1.0/0.8 = 1.25</span></div>
-            <div class="rho-chip" id="rho1"><span class="rho-label">ρ₁ (S₁,L)</span><span class="rho-val">π/b = 1.0/0.8 = 1.25</span></div>
-            <div class="rho-chip" id="rho2"><span class="rho-label">ρ₂ (S₂,R)</span><span class="rho-val">π/b = 1.0/0.8 = 1.25</span></div>
-            <div class="rho-chip" id="rhoCum"><span class="rho-label">Cumulative ρ</span><span class="rho-val" id="rhoCumVal">—</span></div>
+            <div class="rho-chip" id="rho0"><span class="rho-label">π(R|A)/b(R|A)</span><span class="rho-val">0.8/0.6 = 1.333</span></div>
+            <div class="rho-chip" id="rho1"><span class="rho-label">π(D|A)/b(D|A)</span><span class="rho-val">0.2/0.4 = 0.5</span></div>
+            <div class="rho-chip" id="rho2"><span class="rho-label">π(R|B)/b(R|B)</span><span class="rho-val">0.9/0.5 = 1.8</span></div>
+            <div class="rho-chip" id="rho3"><span class="rho-label">π(D|B)/b(D|B)</span><span class="rho-val">0.1/0.5 = 0.2</span></div>
         </div>
 
         <!-- Controls -->
         <div class="controls">
             <button class="btn-prev" id="prevBtn" disabled onclick="prevStep()">← Previous</button>
-            <span class="step-label" id="stepLabel">Step 0 / 5</span>
+            <span class="step-label" id="stepLabel">Step 0 / 6</span>
             <button class="btn-next" id="nextBtn" onclick="nextStep()">Next Step →</button>
             <button class="btn-reset" onclick="reset()">Reset</button>
         </div>
@@ -488,201 +531,198 @@
 
         <!-- Info Panel -->
         <div class="info-panel on-mode" id="infoPanel">
-            <h3 id="infoTitle">Episode Generated</h3>
-            <p class="desc" id="infoDesc">The agent follows the behavior policy and generates an episode: S₀ →(R, +1)→ S₁ →(L, +3)→ S₂ →(R, +5)→ S_T. Now we'll compute returns and update Q-values.</p>
-            <div class="computation-display" id="infoComp">Episode: S₀ →(R, r=+1)→ S₁ →(L, r=+3)→ S₂ →(R, r=+5)→ Terminal
-
-Actions taken: R, L, R
-Rewards received: +1, +3, +5</div>
+            <h3 id="infoTitle"></h3>
+            <p class="desc" id="infoDesc"></p>
+            <div class="computation-display" id="infoComp"></div>
         </div>
 
-        <!-- Timeline Table -->
-        <div class="timeline-section">
-            <h3>Q-Value History</h3>
-            <table class="timeline-table">
-                <thead>
-                    <tr>
-                        <th>Step</th>
-                        <th>Q(S₀, R)</th>
-                        <th>Q(S₁, L)</th>
-                        <th>Q(S₂, R)</th>
-                        <th>What Changed</th>
-                    </tr>
+        <!-- Returns Collection Table -->
+        <div class="returns-section">
+            <h3 id="tableTitle">Returns Table — G values collected per (state, action) pair</h3>
+            <table class="returns-table" id="returnsTable">
+                <thead id="tableHead">
                 </thead>
-                <tbody id="timelineBody">
+                <tbody id="tableBody">
                 </tbody>
             </table>
         </div>
 
-        <div class="footnote">
-            <strong>Key Observation:</strong> In Monte Carlo, we first generate the <em>entire episode</em>, then compute returns backwards, then update Q-values. Unlike TD methods, MC must wait until the episode ends. In off-policy mode, watch how the importance sampling ratio ρ scales the return — amplifying it when π would have taken the same actions more often than b did.
+        <div class="footnote" id="footnote">
+            <strong>MC Process:</strong> ① Generate complete episodes → ② Compute return G backwards from terminal for each visited (s,a) → ③ Collect G values across all episodes → ④ <strong>Q(s,a) = average of all G values</strong> for that (s,a) pair → ⑤ Extract greedy policy: π(s) = argmax<sub>a</sub> Q(s,a). The key insight: each episode gives one G sample — only averaging over many episodes gives reliable Q estimates.
         </div>
     </div>
 
     <script>
-        let mode = 'on'; // 'on' or 'off'
+        let mode = 'on';
         let currentStep = 0;
 
         const gamma = 0.9;
-        const alpha = 0.5;
 
-        // Returns computed backwards
-        const G2 = 5;
-        const G1 = 3 + gamma * G2; // 7.5
-        const G0 = 1 + gamma * G1; // 7.75
+        // Environment:
+        // State A: actions = {Right → B (r=-1), Down → Terminal (r=+3)}
+        // State B: actions = {Right → Terminal (r=+10), Down → Terminal (r=+2)}
+        //
+        // 3 Episodes:
+        // Ep1: A→(Right,r=-1)→B→(Right,r=+10)→T
+        // Ep2: A→(Down,r=+3)→T
+        // Ep3: A→(Right,r=-1)→B→(Down,r=+2)→T
+        //
+        // Returns (γ=0.9):
+        // Ep1: G(B,R)=10, G(A,R)=-1+0.9×10=8
+        // Ep2: G(A,D)=3
+        // Ep3: G(B,D)=2, G(A,R)=-1+0.9×2=0.8
+        //
+        // Q-values (first-visit, simple average):
+        // Q(A,R) = avg(8, 0.8) = 4.4
+        // Q(A,D) = avg(3) = 3.0
+        // Q(B,R) = avg(10) = 10.0
+        // Q(B,D) = avg(2) = 2.0
+        //
+        // Policy: A→Right (4.4>3), B→Right (10>2)
 
-        // Importance sampling ratios
-        const rho_single = 1.25; // each π/b = 1.0/0.8
-        const rho_cum_2 = 1.25;
-        const rho_cum_1 = 1.25 * 1.25; // 1.5625
-        const rho_cum_0 = 1.25 * 1.25 * 1.25; // 1.953125
+        // Off-policy:
+        // b(R|A)=0.6, b(D|A)=0.4, b(R|B)=0.5, b(D|B)=0.5
+        // π(R|A)=0.8, π(D|A)=0.2, π(R|B)=0.9, π(D|B)=0.1
+        //
+        // Ep1: ρ(A,R)=0.8/0.6=1.333, ρ(B,R)=0.9/0.5=1.8
+        //   cumulative for G(B,R): ρ=1.8 → ρG=18
+        //   cumulative for G(A,R): ρ=1.333×1.8=2.4 → ρG=19.2
+        // Ep2: ρ(A,D)=0.2/0.4=0.5
+        //   cumulative for G(A,D): ρ=0.5 → ρG=1.5
+        // Ep3: ρ(A,R)=0.8/0.6=1.333, ρ(B,D)=0.1/0.5=0.2
+        //   cumulative for G(B,D): ρ=0.2 → ρG=0.4
+        //   cumulative for G(A,R): ρ=1.333×0.2=0.267 → ρG=0.213
+        //
+        // Q(A,R) = avg(19.2, 0.213) = 9.707
+        // Q(A,D) = avg(1.5) = 1.5
+        // Q(B,R) = avg(18) = 18.0
+        // Q(B,D) = avg(0.4) = 0.4
 
+        // ============ ON-POLICY STEPS ============
         const onPolicySteps = [
             {
-                title: "Episode Generated (t=0 to terminal)",
-                desc: "The agent follows behavior policy b (ε-greedy, ε=0.4) and generates a complete episode. MC cannot update until the episode <strong>finishes</strong>.",
-                comp: `Episode: S₀ →(R, r=+1)→ S₁ →(L, r=+3)→ S₂ →(R, r=+5)→ Terminal\n\nActions taken: R, L, R\nRewards received: +1, +3, +5\n\n<span class="dim">Now we compute returns backwards from terminal...</span>`,
-                qValues: [0, 0, 0],
-                agentPos: -1,
-                activeArrow: -1,
-                updatingState: -1,
-                rhoRevealed: [],
-                rhoCum: null
+                phase: 0,
+                title: "Setup: Environment & Method",
+                desc: "The agent has 2 states (A, B) with 2 actions each. MC will generate <strong>3 episodes</strong>, compute G at each visited (s,a), and then <strong>average all G values</strong> to get Q(s,a).",
+                comp: `Environment:\n  State A: Right → B (r = −1),  Down → Terminal (r = +3)\n  State B: Right → T (r = +10), Down → Terminal (r = +2)\n\nMethod: First-Visit MC (simple averaging)\n\n<span class="hl">Q(s, a) = (1/N) × Σ Gᵢ</span>  where N = number of episodes\n                              that visited (s,a) for the first time\n\nProcess:\n  1. Generate episode\n  2. Compute G backwards for each (s,a)\n  3. Store G in a table\n  4. Repeat for all episodes\n  5. Average all stored G values → Q\n  6. Extract greedy policy from Q`,
+                activeArrows: [],
+                policyShown: false,
+                newCells: [],
+                rhoRevealed: []
             },
             {
-                title: "Step 1: Compute Returns (backwards)",
-                desc: "We calculate the discounted return G at each time step, working <strong>backwards</strong> from the terminal state. This is why MC needs the full episode first.",
-                comp: `Computing returns backwards:\n\n<span class="hl">G₂</span> = r₃ = +5                           = <span class="hl">5.0</span>\n<span class="hl">G₁</span> = r₂ + γ·G₂ = 3 + 0.9×5 = 3 + 4.5  = <span class="hl">7.5</span>\n<span class="hl">G₀</span> = r₁ + γ·G₁ = 1 + 0.9×7.5 = 1 + 6.75 = <span class="hl">7.75</span>`,
-                qValues: [0, 0, 0],
-                agentPos: -1,
-                activeArrow: -1,
-                updatingState: -1,
-                rhoRevealed: [],
-                rhoCum: null
+                phase: 1,
+                title: "Episode 1: Compute G (backwards from terminal)",
+                desc: "Episode 1 follows path A→Right→B→Right→Terminal. Working backwards from terminal, we compute G for each first-visited (s,a) pair.",
+                comp: `<span class="ep">Episode 1:</span> A →(Right, r=−1)→ B →(Right, r=+10)→ Terminal\n\nWorking backwards (γ = 0.9):\n\n  t=1: <span class="hl">G(B, Right)</span> = r₂ = +10             = <span class="hl">10.0</span>\n\n  t=0: <span class="hl">G(A, Right)</span> = r₁ + γ × G(B,Right)\n                     = −1 + 0.9 × 10\n                     = −1 + 9            = <span class="hl">8.0</span>\n\n<span class="dim">These G values go into the returns table ↓</span>`,
+                activeArrows: ['AB', 'BT1'],
+                policyShown: false,
+                newCells: ['AR_0', 'BR_0'],
+                rhoRevealed: []
             },
             {
-                title: "Step 2: Update Q(S₂, R) — first visit at t=2",
-                desc: "Starting updates from the <strong>last</strong> visited state. G₂ = 5. The MC error is (G − Q) and we scale by α.",
-                comp: `Update Q(S₂, R):\n\nG₂ = 5.0\nCurrent Q(S₂, R) = 0\n\nMC error = G₂ − Q = 5.0 − 0 = <span class="hl">5.0</span>\nUpdate   = α × error = 0.5 × 5.0 = <span class="hl">2.5</span>\n\n<span class="hl">Q(S₂, R) = 0 + 2.5 = 2.5</span>  ✓`,
-                qValues: [0, 0, 2.5],
-                agentPos: 2,
-                activeArrow: 2,
-                updatingState: 2,
-                rhoRevealed: [],
-                rhoCum: null
+                phase: 2,
+                title: "Episode 2: Compute G",
+                desc: "Episode 2 takes a different action at A — goes Down directly to Terminal. Only (A, Down) is visited.",
+                comp: `<span class="ep">Episode 2:</span> A →(Down, r=+3)→ Terminal\n\nWorking backwards:\n\n  t=0: <span class="hl">G(A, Down)</span> = r₁ = +3              = <span class="hl">3.0</span>\n\n<span class="dim">State B is not visited in this episode.</span>\n<span class="dim">Only (A, Down) gets a new G value.</span>`,
+                activeArrows: ['AT3'],
+                policyShown: false,
+                newCells: ['AD_0'],
+                rhoRevealed: []
             },
             {
-                title: "Step 3: Update Q(S₁, L) — first visit at t=1",
-                desc: "Next, update the previous state. G₁ = 7.5. Note Q(S₂,R) was already updated but that doesn't affect this — MC uses the <strong>same G</strong> computed earlier.",
-                comp: `Update Q(S₁, L):\n\nG₁ = 7.5\nCurrent Q(S₁, L) = 0\n\nMC error = G₁ − Q = 7.5 − 0 = <span class="hl">7.5</span>\nUpdate   = α × error = 0.5 × 7.5 = <span class="hl">3.75</span>\n\n<span class="hl">Q(S₁, L) = 0 + 3.75 = 3.75</span>  ✓\n\n<span class="dim">Q(S₂, R) = 2.5 (unchanged this step)</span>`,
-                qValues: [0, 3.75, 2.5],
-                agentPos: 1,
-                activeArrow: 1,
-                updatingState: 1,
-                rhoRevealed: [],
-                rhoCum: null
+                phase: 3,
+                title: "Episode 3: Compute G",
+                desc: "Episode 3 goes A→Right→B→Down→T. This gives a <strong>second G sample</strong> for (A, Right) — different from Episode 1 because B takes a different action.",
+                comp: `<span class="ep">Episode 3:</span> A →(Right, r=−1)→ B →(Down, r=+2)→ Terminal\n\nWorking backwards (γ = 0.9):\n\n  t=1: <span class="hl">G(B, Down)</span> = r₂ = +2              = <span class="hl">2.0</span>\n\n  t=0: <span class="hl">G(A, Right)</span> = r₁ + γ × G(B,Down)\n                     = −1 + 0.9 × 2\n                     = −1 + 1.8           = <span class="hl">0.8</span>\n\n<span class="warn">Notice: G(A,Right) = 0.8 here vs 8.0 in Episode 1!</span>\n<span class="dim">The return depends on what happens AFTER taking the action.</span>\n<span class="dim">Ep1: B→Right(+10) made it great. Ep3: B→Down(+2) made it poor.</span>`,
+                activeArrows: ['AB', 'BT2'],
+                policyShown: false,
+                newCells: ['AR_1', 'BD_0'],
+                rhoRevealed: []
             },
             {
-                title: "Step 4: Update Q(S₀, R) — first visit at t=0",
-                desc: "Finally, update the starting state. G₀ = 7.75. After this, all first-visited state-action pairs have been updated.",
-                comp: `Update Q(S₀, R):\n\nG₀ = 7.75\nCurrent Q(S₀, R) = 0\n\nMC error = G₀ − Q = 7.75 − 0 = <span class="hl">7.75</span>\nUpdate   = α × error = 0.5 × 7.75 = <span class="hl">3.875</span>\n\n<span class="hl">Q(S₀, R) = 0 + 3.875 = 3.875</span>  ✓\n\n<span class="dim">Q(S₁, L) = 3.75 (unchanged)</span>\n<span class="dim">Q(S₂, R) = 2.5  (unchanged)</span>`,
-                qValues: [3.875, 3.75, 2.5],
-                agentPos: 0,
-                activeArrow: 0,
-                updatingState: 0,
-                rhoRevealed: [],
-                rhoCum: null
+                phase: 4,
+                title: "Average G values → Q values",
+                desc: "Now we have all G values. The MC estimate is simply the <strong>average</strong> of all collected returns for each (s,a) pair. More samples → more reliable estimates.",
+                comp: `<span class="hl">Q(s, a) = (1/N) × Σ G</span>\n\n  Q(A, Right) = (8.0 + 0.8) / 2     = <span class="hl">4.4</span>   (2 episodes)\n  Q(A, Down)  = (3.0) / 1           = <span class="hl">3.0</span>   (1 episode)\n  Q(B, Right) = (10.0) / 1          = <span class="hl">10.0</span>  (1 episode)\n  Q(B, Down)  = (2.0) / 1           = <span class="hl">2.0</span>   (1 episode)\n\n<span class="warn">Key insight: Q(A,Right) = 4.4 — NOT 8.0 and NOT 0.8</span>\n<span class="dim">The average smooths out the variance from individual episodes.</span>\n<span class="dim">With more episodes, estimates converge to true Q^π values.</span>`,
+                activeArrows: [],
+                policyShown: false,
+                newCells: [],
+                rhoRevealed: []
             },
             {
-                title: "Done! All Q-values updated (On-Policy)",
-                desc: "The episode is fully processed. These Q-values estimate Q<sup>b</sup> — the value under the <strong>behavior policy</strong> (which includes exploration). Over many episodes, they converge to the true Q<sup>b</sup>.",
-                comp: `Final Q-values (On-Policy MC):\n\n<span class="hl">Q(S₀, R) = 3.875</span>   (was 0, G₀ = 7.75)\n<span class="hl">Q(S₁, L) = 3.75</span>    (was 0, G₁ = 7.5)\n<span class="hl">Q(S₂, R) = 2.5</span>     (was 0, G₂ = 5.0)\n\nThese estimate Q^b (value under behavior policy).\nNo importance sampling needed — data matches policy.`,
-                qValues: [3.875, 3.75, 2.5],
-                agentPos: -1,
-                activeArrow: -1,
-                updatingState: -1,
-                rhoRevealed: [],
-                rhoCum: null
+                phase: 5,
+                title: "Extract Greedy Policy: π(s) = argmax Q(s,a)",
+                desc: "The final step: at each state, pick the action with the <strong>highest Q-value</strong>. This is the policy improvement step. In MC Control, this new policy would be used to generate more episodes (with ε-exploration).",
+                comp: `<span class="policy">Policy Extraction:</span>\n\n  At state A: Q(A, Right) = 4.4,  Q(A, Down) = 3.0\n              argmax → <span class="policy">π(A) = Right</span>  (4.4 > 3.0) ✓\n\n  At state B: Q(B, Right) = 10.0, Q(B, Down) = 2.0\n              argmax → <span class="policy">π(B) = Right</span>  (10.0 > 2.0) ✓\n\n<span class="hl">Learned optimal path: A →Right→ B →Right→ Terminal</span>\n<span class="hl">Expected return: −1 + 0.9×10 = 8.0</span>\n\n<span class="dim">MC Control loop: generate episodes → collect G → average → improve policy → repeat</span>\n<span class="dim">With ε-greedy exploration, all (s,a) pairs keep getting visited.</span>`,
+                activeArrows: ['AB', 'BT1'],
+                policyShown: true,
+                newCells: [],
+                rhoRevealed: []
             }
         ];
 
+        // ============ OFF-POLICY STEPS ============
         const offPolicySteps = [
             {
-                title: "Episode Generated (under behavior policy b)",
-                desc: "Same episode as on-policy, but now we want to evaluate the <strong>target policy π</strong> (deterministic greedy), not b. We need importance sampling to correct for the mismatch.",
-                comp: `Episode (generated by b): S₀ →(R, +1)→ S₁ →(L, +3)→ S₂ →(R, +5)→ Terminal\n\nBehavior policy b (ε-greedy, ε=0.4):\n  b(R|S₀)=0.8, b(L|S₁)=0.8, b(R|S₂)=0.8\n\nTarget policy π (deterministic greedy):\n  π(R|S₀)=1.0, π(L|S₁)=1.0, π(R|S₂)=1.0\n\n<span class="warn">π always picks these actions! ρ will be > 1 everywhere.</span>`,
-                qValues: [0, 0, 0],
-                agentPos: -1,
-                activeArrow: -1,
-                updatingState: -1,
-                rhoRevealed: [],
-                rhoCum: null
+                phase: 0,
+                title: "Setup: Behavior policy b vs Target policy π",
+                desc: "Same episodes generated by behavior policy b, but we want to estimate Q under a <strong>different</strong> target policy π. We multiply each G by an importance sampling ratio ρ before averaging.",
+                comp: `Behavior policy b (generates data):     Target policy π (what we evaluate):\n  b(Right|A) = 0.6, b(Down|A) = 0.4      π(Right|A) = 0.8, π(Down|A) = 0.2\n  b(Right|B) = 0.5, b(Down|B) = 0.5      π(Right|B) = 0.9, π(Down|B) = 0.1\n\nOrdinary IS formula:\n  <span class="hl">Q(s,a) = (1/N) × Σ (ρᵢ × Gᵢ)</span>\n\nwhere ρ = cumulative product of π(aₖ|sₖ)/b(aₖ|sₖ)\n      from time t to end of episode\n\n<span class="warn">ρ > 1: π likes this action more than b → amplify G</span>\n<span class="warn">ρ < 1: π likes this action less than b → dampen G</span>`,
+                activeArrows: [],
+                policyShown: false,
+                newCells: [],
+                rhoRevealed: [0, 1, 2, 3]
             },
             {
-                title: "Step 1: Compute Returns (same as on-policy)",
-                desc: "The returns G are the same regardless of method — they're computed from the actual rewards observed. The difference comes in <strong>how</strong> we use them.",
-                comp: `Returns (same episode, same rewards):\n\n<span class="hl">G₂</span> = 5.0\n<span class="hl">G₁</span> = 7.5\n<span class="hl">G₀</span> = 7.75\n\n<span class="dim">Same returns as on-policy — the episode happened the same way.</span>\n<span class="dim">The difference: we'll multiply by importance sampling ratio ρ.</span>`,
-                qValues: [0, 0, 0],
-                agentPos: -1,
-                activeArrow: -1,
-                updatingState: -1,
-                rhoRevealed: [],
-                rhoCum: null
+                phase: 1,
+                title: "Episode 1: Compute G and ρ×G",
+                desc: "Same episode as on-policy. But now each G is multiplied by the cumulative importance sampling ratio ρ — accounting for how π differs from b at <strong>every step</strong> in the trajectory.",
+                comp: `<span class="ep">Episode 1:</span> A →(Right)→ B →(Right)→ Terminal\n\nReturns: G(B,R) = 10.0,  G(A,R) = 8.0\n\nIS ratios (cumulative from each state to end):\n  For G(B, Right): ρ = π(R|B)/b(R|B) = 0.9/0.5 = <span class="warn">1.8</span>\n  For G(A, Right): ρ = [π(R|A)/b(R|A)] × [π(R|B)/b(R|B)]\n                     = (0.8/0.6) × (0.9/0.5)\n                     = 1.333 × 1.8 = <span class="warn">2.4</span>\n\nWeighted returns (ρ × G):\n  (B, Right): 1.8 × 10.0 = <span class="hl">18.0</span>  <span class="dim">(amplified: π likes Right at B more)</span>\n  (A, Right): 2.4 × 8.0  = <span class="hl">19.2</span>  <span class="dim">(amplified: π likes this whole path)</span>`,
+                activeArrows: ['AB', 'BT1'],
+                policyShown: false,
+                newCells: ['AR_0', 'BR_0'],
+                rhoRevealed: [0, 2]
             },
             {
-                title: "Step 2: Compute Importance Sampling Ratios",
-                desc: "For each step, compute π(a|s)/b(a|s). Since π is deterministic and b always has prob 0.8 for these actions, each single-step ratio is 1.0/0.8 = 1.25.",
-                comp: `Per-step ratios:\n\n  t=0: π(R|S₀)/b(R|S₀) = 1.0/0.8 = <span class="hl">1.25</span>\n  t=1: π(L|S₁)/b(L|S₁) = 1.0/0.8 = <span class="hl">1.25</span>\n  t=2: π(R|S₂)/b(R|S₂) = 1.0/0.8 = <span class="hl">1.25</span>\n\nCumulative products (from t to end):\n  ρ₂:₂ = 1.25                    = <span class="warn">1.25</span>\n  ρ₁:₂ = 1.25 × 1.25             = <span class="warn">1.5625</span>\n  ρ₀:₂ = 1.25 × 1.25 × 1.25      = <span class="warn">1.953125</span>\n\n<span class="dim">ρ > 1 means π favors these actions MORE than b → upweight returns</span>`,
-                qValues: [0, 0, 0],
-                agentPos: -1,
-                activeArrow: -1,
-                updatingState: -1,
-                rhoRevealed: [0, 1, 2],
-                rhoCum: "see per-step"
+                phase: 2,
+                title: "Episode 2: Compute G and ρ×G",
+                desc: "Episode 2 takes Down at A. The target policy π gives only 0.2 probability to Down (vs b's 0.4), so ρ = 0.5 — the return is <strong>dampened</strong>.",
+                comp: `<span class="ep">Episode 2:</span> A →(Down, r=+3)→ Terminal\n\nReturn: G(A,D) = 3.0\n\nIS ratio:\n  For G(A, Down): ρ = π(D|A)/b(D|A) = 0.2/0.4 = <span class="warn">0.5</span>\n\nWeighted return:\n  (A, Down): 0.5 × 3.0 = <span class="hl">1.5</span>  <span class="dim">(dampened: π rarely takes Down at A)</span>\n\n<span class="dim">Under π, going Down at A is unlikely (prob 0.2 vs 0.4 in b).</span>\n<span class="dim">So this outcome contributes less to π's value estimate.</span>`,
+                activeArrows: ['AT3'],
+                policyShown: false,
+                newCells: ['AD_0'],
+                rhoRevealed: [1]
             },
             {
-                title: "Step 3: Update Q(S₂, R) — with ρ₂:₂ = 1.25",
-                desc: "Update Q(S₂,R) using the importance-weighted return. ρ is small here (only 1 step) so the effect is modest.",
-                comp: `Update Q(S₂, R) with importance sampling:\n\nG₂ = 5.0\nρ₂:₂ = <span class="warn">1.25</span>\nWeighted return = ρ × G₂ = 1.25 × 5.0 = <span class="warn">6.25</span>\n\nMC error = ρ·G − Q = 6.25 − 0 = <span class="hl">6.25</span>\nUpdate   = α × error = 0.5 × 6.25 = <span class="hl">3.125</span>\n\n<span class="hl">Q(S₂, R) = 0 + 3.125 = 3.125</span>  ✓\n\n<span class="dim">Compare on-policy: Q(S₂,R) = 2.5 (no ρ amplification)</span>`,
-                qValues: [0, 0, 3.125],
-                agentPos: 2,
-                activeArrow: 2,
-                updatingState: 2,
-                rhoRevealed: [0, 1, 2],
-                rhoCum: "ρ₂:₂ = 1.25"
+                phase: 3,
+                title: "Episode 3: Compute G and ρ×G",
+                desc: "Episode 3: A→Right→B→Down→T. The ratio for B→Down is tiny (0.2) because π hates Down at B. This makes the cumulative ρ for (A, Right) = 0.267 — this path barely counts under π.",
+                comp: `<span class="ep">Episode 3:</span> A →(Right)→ B →(Down, r=+2)→ Terminal\n\nReturns: G(B,D) = 2.0,  G(A,R) = 0.8\n\nIS ratios:\n  For G(B, Down):  ρ = π(D|B)/b(D|B) = 0.1/0.5 = <span class="warn">0.2</span>\n  For G(A, Right): ρ = [π(R|A)/b(R|A)] × [π(D|B)/b(D|B)]\n                     = 1.333 × 0.2 = <span class="warn">0.267</span>\n\nWeighted returns:\n  (B, Down):  0.2 × 2.0   = <span class="hl">0.4</span>    <span class="dim">(tiny: π almost never goes Down at B)</span>\n  (A, Right): 0.267 × 0.8 = <span class="hl">0.213</span>  <span class="dim">(tiny: this trajectory is unlikely under π)</span>\n\n<span class="warn">Compare: Ep1 gave ρG(A,R)=19.2 vs Ep3 gives ρG(A,R)=0.213</span>\n<span class="dim">Ep1's path (A→R→B→R) is what π would do; Ep3's path is not.</span>`,
+                activeArrows: ['AB', 'BT2'],
+                policyShown: false,
+                newCells: ['AR_1', 'BD_0'],
+                rhoRevealed: [0, 3]
             },
             {
-                title: "Step 4: Update Q(S₁, L) — with ρ₁:₂ = 1.5625",
-                desc: "Now ρ is the <strong>product of two steps</strong> — it grows multiplicatively. The return is amplified more.",
-                comp: `Update Q(S₁, L) with importance sampling:\n\nG₁ = 7.5\nρ₁:₂ = 1.25 × 1.25 = <span class="warn">1.5625</span>\nWeighted return = ρ × G₁ = 1.5625 × 7.5 = <span class="warn">11.719</span>\n\nMC error = ρ·G − Q = 11.719 − 0 = <span class="hl">11.719</span>\nUpdate   = α × error = 0.5 × 11.719 = <span class="hl">5.859</span>\n\n<span class="hl">Q(S₁, L) = 0 + 5.859 = 5.859</span>  ✓\n\n<span class="dim">Compare on-policy: Q(S₁,L) = 3.75 (ρ amplified by 56%)</span>`,
-                qValues: [0, 5.859, 3.125],
-                agentPos: 1,
-                activeArrow: 1,
-                updatingState: 1,
-                rhoRevealed: [0, 1, 2],
-                rhoCum: "ρ₁:₂ = 1.5625"
+                phase: 4,
+                title: "Average ρ×G values → Q values (Off-Policy)",
+                desc: "Average the importance-weighted returns. The IS-weighted averages reflect value <strong>under π</strong>, not under b. Actions that π favors get amplified; actions π avoids get dampened.",
+                comp: `<span class="hl">Q(s, a) = (1/N) × Σ (ρᵢ × Gᵢ)</span>   (ordinary IS)\n\n  Q(A, Right) = (19.2 + 0.213) / 2  = <span class="hl">9.707</span>   (2 episodes)\n  Q(A, Down)  = (1.5) / 1           = <span class="hl">1.5</span>     (1 episode)\n  Q(B, Right) = (18.0) / 1          = <span class="hl">18.0</span>    (1 episode)\n  Q(B, Down)  = (0.4) / 1           = <span class="hl">0.4</span>     (1 episode)\n\n<span class="warn">Compare with On-Policy Q-values:</span>\n  On:  Q(A,R)=4.4  Q(A,D)=3.0  Q(B,R)=10.0  Q(B,D)=2.0\n  Off: Q(A,R)=9.7  Q(A,D)=1.5  Q(B,R)=18.0  Q(B,D)=0.4\n\n<span class="dim">Off-policy amplified Right actions (π favors them)</span>\n<span class="dim">and dampened Down actions (π avoids them).</span>`,
+                activeArrows: [],
+                policyShown: false,
+                newCells: [],
+                rhoRevealed: [0, 1, 2, 3]
             },
             {
-                title: "Step 5: Update Q(S₀, R) — with ρ₀:₂ = 1.953",
-                desc: "The cumulative ρ is now the product of <strong>all three steps</strong>. Notice how it nearly doubles the return! This is the variance problem of off-policy MC.",
-                comp: `Update Q(S₀, R) with importance sampling:\n\nG₀ = 7.75\nρ₀:₂ = 1.25 × 1.25 × 1.25 = <span class="warn">1.953125</span>\nWeighted return = ρ × G₀ = 1.953 × 7.75 = <span class="warn">15.137</span>\n\nMC error = ρ·G − Q = 15.137 − 0 = <span class="hl">15.137</span>\nUpdate   = α × error = 0.5 × 15.137 = <span class="hl">7.568</span>\n\n<span class="hl">Q(S₀, R) = 0 + 7.568 = 7.568</span>  ✓\n\n<span class="warn">Compare on-policy: Q(S₀,R) = 3.875 — off-policy is 95% higher!</span>\n<span class="dim">This is because ρ nearly doubled the return (1.953× amplification)</span>`,
-                qValues: [7.568, 5.859, 3.125],
-                agentPos: 0,
-                activeArrow: 0,
-                updatingState: 0,
-                rhoRevealed: [0, 1, 2],
-                rhoCum: "ρ₀:₂ = 1.953"
-            },
-            {
-                title: "Done! All Q-values updated (Off-Policy)",
-                desc: "These Q-values estimate Q<sup>π</sup> — the value under the <strong>target policy</strong>. They're higher because π always takes these actions (no exploration waste), while b sometimes explores.",
-                comp: `Final Q-values (Off-Policy MC):\n\n<span class="hl">Q(S₀, R) = 7.568</span>   (ρ=1.953, amplified from G=7.75)\n<span class="hl">Q(S₁, L) = 5.859</span>   (ρ=1.5625, amplified from G=7.5)\n<span class="hl">Q(S₂, R) = 3.125</span>   (ρ=1.25, amplified from G=5.0)\n\nThese estimate Q^π (value under target policy).\n<span class="warn">Warning: ρ grows exponentially with episode length!</span>\nWith 50 steps: ρ = 1.25⁵⁰ = 8,882 — catastrophic variance.`,
-                qValues: [7.568, 5.859, 3.125],
-                agentPos: -1,
-                activeArrow: -1,
-                updatingState: -1,
-                rhoRevealed: [0, 1, 2],
-                rhoCum: "ρ₀:₂ = 1.953"
+                phase: 5,
+                title: "Extract Greedy Policy (Off-Policy)",
+                desc: "Same policy extraction from the off-policy Q-values. Same greedy choices (Right, Right) but with different Q-magnitudes reflecting π's preferences.",
+                comp: `<span class="policy">Policy Extraction:</span>\n\n  At state A: Q(A, Right) = 9.707,  Q(A, Down) = 1.5\n              argmax → <span class="policy">π(A) = Right</span>  (9.707 > 1.5) ✓\n\n  At state B: Q(B, Right) = 18.0,   Q(B, Down) = 0.4\n              argmax → <span class="policy">π(B) = Right</span>  (18.0 > 0.4) ✓\n\n<span class="warn">Same optimal actions as on-policy, but Q-magnitudes differ.</span>\n<span class="dim">Off-policy lets us evaluate π using data from a DIFFERENT policy b.</span>\n<span class="dim">Useful when: we can't control the data-generating policy,</span>\n<span class="dim">or we want to learn about multiple policies from one dataset.</span>`,
+                activeArrows: ['AB', 'BT1'],
+                policyShown: true,
+                newCells: [],
+                rhoRevealed: [0, 1, 2, 3]
             }
         ];
 
@@ -702,6 +742,8 @@ Rewards received: +1, +3, +5</div>
             document.getElementById('tabOff').className = 'tab-btn' + (m === 'off' ? ' active-off' : '');
 
             document.getElementById('rhoDisplay').style.display = m === 'off' ? 'flex' : 'none';
+            document.getElementById('methodChip').textContent = m === 'on' ? 'First-Visit MC' : 'Ordinary IS';
+            document.getElementById('formulaChip').textContent = m === 'on' ? 'avg(G)' : 'avg(ρ×G)';
 
             const panel = document.getElementById('infoPanel');
             panel.className = 'info-panel ' + (m === 'on' ? 'on-mode' : 'off-mode');
@@ -738,120 +780,184 @@ Rewards received: +1, +3, +5</div>
             document.getElementById('infoDesc').innerHTML = step.desc;
             document.getElementById('infoComp').innerHTML = step.comp;
 
-            // State nodes
-            ['sn0', 'sn1', 'sn2', 'sn3'].forEach((id, i) => {
-                const node = document.getElementById(id);
-                node.classList.remove('active', 'updating');
-                if (i === step.agentPos) node.classList.add('active');
-                if (i === step.updatingState) node.classList.add('updating');
-            });
+            // Phase chips
+            for (let i = 1; i <= 5; i++) {
+                const chip = document.getElementById(`phase${i}`);
+                chip.className = 'phase-chip';
+                if (step.phase === i) chip.classList.add('current');
+                else if (step.phase > i) chip.classList.add('done');
+                if (step.phase === 5 && i === 5) chip.classList.add('policy-step');
+            }
 
-            // Q-value displays
-            const actions = ['R', 'L', 'R'];
-            ['qv0', 'qv1', 'qv2'].forEach((id, i) => {
-                const el = document.getElementById(id);
-                const val = step.qValues[i];
-                el.textContent = `Q(${actions[i]})=${val % 1 === 0 ? val : val.toFixed(3)}`;
-                el.style.color = (currentStep > 0 && val !== 0 && val !== steps[currentStep - 1].qValues[i]) ? '#22c55e' : '#94a3b8';
+            // State nodes
+            ['snA', 'snB'].forEach(id => {
+                const node = document.getElementById(id);
+                node.classList.remove('active', 'policy-extracted');
             });
+            if (step.activeArrows.includes('AB') || step.activeArrows.includes('AT3'))
+                document.getElementById('snA').classList.add('active');
+            if (step.activeArrows.includes('BT1') || step.activeArrows.includes('BT2'))
+                document.getElementById('snB').classList.add('active');
+            if (step.policyShown) {
+                document.getElementById('snA').classList.add('policy-extracted');
+                document.getElementById('snB').classList.add('policy-extracted');
+            }
+
+            // Q-value displays on nodes
+            if (step.phase < 4) {
+                document.getElementById('qvA').innerHTML = `<span style="color:#64748b">collecting G...</span>`;
+                document.getElementById('qvB').innerHTML = `<span style="color:#64748b">collecting G...</span>`;
+            } else if (mode === 'on') {
+                document.getElementById('qvA').innerHTML = `Q(R)=<b>4.4</b><br>Q(D)=<b>3.0</b>`;
+                document.getElementById('qvB').innerHTML = `Q(R)=<b>10.0</b><br>Q(D)=<b>2.0</b>`;
+            } else {
+                document.getElementById('qvA').innerHTML = `Q(R)=<b>9.7</b><br>Q(D)=<b>1.5</b>`;
+                document.getElementById('qvB').innerHTML = `Q(R)=<b>18.0</b><br>Q(D)=<b>0.4</b>`;
+            }
 
             // Arrows
-            ['ar0', 'ar1', 'ar2'].forEach((id, i) => {
-                document.getElementById(id).classList.toggle('active', i === step.activeArrow);
+            ['AB', 'BT1', 'BT2', 'AT3'].forEach(id => {
+                const path = document.getElementById('ar' + id);
+                const label = document.getElementById('al' + id);
+                if (path) path.classList.toggle('active', step.activeArrows.includes(id));
+                if (label) label.classList.toggle('active', step.activeArrows.includes(id));
             });
 
-            // Agent
-            const agent = document.getElementById('agent');
-            const positions = ['11%', '33%', '55%', '77%'];
-            if (step.agentPos >= 0) {
-                agent.classList.add('visible');
-                agent.style.left = positions[step.agentPos];
-            } else {
-                agent.classList.remove('visible');
-            }
+            // Policy arrows
+            document.getElementById('policyA').classList.toggle('visible', step.policyShown);
+            document.getElementById('policyB').classList.toggle('visible', step.policyShown);
 
-            // Rho chips (off-policy)
+            // IS ratio chips
             if (mode === 'off') {
-                [0, 1, 2].forEach(i => {
+                [0, 1, 2, 3].forEach(i => {
                     document.getElementById(`rho${i}`).classList.toggle('revealed', step.rhoRevealed.includes(i));
                 });
-                const cumChip = document.getElementById('rhoCum');
-                cumChip.classList.toggle('revealed', step.rhoCum !== null);
-                document.getElementById('rhoCumVal').textContent = step.rhoCum || '—';
             }
 
-            // Timeline table
-            renderTimeline(steps);
+            // Returns table
+            renderReturnsTable(step);
         }
 
-        function renderTimeline(steps) {
-            const tbody = document.getElementById('timelineBody');
-            tbody.innerHTML = '';
+        function renderReturnsTable(step) {
+            const thead = document.getElementById('tableHead');
+            const tbody = document.getElementById('tableBody');
+            const title = document.getElementById('tableTitle');
 
-            const labels = [
-                'Init',
-                mode === 'on' ? 'Compute G' : 'Compute G',
-                mode === 'on' ? 'Update Q(S₂,R)' : 'Compute ρ',
-                mode === 'on' ? 'Update Q(S₁,L)' : 'Update Q(S₂,R)',
-                mode === 'on' ? 'Update Q(S₀,R)' : 'Update Q(S₁,L)',
-                mode === 'on' ? 'Final' : 'Update Q(S₀,R)',
-            ];
+            if (mode === 'on') {
+                title.textContent = 'Returns Table — G values collected per (state, action) pair';
+                thead.innerHTML = `<tr>
+                    <th>State-Action</th>
+                    <th>G from Ep 1</th>
+                    <th>G from Ep 2</th>
+                    <th>G from Ep 3</th>
+                    <th>Q = Average of G values</th>
+                </tr>`;
 
-            if (mode === 'off') labels.push('Final');
+                // Data: which episodes contribute which G
+                const data = [
+                    { label: 'Q(A, Right)', gs: [8.0, null, 0.8], avg: 4.4 },
+                    { label: 'Q(A, Down)',  gs: [null, 3.0, null], avg: 3.0 },
+                    { label: 'Q(B, Right)', gs: [10.0, null, null], avg: 10.0 },
+                    { label: 'Q(B, Down)',  gs: [null, null, 2.0], avg: 2.0 }
+                ];
 
-            for (let i = 0; i <= getMaxStep(); i++) {
-                const row = document.createElement('tr');
-                const s = steps[i];
-                const prev = i > 0 ? steps[i - 1] : null;
+                const cellKeys = [
+                    ['AR_0', null, 'AR_1'],
+                    [null, 'AD_0', null],
+                    ['BR_0', null, null],
+                    [null, null, 'BD_0']
+                ];
 
-                const isActive = i === currentStep;
-                const isFuture = i > currentStep;
+                // Determine which cells to show based on phase
+                const visibleEps = step.phase >= 3 ? 3 : step.phase >= 2 ? 2 : step.phase >= 1 ? 1 : 0;
 
-                let cells = `<td>${labels[i] || `Step ${i}`}</td>`;
+                tbody.innerHTML = '';
+                data.forEach((row, ri) => {
+                    const tr = document.createElement('tr');
+                    let html = `<td>${row.label}</td>`;
 
-                for (let q = 0; q < 3; q++) {
-                    let cls = '';
-                    let val = '';
+                    for (let ei = 0; ei < 3; ei++) {
+                        const g = row.gs[ei];
+                        const key = cellKeys[ri][ei];
+                        if (ei >= visibleEps) {
+                            html += `<td class="cell-dim">—</td>`;
+                        } else if (g === null) {
+                            html += `<td class="cell-dim">—</td>`;
+                        } else {
+                            const isNew = step.newCells.includes(key);
+                            html += `<td class="${isNew ? 'cell-new' : ''}">${g}</td>`;
+                        }
+                    }
 
-                    if (isFuture) {
-                        cls = 'cell-hidden';
-                        val = '?';
+                    // Q column
+                    if (step.phase >= 4) {
+                        const isBest = (ri === 0 && row.avg > data[1].avg) || (ri === 2 && row.avg > data[3].avg);
+                        html += `<td class="${step.phase >= 5 && isBest ? 'cell-best' : 'cell-avg'}">${row.avg}</td>`;
                     } else {
-                        val = s.qValues[q] % 1 === 0 ? s.qValues[q] : s.qValues[q].toFixed(3);
-                        if (prev && s.qValues[q] !== prev.qValues[q]) {
-                            cls = 'cell-changed';
-                        } else if (i > 0) {
-                            cls = 'cell-unchanged';
+                        html += `<td class="cell-dim">—</td>`;
+                    }
+
+                    tr.innerHTML = html;
+                    tbody.appendChild(tr);
+                });
+
+            } else {
+                // Off-policy table
+                title.textContent = 'Returns Table — ρ×G (importance-weighted) values collected per (state, action) pair';
+                thead.innerHTML = `<tr>
+                    <th>State-Action</th>
+                    <th>ρ×G from Ep 1</th>
+                    <th>ρ×G from Ep 2</th>
+                    <th>ρ×G from Ep 3</th>
+                    <th>Q = Average of ρ×G</th>
+                </tr>`;
+
+                const data = [
+                    { label: 'Q(A, Right)', gs: [19.2, null, 0.213], avg: 9.707 },
+                    { label: 'Q(A, Down)',  gs: [null, 1.5, null], avg: 1.5 },
+                    { label: 'Q(B, Right)', gs: [18.0, null, null], avg: 18.0 },
+                    { label: 'Q(B, Down)',  gs: [null, null, 0.4], avg: 0.4 }
+                ];
+
+                const cellKeys = [
+                    ['AR_0', null, 'AR_1'],
+                    [null, 'AD_0', null],
+                    ['BR_0', null, null],
+                    [null, null, 'BD_0']
+                ];
+
+                const visibleEps = step.phase >= 3 ? 3 : step.phase >= 2 ? 2 : step.phase >= 1 ? 1 : 0;
+
+                tbody.innerHTML = '';
+                data.forEach((row, ri) => {
+                    const tr = document.createElement('tr');
+                    let html = `<td>${row.label}</td>`;
+
+                    for (let ei = 0; ei < 3; ei++) {
+                        const g = row.gs[ei];
+                        const key = cellKeys[ri][ei];
+                        if (ei >= visibleEps) {
+                            html += `<td class="cell-dim">—</td>`;
+                        } else if (g === null) {
+                            html += `<td class="cell-dim">—</td>`;
+                        } else {
+                            const isNew = step.newCells.includes(key);
+                            const isWarn = g > 10;
+                            html += `<td class="${isNew ? 'cell-new' : ''} ${isWarn ? 'cell-warn' : ''}">${g < 1 ? g.toFixed(3) : g}</td>`;
                         }
                     }
 
-                    cells += `<td class="${cls}">${val}</td>`;
-                }
-
-                // What changed column
-                let whatChanged = '';
-                if (isFuture) {
-                    whatChanged = '<td class="cell-hidden">?</td>';
-                } else if (i === 0) {
-                    whatChanged = '<td style="font-family:sans-serif; color:#64748b;">All = 0</td>';
-                } else {
-                    let changes = [];
-                    for (let q = 0; q < 3; q++) {
-                        if (prev && s.qValues[q] !== prev.qValues[q]) {
-                            const names = ['Q(S₀,R)', 'Q(S₁,L)', 'Q(S₂,R)'];
-                            changes.push(`<span style="color:#22c55e">${names[q]}→${s.qValues[q].toFixed ? s.qValues[q].toFixed(3) : s.qValues[q]}</span>`);
-                        }
+                    // Q column
+                    if (step.phase >= 4) {
+                        const isBest = (ri === 0 && row.avg > data[1].avg) || (ri === 2 && row.avg > data[3].avg);
+                        html += `<td class="${step.phase >= 5 && isBest ? 'cell-best' : 'cell-avg'}">${row.avg < 1 ? row.avg.toFixed(3) : row.avg}</td>`;
+                    } else {
+                        html += `<td class="cell-dim">—</td>`;
                     }
-                    whatChanged = `<td style="font-family:sans-serif; font-size:0.78rem;">${changes.length ? changes.join(', ') : '<span style="color:#4b5563">—</span>'}</td>`;
-                }
 
-                cells += whatChanged;
-                row.innerHTML = cells;
-
-                if (isActive) row.style.background = '#1e293b';
-                if (isFuture) row.style.opacity = '0.3';
-
-                tbody.appendChild(row);
+                    tr.innerHTML = html;
+                    tbody.appendChild(tr);
+                });
             }
         }
 
