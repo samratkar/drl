@@ -42,8 +42,10 @@ deliveries : []
       - [1. The Importance Sampling Ratio ($\\rho$)](#1-the-importance-sampling-ratio-rho)
       - [2. Ordinary Importance Sampling (OIS)](#2-ordinary-importance-sampling-ois)
       - [3. Weighted Importance Sampling (WIS)](#3-weighted-importance-sampling-wis)
+      - [Worked Numerical Example: OIS in Action](#worked-numerical-example-ois-in-action)
       - [Example 5.5: Infinite Variance](#example-55-infinite-variance)
     - [5.6 Incremental Implementation](#56-incremental-implementation)
+    - [Worked Example: On-Policy vs Off-Policy MC (Step-by-Step)](#worked-example-on-policy-vs-off-policy-mc-step-by-step)
     - [Code Examples](#code-examples)
     - [5.7 Off-policy Monte Carlo Control](#57-off-policy-monte-carlo-control)
       - [Detailed Process Flow (From Scratch)](#detailed-process-flow-from-scratch)
@@ -51,6 +53,12 @@ deliveries : []
     - [5.8 \*Discounting-aware Importance Sampling](#58-discounting-aware-importance-sampling)
     - [5.9 \*Per-decision Importance Sampling](#59-per-decision-importance-sampling)
     - [Comparison of Off-Policy MC Methods](#comparison-of-off-policy-mc-methods)
+      - [The Core Problem](#the-core-problem)
+      - [Method Comparison Table](#method-comparison-table)
+      - [Why Each Method Exists — The Variance Reduction Chain](#why-each-method-exists--the-variance-reduction-chain)
+      - [Detailed Rationale](#detailed-rationale)
+      - [When to Use Which](#when-to-use-which)
+      - [Numerical Example (same episode, different estimates)](#numerical-example-same-episode-different-estimates)
 - [Chapter 6: Temporal-Difference Learning](#chapter-6-temporal-difference-learning)
     - [6.1 TD Prediction](#61-td-prediction)
     - [6.2 Advantages of TD Prediction Methods](#62-advantages-of-td-prediction-methods)
@@ -488,11 +496,11 @@ This ratio can be extremely large (product of many terms > 1) or extremely small
 
 | Method | Formula | Unbiased? | Variance | Key Idea |
 |--------|---------|-----------|----------|----------|
-| **Ordinary IS** (§5.5) | $Q = \frac{1}{N} \sum_{i=1}^N \rho_i G_i$ | Yes | Highest | Simple average of $\rho \times G$. Full cumulative $\rho$ multiplies entire return. |
-| **Weighted IS** (§5.5) | $Q = \frac{\sum_{i=1}^N \rho_i G_i}{\sum_{i=1}^N \rho_i}$ | No (biased, consistent) | Low | Self-normalizing: divides by $\Sigma\rho$ instead of $N$. Extreme $\rho$ values cancel out. |
-| **Incremental WIS** (§5.6) | $Q_{n+1} = Q_n + \frac{\rho_n}{C_n}(G_n - Q_n)$ where $C_n = C_{n-1} + \rho_n$ | No (same as WIS) | Low | Online version of WIS. O(1) memory per (s,a). Same final result. |
-| **Per-Decision IS** (§5.9) | $\hat{G}_t = \sum_{k=t}^{T-1} \gamma^{k-t} \rho_{t:k} R_{k+1}$ | Yes | Medium | Each reward $R_{k+1}$ multiplied by $\rho$ only up to step $k$ (not full trajectory). |
-| **Discounting-Aware IS** (§5.8) | $\gamma$-weighted mixture of $n$-step flat partial returns, each with truncated $\rho_{t:t+n-1}$ | Yes | Lowest (among unbiased) | Treats $\gamma$ as termination probability. Shorter partials use shorter $\rho$ products. |
+| **Ordinary IS** (§5.5) | Q = (1/N) Σ ρᵢGᵢ | Yes | Highest | Simple average of ρ×G. Full cumulative ρ multiplies entire return. |
+| **Weighted IS** (§5.5) | Q = Σ(ρᵢGᵢ) / Σ(ρᵢ) | No (biased, consistent) | Low | Self-normalizing: divides by Σρ instead of N. Extreme ρ values cancel out. |
+| **Incremental WIS** (§5.6) | Qₙ₊₁ = Qₙ + (ρₙ/Cₙ)(Gₙ − Qₙ), Cₙ = Cₙ₋₁ + ρₙ | No (same as WIS) | Low | Online version of WIS. O(1) memory per (s,a). Same final result. |
+| **Per-Decision IS** (§5.9) | Ĝₜ = Σₖ γ^(k−t) · ρₜ:ₖ · Rₖ₊₁ | Yes | Medium | Each reward Rₖ₊₁ multiplied by ρ only up to step k (not full trajectory). |
+| **Discounting-Aware IS** (§5.8) | γ-weighted mixture of n-step flat partials, each with truncated ρₜ:ₜ₊ₙ₋₁ | Yes | Lowest (among unbiased) | Treats γ as termination probability. Shorter partials use shorter ρ products. |
 
 #### Why Each Method Exists — The Variance Reduction Chain
 
@@ -512,21 +520,21 @@ High Variance ──────────────────────
 
 **1. Ordinary IS → Per-Decision IS (remove unnecessary ρ factors)**
 
-The standard OIS formula applies $\rho_{t:T-1}$ to the entire return $G_t = R_{t+1} + \gamma R_{t+2} + \ldots$. But reward $R_{k+1}$ only depends on actions up to time $k$ — future actions at $k+1, k+2, \ldots$ are irrelevant to it. The extra $\rho_{k+1:T-1}$ factors have expectation 1 but add noise.
+The standard OIS formula applies $\rho\_{t:T-1}$ to the entire return $G\_t = R\_{t+1} + \gamma R\_{t+2} + \ldots$. But reward $R\_{k+1}$ only depends on actions up to time $k$ — future actions at $k+1, k+2, \ldots$ are irrelevant to it. The extra $\rho\_{k+1:T-1}$ factors have expectation 1 but add noise.
 
-Per-Decision removes them: each $R_{k+1}$ is weighted by $\rho_{t:k}$ only.
+Per-Decision removes them: each $R\_{k+1}$ is weighted by $\rho\_{t:k}$ only.
 
-$$\text{OIS: } \rho_{t:T-1} \times G_t \quad \longrightarrow \quad \text{PDIS: } \sum_{k=t}^{T-1} \gamma^{k-t} \rho_{t:k} R_{k+1}$$
+$$\text{OIS: } \rho\_{t:T-1} \times G\_t \quad \longrightarrow \quad \text{PDIS: } \sum\_{k=t}^{T-1} \gamma^{k-t} \rho\_{t:k} R\_{k+1}$$
 
 *Result:* Same expected value, strictly lower variance.
 
 **2. Per-Decision IS → Discounting-Aware IS (exploit γ < 1)**
 
-Even in PDIS, the reward $R_{T}$ (last step) still gets the full product $\rho_{t:T-2}$. But when $\gamma < 1$, that reward is heavily discounted anyway ($\gamma^{T-t-1}$ is small). The large $\rho$ product contributes high variance for a near-zero contribution.
+Even in PDIS, the reward $R\_T$ (last step) still gets the full product $\rho\_{t:T-2}$. But when $\gamma < 1$, that reward is heavily discounted anyway ($\gamma^{T-t-1}$ is small). The large $\rho$ product contributes high variance for a near-zero contribution.
 
 Discounting-Aware IS treats the return as a $\gamma$-weighted mixture of partial returns of lengths 1, 2, ..., $H$:
-- The 1-step partial uses only $\rho_{t:t}$ (1 ratio)
-- The 2-step partial uses $\rho_{t:t+1}$ (2 ratios)
+- The 1-step partial uses only $\rho\_{t:t}$ (1 ratio)
+- The 2-step partial uses $\rho\_{t:t+1}$ (2 ratios)
 - Each weighted by $(1-\gamma)\gamma^{n-1}$ (short partials get more weight)
 
 *Result:* Shorter $\rho$ products dominate, further reducing variance.
@@ -556,22 +564,22 @@ This is what actual implementations use (Sutton & Barto Algorithm box, §5.6).
 |-----------|-------------------|--------|
 | General practice | **Incremental WIS** | Low variance, O(1) memory, well-behaved |
 | Need strict unbiasedness | **Per-Decision IS** | Unbiased + lower variance than OIS |
-| Long episodes + γ < 1 | **Discounting-Aware IS** | Prevents $\rho$ explosion for distant rewards |
+| Long episodes + γ < 1 | **Discounting-Aware IS** | Prevents ρ explosion for distant rewards |
 | Simple analysis/teaching | **Ordinary IS** | Easiest to understand and prove convergence |
-| Single episode, N=1 | **Weighted IS** | Returns just $G$ (ignores unreliable single $\rho$) |
+| Single episode, N=1 | **Weighted IS** | Returns just G (ignores unreliable single ρ) |
 
 #### Numerical Example (same episode, different estimates)
 
-Episode: $S_0 \xrightarrow{a_1, r=-1} S_1 \xrightarrow{a_2, r=+10} T$, with $\gamma=0.9$
+Episode: S₀ →(a₁, r=−1)→ S₁ →(a₂, r=+10)→ T, with γ=0.9
 
-$G_0 = -1 + 0.9 \times 10 = 8.0$, and $\rho_{0:1} = 2.4$, $\rho_{0:0} = 1.5$, $\rho_{1:1} = 1.6$
+G₀ = −1 + 0.9 × 10 = 8.0, and ρ₀:₁ = 2.4, ρ₀:₀ = 1.5, ρ₁:₁ = 1.6
 
-| Method | Computation | Estimate for $Q(S_0, a_1)$ |
+| Method | Computation | Estimate for Q(S₀, a₁) |
 |--------|-------------|---------------------------|
-| **OIS** | $\rho_{0:1} \times G_0 = 2.4 \times 8$ | **19.2** |
-| **WIS** (N=1) | $\rho G / \rho = G$ | **8.0** |
-| **Per-Decision** | $\rho_{0:0} \times r_1 + \gamma \times \rho_{0:1} \times r_2 = 1.5(-1) + 0.9 \times 2.4(10)$ | **20.1** |
-| **Discounting-Aware** | $(1-\gamma)\rho_{0:0} \bar{G}_{0:1} + \gamma \rho_{0:1} \bar{G}_{0:2}$ where $\bar{G}$ = flat sums | **19.29** |
+| **OIS** | ρ₀:₁ × G₀ = 2.4 × 8 | **19.2** |
+| **WIS** (N=1) | ρG / ρ = G | **8.0** |
+| **Per-Decision** | ρ₀:₀ × r₁ + γ × ρ₀:₁ × r₂ = 1.5(−1) + 0.9 × 2.4(10) | **20.1** |
+| **Discounting-Aware** | (1−γ)ρ₀:₀ G̅₀:₁ + γ ρ₀:₁ G̅₀:₂ where G̅ = flat sums | **19.29** |
 
 > **Key Takeaway:** All methods are estimating the same quantity ($Q^\pi$). With infinite data, they all converge to the same answer. The choice is about *finite-sample behavior*: how much variance (noise) vs. bias you're willing to tolerate.
 
