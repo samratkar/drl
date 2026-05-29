@@ -712,10 +712,10 @@ Jack manages two car rental locations. This is a classic example of a complex MD
 
 ### Example 3 : Grid world problem 1
 [Grid world 1 implementation](https://github.com/samratkar/drl/blob/main/barto-sutton-notes/lecture3-mdp-dp/assets/grid-game/dynamic_programming_case_study.ipynb)
-[Grid world 1 Game](https://samratkar.github.io/assets/drl/webinars/dp-qlearning/src/dynamic_programming_game.html)
+[Grid world 1 Game](./assets/grid-game/dynamic_programming_game.html)
 
 ### Example 4 : Grid world problem 2
-[Grid world 2 Game — Interactive Demo](https://samratkar.github.io/drl/barto-sutton-notes/lecture3-mdp-dp-dp/assets/policy-evaluation-dp-html/index.html)
+[Grid world 2 Game — Interactive Demo](./assets/policy-evaluation-dp-html/index.html)
 
 
 #### Problem Formulation
@@ -1350,13 +1350,13 @@ $$\pi_*(s) = \argmax_a \, q_*(s,a)$$
 
 ## Working simulation of all the above methods and their comparison 
 
-**[Launch Interactive RL Methods Explorer](https://samratkar.github.io/drl/barto-sutton-notes/lecture3-mdp-dp-dp/assets/policy-evaluation-dp-html/index.html)** — a static web page that runs entirely in the browser, no installation required.
+**[Launch Interactive RL Methods Explorer](./assets/policy-evaluation-dp-html/index.html)** — a static web page that runs entirely in the browser, no installation required.
 
 <details>
 <summary>Alternative: Run locally from source</summary>
 
 Clone the repository — [https://github.com/samratkar/drl](https://github.com/samratkar/drl)  
-Open the file directly in your browser: `barto-sutton-notes/lecture3-mdp-dp-dp/assets/policy-evaluation-dp-html/index.html`
+Open the file directly in your browser: `barto-sutton-notes/lecture3-mdp-dp/assets/policy-evaluation-dp-html/index.html`
 </details>
 
 You will get the following running simulations of a 4X4 board game
