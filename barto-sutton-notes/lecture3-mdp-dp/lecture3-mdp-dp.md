@@ -5,7 +5,7 @@ category : Lectures
 subcategory : dynamic-programming
 textbook : [chapter3, chapter4]
 layout: post
-deliveries : [2026-05-09, 2026-05-16]
+deliveries : [2026-05-09, 2026-05-16, 2026-05-30]
 ---
 ## Table of Contents
 1. [Introduction](#finite-markov-decision-processes--dynamic-programming)
@@ -443,7 +443,7 @@ Once the MDP model $\mathcal{M}$ is known, dynamic programming uses it to comput
 
 **Problem**: Given a policy $\pi$, compute $v_\pi$.
 
-The Bellman equation for $v_\pi$ is a system of $|\mathcal{S}|$ linear equations. We could solve it directly (matrix inversion), but for large state spaces that's impractical. Instead, we solve it **iteratively**.
+The Bellman equation for $v_\pi$ is a system of $\mathcal{S}$ linear equations. We could solve it directly (matrix inversion), but for large state spaces that's impractical. Instead, we solve it **iteratively**.
 
 **Update rule**: Start with an arbitrary $V_0$ and repeatedly apply the Bellman equation as an update:
 
