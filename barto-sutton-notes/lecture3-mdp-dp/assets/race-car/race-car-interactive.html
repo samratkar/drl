@@ -1,0 +1,1989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Race Car MDP — Interactive RL Demonstration</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface2: #334155;
+            --border: #475569;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent2: #818cf8;
+            --green: #4ade80;
+            --red: #f87171;
+            --orange: #fb923c;
+            --yellow: #fbbf24;
+            --cool: #38bdf8;
+            --warm: #fb923c;
+            --overheated: #f87171;
+            --radius: 12px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.3);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, rgba(56,189,248,0.1), rgba(129,140,248,0.1));
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+        header h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        header p { color: var(--text-muted); font-size: 1.1rem; }
+
+        /* Navigation Tabs */
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            padding: 0.5rem;
+            background: var(--surface);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+        .tab {
+            padding: 0.7rem 1.2rem;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .tab:hover { background: var(--surface2); color: var(--text); }
+        .tab.active {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff;
+            box-shadow: 0 2px 12px rgba(56,189,248,0.3);
+        }
+
+        /* Panels */
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+        .card h2 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+        .card h3 {
+            font-size: 1.1rem;
+            margin: 1rem 0 0.5rem;
+            color: var(--accent2);
+        }
+
+        /* MDP Diagram */
+        .mdp-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3rem;
+            padding: 2rem;
+            flex-wrap: wrap;
+        }
+        .state-node {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            border: 3px solid;
+            position: relative;
+            transition: all 0.3s;
+        }
+        .state-node.cool { border-color: var(--cool); background: rgba(56,189,248,0.1); }
+        .state-node.warm { border-color: var(--warm); background: rgba(251,146,60,0.1); }
+        .state-node.overheated { border-color: var(--overheated); background: rgba(248,113,113,0.1); }
+        .state-node.active-state {
+            transform: scale(1.15);
+            box-shadow: 0 0 30px rgba(56,189,248,0.5);
+        }
+        .state-value {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Transition Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 0.6rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            background: var(--surface2);
+            color: var(--accent);
+            font-weight: 600;
+        }
+        tr:hover td { background: rgba(56,189,248,0.05); }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            margin: 1rem 0;
+        }
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff;
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(56,189,248,0.4); }
+        .btn-secondary {
+            background: var(--surface2);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover { border-color: var(--accent); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+        .slider-group label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .slider-group input[type="range"] {
+            width: 150px;
+            accent-color: var(--accent);
+        }
+        .slider-val {
+            font-size: 0.85rem;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Log Output */
+        .log {
+            background: #0c1222;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.8rem;
+            max-height: 400px;
+            overflow-y: auto;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .log .sweep { color: var(--accent); font-weight: 600; }
+        .log .state-cool { color: var(--cool); }
+        .log .state-warm { color: var(--warm); }
+        .log .state-oh { color: var(--overheated); }
+        .log .value { color: var(--green); }
+        .log .action { color: var(--yellow); }
+        .log .update { color: var(--accent2); }
+        .log .episode { color: var(--orange); font-weight: 600; }
+
+        /* Value Display */
+        .value-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .value-card {
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        .value-card.cool { background: rgba(56,189,248,0.1); border-color: var(--cool); }
+        .value-card.warm { background: rgba(251,146,60,0.1); border-color: var(--warm); }
+        .value-card.overheated { background: rgba(248,113,113,0.1); border-color: var(--overheated); }
+        .value-card .label { font-size: 0.85rem; color: var(--text-muted); }
+        .value-card .val {
+            font-size: 1.8rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .value-card .policy-label {
+            font-size: 0.8rem;
+            margin-top: 0.3rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .policy-slow { background: rgba(74,222,128,0.2); color: var(--green); }
+        .policy-fast { background: rgba(251,146,60,0.2); color: var(--orange); }
+
+        /* Convergence Chart */
+        .chart-container {
+            position: relative;
+            height: 250px;
+            margin: 1rem 0;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        canvas { width: 100% !important; height: 100% !important; }
+
+        /* Comparison Grid */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .algo-card {
+            padding: 1.2rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--surface);
+        }
+        .algo-card h4 {
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+        .algo-card .stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.3rem 0;
+            border-bottom: 1px solid rgba(71,85,105,0.5);
+            font-size: 0.85rem;
+        }
+        .algo-card .stat-label { color: var(--text-muted); }
+        .algo-card .stat-value { color: var(--green); font-weight: 600; }
+
+        /* Episode Visualization */
+        .episode-viz {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            background: rgba(15,23,42,0.5);
+            border-radius: 8px;
+            overflow-x: auto;
+            flex-wrap: wrap;
+        }
+        .step-box {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.8rem;
+        }
+        .step-state {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .step-state.cool { background: rgba(56,189,248,0.2); color: var(--cool); }
+        .step-state.warm { background: rgba(251,146,60,0.2); color: var(--warm); }
+        .step-state.overheated { background: rgba(248,113,113,0.2); color: var(--overheated); }
+        .step-arrow {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+        .step-action {
+            font-size: 0.7rem;
+            color: var(--yellow);
+        }
+        .step-reward {
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .step-reward.positive { color: var(--green); }
+        .step-reward.negative { color: var(--red); }
+
+        /* Q-Table */
+        .q-table {
+            width: 100%;
+            margin: 1rem 0;
+        }
+        .q-table td, .q-table th { text-align: center; padding: 0.7rem; }
+        .q-table .best { background: rgba(74,222,128,0.15); color: var(--green); font-weight: 700; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            header h1 { font-size: 1.6rem; }
+            .tabs { gap: 0.25rem; }
+            .tab { padding: 0.5rem 0.8rem; font-size: 0.8rem; }
+            .mdp-diagram { gap: 1.5rem; }
+            .state-node { width: 90px; height: 90px; font-size: 0.85rem; }
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .running { animation: pulse 1s infinite; }
+
+        /* Info box */
+        .info-box {
+            background: rgba(56,189,248,0.08);
+            border-left: 3px solid var(--accent);
+            padding: 1rem 1.2rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+        .info-box strong { color: var(--accent); }
+
+        /* Formula */
+        .formula {
+            background: rgba(129,140,248,0.08);
+            border: 1px solid rgba(129,140,248,0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.8rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            text-align: center;
+            color: var(--accent2);
+        }
+
+        /* Progress bar */
+        .progress-bar {
+            height: 4px;
+            background: var(--surface2);
+            border-radius: 2px;
+            margin: 0.5rem 0;
+            overflow: hidden;
+        }
+        .progress-bar .fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Race Car MDP — Interactive RL Lab</h1>
+            <p>Explore Dynamic Programming and Model-Free methods on a 3-state Markov Decision Process</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" data-panel="mdp">MDP Setup</button>
+            <button class="tab" data-panel="policy-eval">Policy Evaluation</button>
+            <button class="tab" data-panel="policy-iter">Policy Iteration</button>
+            <button class="tab" data-panel="value-iter">Value Iteration</button>
+            <button class="tab" data-panel="async-dp">Async DP</button>
+            <button class="tab" data-panel="mc">Monte Carlo</button>
+            <button class="tab" data-panel="qlearning">Q-Learning</button>
+            <button class="tab" data-panel="compare">Compare All</button>
+        </div>
+
+        <!-- Panel: MDP Setup -->
+        <div class="panel active" id="panel-mdp">
+            <div class="card">
+                <h2>The Race Car Problem</h2>
+                <p>A race car has an engine that can be in one of three states. The driver must decide how fast to drive to maximize reward without overheating.</p>
+
+                <div class="mdp-diagram">
+                    <div class="state-node cool">
+                        <span>Cool</span>
+                        <span class="state-value">Safe</span>
+                    </div>
+                    <div class="state-node warm">
+                        <span>Warm</span>
+                        <span class="state-value">Risky</span>
+                    </div>
+                    <div class="state-node overheated">
+                        <span>Overheated</span>
+                        <span class="state-value">Terminal</span>
+                    </div>
+                </div>
+
+                <h3>Transition Dynamics</h3>
+                <table>
+                    <thead>
+                        <tr><th>State</th><th>Action</th><th>Next State</th><th>Reward</th><th>Probability</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td style="color:var(--cool)">Cool</td><td>Slow</td><td>Cool</td><td>+1</td><td>0.5</td></tr>
+                        <tr><td style="color:var(--cool)">Cool</td><td>Slow</td><td>Warm</td><td>+1</td><td>0.5</td></tr>
+                        <tr><td style="color:var(--cool)">Cool</td><td>Fast</td><td>Cool</td><td>+2</td><td>0.5</td></tr>
+                        <tr><td style="color:var(--cool)">Cool</td><td>Fast</td><td>Warm</td><td>+2</td><td>0.5</td></tr>
+                        <tr><td style="color:var(--warm)">Warm</td><td>Slow</td><td>Cool</td><td>+1</td><td>0.5</td></tr>
+                        <tr><td style="color:var(--warm)">Warm</td><td>Slow</td><td>Warm</td><td>+1</td><td>0.5</td></tr>
+                        <tr><td style="color:var(--warm)">Warm</td><td style="color:var(--red)">Fast</td><td style="color:var(--red)">Overheated</td><td style="color:var(--red)">-10</td><td>1.0</td></tr>
+                        <tr><td style="color:var(--overheated)">Overheated</td><td>Any</td><td>Overheated</td><td>0</td><td>1.0</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="info-box">
+                    <strong>Key Insight:</strong> Going Fast from Cool is always safe (reward +2), but going Fast from Warm guarantees overheating (reward -10). The optimal strategy is to go Fast when Cool and Slow when Warm.
+                </div>
+
+                <h3>Parameters</h3>
+                <div class="controls">
+                    <div class="slider-group">
+                        <label>Discount Factor (γ)</label>
+                        <input type="range" id="gamma-slider" min="0.1" max="0.99" step="0.01" value="0.9">
+                        <span class="slider-val" id="gamma-val">0.9</span>
+                    </div>
+                </div>
+
+                <h3>P[s][a] Data Structure</h3>
+                <div class="formula">
+                    P[state][action] = [(probability, next_state, reward, is_terminal), ...]
+                </div>
+                <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.5rem;">
+                    This encodes the complete dynamics. Each tuple gives one possible outcome.
+                    Probabilities for a given (state, action) pair always sum to 1.0.
+                </p>
+            </div>
+        </div>
+
+        <!-- Panel: Policy Evaluation -->
+        <div class="panel" id="panel-policy-eval">
+            <div class="card">
+                <h2>Policy Evaluation — Compute V<sub>π</sub>(s)</h2>
+                <p>Given a fixed policy π, iteratively compute the value of each state using the Bellman expectation equation.</p>
+
+                <div class="formula">
+                    V(s) ← Σ<sub>a</sub> π(a|s) · Σ<sub>s',r</sub> p(s',r|s,a) · [r + γ·V(s')]
+                </div>
+
+                <h3>Configure Policy</h3>
+                <div class="controls">
+                    <div class="slider-group">
+                        <label>π(Fast | Cool)</label>
+                        <input type="range" id="pe-pi-cool" min="0" max="1" step="0.1" value="0.5">
+                        <span class="slider-val" id="pe-pi-cool-val">0.5</span>
+                    </div>
+                    <div class="slider-group">
+                        <label>π(Fast | Warm)</label>
+                        <input type="range" id="pe-pi-warm" min="0" max="1" step="0.1" value="0.5">
+                        <span class="slider-val" id="pe-pi-warm-val">0.5</span>
+                    </div>
+                    <button class="btn btn-primary" id="pe-run">Run Policy Evaluation</button>
+                    <button class="btn btn-secondary" id="pe-step">Step (1 Sweep)</button>
+                    <button class="btn btn-secondary" id="pe-reset">Reset</button>
+                </div>
+
+                <h3>Value Function</h3>
+                <div class="value-display" id="pe-values">
+                    <div class="value-card cool"><div class="label">V(Cool)</div><div class="val" id="pe-v-cool">0.0000</div></div>
+                    <div class="value-card warm"><div class="label">V(Warm)</div><div class="val" id="pe-v-warm">0.0000</div></div>
+                    <div class="value-card overheated"><div class="label">V(Overheated)</div><div class="val" id="pe-v-oh">0.0000</div></div>
+                </div>
+
+                <div class="controls">
+                    <span style="color:var(--text-muted); font-size:0.85rem;">Sweeps: <strong id="pe-sweeps">0</strong> | Max Δ: <strong id="pe-delta">—</strong></span>
+                </div>
+
+                <h3>Convergence Trace</h3>
+                <div class="chart-container"><canvas id="pe-chart"></canvas></div>
+
+                <h3>Computation Log</h3>
+                <div class="log" id="pe-log">Click "Run" or "Step" to begin...</div>
+            </div>
+        </div>
+
+        <!-- Panel: Policy Iteration -->
+        <div class="panel" id="panel-policy-iter">
+            <div class="card">
+                <h2>Policy Iteration — Find π*</h2>
+                <p>Alternate between evaluating the current policy and improving it by picking the action that maximizes Q(s,a).</p>
+
+                <div class="formula">
+                    π'(s) = argmax<sub>a</sub> Σ<sub>s',r</sub> p(s',r|s,a) · [r + γ·V<sub>π</sub>(s')]
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-primary" id="pi-run">Run Full Policy Iteration</button>
+                    <button class="btn btn-secondary" id="pi-step">Step (1 Iteration)</button>
+                    <button class="btn btn-secondary" id="pi-reset">Reset</button>
+                </div>
+
+                <h3>Current Policy & Values</h3>
+                <div class="value-display" id="pi-values">
+                    <div class="value-card cool">
+                        <div class="label">Cool</div>
+                        <div class="val" id="pi-v-cool">0.0000</div>
+                        <div class="policy-label policy-slow" id="pi-pol-cool">Slow</div>
+                    </div>
+                    <div class="value-card warm">
+                        <div class="label">Warm</div>
+                        <div class="val" id="pi-v-warm">0.0000</div>
+                        <div class="policy-label policy-slow" id="pi-pol-warm">Slow</div>
+                    </div>
+                    <div class="value-card overheated">
+                        <div class="label">Overheated</div>
+                        <div class="val" id="pi-v-oh">0.0000</div>
+                        <div class="policy-label" id="pi-pol-oh">Terminal</div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <span style="color:var(--text-muted); font-size:0.85rem;">Iteration: <strong id="pi-iter">0</strong> | Status: <strong id="pi-status">Not started</strong></span>
+                </div>
+
+                <h3>Q-Values & Improvement</h3>
+                <table class="q-table" id="pi-q-table">
+                    <thead><tr><th>State</th><th>Q(s, Slow)</th><th>Q(s, Fast)</th><th>Best</th></tr></thead>
+                    <tbody>
+                        <tr><td>Cool</td><td id="pi-q-cs">—</td><td id="pi-q-cf">—</td><td id="pi-best-c">—</td></tr>
+                        <tr><td>Warm</td><td id="pi-q-ws">—</td><td id="pi-q-wf">—</td><td id="pi-best-w">—</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Computation Log</h3>
+                <div class="log" id="pi-log">Click "Run" or "Step" to begin...</div>
+            </div>
+        </div>
+
+        <!-- Panel: Value Iteration -->
+        <div class="panel" id="panel-value-iter">
+            <div class="card">
+                <h2>Value Iteration — Direct Bellman Optimality</h2>
+                <p>Combines evaluation and improvement: each sweep directly takes the max over actions.</p>
+
+                <div class="formula">
+                    V(s) ← max<sub>a</sub> Σ<sub>s',r</sub> p(s',r|s,a) · [r + γ·V(s')]
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-primary" id="vi-run">Run Value Iteration</button>
+                    <button class="btn btn-secondary" id="vi-step">Step (1 Sweep)</button>
+                    <button class="btn btn-secondary" id="vi-reset">Reset</button>
+                </div>
+
+                <h3>Value Function</h3>
+                <div class="value-display">
+                    <div class="value-card cool"><div class="label">V(Cool)</div><div class="val" id="vi-v-cool">0.0000</div></div>
+                    <div class="value-card warm"><div class="label">V(Warm)</div><div class="val" id="vi-v-warm">0.0000</div></div>
+                    <div class="value-card overheated"><div class="label">V(Overheated)</div><div class="val" id="vi-v-oh">0.0000</div></div>
+                </div>
+
+                <div class="controls">
+                    <span style="color:var(--text-muted); font-size:0.85rem;">Sweeps: <strong id="vi-sweeps">0</strong> | Max Δ: <strong id="vi-delta">—</strong></span>
+                </div>
+
+                <h3>Convergence</h3>
+                <div class="chart-container"><canvas id="vi-chart"></canvas></div>
+
+                <h3>Per-Sweep Q-Values</h3>
+                <div class="log" id="vi-log">Click "Run" or "Step" to begin...</div>
+            </div>
+        </div>
+
+        <!-- Panel: Async DP -->
+        <div class="panel" id="panel-async-dp">
+            <div class="card">
+                <h2>Asynchronous DP — Smarter Update Orders</h2>
+                <p>Instead of sweeping all states in fixed order, update states intelligently based on priority or visitation.</p>
+
+                <div class="info-box">
+                    <strong>Three Variants:</strong><br>
+                    1. <strong>In-Place VI</strong> — Use updated values immediately (Gauss-Seidel style)<br>
+                    2. <strong>Prioritized Sweeping</strong> — Update states with largest Bellman error first<br>
+                    3. <strong>Real-Time DP</strong> — Only update states actually visited during episodes
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-primary" id="async-run-all">Run All Three</button>
+                    <button class="btn btn-secondary" id="async-run-inplace">In-Place Only</button>
+                    <button class="btn btn-secondary" id="async-run-priority">Prioritized Only</button>
+                    <button class="btn btn-secondary" id="async-run-realtime">Real-Time Only</button>
+                    <button class="btn btn-secondary" id="async-reset">Reset</button>
+                </div>
+
+                <h3>Results Comparison</h3>
+                <div class="comparison-grid" id="async-results">
+                    <div class="algo-card">
+                        <h4>Synchronous VI (baseline)</h4>
+                        <div class="stat"><span class="stat-label">V(Cool)</span><span class="stat-value" id="async-sync-vc">—</span></div>
+                        <div class="stat"><span class="stat-label">V(Warm)</span><span class="stat-value" id="async-sync-vw">—</span></div>
+                        <div class="stat"><span class="stat-label">Updates</span><span class="stat-value" id="async-sync-u">—</span></div>
+                    </div>
+                    <div class="algo-card">
+                        <h4>In-Place VI</h4>
+                        <div class="stat"><span class="stat-label">V(Cool)</span><span class="stat-value" id="async-ip-vc">—</span></div>
+                        <div class="stat"><span class="stat-label">V(Warm)</span><span class="stat-value" id="async-ip-vw">—</span></div>
+                        <div class="stat"><span class="stat-label">Sweeps</span><span class="stat-value" id="async-ip-u">—</span></div>
+                    </div>
+                    <div class="algo-card">
+                        <h4>Prioritized Sweeping</h4>
+                        <div class="stat"><span class="stat-label">V(Cool)</span><span class="stat-value" id="async-ps-vc">—</span></div>
+                        <div class="stat"><span class="stat-label">V(Warm)</span><span class="stat-value" id="async-ps-vw">—</span></div>
+                        <div class="stat"><span class="stat-label">Updates</span><span class="stat-value" id="async-ps-u">—</span></div>
+                    </div>
+                    <div class="algo-card">
+                        <h4>Real-Time DP</h4>
+                        <div class="stat"><span class="stat-label">V(Cool)</span><span class="stat-value" id="async-rt-vc">—</span></div>
+                        <div class="stat"><span class="stat-label">V(Warm)</span><span class="stat-value" id="async-rt-vw">—</span></div>
+                        <div class="stat"><span class="stat-label">Updates</span><span class="stat-value" id="async-rt-u">—</span></div>
+                    </div>
+                </div>
+
+                <h3>Prioritized Sweeping — Update Order</h3>
+                <div class="log" id="async-log">Click a button to run...</div>
+            </div>
+        </div>
+
+        <!-- Panel: Monte Carlo -->
+        <div class="panel" id="panel-mc">
+            <div class="card">
+                <h2>Monte Carlo Prediction — Learn from Episodes</h2>
+                <p>No model needed! Generate full episodes, compute returns, and average them to estimate V<sub>π</sub>(s).</p>
+
+                <div class="formula">
+                    V(s) ← V(s) + α · [G<sub>t</sub> - V(s)]  where G<sub>t</sub> = r<sub>t+1</sub> + γ·G<sub>t+1</sub>
+                </div>
+
+                <div class="controls">
+                    <div class="slider-group">
+                        <label>Episodes</label>
+                        <input type="range" id="mc-episodes" min="100" max="10000" step="100" value="2000">
+                        <span class="slider-val" id="mc-episodes-val">2000</span>
+                    </div>
+                    <div class="slider-group">
+                        <label>Learning Rate (α)</label>
+                        <input type="range" id="mc-alpha" min="0.001" max="0.1" step="0.001" value="0.01">
+                        <span class="slider-val" id="mc-alpha-val">0.01</span>
+                    </div>
+                    <button class="btn btn-primary" id="mc-run">Run MC Prediction</button>
+                    <button class="btn btn-secondary" id="mc-episode">Generate 1 Episode</button>
+                    <button class="btn btn-secondary" id="mc-reset">Reset</button>
+                </div>
+
+                <div class="progress-bar"><div class="fill" id="mc-progress" style="width:0%"></div></div>
+
+                <h3>Estimated Values</h3>
+                <div class="value-display">
+                    <div class="value-card cool"><div class="label">V(Cool)</div><div class="val" id="mc-v-cool">0.0000</div></div>
+                    <div class="value-card warm"><div class="label">V(Warm)</div><div class="val" id="mc-v-warm">0.0000</div></div>
+                    <div class="value-card overheated"><div class="label">V(Overheated)</div><div class="val" id="mc-v-oh">0.0000</div></div>
+                </div>
+
+                <div class="controls">
+                    <span style="color:var(--text-muted); font-size:0.85rem;">Episodes completed: <strong id="mc-ep-count">0</strong> | DP target V(Cool): <strong id="mc-dp-target">—</strong></span>
+                </div>
+
+                <h3>Convergence</h3>
+                <div class="chart-container"><canvas id="mc-chart"></canvas></div>
+
+                <h3>Episode Visualization</h3>
+                <div id="mc-episodes-viz"></div>
+
+                <h3>Computation Log</h3>
+                <div class="log" id="mc-log">Click "Generate 1 Episode" to see step-by-step, or "Run" for full training...</div>
+            </div>
+        </div>
+
+        <!-- Panel: Q-Learning -->
+        <div class="panel" id="panel-qlearning">
+            <div class="card">
+                <h2>Q-Learning — Off-Policy TD Control</h2>
+                <p>Learn optimal Q(s,a) directly by bootstrapping: use max Q(s',a') as the estimate of future value.</p>
+
+                <div class="formula">
+                    Q(s,a) ← Q(s,a) + α · [r + γ·max<sub>a'</sub>Q(s',a') − Q(s,a)]
+                </div>
+
+                <div class="controls">
+                    <div class="slider-group">
+                        <label>Episodes</label>
+                        <input type="range" id="ql-episodes" min="100" max="20000" step="100" value="5000">
+                        <span class="slider-val" id="ql-episodes-val">5000</span>
+                    </div>
+                    <div class="slider-group">
+                        <label>α (learning rate)</label>
+                        <input type="range" id="ql-alpha" min="0.01" max="0.5" step="0.01" value="0.1">
+                        <span class="slider-val" id="ql-alpha-val">0.1</span>
+                    </div>
+                    <div class="slider-group">
+                        <label>ε (exploration)</label>
+                        <input type="range" id="ql-epsilon" min="0.01" max="0.5" step="0.01" value="0.1">
+                        <span class="slider-val" id="ql-epsilon-val">0.1</span>
+                    </div>
+                    <button class="btn btn-primary" id="ql-run">Run Q-Learning</button>
+                    <button class="btn btn-secondary" id="ql-step-ep">Step (1 Episode)</button>
+                    <button class="btn btn-secondary" id="ql-reset">Reset</button>
+                </div>
+
+                <div class="progress-bar"><div class="fill" id="ql-progress" style="width:0%"></div></div>
+
+                <h3>Q-Table</h3>
+                <table class="q-table">
+                    <thead><tr><th>State</th><th>Q(s, Slow)</th><th>Q(s, Fast)</th><th>Optimal Action</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color:var(--cool)">Cool</td><td id="ql-q-cs">0.0000</td><td id="ql-q-cf">0.0000</td><td id="ql-best-c">—</td></tr>
+                        <tr><td style="color:var(--warm)">Warm</td><td id="ql-q-ws">0.0000</td><td id="ql-q-wf">0.0000</td><td id="ql-best-w">—</td></tr>
+                        <tr><td style="color:var(--overheated)">Overheated</td><td id="ql-q-ohs">0.0000</td><td id="ql-q-ohf">0.0000</td><td id="ql-best-oh">Terminal</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="controls">
+                    <span style="color:var(--text-muted); font-size:0.85rem;">Episodes: <strong id="ql-ep-count">0</strong></span>
+                </div>
+
+                <h3>Convergence</h3>
+                <div class="chart-container"><canvas id="ql-chart"></canvas></div>
+
+                <h3>Recent Episodes</h3>
+                <div id="ql-episodes-viz"></div>
+
+                <h3>Step-by-Step Log</h3>
+                <div class="log" id="ql-log">Click "Step (1 Episode)" to trace a single episode, or "Run" for full training...</div>
+            </div>
+        </div>
+
+        <!-- Panel: Compare All -->
+        <div class="panel" id="panel-compare">
+            <div class="card">
+                <h2>Algorithm Comparison</h2>
+                <p>Run all algorithms and compare convergence speed, accuracy, and computational cost.</p>
+
+                <div class="controls">
+                    <button class="btn btn-primary" id="cmp-run">Run All Algorithms</button>
+                    <div class="slider-group">
+                        <label>MC/QL Episodes</label>
+                        <input type="range" id="cmp-episodes" min="1000" max="20000" step="1000" value="5000">
+                        <span class="slider-val" id="cmp-episodes-val">5000</span>
+                    </div>
+                </div>
+
+                <div class="progress-bar"><div class="fill" id="cmp-progress" style="width:0%"></div></div>
+
+                <h3>Results</h3>
+                <table id="cmp-table">
+                    <thead>
+                        <tr><th>Algorithm</th><th>V(Cool)</th><th>V(Warm)</th><th>Optimal Policy</th><th>Iterations/Episodes</th><th>Model Needed?</th></tr>
+                    </thead>
+                    <tbody id="cmp-tbody">
+                        <tr><td colspan="6" style="color:var(--text-muted); text-align:center;">Click "Run All Algorithms" to compare</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Convergence Comparison</h3>
+                <div class="chart-container"><canvas id="cmp-chart"></canvas></div>
+
+                <h3>Key Takeaways</h3>
+                <div class="info-box" id="cmp-insights">
+                    <strong>Run the comparison to see insights...</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // =========================================================================
+    // MDP DEFINITION
+    // =========================================================================
+    const COOL = 0, WARM = 1, OVERHEATED = 2;
+    const SLOW = 0, FAST = 1;
+    const STATE_NAMES = ['Cool', 'Warm', 'Overheated'];
+    const ACTION_NAMES = ['Slow', 'Fast'];
+
+    function getGamma() {
+        return parseFloat(document.getElementById('gamma-slider').value);
+    }
+
+    function getMDP() {
+        return {
+            numStates: 3,
+            numActions: 2,
+            gamma: getGamma(),
+            P: {
+                0: { // COOL
+                    0: [[0.5, 0, 1.0, false], [0.5, 1, 1.0, false]], // SLOW
+                    1: [[0.5, 0, 2.0, false], [0.5, 1, 2.0, false]]  // FAST
+                },
+                1: { // WARM
+                    0: [[0.5, 0, 1.0, false], [0.5, 1, 1.0, false]], // SLOW
+                    1: [[1.0, 2, -10.0, true]]                         // FAST
+                },
+                2: { // OVERHEATED
+                    0: [[1.0, 2, 0.0, true]],
+                    1: [[1.0, 2, 0.0, true]]
+                }
+            }
+        };
+    }
+
+    function step(mdp, s, a) {
+        const outcomes = mdp.P[s][a];
+        const r = Math.random();
+        let cumProb = 0;
+        for (const [prob, ns, reward, done] of outcomes) {
+            cumProb += prob;
+            if (r < cumProb) return { ns, reward, done };
+        }
+        const last = outcomes[outcomes.length - 1];
+        return { ns: last[1], reward: last[2], done: last[3] };
+    }
+
+    // =========================================================================
+    // SIMPLE CANVAS CHART
+    // =========================================================================
+    class SimpleChart {
+        constructor(canvasId, options = {}) {
+            this.canvas = document.getElementById(canvasId);
+            this.ctx = this.canvas.getContext('2d');
+            this.series = {};
+            this.options = {
+                yLabel: options.yLabel || 'Value',
+                xLabel: options.xLabel || 'Iteration',
+                colors: options.colors || ['#38bdf8', '#fb923c', '#4ade80', '#818cf8', '#f87171'],
+                ...options
+            };
+            this.resize();
+            window.addEventListener('resize', () => this.resize());
+        }
+
+        resize() {
+            const rect = this.canvas.parentElement.getBoundingClientRect();
+            if (rect.width === 0 || rect.height === 0) return;
+            this.canvas.width = rect.width * window.devicePixelRatio;
+            this.canvas.height = rect.height * window.devicePixelRatio;
+            this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+            this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            this.width = rect.width;
+            this.height = rect.height;
+            this.draw();
+        }
+
+        addSeries(name, data) {
+            this.series[name] = data;
+        }
+
+        clear() {
+            this.series = {};
+            this.draw();
+        }
+
+        draw() {
+            const ctx = this.ctx;
+            const w = this.width, h = this.height;
+            if (!w || !h) return;
+            const pad = { top: 20, right: 20, bottom: 35, left: 60 };
+
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = '#0c1222';
+            ctx.fillRect(0, 0, w, h);
+
+            const names = Object.keys(this.series);
+            if (names.length === 0) return;
+
+            let allData = [];
+            names.forEach(n => allData.push(...this.series[n]));
+            if (allData.length === 0) return;
+
+            const maxLen = Math.max(...names.map(n => this.series[n].length));
+            const yMin = Math.min(...allData) - 0.5;
+            const yMax = Math.max(...allData) + 0.5;
+
+            const plotW = w - pad.left - pad.right;
+            const plotH = h - pad.top - pad.bottom;
+
+            // Axes
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(pad.left, pad.top);
+            ctx.lineTo(pad.left, h - pad.bottom);
+            ctx.lineTo(w - pad.right, h - pad.bottom);
+            ctx.stroke();
+
+            // Y labels
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '11px sans-serif';
+            ctx.textAlign = 'right';
+            const ySteps = 5;
+            for (let i = 0; i <= ySteps; i++) {
+                const val = yMin + (yMax - yMin) * (i / ySteps);
+                const y = h - pad.bottom - (i / ySteps) * plotH;
+                ctx.fillText(val.toFixed(1), pad.left - 5, y + 4);
+                ctx.strokeStyle = '#1e293b';
+                ctx.beginPath();
+                ctx.moveTo(pad.left, y);
+                ctx.lineTo(w - pad.right, y);
+                ctx.stroke();
+            }
+
+            // X label
+            ctx.textAlign = 'center';
+            ctx.fillText(this.options.xLabel, pad.left + plotW / 2, h - 5);
+
+            // Plot series
+            names.forEach((name, idx) => {
+                const data = this.series[name];
+                if (data.length < 2) return;
+                const color = this.options.colors[idx % this.options.colors.length];
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                data.forEach((val, i) => {
+                    const x = pad.left + (i / (maxLen - 1)) * plotW;
+                    const y = h - pad.bottom - ((val - yMin) / (yMax - yMin)) * plotH;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+
+                // Legend
+                const legendY = pad.top + idx * 18;
+                ctx.fillStyle = color;
+                ctx.fillRect(w - pad.right - 100, legendY, 12, 12);
+                ctx.fillStyle = '#f1f5f9';
+                ctx.textAlign = 'left';
+                ctx.fillText(name, w - pad.right - 84, legendY + 10);
+            });
+        }
+    }
+
+    // =========================================================================
+    // TAB NAVIGATION
+    // =========================================================================
+    const allCharts = [];
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+            setTimeout(() => allCharts.forEach(c => c.resize()), 50);
+        });
+    });
+
+    // Gamma slider
+    document.getElementById('gamma-slider').addEventListener('input', e => {
+        document.getElementById('gamma-val').textContent = parseFloat(e.target.value).toFixed(2);
+    });
+
+    // =========================================================================
+    // POLICY EVALUATION
+    // =========================================================================
+    let peState = { V: [0, 0, 0], sweeps: 0, history: { cool: [0], warm: [0] } };
+    const peChart = new SimpleChart('pe-chart', { xLabel: 'Sweep', colors: ['#38bdf8', '#fb923c'] });
+    allCharts.push(peChart);
+
+    function getPEPolicy() {
+        const pFastCool = parseFloat(document.getElementById('pe-pi-cool').value);
+        const pFastWarm = parseFloat(document.getElementById('pe-pi-warm').value);
+        return [[1 - pFastCool, pFastCool], [1 - pFastWarm, pFastWarm], [0.5, 0.5]];
+    }
+
+    function peSweep(mdp, V, policy) {
+        let delta = 0;
+        let log = '';
+        for (let s = 0; s < mdp.numStates; s++) {
+            let vNew = 0;
+            let contributions = [];
+            for (let a = 0; a < mdp.numActions; a++) {
+                for (const [prob, ns, r, done] of mdp.P[s][a]) {
+                    const contrib = policy[s][a] * prob * (r + mdp.gamma * V[ns] * (done ? 0 : 1));
+                    vNew += contrib;
+                    contributions.push(`  π(${ACTION_NAMES[a]}|${STATE_NAMES[s]})=${policy[s][a].toFixed(1)} × P(→${STATE_NAMES[ns]})=${prob} × (${r} + ${mdp.gamma}×${V[ns].toFixed(4)}) = ${contrib.toFixed(4)}`);
+                }
+            }
+            delta = Math.max(delta, Math.abs(vNew - V[s]));
+            log += `<span class="state-${['cool','warm','oh'][s]}">${STATE_NAMES[s]}</span>:\n`;
+            log += contributions.join('\n') + '\n';
+            log += `  → V = <span class="value">${vNew.toFixed(4)}</span> (Δ=${Math.abs(vNew - V[s]).toFixed(6)})\n\n`;
+            V[s] = vNew;
+        }
+        return { V, delta, log };
+    }
+
+    function peUpdateDisplay() {
+        document.getElementById('pe-v-cool').textContent = peState.V[0].toFixed(4);
+        document.getElementById('pe-v-warm').textContent = peState.V[1].toFixed(4);
+        document.getElementById('pe-v-oh').textContent = peState.V[2].toFixed(4);
+        document.getElementById('pe-sweeps').textContent = peState.sweeps;
+    }
+
+    document.getElementById('pe-pi-cool').addEventListener('input', e => {
+        document.getElementById('pe-pi-cool-val').textContent = parseFloat(e.target.value).toFixed(1);
+    });
+    document.getElementById('pe-pi-warm').addEventListener('input', e => {
+        document.getElementById('pe-pi-warm-val').textContent = parseFloat(e.target.value).toFixed(1);
+    });
+
+    document.getElementById('pe-step').addEventListener('click', () => {
+        const mdp = getMDP();
+        const policy = getPEPolicy();
+        peState.sweeps++;
+        const result = peSweep(mdp, peState.V, policy);
+        peState.V = result.V;
+        peState.history.cool.push(peState.V[0]);
+        peState.history.warm.push(peState.V[1]);
+
+        document.getElementById('pe-delta').textContent = result.delta.toFixed(8);
+        document.getElementById('pe-log').innerHTML = `<span class="sweep">═══ SWEEP ${peState.sweeps} ═══</span>\n\n` + result.log;
+        peUpdateDisplay();
+        peChart.addSeries('V(Cool)', peState.history.cool);
+        peChart.addSeries('V(Warm)', peState.history.warm);
+        peChart.draw();
+    });
+
+    document.getElementById('pe-run').addEventListener('click', () => {
+        const mdp = getMDP();
+        const policy = getPEPolicy();
+        peState.V = [0, 0, 0];
+        peState.sweeps = 0;
+        peState.history = { cool: [0], warm: [0] };
+        let fullLog = '';
+
+        for (let i = 0; i < 500; i++) {
+            peState.sweeps++;
+            const result = peSweep(mdp, peState.V, policy);
+            peState.V = result.V;
+            peState.history.cool.push(peState.V[0]);
+            peState.history.warm.push(peState.V[1]);
+            if (i < 5) fullLog += `<span class="sweep">═══ SWEEP ${peState.sweeps} ═══</span>\n` + result.log + '\n';
+            if (result.delta < 1e-8) {
+                fullLog += `\n<span class="value">✓ CONVERGED after ${peState.sweeps} sweeps (Δ < 1e-8)</span>\n`;
+                fullLog += `Final: V(Cool)=${peState.V[0].toFixed(4)}, V(Warm)=${peState.V[1].toFixed(4)}`;
+                document.getElementById('pe-delta').textContent = result.delta.toExponential(2);
+                break;
+            }
+        }
+        document.getElementById('pe-log').innerHTML = fullLog;
+        peUpdateDisplay();
+        peChart.addSeries('V(Cool)', peState.history.cool);
+        peChart.addSeries('V(Warm)', peState.history.warm);
+        peChart.draw();
+    });
+
+    document.getElementById('pe-reset').addEventListener('click', () => {
+        peState = { V: [0, 0, 0], sweeps: 0, history: { cool: [0], warm: [0] } };
+        peUpdateDisplay();
+        document.getElementById('pe-delta').textContent = '—';
+        document.getElementById('pe-log').innerHTML = 'Click "Run" or "Step" to begin...';
+        peChart.clear();
+    });
+
+    // =========================================================================
+    // POLICY ITERATION
+    // =========================================================================
+    let piState = { policy: [[1, 0], [1, 0], [1, 0]], V: [0, 0, 0], iter: 0, converged: false };
+
+    function piUpdateDisplay() {
+        document.getElementById('pi-v-cool').textContent = piState.V[0].toFixed(4);
+        document.getElementById('pi-v-warm').textContent = piState.V[1].toFixed(4);
+        document.getElementById('pi-v-oh').textContent = piState.V[2].toFixed(4);
+        document.getElementById('pi-iter').textContent = piState.iter;
+
+        for (let s = 0; s < 2; s++) {
+            const el = document.getElementById(['pi-pol-cool', 'pi-pol-warm'][s]);
+            const action = piState.policy[s][1] > piState.policy[s][0] ? 'Fast' : 'Slow';
+            el.textContent = action;
+            el.className = 'policy-label ' + (action === 'Fast' ? 'policy-fast' : 'policy-slow');
+        }
+        document.getElementById('pi-status').textContent = piState.converged ? 'CONVERGED (optimal!)' : 'In progress...';
+    }
+
+    function fullPolicyEval(mdp, policy, theta = 1e-8) {
+        let V = [0, 0, 0];
+        for (let iter = 0; iter < 1000; iter++) {
+            let delta = 0;
+            for (let s = 0; s < mdp.numStates; s++) {
+                let vNew = 0;
+                for (let a = 0; a < mdp.numActions; a++) {
+                    for (const [prob, ns, r, done] of mdp.P[s][a]) {
+                        vNew += policy[s][a] * prob * (r + mdp.gamma * V[ns] * (done ? 0 : 1));
+                    }
+                }
+                delta = Math.max(delta, Math.abs(vNew - V[s]));
+                V[s] = vNew;
+            }
+            if (delta < theta) break;
+        }
+        return V;
+    }
+
+    function piStep() {
+        if (piState.converged) return;
+        const mdp = getMDP();
+        piState.iter++;
+
+        // Evaluate
+        piState.V = fullPolicyEval(mdp, piState.policy);
+
+        // Improve
+        let stable = true;
+        let log = `<span class="sweep">═══ ITERATION ${piState.iter} ═══</span>\n\n`;
+        log += `<span class="update">STEP 1: Policy Evaluation (converged)</span>\n`;
+        log += `  V = [Cool=${piState.V[0].toFixed(4)}, Warm=${piState.V[1].toFixed(4)}]\n\n`;
+        log += `<span class="update">STEP 2: Policy Improvement</span>\n`;
+
+        for (let s = 0; s < 2; s++) {
+            const oldA = piState.policy[s][1] > piState.policy[s][0] ? 1 : 0;
+            let qVals = [];
+            for (let a = 0; a < mdp.numActions; a++) {
+                let q = 0;
+                for (const [prob, ns, r, done] of mdp.P[s][a]) {
+                    q += prob * (r + mdp.gamma * piState.V[ns] * (done ? 0 : 1));
+                }
+                qVals.push(q);
+            }
+            const bestA = qVals[1] > qVals[0] ? 1 : 0;
+
+            document.getElementById(`pi-q-${['c','w'][s]}s`).textContent = qVals[0].toFixed(4);
+            document.getElementById(`pi-q-${['c','w'][s]}f`).textContent = qVals[1].toFixed(4);
+            document.getElementById(`pi-best-${['c','w'][s]}`).textContent = ACTION_NAMES[bestA];
+
+            // Highlight best
+            const cellS = document.getElementById(`pi-q-${['c','w'][s]}s`);
+            const cellF = document.getElementById(`pi-q-${['c','w'][s]}f`);
+            cellS.className = bestA === 0 ? 'best' : '';
+            cellF.className = bestA === 1 ? 'best' : '';
+
+            log += `  Q(${STATE_NAMES[s]}, Slow) = <span class="value">${qVals[0].toFixed(4)}</span>\n`;
+            log += `  Q(${STATE_NAMES[s]}, Fast) = <span class="value">${qVals[1].toFixed(4)}</span>\n`;
+
+            if (bestA !== oldA) {
+                stable = false;
+                piState.policy[s] = bestA === 0 ? [1, 0] : [0, 1];
+                log += `  → π(${STATE_NAMES[s]}): ${ACTION_NAMES[oldA]} → <span class="action">${ACTION_NAMES[bestA]}</span> ✗ CHANGED\n\n`;
+            } else {
+                log += `  → π(${STATE_NAMES[s]}): ${ACTION_NAMES[oldA]} (unchanged) ✓\n\n`;
+            }
+        }
+
+        if (stable) {
+            piState.converged = true;
+            log += `\n<span class="value">✓ Policy STABLE — CONVERGED! Optimal policy found.</span>\n`;
+            log += `  Cool → ${piState.policy[0][1] > 0 ? 'Fast' : 'Slow'}\n`;
+            log += `  Warm → ${piState.policy[1][1] > 0 ? 'Fast' : 'Slow'}`;
+        } else {
+            log += `Policy changed — will re-evaluate...\n`;
+        }
+
+        document.getElementById('pi-log').innerHTML = log;
+        piUpdateDisplay();
+    }
+
+    document.getElementById('pi-step').addEventListener('click', piStep);
+    document.getElementById('pi-run').addEventListener('click', () => {
+        piState = { policy: [[1, 0], [1, 0], [1, 0]], V: [0, 0, 0], iter: 0, converged: false };
+        let allLog = '';
+        for (let i = 0; i < 20; i++) {
+            piStep();
+            allLog += document.getElementById('pi-log').innerHTML + '\n\n';
+            if (piState.converged) break;
+        }
+        document.getElementById('pi-log').innerHTML = allLog;
+    });
+    document.getElementById('pi-reset').addEventListener('click', () => {
+        piState = { policy: [[1, 0], [1, 0], [1, 0]], V: [0, 0, 0], iter: 0, converged: false };
+        piUpdateDisplay();
+        document.getElementById('pi-log').innerHTML = 'Click "Run" or "Step" to begin...';
+        document.getElementById('pi-q-cs').textContent = '—';
+        document.getElementById('pi-q-cf').textContent = '—';
+        document.getElementById('pi-q-ws').textContent = '—';
+        document.getElementById('pi-q-wf').textContent = '—';
+        document.getElementById('pi-best-c').textContent = '—';
+        document.getElementById('pi-best-w').textContent = '—';
+    });
+
+    // =========================================================================
+    // VALUE ITERATION
+    // =========================================================================
+    let viState = { V: [0, 0, 0], sweeps: 0, history: { cool: [0], warm: [0] } };
+    const viChart = new SimpleChart('vi-chart', { xLabel: 'Sweep', colors: ['#38bdf8', '#fb923c'] });
+    allCharts.push(viChart);
+
+    function viUpdateDisplay() {
+        document.getElementById('vi-v-cool').textContent = viState.V[0].toFixed(4);
+        document.getElementById('vi-v-warm').textContent = viState.V[1].toFixed(4);
+        document.getElementById('vi-v-oh').textContent = viState.V[2].toFixed(4);
+        document.getElementById('vi-sweeps').textContent = viState.sweeps;
+    }
+
+    function viSweep(mdp, V) {
+        let delta = 0;
+        let log = '';
+        const newV = [...V];
+        for (let s = 0; s < mdp.numStates; s++) {
+            let qVals = [];
+            let details = [];
+            for (let a = 0; a < mdp.numActions; a++) {
+                let q = 0;
+                let terms = [];
+                for (const [prob, ns, r, done] of mdp.P[s][a]) {
+                    const val = prob * (r + mdp.gamma * V[ns] * (done ? 0 : 1));
+                    q += val;
+                    terms.push(`${prob}×(${r}+${mdp.gamma}×${V[ns].toFixed(3)}×${done?0:1})`);
+                }
+                qVals.push(q);
+                details.push(`  Q(${STATE_NAMES[s]}, ${ACTION_NAMES[a]}) = ${terms.join(' + ')} = <span class="value">${q.toFixed(4)}</span>`);
+            }
+            newV[s] = Math.max(...qVals);
+            delta = Math.max(delta, Math.abs(newV[s] - V[s]));
+            const bestA = qVals[0] >= qVals[1] ? 0 : 1;
+            log += `<span class="state-${['cool','warm','oh'][s]}">${STATE_NAMES[s]}</span>:\n`;
+            log += details.join('\n') + '\n';
+            log += `  → V = max(${qVals[0].toFixed(4)}, ${qVals[1].toFixed(4)}) = <span class="value">${newV[s].toFixed(4)}</span> [<span class="action">${ACTION_NAMES[bestA]}</span>]\n\n`;
+        }
+        return { V: newV, delta, log };
+    }
+
+    document.getElementById('vi-step').addEventListener('click', () => {
+        const mdp = getMDP();
+        viState.sweeps++;
+        const result = viSweep(mdp, viState.V);
+        viState.V = result.V;
+        viState.history.cool.push(viState.V[0]);
+        viState.history.warm.push(viState.V[1]);
+        document.getElementById('vi-delta').textContent = result.delta.toFixed(8);
+        document.getElementById('vi-log').innerHTML = `<span class="sweep">═══ SWEEP ${viState.sweeps} ═══</span>\n\n` + result.log;
+        viUpdateDisplay();
+        viChart.addSeries('V(Cool)', viState.history.cool);
+        viChart.addSeries('V(Warm)', viState.history.warm);
+        viChart.draw();
+    });
+
+    document.getElementById('vi-run').addEventListener('click', () => {
+        const mdp = getMDP();
+        viState = { V: [0, 0, 0], sweeps: 0, history: { cool: [0], warm: [0] } };
+        let fullLog = '';
+        for (let i = 0; i < 500; i++) {
+            viState.sweeps++;
+            const result = viSweep(mdp, viState.V);
+            viState.V = result.V;
+            viState.history.cool.push(viState.V[0]);
+            viState.history.warm.push(viState.V[1]);
+            if (i < 4) fullLog += `<span class="sweep">═══ SWEEP ${viState.sweeps} ═══</span>\n` + result.log + '\n';
+            if (result.delta < 1e-8) {
+                fullLog += `\n<span class="value">✓ CONVERGED after ${viState.sweeps} sweeps</span>\n`;
+                fullLog += `V* = [Cool=${viState.V[0].toFixed(4)}, Warm=${viState.V[1].toFixed(4)}]\n`;
+                fullLog += `Optimal: Cool→Fast, Warm→Slow`;
+                document.getElementById('vi-delta').textContent = result.delta.toExponential(2);
+                break;
+            }
+        }
+        document.getElementById('vi-log').innerHTML = fullLog;
+        viUpdateDisplay();
+        viChart.addSeries('V(Cool)', viState.history.cool);
+        viChart.addSeries('V(Warm)', viState.history.warm);
+        viChart.draw();
+    });
+
+    document.getElementById('vi-reset').addEventListener('click', () => {
+        viState = { V: [0, 0, 0], sweeps: 0, history: { cool: [0], warm: [0] } };
+        viUpdateDisplay();
+        document.getElementById('vi-delta').textContent = '—';
+        document.getElementById('vi-log').innerHTML = 'Click "Run" or "Step" to begin...';
+        viChart.clear();
+    });
+
+    // =========================================================================
+    // ASYNC DP
+    // =========================================================================
+    function asyncInPlace(mdp, theta = 1e-8) {
+        let V = [0, 0, 0];
+        let sweeps = 0;
+        for (let i = 0; i < 1000; i++) {
+            let delta = 0;
+            sweeps++;
+            for (let s = 0; s < mdp.numStates; s++) {
+                const vOld = V[s];
+                let maxQ = -Infinity;
+                for (let a = 0; a < mdp.numActions; a++) {
+                    let q = 0;
+                    for (const [prob, ns, r, done] of mdp.P[s][a]) {
+                        q += prob * (r + mdp.gamma * V[ns] * (done ? 0 : 1));
+                    }
+                    maxQ = Math.max(maxQ, q);
+                }
+                V[s] = maxQ;
+                delta = Math.max(delta, Math.abs(V[s] - vOld));
+            }
+            if (delta < theta) break;
+        }
+        return { V, sweeps };
+    }
+
+    function asyncPrioritized(mdp, theta = 1e-8) {
+        let V = [0, 0, 0];
+        const predecessors = { 0: new Set(), 1: new Set(), 2: new Set() };
+        for (let s = 0; s < mdp.numStates; s++) {
+            for (let a = 0; a < mdp.numActions; a++) {
+                for (const [prob, ns] of mdp.P[s][a]) {
+                    if (prob > 0) predecessors[ns].add(s);
+                }
+            }
+        }
+
+        let queue = [];
+        let log = [];
+        for (let s = 0; s < mdp.numStates; s++) {
+            let maxQ = -Infinity;
+            for (let a = 0; a < mdp.numActions; a++) {
+                let q = 0;
+                for (const [prob, ns, r, done] of mdp.P[s][a]) {
+                    q += prob * (r + mdp.gamma * V[ns] * (done ? 0 : 1));
+                }
+                maxQ = Math.max(maxQ, q);
+            }
+            const err = Math.abs(maxQ - V[s]);
+            if (err > theta) queue.push({ priority: err, state: s });
+        }
+        queue.sort((a, b) => b.priority - a.priority);
+
+        let updates = 0;
+        while (queue.length > 0) {
+            const { priority, state: s } = queue.shift();
+            const vOld = V[s];
+            let maxQ = -Infinity;
+            for (let a = 0; a < mdp.numActions; a++) {
+                let q = 0;
+                for (const [prob, ns, r, done] of mdp.P[s][a]) {
+                    q += prob * (r + mdp.gamma * V[ns] * (done ? 0 : 1));
+                }
+                maxQ = Math.max(maxQ, q);
+            }
+            V[s] = maxQ;
+            updates++;
+            log.push({ state: s, vOld, vNew: V[s], priority });
+
+            for (const pred of predecessors[s]) {
+                let maxQP = -Infinity;
+                for (let a = 0; a < mdp.numActions; a++) {
+                    let q = 0;
+                    for (const [prob, ns, r, done] of mdp.P[pred][a]) {
+                        q += prob * (r + mdp.gamma * V[ns] * (done ? 0 : 1));
+                    }
+                    maxQP = Math.max(maxQP, q);
+                }
+                const err = Math.abs(maxQP - V[pred]);
+                if (err > theta) {
+                    queue.push({ priority: err, state: pred });
+                    queue.sort((a, b) => b.priority - a.priority);
+                }
+            }
+            if (updates > 200) break;
+        }
+        return { V, updates, log };
+    }
+
+    function asyncRealTime(mdp, numEpisodes = 50) {
+        let V = [0, 0, 0];
+        let totalUpdates = 0;
+        let visited = new Set();
+
+        for (let ep = 0; ep < numEpisodes; ep++) {
+            let s = COOL;
+            for (let step = 0; step < 200; step++) {
+                let maxQ = -Infinity;
+                let bestA = 0;
+                for (let a = 0; a < mdp.numActions; a++) {
+                    let q = 0;
+                    for (const [prob, ns, r, done] of mdp.P[s][a]) {
+                        q += prob * (r + mdp.gamma * V[ns] * (done ? 0 : 1));
+                    }
+                    if (q > maxQ) { maxQ = q; bestA = a; }
+                }
+                V[s] = maxQ;
+                totalUpdates++;
+                visited.add(s);
+
+                const outcomes = mdp.P[s][bestA];
+                const rand = Math.random();
+                let cumP = 0;
+                let ns = s, reward = 0, done = false;
+                for (const [prob, nst, r, d] of outcomes) {
+                    cumP += prob;
+                    if (rand < cumP) { ns = nst; reward = r; done = d; break; }
+                }
+                if (done) break;
+                s = ns;
+            }
+        }
+        return { V, totalUpdates, visited };
+    }
+
+    document.getElementById('async-run-all').addEventListener('click', () => {
+        const mdp = getMDP();
+
+        // Sync baseline
+        let Vsync = [0, 0, 0];
+        let syncSweeps = 0;
+        for (let i = 0; i < 500; i++) {
+            let delta = 0;
+            const newV = [...Vsync];
+            syncSweeps++;
+            for (let s = 0; s < mdp.numStates; s++) {
+                let maxQ = -Infinity;
+                for (let a = 0; a < mdp.numActions; a++) {
+                    let q = 0;
+                    for (const [prob, ns, r, done] of mdp.P[s][a]) {
+                        q += prob * (r + mdp.gamma * Vsync[ns] * (done ? 0 : 1));
+                    }
+                    maxQ = Math.max(maxQ, q);
+                }
+                newV[s] = maxQ;
+                delta = Math.max(delta, Math.abs(newV[s] - Vsync[s]));
+            }
+            Vsync = newV;
+            if (delta < 1e-8) break;
+        }
+
+        const ip = asyncInPlace(mdp);
+        const ps = asyncPrioritized(mdp);
+        const rt = asyncRealTime(mdp, 50);
+
+        document.getElementById('async-sync-vc').textContent = Vsync[0].toFixed(4);
+        document.getElementById('async-sync-vw').textContent = Vsync[1].toFixed(4);
+        document.getElementById('async-sync-u').textContent = `${syncSweeps} sweeps (${syncSweeps * 3} updates)`;
+
+        document.getElementById('async-ip-vc').textContent = ip.V[0].toFixed(4);
+        document.getElementById('async-ip-vw').textContent = ip.V[1].toFixed(4);
+        document.getElementById('async-ip-u').textContent = `${ip.sweeps} (${ip.sweeps * 3} updates)`;
+
+        document.getElementById('async-ps-vc').textContent = ps.V[0].toFixed(4);
+        document.getElementById('async-ps-vw').textContent = ps.V[1].toFixed(4);
+        document.getElementById('async-ps-u').textContent = `${ps.updates}`;
+
+        document.getElementById('async-rt-vc').textContent = rt.V[0].toFixed(4);
+        document.getElementById('async-rt-vw').textContent = rt.V[1].toFixed(4);
+        document.getElementById('async-rt-u').textContent = `${rt.totalUpdates}`;
+
+        let logHtml = `<span class="sweep">PRIORITIZED SWEEPING — UPDATE ORDER</span>\n\n`;
+        for (let i = 0; i < Math.min(ps.log.length, 20); i++) {
+            const { state, vOld, vNew, priority } = ps.log[i];
+            const cls = ['state-cool', 'state-warm', 'state-oh'][state];
+            logHtml += `Step ${i + 1}: <span class="${cls}">${STATE_NAMES[state]}</span> `;
+            logHtml += `${vOld.toFixed(4)} → <span class="value">${vNew.toFixed(4)}</span> (priority=${priority.toFixed(4)})\n`;
+        }
+        if (ps.log.length > 20) logHtml += `... (${ps.log.length - 20} more updates)\n`;
+
+        const ohUpdated = ps.log.some(l => l.state === OVERHEATED);
+        logHtml += `\n<span class="update">Overheated was ${ohUpdated ? 'updated' : 'NEVER updated'} — its Bellman error is always 0!</span>`;
+
+        document.getElementById('async-log').innerHTML = logHtml;
+    });
+
+    document.getElementById('async-run-inplace').addEventListener('click', () => {
+        const mdp = getMDP();
+        const ip = asyncInPlace(mdp);
+        document.getElementById('async-ip-vc').textContent = ip.V[0].toFixed(4);
+        document.getElementById('async-ip-vw').textContent = ip.V[1].toFixed(4);
+        document.getElementById('async-ip-u').textContent = `${ip.sweeps} (${ip.sweeps * 3} updates)`;
+        document.getElementById('async-log').innerHTML = `<span class="value">In-Place VI converged in ${ip.sweeps} sweeps</span>\nV* = [${ip.V[0].toFixed(4)}, ${ip.V[1].toFixed(4)}, ${ip.V[2].toFixed(4)}]`;
+    });
+
+    document.getElementById('async-run-priority').addEventListener('click', () => {
+        const mdp = getMDP();
+        const ps = asyncPrioritized(mdp);
+        document.getElementById('async-ps-vc').textContent = ps.V[0].toFixed(4);
+        document.getElementById('async-ps-vw').textContent = ps.V[1].toFixed(4);
+        document.getElementById('async-ps-u').textContent = `${ps.updates}`;
+        let logHtml = `<span class="sweep">PRIORITIZED SWEEPING — ${ps.updates} updates</span>\n\n`;
+        for (const { state, vOld, vNew, priority } of ps.log) {
+            const cls = ['state-cool', 'state-warm', 'state-oh'][state];
+            logHtml += `<span class="${cls}">${STATE_NAMES[state]}</span>: ${vOld.toFixed(4)} → <span class="value">${vNew.toFixed(4)}</span> (Δ=${priority.toFixed(4)})\n`;
+        }
+        document.getElementById('async-log').innerHTML = logHtml;
+    });
+
+    document.getElementById('async-run-realtime').addEventListener('click', () => {
+        const mdp = getMDP();
+        const rt = asyncRealTime(mdp, 50);
+        document.getElementById('async-rt-vc').textContent = rt.V[0].toFixed(4);
+        document.getElementById('async-rt-vw').textContent = rt.V[1].toFixed(4);
+        document.getElementById('async-rt-u').textContent = `${rt.totalUpdates}`;
+        const visited = [...rt.visited].map(s => STATE_NAMES[s]).join(', ');
+        document.getElementById('async-log').innerHTML = `<span class="value">Real-Time DP: ${rt.totalUpdates} updates over 50 episodes</span>\nStates visited: ${visited}\nV* = [${rt.V[0].toFixed(4)}, ${rt.V[1].toFixed(4)}, ${rt.V[2].toFixed(4)}]`;
+    });
+
+    document.getElementById('async-reset').addEventListener('click', () => {
+        ['async-sync-vc','async-sync-vw','async-sync-u','async-ip-vc','async-ip-vw','async-ip-u',
+         'async-ps-vc','async-ps-vw','async-ps-u','async-rt-vc','async-rt-vw','async-rt-u'].forEach(id => {
+            document.getElementById(id).textContent = '—';
+        });
+        document.getElementById('async-log').innerHTML = 'Click a button to run...';
+    });
+
+    // =========================================================================
+    // MONTE CARLO
+    // =========================================================================
+    let mcState = { V: [0, 0, 0], episodes: 0, history: { cool: [], warm: [] } };
+    const mcChart = new SimpleChart('mc-chart', { xLabel: 'Episode', colors: ['#38bdf8', '#fb923c', '#4ade80', '#818cf8'] });
+    allCharts.push(mcChart);
+
+    document.getElementById('mc-episodes').addEventListener('input', e => {
+        document.getElementById('mc-episodes-val').textContent = e.target.value;
+    });
+    document.getElementById('mc-alpha').addEventListener('input', e => {
+        document.getElementById('mc-alpha-val').textContent = parseFloat(e.target.value).toFixed(3);
+    });
+
+    function mcUpdateDisplay() {
+        document.getElementById('mc-v-cool').textContent = mcState.V[0].toFixed(4);
+        document.getElementById('mc-v-warm').textContent = mcState.V[1].toFixed(4);
+        document.getElementById('mc-v-oh').textContent = mcState.V[2].toFixed(4);
+        document.getElementById('mc-ep-count').textContent = mcState.episodes;
+    }
+
+    function runMCEpisode(mdp, V, alpha) {
+        let s = COOL;
+        const trajectory = [];
+        for (let i = 0; i < 500; i++) {
+            const a = Math.random() < 0.5 ? FAST : SLOW;
+            const { ns, reward, done } = step(mdp, s, a);
+            trajectory.push({ state: s, action: a, reward });
+            if (done) break;
+            s = ns;
+        }
+        let G = 0;
+        const returns = [];
+        for (let i = trajectory.length - 1; i >= 0; i--) {
+            G = trajectory[i].reward + mdp.gamma * G;
+            V[trajectory[i].state] += alpha * (G - V[trajectory[i].state]);
+            returns.unshift(G);
+        }
+        return { trajectory, returns, V };
+    }
+
+    document.getElementById('mc-episode').addEventListener('click', () => {
+        const mdp = getMDP();
+        const alpha = parseFloat(document.getElementById('mc-alpha').value);
+        const result = runMCEpisode(mdp, mcState.V, alpha);
+        mcState.episodes++;
+        mcState.history.cool.push(mcState.V[0]);
+        mcState.history.warm.push(mcState.V[1]);
+
+        // Visualize episode
+        const vizDiv = document.getElementById('mc-episodes-viz');
+        let vizHtml = `<div class="episode-viz"><strong style="font-size:0.75rem;color:var(--text-muted);">Ep ${mcState.episodes}:</strong>`;
+        for (let i = 0; i < result.trajectory.length; i++) {
+            const t = result.trajectory[i];
+            const cls = ['cool', 'warm', 'overheated'][t.state];
+            vizHtml += `<div class="step-box">`;
+            vizHtml += `<span class="step-state ${cls}">${STATE_NAMES[t.state]}</span>`;
+            vizHtml += `<span class="step-arrow">─[<span class="step-action">${ACTION_NAMES[t.action]}</span>]→</span>`;
+            vizHtml += `<span class="step-reward ${t.reward >= 0 ? 'positive' : 'negative'}">${t.reward >= 0 ? '+' : ''}${t.reward}</span>`;
+            vizHtml += `</div>`;
+        }
+        vizHtml += `</div>`;
+        vizDiv.innerHTML = vizHtml + vizDiv.innerHTML;
+        if (vizDiv.children.length > 8) vizDiv.removeChild(vizDiv.lastChild);
+
+        // Log
+        let log = `<span class="episode">═══ EPISODE ${mcState.episodes} ═══</span>\n\n`;
+        log += `<span class="update">PHASE 1: Generate Episode</span>\n`;
+        for (let i = 0; i < result.trajectory.length; i++) {
+            const t = result.trajectory[i];
+            log += `  t=${i + 1}: ${STATE_NAMES[t.state]} ─[${ACTION_NAMES[t.action]}, r=${t.reward >= 0 ? '+' : ''}${t.reward}]→\n`;
+        }
+        log += `\n<span class="update">PHASE 2: Compute Returns (backwards)</span>\n`;
+        for (let i = result.trajectory.length - 1; i >= 0; i--) {
+            const t = result.trajectory[i];
+            log += `  G=${result.returns[i].toFixed(3)} → V(<span class="state-${['cool','warm','oh'][t.state]}">${STATE_NAMES[t.state]}</span>) = <span class="value">${mcState.V[t.state].toFixed(4)}</span>\n`;
+        }
+        document.getElementById('mc-log').innerHTML = log;
+        mcUpdateDisplay();
+        mcChart.addSeries('V(Cool)', mcState.history.cool);
+        mcChart.addSeries('V(Warm)', mcState.history.warm);
+        mcChart.draw();
+
+        // Show DP target
+        const dpV = fullPolicyEval(mdp, [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]);
+        document.getElementById('mc-dp-target').textContent = dpV[0].toFixed(4);
+    });
+
+    document.getElementById('mc-run').addEventListener('click', () => {
+        const mdp = getMDP();
+        const numEpisodes = parseInt(document.getElementById('mc-episodes').value);
+        const alpha = parseFloat(document.getElementById('mc-alpha').value);
+        mcState = { V: [0, 0, 0], episodes: 0, history: { cool: [], warm: [] } };
+
+        const logInterval = Math.max(1, Math.floor(numEpisodes / 50));
+        let log = '';
+
+        for (let i = 0; i < numEpisodes; i++) {
+            runMCEpisode(mdp, mcState.V, alpha);
+            mcState.episodes++;
+            if (i % logInterval === 0 || i === numEpisodes - 1) {
+                mcState.history.cool.push(mcState.V[0]);
+                mcState.history.warm.push(mcState.V[1]);
+            }
+            if (i < 3 || i === numEpisodes - 1) {
+                log += `Episode ${i + 1}: V(Cool)=${mcState.V[0].toFixed(4)}, V(Warm)=${mcState.V[1].toFixed(4)}\n`;
+            }
+        }
+
+        document.getElementById('mc-progress').style.width = '100%';
+        const dpV = fullPolicyEval(mdp, [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]);
+        log += `\n<span class="value">MC converged: V(Cool)=${mcState.V[0].toFixed(4)}, V(Warm)=${mcState.V[1].toFixed(4)}</span>\n`;
+        log += `DP exact:     V(Cool)=${dpV[0].toFixed(4)}, V(Warm)=${dpV[1].toFixed(4)}\n`;
+        log += `Error: Cool=${Math.abs(mcState.V[0] - dpV[0]).toFixed(4)}, Warm=${Math.abs(mcState.V[1] - dpV[1]).toFixed(4)}`;
+        document.getElementById('mc-log').innerHTML = log;
+        document.getElementById('mc-dp-target').textContent = dpV[0].toFixed(4);
+        mcUpdateDisplay();
+        mcChart.addSeries('V(Cool)', mcState.history.cool);
+        mcChart.addSeries('V(Warm)', mcState.history.warm);
+        mcChart.draw();
+        setTimeout(() => { document.getElementById('mc-progress').style.width = '0%'; }, 1000);
+    });
+
+    document.getElementById('mc-reset').addEventListener('click', () => {
+        mcState = { V: [0, 0, 0], episodes: 0, history: { cool: [], warm: [] } };
+        mcUpdateDisplay();
+        document.getElementById('mc-log').innerHTML = 'Click "Generate 1 Episode" to see step-by-step, or "Run" for full training...';
+        document.getElementById('mc-episodes-viz').innerHTML = '';
+        document.getElementById('mc-progress').style.width = '0%';
+        mcChart.clear();
+    });
+
+    // =========================================================================
+    // Q-LEARNING
+    // =========================================================================
+    let qlState = { Q: [[0,0],[0,0],[0,0]], episodes: 0, history: { qcs: [], qcf: [], qws: [], qwf: [] } };
+    const qlChart = new SimpleChart('ql-chart', { xLabel: 'Episode', colors: ['#4ade80', '#38bdf8', '#fb923c', '#f87171'] });
+    allCharts.push(qlChart);
+
+    document.getElementById('ql-episodes').addEventListener('input', e => {
+        document.getElementById('ql-episodes-val').textContent = e.target.value;
+    });
+    document.getElementById('ql-alpha').addEventListener('input', e => {
+        document.getElementById('ql-alpha-val').textContent = parseFloat(e.target.value).toFixed(2);
+    });
+    document.getElementById('ql-epsilon').addEventListener('input', e => {
+        document.getElementById('ql-epsilon-val').textContent = parseFloat(e.target.value).toFixed(2);
+    });
+
+    function qlUpdateDisplay() {
+        document.getElementById('ql-q-cs').textContent = qlState.Q[0][0].toFixed(4);
+        document.getElementById('ql-q-cf').textContent = qlState.Q[0][1].toFixed(4);
+        document.getElementById('ql-q-ws').textContent = qlState.Q[1][0].toFixed(4);
+        document.getElementById('ql-q-wf').textContent = qlState.Q[1][1].toFixed(4);
+        document.getElementById('ql-q-ohs').textContent = qlState.Q[2][0].toFixed(4);
+        document.getElementById('ql-q-ohf').textContent = qlState.Q[2][1].toFixed(4);
+
+        const bestC = qlState.Q[0][0] !== qlState.Q[0][1] ? ACTION_NAMES[qlState.Q[0][1] > qlState.Q[0][0] ? 1 : 0] : '—';
+        const bestW = qlState.Q[1][0] !== qlState.Q[1][1] ? ACTION_NAMES[qlState.Q[1][1] > qlState.Q[1][0] ? 1 : 0] : '—';
+        document.getElementById('ql-best-c').textContent = bestC;
+        document.getElementById('ql-best-w').textContent = bestW;
+        document.getElementById('ql-ep-count').textContent = qlState.episodes;
+
+        // Highlight best Q
+        const csCell = document.getElementById('ql-q-cs');
+        const cfCell = document.getElementById('ql-q-cf');
+        csCell.className = qlState.Q[0][0] > qlState.Q[0][1] ? 'best' : '';
+        cfCell.className = qlState.Q[0][1] > qlState.Q[0][0] ? 'best' : '';
+        const wsCell = document.getElementById('ql-q-ws');
+        const wfCell = document.getElementById('ql-q-wf');
+        wsCell.className = qlState.Q[1][0] > qlState.Q[1][1] ? 'best' : '';
+        wfCell.className = qlState.Q[1][1] > qlState.Q[1][0] ? 'best' : '';
+    }
+
+    function runQLEpisode(mdp, Q, alpha, epsilon, trace = false) {
+        let s = COOL;
+        const steps = [];
+        for (let i = 0; i < 500; i++) {
+            let a;
+            const isExplore = Math.random() < epsilon;
+            if (isExplore) {
+                a = Math.random() < 0.5 ? 0 : 1;
+            } else {
+                a = Q[s][1] > Q[s][0] ? 1 : 0;
+            }
+            const { ns, reward, done } = step(mdp, s, a);
+            const tdTarget = reward + mdp.gamma * Math.max(Q[ns][0], Q[ns][1]) * (done ? 0 : 1);
+            const tdError = tdTarget - Q[s][a];
+            const qOld = Q[s][a];
+            Q[s][a] += alpha * tdError;
+            if (trace) steps.push({ s, a, ns, reward, done, isExplore, tdTarget, tdError, qOld, qNew: Q[s][a] });
+            if (done) break;
+            s = ns;
+        }
+        return { Q, steps };
+    }
+
+    document.getElementById('ql-step-ep').addEventListener('click', () => {
+        const mdp = getMDP();
+        const alpha = parseFloat(document.getElementById('ql-alpha').value);
+        const epsilon = parseFloat(document.getElementById('ql-epsilon').value);
+        const result = runQLEpisode(mdp, qlState.Q, alpha, epsilon, true);
+        qlState.episodes++;
+        qlState.history.qcs.push(qlState.Q[0][0]);
+        qlState.history.qcf.push(qlState.Q[0][1]);
+        qlState.history.qws.push(qlState.Q[1][0]);
+        qlState.history.qwf.push(qlState.Q[1][1]);
+
+        // Episode visualization
+        const vizDiv = document.getElementById('ql-episodes-viz');
+        let vizHtml = `<div class="episode-viz"><strong style="font-size:0.75rem;color:var(--text-muted);">Ep ${qlState.episodes}:</strong>`;
+        for (const s of result.steps) {
+            const cls = ['cool', 'warm', 'overheated'][s.s];
+            vizHtml += `<div class="step-box">`;
+            vizHtml += `<span class="step-state ${cls}">${STATE_NAMES[s.s]}</span>`;
+            vizHtml += `<span class="step-arrow">─[<span class="step-action">${ACTION_NAMES[s.a]}${s.isExplore ? '?' : ''}</span>]→</span>`;
+            vizHtml += `<span class="step-reward ${s.reward >= 0 ? 'positive' : 'negative'}">${s.reward >= 0 ? '+' : ''}${s.reward}</span>`;
+            vizHtml += `</div>`;
+        }
+        vizHtml += `</div>`;
+        vizDiv.innerHTML = vizHtml + vizDiv.innerHTML;
+        if (vizDiv.children.length > 6) vizDiv.removeChild(vizDiv.lastChild);
+
+        // Detailed log
+        let log = `<span class="episode">═══ EPISODE ${qlState.episodes} ═══</span>\n\n`;
+        for (let i = 0; i < result.steps.length; i++) {
+            const st = result.steps[i];
+            log += `<span class="state-${['cool','warm','oh'][st.s]}">Step ${i + 1}: ${STATE_NAMES[st.s]}</span>\n`;
+            log += `  Action: ${st.isExplore ? '<span class="action">EXPLORE</span>' : '<span class="value">EXPLOIT</span>'} → ${ACTION_NAMES[st.a]}\n`;
+            log += `  Result: → ${STATE_NAMES[st.ns]}, r=${st.reward >= 0 ? '+' : ''}${st.reward}${st.done ? ' (DONE)' : ''}\n`;
+            log += `  TD Target = ${st.reward} + ${mdp.gamma}×max(${qlState.Q[st.ns][0].toFixed(3)}, ${qlState.Q[st.ns][1].toFixed(3)})×${st.done ? 0 : 1} = <span class="value">${st.tdTarget.toFixed(4)}</span>\n`;
+            log += `  Q(${STATE_NAMES[st.s]},${ACTION_NAMES[st.a]}): ${st.qOld.toFixed(4)} → <span class="value">${st.qNew.toFixed(4)}</span> (error=${st.tdError.toFixed(4)})\n\n`;
+        }
+        document.getElementById('ql-log').innerHTML = log;
+        qlUpdateDisplay();
+        qlChart.addSeries('Q(Cool,Slow)', qlState.history.qcs);
+        qlChart.addSeries('Q(Cool,Fast)', qlState.history.qcf);
+        qlChart.addSeries('Q(Warm,Slow)', qlState.history.qws);
+        qlChart.addSeries('Q(Warm,Fast)', qlState.history.qwf);
+        qlChart.draw();
+    });
+
+    document.getElementById('ql-run').addEventListener('click', () => {
+        const mdp = getMDP();
+        const numEpisodes = parseInt(document.getElementById('ql-episodes').value);
+        const alpha = parseFloat(document.getElementById('ql-alpha').value);
+        const epsilon = parseFloat(document.getElementById('ql-epsilon').value);
+        qlState = { Q: [[0,0],[0,0],[0,0]], episodes: 0, history: { qcs: [], qcf: [], qws: [], qwf: [] } };
+
+        const logInterval = Math.max(1, Math.floor(numEpisodes / 100));
+        let log = '';
+
+        for (let i = 0; i < numEpisodes; i++) {
+            runQLEpisode(mdp, qlState.Q, alpha, epsilon, false);
+            qlState.episodes++;
+            if (i % logInterval === 0 || i === numEpisodes - 1) {
+                qlState.history.qcs.push(qlState.Q[0][0]);
+                qlState.history.qcf.push(qlState.Q[0][1]);
+                qlState.history.qws.push(qlState.Q[1][0]);
+                qlState.history.qwf.push(qlState.Q[1][1]);
+            }
+            if (i < 3 || i === numEpisodes - 1) {
+                log += `Ep ${i + 1}: Q(C,S)=${qlState.Q[0][0].toFixed(3)}, Q(C,F)=${qlState.Q[0][1].toFixed(3)}, Q(W,S)=${qlState.Q[1][0].toFixed(3)}, Q(W,F)=${qlState.Q[1][1].toFixed(3)}\n`;
+            }
+        }
+        document.getElementById('ql-progress').style.width = '100%';
+        log += `\n<span class="value">CONVERGED after ${numEpisodes} episodes</span>\n`;
+        log += `Optimal policy: Cool→${qlState.Q[0][1] > qlState.Q[0][0] ? 'Fast' : 'Slow'}, Warm→${qlState.Q[1][1] > qlState.Q[1][0] ? 'Fast' : 'Slow'}`;
+        document.getElementById('ql-log').innerHTML = log;
+        qlUpdateDisplay();
+        qlChart.addSeries('Q(Cool,Slow)', qlState.history.qcs);
+        qlChart.addSeries('Q(Cool,Fast)', qlState.history.qcf);
+        qlChart.addSeries('Q(Warm,Slow)', qlState.history.qws);
+        qlChart.addSeries('Q(Warm,Fast)', qlState.history.qwf);
+        qlChart.draw();
+        setTimeout(() => { document.getElementById('ql-progress').style.width = '0%'; }, 1000);
+    });
+
+    document.getElementById('ql-reset').addEventListener('click', () => {
+        qlState = { Q: [[0,0],[0,0],[0,0]], episodes: 0, history: { qcs: [], qcf: [], qws: [], qwf: [] } };
+        qlUpdateDisplay();
+        document.getElementById('ql-log').innerHTML = 'Click "Step (1 Episode)" to trace a single episode, or "Run" for full training...';
+        document.getElementById('ql-episodes-viz').innerHTML = '';
+        document.getElementById('ql-progress').style.width = '0%';
+        qlChart.clear();
+    });
+
+    // =========================================================================
+    // COMPARISON
+    // =========================================================================
+    const cmpChart = new SimpleChart('cmp-chart', { xLabel: 'Iteration/Episode', colors: ['#38bdf8', '#818cf8', '#4ade80', '#fb923c', '#f87171'] });
+    allCharts.push(cmpChart);
+
+    document.getElementById('cmp-episodes').addEventListener('input', e => {
+        document.getElementById('cmp-episodes-val').textContent = e.target.value;
+    });
+
+    document.getElementById('cmp-run').addEventListener('click', () => {
+        const mdp = getMDP();
+        const numEp = parseInt(document.getElementById('cmp-episodes').value);
+        document.getElementById('cmp-progress').style.width = '50%';
+
+        // 1. Policy Evaluation (random policy)
+        const pePolicy = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]];
+        const peV = fullPolicyEval(mdp, pePolicy);
+
+        // 2. Policy Iteration
+        let piPolicy = [[1, 0], [1, 0], [1, 0]];
+        let piV = [0, 0, 0];
+        let piIter = 0;
+        for (let i = 0; i < 20; i++) {
+            piV = fullPolicyEval(mdp, piPolicy);
+            let stable = true;
+            for (let s = 0; s < 2; s++) {
+                let qVals = [];
+                for (let a = 0; a < 2; a++) {
+                    let q = 0;
+                    for (const [prob, ns, r, done] of mdp.P[s][a]) {
+                        q += prob * (r + mdp.gamma * piV[ns] * (done ? 0 : 1));
+                    }
+                    qVals.push(q);
+                }
+                const bestA = qVals[1] > qVals[0] ? 1 : 0;
+                const oldA = piPolicy[s][1] > piPolicy[s][0] ? 1 : 0;
+                if (bestA !== oldA) { stable = false; piPolicy[s] = bestA === 0 ? [1, 0] : [0, 1]; }
+            }
+            piIter++;
+            if (stable) break;
+        }
+
+        // 3. Value Iteration
+        let viV = [0, 0, 0];
+        let viSweeps = 0;
+        const viHistory = [0];
+        for (let i = 0; i < 500; i++) {
+            let delta = 0;
+            const newV = [...viV];
+            viSweeps++;
+            for (let s = 0; s < 3; s++) {
+                let maxQ = -Infinity;
+                for (let a = 0; a < 2; a++) {
+                    let q = 0;
+                    for (const [prob, ns, r, done] of mdp.P[s][a]) {
+                        q += prob * (r + mdp.gamma * viV[ns] * (done ? 0 : 1));
+                    }
+                    maxQ = Math.max(maxQ, q);
+                }
+                newV[s] = maxQ;
+                delta = Math.max(delta, Math.abs(newV[s] - viV[s]));
+            }
+            viV = newV;
+            viHistory.push(viV[0]);
+            if (delta < 1e-8) break;
+        }
+
+        // 4. Monte Carlo
+        let mcV = [0, 0, 0];
+        const mcHist = [0];
+        const mcLogInt = Math.max(1, Math.floor(numEp / 100));
+        for (let i = 0; i < numEp; i++) {
+            let s = COOL;
+            const traj = [];
+            for (let j = 0; j < 500; j++) {
+                const a = Math.random() < 0.5 ? 1 : 0;
+                const { ns, reward, done } = step(mdp, s, a);
+                traj.push({ state: s, reward });
+                if (done) break;
+                s = ns;
+            }
+            let G = 0;
+            for (let j = traj.length - 1; j >= 0; j--) {
+                G = traj[j].reward + mdp.gamma * G;
+                mcV[traj[j].state] += 0.01 * (G - mcV[traj[j].state]);
+            }
+            if (i % mcLogInt === 0) mcHist.push(mcV[0]);
+        }
+
+        // 5. Q-Learning
+        let qlQ = [[0,0],[0,0],[0,0]];
+        const qlHist = [0];
+        const qlLogInt = Math.max(1, Math.floor(numEp / 100));
+        for (let i = 0; i < numEp; i++) {
+            let s = COOL;
+            for (let j = 0; j < 500; j++) {
+                const a = Math.random() < 0.1 ? (Math.random() < 0.5 ? 0 : 1) : (qlQ[s][1] > qlQ[s][0] ? 1 : 0);
+                const { ns, reward, done } = step(mdp, s, a);
+                const target = reward + mdp.gamma * Math.max(qlQ[ns][0], qlQ[ns][1]) * (done ? 0 : 1);
+                qlQ[s][a] += 0.1 * (target - qlQ[s][a]);
+                if (done) break;
+                s = ns;
+            }
+            if (i % qlLogInt === 0) qlHist.push(Math.max(qlQ[0][0], qlQ[0][1]));
+        }
+
+        document.getElementById('cmp-progress').style.width = '100%';
+
+        // Display results
+        const qlVCool = Math.max(qlQ[0][0], qlQ[0][1]);
+        const qlVWarm = Math.max(qlQ[1][0], qlQ[1][1]);
+        const qlPolC = qlQ[0][1] > qlQ[0][0] ? 'Fast' : 'Slow';
+        const qlPolW = qlQ[1][1] > qlQ[1][0] ? 'Fast' : 'Slow';
+        const piPolC = piPolicy[0][1] > piPolicy[0][0] ? 'Fast' : 'Slow';
+        const piPolW = piPolicy[1][1] > piPolicy[1][0] ? 'Fast' : 'Slow';
+
+        document.getElementById('cmp-tbody').innerHTML = `
+            <tr><td>Policy Evaluation</td><td>${peV[0].toFixed(4)}</td><td>${peV[1].toFixed(4)}</td><td style="color:var(--text-muted)">N/A (evaluates π)</td><td>~50 sweeps</td><td style="color:var(--green)">YES</td></tr>
+            <tr><td>Policy Iteration</td><td>${piV[0].toFixed(4)}</td><td>${piV[1].toFixed(4)}</td><td>Cool→${piPolC}, Warm→${piPolW}</td><td>${piIter} iterations</td><td style="color:var(--green)">YES</td></tr>
+            <tr><td>Value Iteration</td><td>${viV[0].toFixed(4)}</td><td>${viV[1].toFixed(4)}</td><td>Cool→Fast, Warm→Slow</td><td>${viSweeps} sweeps</td><td style="color:var(--green)">YES</td></tr>
+            <tr><td>Monte Carlo</td><td>${mcV[0].toFixed(4)}</td><td>${mcV[1].toFixed(4)}</td><td style="color:var(--text-muted)">N/A (prediction only)</td><td>${numEp} episodes</td><td style="color:var(--orange)">NO</td></tr>
+            <tr><td>Q-Learning</td><td>${qlVCool.toFixed(4)}</td><td>${qlVWarm.toFixed(4)}</td><td>Cool→${qlPolC}, Warm→${qlPolW}</td><td>${numEp} episodes</td><td style="color:var(--orange)">NO</td></tr>
+        `;
+
+        // Chart — normalize x-axis by showing convergence curves
+        cmpChart.clear();
+        cmpChart.addSeries('Value Iteration', viHistory);
+        cmpChart.addSeries('MC (V_Cool)', mcHist);
+        cmpChart.addSeries('Q-Learning (max Q_Cool)', qlHist);
+        cmpChart.draw();
+
+        // Insights
+        document.getElementById('cmp-insights').innerHTML = `
+            <strong>Key Takeaways:</strong><br><br>
+            <strong>1. All methods find the same answer:</strong> Go Fast when Cool (higher reward, no risk), go Slow when Warm (avoid catastrophic -10).<br><br>
+            <strong>2. DP is fast but needs the model:</strong> Value Iteration converges in ${viSweeps} sweeps. Policy Iteration in just ${piIter} iterations. But they require knowing P[s][a] exactly.<br><br>
+            <strong>3. Model-free methods are slower but more flexible:</strong> MC and Q-Learning need ${numEp} episodes of trial-and-error. They work even when the environment dynamics are unknown.<br><br>
+            <strong>4. The fundamental trade-off:</strong> Exact computation (DP) vs. sample-based estimation (MC/QL). For this 3-state MDP, DP is obviously better. For real-world problems with millions of states, only model-free methods are feasible.
+        `;
+
+        setTimeout(() => { document.getElementById('cmp-progress').style.width = '0%'; }, 1500);
+    });
+    </script>
+</body>
+</html>
