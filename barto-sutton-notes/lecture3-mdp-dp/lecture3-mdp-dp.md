@@ -703,7 +703,7 @@ In practice, convergence is remarkably fast — often far fewer iterations than 
 
 ### Example 1: race car on a track (Sutton & Barto, Example 4.1)
 Predicting the car to move slow or fast to balance between its states of hot, cold and over heated. 
-[Car Race implementation](https://github.com/samratkar/drl/blob/main/barto-sutton-notes/lecture3-mdp-dp/assets/race-car/dp_race_car_demonstration.ipynb)
+[Car Race implementation](https://nbviewer.org/github/samratkar/drl/blob/main/barto-sutton-notes/lecture3-mdp-dp/assets/race-car/dp_race_car_demonstration.ipynb)
 [Car Race Interactive Demo — DP, Async DP, MC, Q-Learning](./assets/race-car/race-car-interactive.html)
 [Car Race Mathematical Formulation](https://github.com/samratkar/drl/blob/main/barto-sutton-notes/lecture3-mdp-dp/assets/race-car/mdp_race_car.xlsx)
 
