@@ -4,10 +4,11 @@ title : "Temporal-Difference Learning"
 category : Lectures
 subcategory : temporal-difference
 textbook : [chapter6]
-layout: 
-deliveries : []
+layout: post
+deliveries : [2026-05-31]
 ---
 ## Table of Contents
+
 - [Context: V(s) vs Q(s,a) — Prediction vs Control](#context-vs-vs-qsa--prediction-vs-control)
 - [Unified Comparison: DP, MC, and TD Update Rules](#unified-comparison-dp-mc-and-td-update-rules)
 - [TD Prediction](#td-prediction)
@@ -42,9 +43,9 @@ deliveries : []
   - [Double Q-learning](#double-q-learning)
     - [Algorithm: Double Q-learning](#algorithm-double-q-learning)
 - [Unified View: TD, MC, DP](#unified-view-td-mc-dp)
-    - [The Backup Diagrams](#the-backup-diagrams)
+  - [The Backup Diagrams](#the-backup-diagrams)
 - [Summary: Key Equations at a Glance](#summary-key-equations-at-a-glance)
-    - [Convergence Guarantees](#convergence-guarantees)
+  - [Convergence Guarantees](#convergence-guarantees)
 
 ---
 
@@ -65,7 +66,9 @@ Before diving into TD, it's important to understand **why** this lecture starts 
 
 **The fundamental problem:** In model-free RL, an agent cannot improve its policy using V(s) alone. To pick the best action at state s, you'd need to compute:
 
-$$\pi(s) = \arg\max_a \sum_{s',r} p(s',r \mid s,a)\left[r + \gamma V(s')\right]$$
+$$
+\pi(s) = \arg\max_a \sum_{s',r} p(s',r \mid s,a)\left[r + \gamma V(s')\right]
+$$
 
 This requires the transition model p(s',r∣s,a), which we don't have. That's why all model-free **control** methods (SARSA, Q-learning) estimate Q(s,a) — you can directly pick argmax_a Q(s,a) without any model.
 
@@ -76,6 +79,7 @@ This requires the transition model p(s',r∣s,a), which we don't have. That's wh
 3. **With a known model** — if you do have p, you can do DP-style policy improvement over TD-learned V(s)
 
 **The journey through this lecture:**
+
 - **TD Prediction (V):** Learn the core idea — bootstrapping from one-step experience
 - **TD Control (Q):** Apply the same idea to Q(s,a) → SARSA, Q-learning — now you can act optimally without a model
 
@@ -85,28 +89,23 @@ This requires the transition model p(s',r∣s,a), which we don't have. That's wh
 
 The table below shows how all major methods relate. They differ in: (1) what they estimate, (2) whether they need a model, (3) whether they bootstrap, and (4) how they do policy evaluation and improvement.
 
-| Method | Estimates | Policy Evaluation (update rule) | Policy Improvement | Needs Model? | Bootstraps? |
-|--------|-----------|--------------------------------|-------------------|:---:|:---:|
-| **DP (Policy Eval)** | V(s) | $V(s) \leftarrow \sum_{s',r} p(s',r \mid s,\pi(s))[r + \gamma V(s')]$ | $\pi(s) \leftarrow \arg\max_a \sum_{s',r} p(s',r \mid s,a)[r + \gamma V(s')]$ | Yes | Yes |
-| **MC On-Policy** | Q(s,a) | $Q(s,a) \leftarrow Q(s,a) + \alpha[G_t - Q(s,a)]$ | $\pi(s) \leftarrow \arg\max_a Q(s,a)$ with ε-greedy | No | No |
-| **MC Off-Policy (OIS)** | Q(s,a) | $Q(s,a) \leftarrow Q(s,a) + \alpha[\rho \cdot G_t - Q(s,a)]$ | $\pi(s) \leftarrow \arg\max_a Q(s,a)$ (greedy) | No | No |
-| **TD(0) Prediction** | V(s) | $V(S) \leftarrow V(S) + \alpha[R + \gamma V(S') - V(S)]$ | Cannot improve without model (used in Actor-Critic as critic) | No | Yes |
-| **SARSA (On-policy TD)** | Q(s,a) | $Q(S,A) \leftarrow Q(S,A) + \alpha[R + \gamma Q(S',A') - Q(S,A)]$ | $\pi(s) \leftarrow \arg\max_a Q(s,a)$ with ε-greedy | No | Yes |
-| **Q-learning (Off-policy TD)** | Q(s,a) | $Q(S,A) \leftarrow Q(S,A) + \alpha[R + \gamma \max_a Q(S',a) - Q(S,A)]$ | $\pi(s) \leftarrow \arg\max_a Q(s,a)$ (greedy, built into update) | No | Yes |
-| **TD + Model (Dyna-style)** | V(s) | $V(S) \leftarrow V(S) + \alpha[R + \gamma V(S') - V(S)]$ | $\pi(s) \leftarrow \arg\max_a \sum_{s',r} p(s',r \mid s,a)[r + \gamma V(s')]$ | Yes (learned or given) | Yes |
+| Method                               | Estimates | Policy Evaluation (update rule)                                           | Policy Improvement                                                              |      Needs Model?      | Bootstraps? |
+| ------------------------------------ | --------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | :--------------------: | :---------: |
+| **DP (Policy Eval)**           | V(s)      | $V(s) \leftarrow \sum_{s',r} p(s',r \mid s,\pi(s))[r + \gamma V(s')]$   | $\pi(s) \leftarrow \arg\max_a \sum_{s',r} p(s',r \mid s,a)[r + \gamma V(s')]$ |          Yes          |     Yes     |
+| **MC On-Policy**               | Q(s,a)    | $Q(s,a) \leftarrow Q(s,a) + \alpha[G_t - Q(s,a)]$                       | $\pi(s) \leftarrow \arg\max_a Q(s,a)$ with ε-greedy                          |           No           |     No     |
+| **MC Off-Policy (OIS)**        | Q(s,a)    | $Q(s,a) \leftarrow Q(s,a) + \alpha[\rho \cdot G_t - Q(s,a)]$            | $\pi(s) \leftarrow \arg\max_a Q(s,a)$ (greedy)                                |           No           |     No     |
+| **TD(0) Prediction**           | V(s)      | $V(S) \leftarrow V(S) + \alpha[R + \gamma V(S') - V(S)]$                | Cannot improve without model (used in Actor-Critic as critic)                   |           No           |     Yes     |
+| **SARSA (On-policy TD)**       | Q(s,a)    | $Q(S,A) \leftarrow Q(S,A) + \alpha[R + \gamma Q(S',A') - Q(S,A)]$       | $\pi(s) \leftarrow \arg\max_a Q(s,a)$ with ε-greedy                          |           No           |     Yes     |
+| **Q-learning (Off-policy TD)** | Q(s,a)    | $Q(S,A) \leftarrow Q(S,A) + \alpha[R + \gamma \max_a Q(S',a) - Q(S,A)]$ | $\pi(s) \leftarrow \arg\max_a Q(s,a)$ (greedy, built into update)             |           No           |     Yes     |
+| **TD + Model (Dyna-style)**    | V(s)      | $V(S) \leftarrow V(S) + \alpha[R + \gamma V(S') - V(S)]$                | $\pi(s) \leftarrow \arg\max_a \sum_{s',r} p(s',r \mid s,a)[r + \gamma V(s')]$ | Yes (learned or given) |     Yes     |
 
 **Key observations:**
 
 1. **DP uses V(s) because it has the model** — it can enumerate all actions and their outcomes via p(s',r∣s,a), so V(s) is sufficient for both evaluation and improvement. The improvement step explicitly needs p to compute the argmax over actions.
-
 2. **MC and TD control use Q(s,a) because they are model-free** — without p, you cannot determine which action leads where from V(s) alone. With Q(s,a), improvement is trivial: just pick argmax_a Q(s,a) — no model needed.
-
 3. **TD(0) prediction uses V(s) but cannot do improvement alone** — it teaches bootstrapping. On its own, V(s) cannot drive policy improvement without a model. However, it's essential in Actor-Critic architectures where the actor selects actions and the critic (V) provides the TD error δ as an advantage signal.
-
 4. **Q-learning merges evaluation and improvement** — the max in its update target means it's always evaluating the greedy (optimal) policy, regardless of what the behavior policy does. Evaluation and improvement happen simultaneously in every update.
-
 5. **The update structure is identical across all methods** — whether V or Q, the pattern is always: estimate ← estimate + α[target − estimate]. Only the target and the improvement mechanism change.
-
 6. **TD + Model is the hybrid (Dyna)** — uses TD's efficient sample-based evaluation (no need for full sweeps over all states), but leverages the model for DP-style improvement. The model can be *given* (game rules, physics simulator) or *learned* from experience. This gives: fast evaluation from TD + exact improvement from model. Examples: Dyna-Q (Sutton Ch.8), AlphaGo (known game rules + TD-learned value function), robotics with physics simulators.
 
 ---
@@ -117,34 +116,39 @@ The table below shows how all major methods relate. They differ in: (1) what the
 
 Given an experience transition $S_t \xrightarrow{A_t} R_{t+1}, S_{t+1}$, the simplest TD method updates:
 
-$$\boxed{V(S_t) \leftarrow V(S_t) + \alpha \left[ R_{t+1} + \gamma\, V(S_{t+1}) - V(S_t) \right]}$$
+$$
+\boxed{V(S_t) \leftarrow V(S_t) + \alpha \left[ R_{t+1} + \gamma\, V(S_{t+1}) - V(S_t) \right]}
+$$
 
 Let's dissect this term by term:
 
-| Term | Meaning |
-|------|---------|
-| $V(S_t)$ | Current estimate of value at state $S_t$ |
-| $\alpha$ | Learning rate (step size) — how much to adjust |
-| $R_{t+1} + \gamma\, V(S_{t+1})$ | **TD target** — a better estimate of what $V(S_t)$ should be |
+| Term                                       | Meaning                                                                |
+| ------------------------------------------ | ---------------------------------------------------------------------- |
+| $V(S_t)$                                 | Current estimate of value at state$S_t$                              |
+| $\alpha$                                 | Learning rate (step size) — how much to adjust                        |
+| $R_{t+1} + \gamma\, V(S_{t+1})$          | **TD target** — a better estimate of what $V(S_t)$ should be  |
 | $R_{t+1} + \gamma\, V(S_{t+1}) - V(S_t)$ | **TD error** ($\delta_t$) — how wrong our current estimate is |
 
 **Why is the TD target a better estimate?** It incorporates one step of real experience ($R_{t+1}$) and then bootstraps from the current estimate of the successor ($V(S_{t+1})$). It's an estimate because: (1) it samples the expected value (single transition, not the full sum over all $s', r$), and (2) it uses $V(S_{t+1})$ rather than the true $v_\pi(S_{t+1})$.
 
 **Comparison with MC target:**
 
-| Method | Target | Must wait for |
-|--------|--------|---------------|
-| MC | $G_t = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \cdots$ | End of episode |
-| TD(0) | $R_{t+1} + \gamma\, V(S_{t+1})$ | Next time step |
-| DP | $\sum_{s',r} p(s',r \mid s, \pi(s))\left[r + \gamma\, V(s')\right]$ | Nothing (needs model) |
+| Method | Target                                                                | Must wait for         |
+| ------ | --------------------------------------------------------------------- | --------------------- |
+| MC     | $G_t = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \cdots$        | End of episode        |
+| TD(0)  | $R_{t+1} + \gamma\, V(S_{t+1})$                                     | Next time step        |
+| DP     | $\sum_{s',r} p(s',r \mid s, \pi(s))\left[r + \gamma\, V(s')\right]$ | Nothing (needs model) |
 
 ## TD Error
 
 The **TD error** at time step $t$ is:
 
-$$\delta_t = R_{t+1} + \gamma\, V(S_{t+1}) - V(S_t)$$
+$$
+\delta_t = R_{t+1} + \gamma\, V(S_{t+1}) - V(S_t)
+$$
 
 This is the discrepancy between:
+
 - What we now think $S_t$ is worth: $V(S_t)$
 - A one-step-better estimate: $R_{t+1} + \gamma\, V(S_{t+1})$
 
@@ -158,25 +162,37 @@ The TD error plays a fundamental role throughout RL. It corresponds to the dopam
 
 There is a beautiful relationship between the MC error and TD errors. If $V$ is not updated during the episode (or equivalently, if we save the errors before any updates), then:
 
-$$G_t - V(S_t) = \sum_{k=t}^{T-1} \gamma^{k-t}\, \delta_k$$
+$$
+G_t - V(S_t) = \sum_{k=t}^{T-1} \gamma^{k-t}\, \delta_k
+$$
 
 **Derivation:**
 
-$$\delta_t = R_{t+1} + \gamma\, V(S_{t+1}) - V(S_t)$$
+$$
+\delta_t = R_{t+1} + \gamma\, V(S_{t+1}) - V(S_t)
+$$
 
-$$\delta_{t+1} = R_{t+2} + \gamma\, V(S_{t+2}) - V(S_{t+1})$$
+$$
+\delta_{t+1} = R_{t+2} + \gamma\, V(S_{t+2}) - V(S_{t+1})
+$$
 
 Summing with discount factors:
 
-$$\sum_{k=t}^{T-1} \gamma^{k-t}\, \delta_k = \sum_{k=t}^{T-1} \gamma^{k-t} \left[R_{k+1} + \gamma\, V(S_{k+1}) - V(S_k)\right]$$
+$$
+\sum_{k=t}^{T-1} \gamma^{k-t}\, \delta_k = \sum_{k=t}^{T-1} \gamma^{k-t} \left[R_{k+1} + \gamma\, V(S_{k+1}) - V(S_k)\right]
+$$
 
 The $\gamma V(S_{k+1})$ of one term cancels with $-V(S_k)$ of the next (telescoping). What remains:
 
-$$= -V(S_t) + \sum_{k=t}^{T-1} \gamma^{k-t}\, R_{k+1} + \gamma^{T-t}\, V(S_T)$$
+$$
+= -V(S_t) + \sum_{k=t}^{T-1} \gamma^{k-t}\, R_{k+1} + \gamma^{T-t}\, V(S_T)
+$$
 
 Since $V(S_T) = 0$ (terminal state) and $\sum_{k=t}^{T-1} \gamma^{k-t}\, R_{k+1} = G_t$:
 
-$$= G_t - V(S_t)$$
+$$
+= G_t - V(S_t)
+$$
 
 This means: **the MC update (using $G_t$) is equivalent to summing all the TD corrections along the trajectory.** MC does it all at once at the end; TD does it incrementally step by step. If $V$ doesn't change during the episode, they would produce the same total update.
 
@@ -203,35 +219,35 @@ For each episode:
 def td_0_prediction(env, policy, gamma=1.0, alpha=0.1, num_episodes=1000):
     """
     TD(0) Prediction: Estimate V for a given policy.
-    
+  
     Args:
         env: Gymnasium environment.
         policy: Function mapping state -> action.
         gamma: Discount factor.
         alpha: Learning rate.
         num_episodes: Number of episodes to run.
-        
+      
     Returns:
         V: Estimated state-value function (dict).
     """
     V = defaultdict(float)
-    
+  
     for _ in range(num_episodes):
         state, _ = env.reset()
         done = False
-        
+      
         while not done:
             action = policy(state)
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
-            
+          
             # TD(0) update
             td_target = reward + gamma * V[next_state] * (not done)
             td_error = td_target - V[state]
             V[state] += alpha * td_error
-            
+          
             state = next_state
-    
+  
     return V
 ```
 
@@ -254,6 +270,7 @@ TD updates after **every step**. MC must wait until episode termination to compu
 ## 3. Provably convergent
 
 TD(0) converges to $v_\pi$ with probability 1 if:
+
 - Step sizes satisfy the Robbins-Monro conditions: $\sum_t \alpha_t = \infty$ and $\sum_t \alpha_t^2 < \infty$
 - Or with constant $\alpha$: converges in the mean
 
@@ -327,7 +344,9 @@ TD prediction gives us a way to estimate $V_\pi$. For **control** (finding the o
 
 **Named after the quintuple**: $(S_t, A_t, R_{t+1}, S_{t+1}, A_{t+1})$ — everything needed for one update.
 
-$$\boxed{Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma\, Q(S_{t+1}, A_{t+1}) - Q(S_t, A_t) \right]}$$
+$$
+\boxed{Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma\, Q(S_{t+1}, A_{t+1}) - Q(S_t, A_t) \right]}
+$$
 
 **Key property**: Sarsa is **on-policy** — it evaluates and improves the policy it is currently following. If the policy explores (e.g., $\varepsilon$-greedy), Sarsa's Q-values reflect the cost of that exploration.
 
@@ -356,30 +375,30 @@ def sarsa(env, gamma=1.0, alpha=0.1, epsilon=0.1, num_episodes=1000):
     Sarsa: On-policy TD Control.
     """
     Q = defaultdict(lambda: np.zeros(env.action_space.n))
-    
+  
     def epsilon_greedy(state):
         if np.random.random() < epsilon:
             return env.action_space.sample()
         return np.argmax(Q[state])
-    
+  
     for _ in range(num_episodes):
         state, _ = env.reset()
         action = epsilon_greedy(state)
         done = False
-        
+      
         while not done:
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
             next_action = epsilon_greedy(next_state)
-            
+          
             # Sarsa update: use the action actually taken next
             td_target = reward + gamma * Q[next_state][next_action] * (not done)
             td_error = td_target - Q[state][action]
             Q[state][action] += alpha * td_error
-            
+          
             state = next_state
             action = next_action
-    
+  
     return Q
 ```
 
@@ -411,11 +430,15 @@ Below we derive the rule rigorously, showing exactly where each piece of the for
 
 The action-value function under policy $\pi$ is defined as:
 
-$$Q^\pi(s, a) \doteq \mathbb{E}_\pi\left[G_t \mid S_t = s, A_t = a\right]$$
+$$
+Q^\pi(s, a) \doteq \mathbb{E}_\pi\left[G_t \mid S_t = s, A_t = a\right]
+$$
 
 where $G_t$ is the infinite-horizon discounted return:
 
-$$G_t = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \cdots = \sum_{k=0}^{\infty} \gamma^k R_{t+k+1}$$
+$$
+G_t = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \cdots = \sum_{k=0}^{\infty} \gamma^k R_{t+k+1}
+$$
 
 This is the quantity we wish to estimate. It tells us: "If I'm in state $s$, I take action $a$, and then follow $\pi$ forever — what is the expected cumulative discounted reward?"
 
@@ -425,19 +448,27 @@ This is the quantity we wish to estimate. It tells us: "If I'm in state $s$, I t
 
 We decompose $G_t$ by separating the first reward from the rest:
 
-$$G_t = R_{t+1} + \gamma G_{t+1}$$
+$$
+G_t = R_{t+1} + \gamma G_{t+1}
+$$
 
 Substituting into the definition of $Q^\pi$:
 
-$$Q^\pi(s, a) = \mathbb{E}_\pi\left[R_{t+1} + \gamma G_{t+1} \mid S_t = s, A_t = a\right]$$
+$$
+Q^\pi(s, a) = \mathbb{E}_\pi\left[R_{t+1} + \gamma G_{t+1} \mid S_t = s, A_t = a\right]
+$$
 
 Now, $G_{t+1}$ depends on the next state $S_{t+1}$ and the next action $A_{t+1}$ chosen by $\pi$. By the tower property of conditional expectation:
 
-$$G_{t+1} \text{ given } S_{t+1} = s', A_{t+1} = a' \text{ has expectation } Q^\pi(s', a')$$
+$$
+G_{t+1} \text{ given } S_{t+1} = s', A_{t+1} = a' \text{ has expectation } Q^\pi(s', a')
+$$
 
 Therefore:
 
-$$\boxed{Q^\pi(s, a) = \mathbb{E}_\pi\left[R_{t+1} + \gamma\, Q^\pi(S_{t+1}, A_{t+1}) \mid S_t = s, A_t = a\right]}$$
+$$
+\boxed{Q^\pi(s, a) = \mathbb{E}_\pi\left[R_{t+1} + \gamma\, Q^\pi(S_{t+1}, A_{t+1}) \mid S_t = s, A_t = a\right]}
+$$
 
 This is the **Bellman equation for the action-value function**. It is exact — if we could solve it, we'd have the true $Q^\pi$.
 
@@ -445,9 +476,12 @@ This is the **Bellman equation for the action-value function**. It is exact — 
 
 **Expanding the expectation explicitly** (showing what makes this intractable):
 
-$$Q^\pi(s, a) = \sum_{s', r} p(s', r \mid s, a) \left[ r + \gamma \sum_{a'} \pi(a' \mid s')\, Q^\pi(s', a') \right]$$
+$$
+Q^\pi(s, a) = \sum_{s', r} p(s', r \mid s, a) \left[ r + \gamma \sum_{a'} \pi(a' \mid s')\, Q^\pi(s', a') \right]
+$$
 
 This requires:
+
 - The transition model $p(s', r \mid s, a)$ — which we don't have (model-free setting)
 - Summation over all possible next states — which may be enormous or continuous
 
@@ -459,24 +493,30 @@ Since we cannot compute the expectation (no model, potentially infinite state sp
 
 At time $t$, the agent experiences one actual transition:
 
-$$(S_t, A_t) \xrightarrow{} R_{t+1}, S_{t+1} \xrightarrow{\pi} A_{t+1}$$
+$$
+(S_t, A_t) \xrightarrow{} R_{t+1}, S_{t+1} \xrightarrow{\pi} A_{t+1}
+$$
 
 This gives us ONE realization of what's inside the expectation. We form the **sample-based target**:
 
-$$\hat{q}_t \doteq R_{t+1} + \gamma\, Q(S_{t+1}, A_{t+1})$$
+$$
+\hat{q}_t \doteq R_{t+1} + \gamma\, Q(S_{t+1}, A_{t+1})
+$$
 
 **Why is this a valid estimator?** Under the Bellman equation:
 
-$$\mathbb{E}\left[\hat{q}_t \mid S_t = s, A_t = a\right] = Q^\pi(s, a)$$
+$$
+\mathbb{E}\left[\hat{q}_t \mid S_t = s, A_t = a\right] = Q^\pi(s, a)
+$$
 
 provided $Q = Q^\pi$. So $\hat{q}_t$ is an **unbiased estimate** of the true Q-value (when Q is converged). During learning, it's biased (since Q is itself an estimate — this is the bootstrapping bias), but it still gives a useful learning signal.
 
 **The relationship to DP:**
 
-| Quantity | What it computes | Requires |
-|----------|-----------------|----------|
-| DP target: $\sum_{s',r} p(s',r\mid s,a)[r + \gamma \sum_{a'} \pi(a'\mid s') Q(s',a')]$ | Full expectation | Model $p$ |
-| TD target: $R_{t+1} + \gamma\, Q(S_{t+1}, A_{t+1})$ | Single sample | One transition |
+| Quantity                                                                                | What it computes | Requires       |
+| --------------------------------------------------------------------------------------- | ---------------- | -------------- |
+| DP target:$\sum_{s',r} p(s',r\mid s,a)[r + \gamma \sum_{a'} \pi(a'\mid s') Q(s',a')]$ | Full expectation | Model$p$     |
+| TD target:$R_{t+1} + \gamma\, Q(S_{t+1}, A_{t+1})$                                    | Single sample    | One transition |
 
 The TD target is a **Monte Carlo sample** of the DP target. Each individual sample is noisy, but on average (over many visits to $(s, a)$) it equals the DP target.
 
@@ -487,14 +527,18 @@ The TD target is a **Monte Carlo sample** of the DP target. Each individual samp
 We now have a noisy estimate $\hat{q}_t$ of the true $Q^\pi(s,a)$. How do we iteratively converge to the correct value?
 
 The **Robbins-Monro stochastic approximation** theorem (1951) provides the answer. Given:
+
 - A quantity $\theta^\ast$ we want to find
 - Noisy observations $X_n$ such that $\mathbb{E}[X_n \mid \theta_n] = f(\theta_n)$ where $f(\theta^\ast) = 0$
 
 The iterative scheme:
 
-$$\theta_{n+1} = \theta_n + \alpha_n\, X_n$$
+$$
+\theta_{n+1} = \theta_n + \alpha_n\, X_n
+$$
 
 converges to $\theta^\ast$ provided:
+
 1. $\sum_{n} \alpha_n = \infty$ (step sizes are large enough to eventually reach any value)
 2. $\sum_{n} \alpha_n^2 < \infty$ (step sizes decrease fast enough to dampen noise)
 
@@ -504,11 +548,15 @@ We want to find $Q^\pi(s,a)$ such that $\mathbb{E}[\hat{q}_t - Q(s,a)] = 0$ (the
 
 Let $X_n = \hat{q}_t - Q(S_t, A_t)$ be the "error signal." Then:
 
-$$Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha\, \underbrace{\left[\hat{q}_t - Q(S_t, A_t)\right]}_{\text{error signal}}$$
+$$
+Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha\, \underbrace{\left[\hat{q}_t - Q(S_t, A_t)\right]}_{\text{error signal}}
+$$
 
 Expanding $\hat{q}_t$:
 
-$$\boxed{Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma\, Q(S_{t+1}, A_{t+1}) - Q(S_t, A_t) \right]}$$
+$$
+\boxed{Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma\, Q(S_{t+1}, A_{t+1}) - Q(S_t, A_t) \right]}
+$$
 
 This is the **SARSA update rule**.
 
@@ -516,17 +564,19 @@ This is the **SARSA update rule**.
 
 #### Anatomy of the Final Formula
 
-$$Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ \underbrace{R_{t+1} + \gamma\, Q(S_{t+1}, A_{t+1})}_{\text{TD target (where we should be)}} - \underbrace{Q(S_t, A_t)}_{\text{current estimate (where we are)}} \right]$$
+$$
+Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ \underbrace{R_{t+1} + \gamma\, Q(S_{t+1}, A_{t+1})}_{\text{TD target (where we should be)}} - \underbrace{Q(S_t, A_t)}_{\text{current estimate (where we are)}} \right]
+$$
 
-| Component | Origin | Role |
-|-----------|--------|------|
-| $Q(S_t, A_t)$ | Current estimate | Starting point — what we currently believe |
-| $R_{t+1}$ | Observed reward | One step of ground truth from the environment |
-| $\gamma\, Q(S_{t+1}, A_{t+1})$ | Bootstrapped future | Estimated value of what comes next (from the Bellman equation) |
-| $R_{t+1} + \gamma Q(S_{t+1}, A_{t+1})$ | TD target | Sample-based estimate of the true $Q^\pi(S_t, A_t)$ |
-| $\delta_t = \text{target} - Q(S_t, A_t)$ | TD error | How wrong we are — the surprise signal |
-| $\alpha$ | Learning rate | How much to trust the new evidence vs. old belief |
-| $\alpha\, \delta_t$ | Increment | The actual adjustment to our estimate |
+| Component                                  | Origin              | Role                                                           |
+| ------------------------------------------ | ------------------- | -------------------------------------------------------------- |
+| $Q(S_t, A_t)$                            | Current estimate    | Starting point — what we currently believe                    |
+| $R_{t+1}$                                | Observed reward     | One step of ground truth from the environment                  |
+| $\gamma\, Q(S_{t+1}, A_{t+1})$           | Bootstrapped future | Estimated value of what comes next (from the Bellman equation) |
+| $R_{t+1} + \gamma Q(S_{t+1}, A_{t+1})$   | TD target           | Sample-based estimate of the true$Q^\pi(S_t, A_t)$           |
+| $\delta_t = \text{target} - Q(S_t, A_t)$ | TD error            | How wrong we are — the surprise signal                        |
+| $\alpha$                                 | Learning rate       | How much to trust the new evidence vs. old belief              |
+| $\alpha\, \delta_t$                      | Increment           | The actual adjustment to our estimate                          |
 
 ---
 
@@ -582,10 +632,11 @@ $$Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ \underbrace{R_{t+1} + \gamm
 Under the following conditions, SARSA converges to $Q^\pi$ (for a fixed $\pi$) or to $Q^\ast$ (with GLIE policy):
 
 1. **All state-action pairs visited infinitely often:** Every $(s,a)$ must be sampled enough times for the law of large numbers to take effect.
-
 2. **Step-size conditions (Robbins-Monro):**
-   $$\sum_{t=1}^{\infty} \alpha_t(s,a) = \infty \quad \text{and} \quad \sum_{t=1}^{\infty} \alpha_t^2(s,a) < \infty$$
 
+   $$
+   \sum_{t=1}^{\infty} \alpha_t(s,a) = \infty \quad \text{and} \quad \sum_{t=1}^{\infty} \alpha_t^2(s,a) < \infty
+   $$
 3. **GLIE condition** (for convergence to $Q^\ast$): The policy must be Greedy in the Limit with Infinite Exploration — e.g., $\varepsilon$-greedy with $\varepsilon_t \to 0$.
 
 With a **constant** $\alpha$ (standard practice), exact convergence is not guaranteed, but the algorithm converges in the mean and tracks non-stationary targets — which is often more useful in practice.
@@ -597,6 +648,7 @@ With a **constant** $\alpha$ (standard practice), exact convergence is not guara
 The SARSA algorithm was first described by Rummery & Niranjan (1994) as "Modified Connectionist Q-learning" and later named SARSA by Sutton (1996). It is the natural on-policy counterpart to Q-learning (Watkins, 1989), which replaces $A_{t+1}$ with $\arg\max_a Q(S_{t+1}, a)$ — a single change that makes the algorithm off-policy.
 
 The derivation above applies identically to Q-learning — the only difference is what we substitute for the next action:
+
 - **SARSA**: $A_{t+1} \sim \pi(\cdot \mid S_{t+1})$ (actual action taken)
 - **Q-learning**: $A_{t+1} = \arg\max_a Q(S_{t+1}, a)$ (hypothetical best action)
 
@@ -608,7 +660,9 @@ Both are instances of the same Bellman equation + sampling + stochastic approxim
 
 One of the most important breakthroughs in RL (Watkins, 1989). Q-learning learns $q_\ast$ directly — the optimal action-value function — regardless of what policy is being followed:
 
-$$\boxed{Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma\, \max_a Q(S_{t+1}, a) - Q(S_t, A_t) \right]}$$
+$$
+\boxed{Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma\, \max_a Q(S_{t+1}, a) - Q(S_t, A_t) \right]}
+$$
 
 **The critical difference from Sarsa**: instead of using $Q(S_{t+1}, A_{t+1})$ (the value of the action actually taken next), Q-learning uses $\max_a Q(S_{t+1}, a)$ (the value of the **best** action available). It doesn't matter what action was actually taken — the update always assumes optimal future behavior.
 
@@ -636,28 +690,28 @@ def q_learning(env, gamma=1.0, alpha=0.1, epsilon=0.1, num_episodes=1000):
     Q-learning: Off-policy TD Control.
     """
     Q = defaultdict(lambda: np.zeros(env.action_space.n))
-    
+  
     def epsilon_greedy(state):
         if np.random.random() < epsilon:
             return env.action_space.sample()
         return np.argmax(Q[state])
-    
+  
     for _ in range(num_episodes):
         state, _ = env.reset()
         done = False
-        
+      
         while not done:
             action = epsilon_greedy(state)
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
-            
+          
             # Q-learning update: use max over next actions
             td_target = reward + gamma * np.max(Q[next_state]) * (not done)
             td_error = td_target - Q[state][action]
             Q[state][action] += alpha * td_error
-            
+          
             state = next_state
-    
+  
     return Q
 ```
 
@@ -678,6 +732,7 @@ The $\max$ node makes this off-policy: we bootstrap from the best action regardl
 ### Why is Q-learning Off-policy?
 
 In Q-learning, there are two policies:
+
 - **Behavior policy** (the one generating experience): typically $\varepsilon$-greedy
 - **Target policy** (the one being learned): greedy ($\arg\max_a Q(s,a)$)
 
@@ -691,17 +746,19 @@ Sarsa, by contrast, uses $Q(S', A')$ where $A'$ is the actual next action taken 
 
 Instead of sampling a single $A_{t+1}$ (Sarsa) or taking the max (Q-learning), Expected Sarsa uses the **expected value** over all actions under the current policy:
 
-$$\boxed{Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma\, \sum_a \pi(a \mid S_{t+1})\, Q(S_{t+1}, a) - Q(S_t, A_t) \right]}$$
+$$
+\boxed{Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma\, \sum_a \pi(a \mid S_{t+1})\, Q(S_{t+1}, a) - Q(S_t, A_t) \right]}
+$$
 
 **Why is this better?** It eliminates the variance that comes from randomly selecting $A_{t+1}$. Instead of depending on which action happens to be sampled, it uses the exact expectation.
 
 ### Unifying the Three TD Control Methods
 
-| Method | Bootstrap target for $S_{t+1}$ | On/Off-policy |
-|--------|-------------------------------|---------------|
-| Sarsa | $Q(S_{t+1}, A_{t+1})$ — one sample action | On-policy |
-| Q-learning | $\max_a Q(S_{t+1}, a)$ — best action | Off-policy |
-| Expected Sarsa | $\sum_a \pi(a \mid S_{t+1})\, Q(S_{t+1}, a)$ — average over policy | Either |
+| Method         | Bootstrap target for$S_{t+1}$                                       | On/Off-policy |
+| -------------- | --------------------------------------------------------------------- | ------------- |
+| Sarsa          | $Q(S_{t+1}, A_{t+1})$ — one sample action                          | On-policy     |
+| Q-learning     | $\max_a Q(S_{t+1}, a)$ — best action                               | Off-policy    |
+| Expected Sarsa | $\sum_a \pi(a \mid S_{t+1})\, Q(S_{t+1}, a)$ — average over policy | Either        |
 
 Expected Sarsa **subsumes** Q-learning as a special case: if the target policy $\pi$ is greedy, then $\sum_a \pi(a \mid s)\, Q(s,a) = \max_a Q(s,a)$, and Expected Sarsa becomes exactly Q-learning.
 
@@ -752,7 +809,9 @@ S . . . . . . . . . . G     S . . . . . . . . . . . G
 
 Consider a state $s$ where all true action values are zero: $q_\ast(s, a) = 0$ for all $a$. If we estimate these from noisy samples, some estimates will be positive and some negative due to noise. Taking $\max_a Q(s,a)$ will select a positive value — but this is **noise, not signal**.
 
-$$\mathbb{E}\left[\max_a Q(s,a)\right] \geq \max_a \mathbb{E}\left[Q(s,a)\right] = 0$$
+$$
+\mathbb{E}\left[\max_a Q(s,a)\right] \geq \max_a \mathbb{E}\left[Q(s,a)\right] = 0
+$$
 
 The max of estimated values **overestimates** the max of true values. This is maximization bias.
 
@@ -776,7 +835,9 @@ But Q-learning with $\max_a Q(B,a)$ picks the highest of many noisy estimates at
 
 **Solution**: Decouple action selection from value estimation by maintaining two independent Q-tables.
 
-$$Q_1(S, A) \leftarrow Q_1(S, A) + \alpha \left[ R + \gamma\, Q_2\!\left(S', \arg\max_a Q_1(S', a)\right) - Q_1(S, A) \right]$$
+$$
+Q_1(S, A) \leftarrow Q_1(S, A) + \alpha \left[ R + \gamma\, Q_2\!\left(S', \arg\max_a Q_1(S', a)\right) - Q_1(S, A) \right]
+$$
 
 - **$Q_1$ selects** the best action: $A^\ast = \arg\max_a Q_1(S', a)$
 - **$Q_2$ evaluates** that action: $Q_2(S', A^\ast)$
@@ -813,22 +874,22 @@ def double_q_learning(env, gamma=1.0, alpha=0.1, epsilon=0.1, num_episodes=1000)
     """
     Q1 = defaultdict(lambda: np.zeros(env.action_space.n))
     Q2 = defaultdict(lambda: np.zeros(env.action_space.n))
-    
+  
     def epsilon_greedy(state):
         combined = Q1[state] + Q2[state]
         if np.random.random() < epsilon:
             return env.action_space.sample()
         return np.argmax(combined)
-    
+  
     for _ in range(num_episodes):
         state, _ = env.reset()
         done = False
-        
+      
         while not done:
             action = epsilon_greedy(state)
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
-            
+          
             if np.random.random() < 0.5:
                 # Update Q1, use Q2 for evaluation
                 best_next = np.argmax(Q1[next_state])
@@ -839,9 +900,9 @@ def double_q_learning(env, gamma=1.0, alpha=0.1, epsilon=0.1, num_episodes=1000)
                 best_next = np.argmax(Q2[next_state])
                 td_target = reward + gamma * Q1[next_state][best_next] * (not done)
                 Q2[state][action] += alpha * (td_target - Q2[state][action])
-            
+          
             state = next_state
-    
+  
     return Q1, Q2
 ```
 
@@ -857,7 +918,7 @@ graph LR
         B["Bootstrapping?"]
         S["Sampling?"]
     end
-    
+  
     subgraph "Methods"
         DP["DP: Bootstrap + No Sampling (needs model)"]
         MC["MC: No Bootstrap + Sampling (episode-based)"]
@@ -865,15 +926,15 @@ graph LR
     end
 ```
 
-| Dimension | DP | MC | TD |
-|-----------|----|----|-----|
-| **Requires model?** | Yes | No | No |
-| **Bootstraps?** | Yes | No | Yes |
-| **Works for continuing tasks?** | Yes | No | Yes |
-| **Updates after** | Full sweep | Episode end | Each step |
-| **Uses actual returns?** | No (expected) | Yes ($G_t$) | No (estimated) |
-| **Bias** | None (if model correct) | None | Yes (from bootstrap) |
-| **Variance** | None (full expectation) | High (single return) | Lower (one-step) |
+| Dimension                             | DP                      | MC                   | TD                   |
+| ------------------------------------- | ----------------------- | -------------------- | -------------------- |
+| **Requires model?**             | Yes                     | No                   | No                   |
+| **Bootstraps?**                 | Yes                     | No                   | Yes                  |
+| **Works for continuing tasks?** | Yes                     | No                   | Yes                  |
+| **Updates after**               | Full sweep              | Episode end          | Each step            |
+| **Uses actual returns?**        | No (expected)           | Yes ($G_t$)        | No (estimated)       |
+| **Bias**                        | None (if model correct) | None                 | Yes (from bootstrap) |
+| **Variance**                    | None (full expectation) | High (single return) | Lower (one-step)     |
 
 ### The Backup Diagrams
 
@@ -887,7 +948,7 @@ graph TD
         dp_a2 --- dp_s3(("s'"))
         dp_a2 --- dp_s4(("s'"))
     end
-    
+  
     subgraph "MC (sample backup)"
         mc_s(("s")) --- mc_a((" "))
         mc_a --- mc_s1(("·"))
@@ -896,7 +957,7 @@ graph TD
         mc_s2 --- mc_dots["..."]
         mc_dots --- mc_T(("T"))
     end
-    
+  
     subgraph "TD (sample backup)"
         td_s(("s")) --- td_a((" "))
         td_a --- td_s1(("s'"))
@@ -911,23 +972,23 @@ graph TD
 
 # Summary: Key Equations at a Glance
 
-| Algorithm | Update Rule | Type |
-|-----------|------------|------|
-| **TD(0) Prediction** | $V(S) \leftarrow V(S) + \alpha\left[R + \gamma V(S') - V(S)\right]$ | Prediction |
-| **Sarsa** | $Q(S,A) \leftarrow Q(S,A) + \alpha\left[R + \gamma Q(S', A') - Q(S,A)\right]$ | On-policy control |
-| **Q-learning** | $Q(S,A) \leftarrow Q(S,A) + \alpha\left[R + \gamma \max_a Q(S', a) - Q(S,A)\right]$ | Off-policy control |
-| **Expected Sarsa** | $Q(S,A) \leftarrow Q(S,A) + \alpha\left[R + \gamma \sum_a \pi(a\mid S') Q(S', a) - Q(S,A)\right]$ | Either |
+| Algorithm                   | Update Rule                                                                                                | Type               |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------ |
+| **TD(0) Prediction**  | $V(S) \leftarrow V(S) + \alpha\left[R + \gamma V(S') - V(S)\right]$                                      | Prediction         |
+| **Sarsa**             | $Q(S,A) \leftarrow Q(S,A) + \alpha\left[R + \gamma Q(S', A') - Q(S,A)\right]$                            | On-policy control  |
+| **Q-learning**        | $Q(S,A) \leftarrow Q(S,A) + \alpha\left[R + \gamma \max_a Q(S', a) - Q(S,A)\right]$                      | Off-policy control |
+| **Expected Sarsa**    | $Q(S,A) \leftarrow Q(S,A) + \alpha\left[R + \gamma \sum_a \pi(a\mid S') Q(S', a) - Q(S,A)\right]$        | Either             |
 | **Double Q-learning** | $Q_1(S,A) \leftarrow Q_1(S,A) + \alpha\left[R + \gamma Q_2(S', \arg\max_a Q_1(S', a)) - Q_1(S,A)\right]$ | Off-policy control |
 
 ### Convergence Guarantees
 
-| Algorithm | Converges to | Conditions |
-|-----------|-------------|------------|
-| TD(0) | $v_\pi$ | Decreasing $\alpha$ (Robbins-Monro) or constant $\alpha$ (in the mean) |
-| Sarsa | $q_\ast$ | All state-action pairs visited $\infty$ often, GLIE policy |
-| Q-learning | $q_\ast$ | All state-action pairs visited $\infty$ often |
-| Expected Sarsa | $q_\ast$ (if target greedy) | Same as Q-learning |
-| Double Q-learning | $q_\ast$ | Same as Q-learning |
+| Algorithm         | Converges to                  | Conditions                                                                |
+| ----------------- | ----------------------------- | ------------------------------------------------------------------------- |
+| TD(0)             | $v_\pi$                     | Decreasing$\alpha$ (Robbins-Monro) or constant $\alpha$ (in the mean) |
+| Sarsa             | $q_\ast$                    | All state-action pairs visited$\infty$ often, GLIE policy               |
+| Q-learning        | $q_\ast$                    | All state-action pairs visited$\infty$ often                            |
+| Expected Sarsa    | $q_\ast$ (if target greedy) | Same as Q-learning                                                        |
+| Double Q-learning | $q_\ast$                    | Same as Q-learning                                                        |
 
 ---
 
