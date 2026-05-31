@@ -596,6 +596,43 @@ flowchart TD
 
 > **The fundamental insight:** b is like a random-walking lab rat in a maze. It generates data by stumbling around — sometimes it stumbles through a useful path, sometimes it doesn't. Over many iterations, enough useful paths accumulate in Q that π converges to optimal. The rat never gets smarter; our *interpretation* of its data gets smarter.
 
+#### Off-Policy = On-Policy with Outsourced Episode Generation
+
+The core GPI loop (Evaluate → Improve → Repeat) is **identical**. The only difference is where episodes come from:
+
+```mermaid
+flowchart TD
+    subgraph ON_POLICY [ON-POLICY MC CONTROL]
+        direction TB
+        A1[1. Generate episode using pi] --> A2[2. Compute returns G]
+        A2 --> A3[3. Update Q directly from G]
+        A3 --> A4[4. Improve: pi = argmax Q]
+        A4 -->|"next iteration<br/>pi changed, so new episodes<br/>come from UPDATED pi"| A1
+    end
+
+    subgraph OFF_POLICY [OFF-POLICY MC CONTROL]
+        direction TB
+        B1[1. Generate episode using b] --> B2[2. Compute returns G]
+        B2 --> B3["3. Update Q from rho x G<br/>(importance sampling correction)"]
+        B3 --> B4[4. Improve: pi = argmax Q]
+        B4 -->|"next iteration<br/>pi changed, but episodes still<br/>come from SAME b"| B1
+    end
+```
+
+**They are the same algorithm with one substitution:**
+
+| GPI Step | On-Policy | Off-Policy | What changed? |
+|----------|-----------|------------|---------------|
+| **1. Generate** | π generates episodes | b generates episodes | WHO generates |
+| **2. Returns** | G computed normally | G computed normally | Nothing |
+| **3. Evaluate** | Q ← Q + α[G − Q] | Q ← Q + α[ρG − Q] | Added ρ correction |
+| **4. Improve** | π = argmax Q | π = argmax Q | Nothing |
+| **5. Loop** | Use updated π for next episode | Use same b for next episode | WHO loops |
+
+The ρ correction in step 3 exists ONLY because episodes came from b instead of π. It mathematically converts "what b experienced" into "what π would have experienced." If b = π, then ρ = 1 everywhere and off-policy reduces exactly to on-policy.
+
+> **Think of it this way:** Off-policy is on-policy where you hired a contractor (b) to do the field work (generate episodes). Since the contractor explores differently than you would, you must apply a correction factor (ρ) to translate their experience into what YOUR experience would have been. The core learning loop — evaluate Q, improve π, repeat — is unchanged.
+
 | Aspect                              | On-Policy                                   | Off-Policy                                            |
 | ----------------------------------- | ------------------------------------------- | ----------------------------------------------------- |
 | **Who generates data?**       | π itself (must be exploratory)             | Separate behavior policy b                            |
