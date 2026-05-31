@@ -650,6 +650,49 @@ The ρ correction in step 3 exists ONLY because episodes came from b instead of 
 | **Pro** | Simple, stable, low variance                         | Can learn optimal policy; can reuse data    |
 | **Con** | Optimal policy unreachable (ε forces suboptimality) | High variance; episodes truncated by ρ = 0 |
 
+#### Choosing and Improving the Behavior Policy b
+
+**How to pick b initially:** The only hard requirement is **coverage** — b(a|s) > 0 for all (s,a) where π(a|s) > 0. Beyond that, it's a practical choice:
+
+| Choice for b | Coverage? | Data quality | Variance of ρ | When to use |
+|---|---|---|---|---|
+| Uniform random | Perfect | Poor (wastes episodes) | High (ρ products explode) | Simple environments, teaching |
+| ε-greedy with high ε (e.g., 0.5) | Yes | Moderate | Moderate | General purpose |
+| ε-soft version of current Q | Yes | Good (follows best knowledge) | Lower | Practical implementations |
+| Historical logs from old policy | Maybe (check!) | Depends on old policy | Unpredictable | Industry (reusing existing data) |
+| Human demonstrations | Maybe (check!) | High quality | Low (if human ≈ π) | Robotics, games |
+
+**Can b be improved during learning?** In the standard textbook algorithm (§5.7): **No.** b is fixed. But in practice, people do adapt b — and it creates a spectrum:
+
+```mermaid
+flowchart LR
+    A["Fixed b<br/>(pure off-policy)<br/>b never changes"] --- B["Adaptive b<br/>(hybrid)<br/>b slowly tracks pi"]
+    B --- C["b = pi<br/>(on-policy)<br/>same policy does both"]
+```
+
+**What happens if you improve b:**
+
+| If you make b... | Effect on ρ | Effect on variance | Effect on coverage | You're moving toward... |
+|---|---|---|---|---|
+| Closer to π | ρ → 1 (smaller corrections) | Lower (good!) | Might lose coverage of actions π doesn't take | On-policy |
+| More random | ρ stays large | Higher (bad!) | Better coverage | Pure off-policy |
+| Exactly = π | ρ = 1 everywhere | Zero (no correction needed) | Only covers what π does | You've reinvented on-policy |
+
+**The paradox of improving b:**
+
+> The better b gets (closer to π), the less you need importance sampling — but you also lose the advantages that made off-policy attractive in the first place (data reuse, learning from external sources). If b = π, off-policy collapses to on-policy with unnecessary extra computation.
+
+**This is precisely why Q-learning (Chapter 6) was a breakthrough:**
+
+| Problem with off-policy MC | How Q-learning solves it |
+|---|---|
+| Must choose a good b | Any exploratory b works — no careful design needed |
+| ρ products explode over long episodes | No importance sampling at all |
+| Episodes truncated when ρ = 0 | Learns from EVERY step (1-step bootstrap) |
+| Only learns from tails | Learns from every (s,a,r,s') transition |
+
+Q-learning achieves off-policy learning by bootstrapping one step at a time: $Q(s,a) \leftarrow Q(s,a) + \alpha[r + \gamma \max_{a'} Q(s',a') - Q(s,a)]$. The $\max_{a'}$ implicitly evaluates the greedy policy (π) while following any exploratory b — without needing ρ.
+
 ---
 
 ### 5.4c Complete Numerical Example: Off-Policy MC (Step-by-Step)
