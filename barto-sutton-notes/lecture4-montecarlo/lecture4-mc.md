@@ -462,23 +462,42 @@ graph LR
 
 #### On-Policy vs Off-Policy: Why Two Approaches?
 
+**On-Policy GPI Loop:**
+
 ```mermaid
 flowchart LR
-    subgraph OnPolicy [ON-POLICY]
-        PI_ON[pi epsilon-greedy] -->|generates| EP_ON[Episodes]
-        EP_ON -->|evaluates| Q_ON[Q pi]
-        Q_ON -->|improves| PI_ON
-    end
-
-    subgraph OffPolicy [OFF-POLICY]
-        B[b exploratory] -->|generates| EP_OFF[Episodes]
-        EP_OFF -->|importance sampling| Q_OFF[Q pi corrected]
-        Q_OFF -->|improves| PI_OFF[pi greedy]
-    end
+    PI[pi e-greedy] -->|generates| EP[Episodes]
+    EP -->|average returns| Q[Q table]
+    Q -->|argmax| PI
 ```
 
-- **On-Policy:** "Learn about π by following π" — the same ε-greedy policy generates data AND gets evaluated/improved. Circular loop.
-- **Off-Policy:** "Learn about π using data from b" — b explores, importance sampling corrects, π (greedy) improves. Two separate roles.
+One policy does everything: generates data, gets evaluated, gets improved. Then it generates *new* episodes with the improved version, and the cycle repeats.
+
+**Off-Policy GPI Loop:**
+
+```mermaid
+flowchart LR
+    B[b exploratory] -->|generates| EP[Episodes]
+    EP -->|importance sampling| Q[Q table]
+    Q -->|argmax| PI[pi greedy]
+    PI -.->|ratio pi/b used next iteration| EP
+    B -->|loop: generate again| B
+```
+
+**Both iterate!** The key difference is WHO generates the next round of episodes:
+
+| Iteration step | On-Policy | Off-Policy |
+|---|---|---|
+| **1. Generate episodes** | Use current π (ε-greedy) | Use b (always the same exploratory policy) |
+| **2. Evaluate** | Average returns → Q_π | Importance-sampled returns → Q_π |
+| **3. Improve π** | π ← argmax Q | π ← argmax Q |
+| **4. Loop back to step 1** | π changed → new episodes come from the UPDATED π | b unchanged → new episodes come from the SAME b |
+
+The iteration loop is identical in both. The difference:
+- **On-Policy:** When π improves, the *data source changes too* (because π IS the data source). Old episodes are stale.
+- **Off-Policy:** When π improves, the *data source stays the same* (b never changes). Old episodes are still valid — only the importance sampling ratio π/b changes because π changed.
+
+> **Why the diagram looks "non-circular" for off-policy:** The improvement of π doesn't feed back into episode generation — b generates episodes regardless of what π is doing. But π still improves iteratively over many episodes. The "iteration" happens through repeated episodes from b, each time updating Q with corrected returns, each time potentially changing which action π considers best.
 
 | Aspect                              | On-Policy                                   | Off-Policy                                            |
 | ----------------------------------- | ------------------------------------------- | ----------------------------------------------------- |
