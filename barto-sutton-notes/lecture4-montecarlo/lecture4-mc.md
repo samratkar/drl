@@ -1297,7 +1297,7 @@ G₀ = −1 + 0.9 × 10 = 8.0, and ρ₀:₁ = 2.4, ρ₀:₀ = 1.5, ρ₁:₁ =
 
 **Working Code implementation for Monte Carlo**
 
-[https://nbviewer.org/github/samratkar/drl/blob/main/barto-sutton-notes/lecture4-montecarlo/assets/mc_gpi_pedagogy.ipynb](https://nbviewer.org/github/samratkar/drl/blob/main/barto-sutton-notes/lecture4-montecarlo/assets/mc_gpi_pedagogy.ipynb "Monte Carlo Code")
+[https://github.com/samratkar/drl/blob/main/barto-sutton-notes/lecture4-montecarlo/assets/mc_gpi_pedagogy.ipynb](https://github.com/samratkar/drl/blob/main/barto-sutton-notes/lecture4-montecarlo/assets/mc_gpi_pedagogy.ipynb "Monte Carlo Code")
 
 # Chapter 6: Temporal-Difference Learning
 
