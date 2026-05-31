@@ -247,14 +247,14 @@ def first_visit_mc_q_prediction(pi, env, num_episodes, gamma=1.0):
             next_state, reward, term, trunc, _ = env.step(action)
             episode.append((state, action, reward))
             state, done = next_state, term or trunc
-          
+        
         # 2. Process episode backwards
         G = 0
         sa_in_episode = [(x[0], x[1]) for x in episode]
         for t in range(len(episode) - 1, -1, -1):
             s_t, a_t, r_tp1 = episode[t]
             G = gamma * G + r_tp1
-          
+        
             # Check if this is the first visit to (s_t, a_t) in this episode
             if (s_t, a_t) not in sa_in_episode[:t]:
                 returns_sum[s_t][a_t] += G
@@ -277,7 +277,7 @@ def every_visit_mc_q_prediction(pi, env, num_episodes, gamma=1.0):
         for t in range(len(episode) - 1, -1, -1):
             s_t, a_t, r_tp1 = episode[t]
             G = gamma * G + r_tp1
-          
+        
             # NO CHECK: Update every time (s_t, a_t) appears
             returns_sum[s_t][a_t] += G
             N[s_t][a_t] += 1
@@ -300,7 +300,7 @@ Q[idx][action] = returns_sum[idx][action] / N[idx][action]
 
 ### 5.2 Monte Carlo Estimation of Action Values
 
-If a model is not available, it is particularly useful to estimate **action values** ($q_*$) rather than state values ($v_*$).
+If a model is not available, it is particularly useful to estimate **action values** ($q_\ast$) rather than state values ($v_\ast$).
 
 - Without a model, state values alone are not sufficient for action selection (you can't see the one-step lookahead).
 - **The exploration problem:** If we use a deterministic policy, some state-action pairs may never be visited. We must ensure **continual exploration**.
