@@ -249,14 +249,14 @@ def first_visit_mc_q_prediction(pi, env, num_episodes, gamma=1.0):
             next_state, reward, term, trunc, _ = env.step(action)
             episode.append((state, action, reward))
             state, done = next_state, term or trunc
-      
+    
         # 2. Process episode backwards
         G = 0
         sa_in_episode = [(x[0], x[1]) for x in episode]
         for t in range(len(episode) - 1, -1, -1):
             s_t, a_t, r_tp1 = episode[t]
             G = gamma * G + r_tp1
-      
+    
             # Check if this is the first visit to (s_t, a_t) in this episode
             if (s_t, a_t) not in sa_in_episode[:t]:
                 returns_sum[s_t][a_t] += G
@@ -279,7 +279,7 @@ def every_visit_mc_q_prediction(pi, env, num_episodes, gamma=1.0):
         for t in range(len(episode) - 1, -1, -1):
             s_t, a_t, r_tp1 = episode[t]
             G = gamma * G + r_tp1
-      
+    
             # NO CHECK: Update every time (s_t, a_t) appears
             returns_sum[s_t][a_t] += G
             N[s_t][a_t] += 1
@@ -360,7 +360,7 @@ In real-world applications, we cannot always teleport the agent to a random stat
 
 |                     | **Prediction**                                    | **Control**                                         |
 | ------------------- | ------------------------------------------------------- | --------------------------------------------------------- |
-| **Question**  | "How good is this*specific* policy π?"               | "What is the *best* policy π*?"                       |
+| **Question**  | "How good is this*specific* policy π?"               | "What is the*best* policy π*?"                         |
 | **Output**    | V_π(s) or Q_π(s,a) — a number                        | π* — a policy (decision rule)                           |
 | **Algorithm** | Policy Evaluation only                                  | GPI = Evaluation + Improvement (iterative)                |
 | **Analogy**   | "If the CEO keeps this strategy, what will revenue be?" | "What strategy should the CEO adopt to maximize revenue?" |
@@ -420,22 +420,22 @@ The prediction/control split exists **identically** in all three method families
 
 **Prediction** (Policy Evaluation — "How good is this given π?")
 
-| Aspect | Dynamic Programming | Monte Carlo | Temporal-Difference |
-|--------|--------------------:|:-----------:|:--------------------|
-| **Algorithm** | Iterative Bellman sweep | Average sampled returns | TD(0) one-step update |
-| **Update rule** | $V(s) = \sum_{a,s',r} \pi \cdot p \cdot [r + \gamma V(s')]$ | $V(s) \approx \text{mean}(G_t)$ | $V(s) \leftarrow V(s) + \alpha[R + \gamma V(s') - V(s)]$ |
-| **Needs model?** | Yes | No | No |
-| **Needs episodes?** | No | Yes (full) | Yes (one step) |
-| **Section** | §4.1 | §5.1 | §6.1 |
+| Aspect                    |                                           Dynamic Programming |            Monte Carlo            | Temporal-Difference                                        |
+| ------------------------- | ------------------------------------------------------------: | :-------------------------------: | :--------------------------------------------------------- |
+| **Algorithm**       |                                       Iterative Bellman sweep |      Average sampled returns      | TD(0) one-step update                                      |
+| **Update rule**     | $V(s) = \sum_{a,s',r} \pi \cdot p \cdot [r + \gamma V(s')]$ | $V(s) \approx \text{mean}(G_t)$ | $V(s) \leftarrow V(s) + \alpha[R + \gamma V(s') - V(s)]$ |
+| **Needs model?**    |                                                           Yes |                No                | No                                                         |
+| **Needs episodes?** |                                                            No |            Yes (full)            | Yes (one step)                                             |
+| **Section**         |                                                         §4.1 |               §5.1               | §6.1                                                      |
 
 **Control** (GPI — "Find the best π*")
 
-| Aspect | Dynamic Programming | Monte Carlo | Temporal-Difference |
-|--------|--------------------:|:-----------:|:--------------------|
-| **On-policy** | Policy Iteration | MC ES / ε-greedy | Sarsa |
-| **Off-policy** | — | Off-policy MC (IS) | Q-learning |
-| **Shortcut** | Value Iteration | — | Expected Sarsa |
-| **Section** | §4.2–4.4 | §5.3–5.7 | §6.4–6.6 |
+| Aspect               | Dynamic Programming |    Monte Carlo    | Temporal-Difference |
+| -------------------- | ------------------: | :----------------: | :------------------ |
+| **On-policy**  |    Policy Iteration | MC ES / ε-greedy | Sarsa               |
+| **Off-policy** |                  — | Off-policy MC (IS) | Q-learning          |
+| **Shortcut**   |     Value Iteration |         —         | Expected Sarsa      |
+| **Section**    |          §4.2–4.4 |     §5.3–5.7     | §6.4–6.6          |
 
 ```mermaid
 graph LR
@@ -480,21 +480,21 @@ flowchart LR
 - **On-Policy:** "Learn about π by following π" — the same ε-greedy policy generates data AND gets evaluated/improved. Circular loop.
 - **Off-Policy:** "Learn about π using data from b" — b explores, importance sampling corrects, π (greedy) improves. Two separate roles.
 
-| Aspect | On-Policy | Off-Policy |
-|--------|-----------|------------|
-| **Who generates data?** | π itself (must be exploratory) | Separate behavior policy b |
-| **Who gets evaluated?** | The same exploratory π | A different target π (can be greedy) |
-| **Can learn optimal policy?** | No — π must keep ε > 0 for exploration | Yes — π can be fully deterministic |
-| **Correction needed?** | None — data matches policy being evaluated | Importance sampling (ρ = π/b) |
-| **Variance** | Low (no correction) | High (ρ products can explode) |
-| **Data reuse** | No — old episodes from old π are stale | Yes — any episode from any b works |
-| **Real-world analogy** | Learning to cook by cooking yourself | Learning a chef's technique by watching cooking shows |
+| Aspect                              | On-Policy                                   | Off-Policy                                            |
+| ----------------------------------- | ------------------------------------------- | ----------------------------------------------------- |
+| **Who generates data?**       | π itself (must be exploratory)             | Separate behavior policy b                            |
+| **Who gets evaluated?**       | The same exploratory π                     | A different target π (can be greedy)                 |
+| **Can learn optimal policy?** | No — π must keep ε > 0 for exploration   | Yes — π can be fully deterministic                  |
+| **Correction needed?**        | None — data matches policy being evaluated | Importance sampling (ρ = π/b)                       |
+| **Variance**                  | Low (no correction)                         | High (ρ products can explode)                        |
+| **Data reuse**                | No — old episodes from old π are stale    | Yes — any episode from any b works                   |
+| **Real-world analogy**        | Learning to cook by cooking yourself        | Learning a chef's technique by watching cooking shows |
 
 **The fundamental tradeoff:**
 
-| | On-Policy | Off-Policy |
-|---|---|---|
-| **Pro** | Simple, stable, low variance | Can learn optimal policy; can reuse data |
+|               | On-Policy                                            | Off-Policy                                  |
+| ------------- | ---------------------------------------------------- | ------------------------------------------- |
+| **Pro** | Simple, stable, low variance                         | Can learn optimal policy; can reuse data    |
 | **Con** | Optimal policy unreachable (ε forces suboptimality) | High variance; episodes truncated by ρ = 0 |
 
 ---
@@ -519,13 +519,13 @@ stateDiagram-v2
     S2 --> S2: L (reward 0)
 ```
 
-| Property | Value |
-|----------|-------|
-| **States** | S₀, S₁, S₂, Terminal |
-| **Actions** | L (left), R (right) |
-| **Transitions** | R moves forward, L stays in place |
-| **Rewards** | R(S₀→S₁) = +1, R(S₁→S₂) = +2, R(S₂→T) = +10 |
-| **Discount** | γ = 1.0 (undiscounted for clarity) |
+| Property              | Value                                               |
+| --------------------- | --------------------------------------------------- |
+| **States**      | S₀, S₁, S₂, Terminal                             |
+| **Actions**     | L (left), R (right)                                 |
+| **Transitions** | R moves forward, L stays in place                   |
+| **Rewards**     | R(S₀→S₁) = +1, R(S₁→S₂) = +2, R(S₂→T) = +10 |
+| **Discount**    | γ = 1.0 (undiscounted for clarity)                 |
 
 #### The Two Policies
 
@@ -752,12 +752,12 @@ t=1: G = -1 + 12 = 11
      ρ₁ = π(L|S₁)/b(L|S₁) = 0.0/0.5 = 0  ← ZERO!
    
      ╔══════════════════════════════════════════════════╗
-     ║  STOP PROCESSING! ρ = 0 means π would never    ║
-     ║  take action L here. This episode is useless    ║
-     ║  for Q(S₁,L) under π (π never goes Left).      ║
-     ║  We also CANNOT update Q(S₀,R) from this       ║
-     ║  episode — the trajectory from S₀ onward       ║
-     ║  includes an action π rejects.                  ║
+     ║  STOP PROCESSING! ρ = 0 means π would never      ║
+     ║  take action L here. This episode is useless     ║
+     ║  for Q(S₁,L) under π (π never goes Left).        ║
+     ║  We also CANNOT update Q(S₀,R) from this         ║
+     ║  episode — the trajectory from S₀ onward         ║
+     ║  includes an action π rejects.                   ║
      ╚══════════════════════════════════════════════════╝
    
      EXIT inner loop. Move to next episode.
@@ -775,12 +775,12 @@ t=1: G = -1 + 12 = 11
 
 #### Summary: Off-Policy MC's Tradeoff
 
-| | Advantages | Disadvantages |
-|---|---|---|
-| 1 | Can learn optimal (greedy) policy while exploring freely | High variance from importance sampling products |
-| 2 | Can reuse data from any source (old logs, humans, etc.) | Episodes truncated when b takes actions π wouldn't |
-| 3 | Separates exploration from exploitation completely | Only learns from "tails" of episodes (slow learning) |
-| 4 | — | Longer episodes → exponentially growing ρ products |
+|   | Advantages                                               | Disadvantages                                        |
+| - | -------------------------------------------------------- | ---------------------------------------------------- |
+| 1 | Can learn optimal (greedy) policy while exploring freely | High variance from importance sampling products      |
+| 2 | Can reuse data from any source (old logs, humans, etc.)  | Episodes truncated when b takes actions π wouldn't  |
+| 3 | Separates exploration from exploitation completely       | Only learns from "tails" of episodes (slow learning) |
+| 4 | —                                                       | Longer episodes → exponentially growing ρ products |
 
 ```mermaid
 graph LR
