@@ -499,6 +499,86 @@ The iteration loop is identical in both. The difference:
 
 > **Why the diagram looks "non-circular" for off-policy:** The improvement of π doesn't feed back into episode generation — b generates episodes regardless of what π is doing. But π still improves iteratively over many episodes. The "iteration" happens through repeated episodes from b, each time updating Q with corrected returns, each time potentially changing which action π considers best.
 
+#### What Actually Happens Inside the b Loop (Iteration by Iteration)
+
+**Setup:** 3-state chain (S₀ → S₁ → S₂ → T). b = uniform random (0.5 Left, 0.5 Right at every state). b is fixed forever — it NEVER changes. π starts as "always go Right" (arbitrary initialization). Q(s,a) = 0 everywhere.
+
+**Iteration 1:** b stumbles and happens to go Right everywhere.
+
+| Step | What happens | Detail |
+|------|-------------|--------|
+| b generates episode | S₀→R→S₁→R→S₂→R→T | b randomly chose R three times (probability = 0.5³ = 12.5%) |
+| Compute returns | G₀=13, G₁=12, G₂=10 | Working backwards: 10, then 2+10, then 1+12 |
+| Compute ρ at each step | ρ = π(R)/b(R) = 1.0/0.5 = 2.0 | π agrees with every action taken (all R) |
+| Update Q | Q(S₂,R)=10, Q(S₁,R)=12, Q(S₀,R)=13 | All steps useful — ρ never hit zero |
+| Improve π | π(s) = argmax Q → all R | No change (was already R) |
+
+**Iteration 2:** b stumbles and goes Left at S₁.
+
+| Step | What happens | Detail |
+|------|-------------|--------|
+| b generates episode | S₀→R→S₁→**L**→S₁→R→S₂→R→T | b randomly chose L at S₁ (probability 0.5) |
+| Process backwards from tail | t=3: S₂→R→T, ρ=2.0 | π agrees with R. Update Q(S₂,R). |
+| Continue backwards | t=2: S₁→R→S₂, ρ=2.0 | π agrees with R. Update Q(S₁,R). |
+| Hit t=1 | S₁→**L**, ρ = π(L)/b(L) = 0/0.5 = **0** | π would NEVER go Left. STOP. |
+| Q(S₀,R) updated? | **NO** | The trajectory from S₀ includes an action π rejects |
+| Improve π | π(s) = argmax Q → still all R | Q(s,L) still 0 everywhere |
+
+**Iteration 3:** b stumbles and goes Left at S₀.
+
+| Step | What happens | Detail |
+|------|-------------|--------|
+| b generates episode | S₀→**L**→S₀→R→S₁→R→S₂→R→T | b randomly chose L at the very start |
+| Process backwards from tail | t=4,3,2: update Q(S₂,R), Q(S₁,R), Q(S₀,R) | All R actions — π agrees, ρ=2.0 each |
+| Hit t=0 | S₀→**L**, ρ = π(L)/b(L) = 0/0.5 = **0** | STOP |
+| What got updated? | Q(S₂,R), Q(S₁,R), Q(S₀,R) from the TAIL | Steps after the bad action are fine! |
+
+**Iteration 4:** b goes Left twice in a row.
+
+| Step | What happens | Detail |
+|------|-------------|--------|
+| b generates episode | S₀→**L**→S₀→**L**→S₀→R→S₁→R→S₂→R→T | Two Left actions before getting going |
+| Useful updates | Q(S₂,R), Q(S₁,R), Q(S₀,R) from tail | Same as iteration 3 — tail is fine |
+| Wasted steps | The two L actions at S₀ | These tell us nothing about π |
+
+**Iteration 50:** After many episodes, Q has been updated many times from many tails.
+
+| State | Q(s,L) | Q(s,R) | π(s) |
+|-------|--------|--------|------|
+| S₀ | 0 (never useful under π) | ≈13.0 (converging) | R |
+| S₁ | 0 (never useful under π) | ≈12.0 (converging) | R |
+| S₂ | 0 (never useful under π) | ≈10.0 (converging) | R |
+
+**Summary: What changes vs what stays fixed across iterations**
+
+```mermaid
+flowchart TD
+    subgraph FIXED [NEVER CHANGES]
+        B[b = uniform 0.5/0.5]
+    end
+    subgraph CHANGES [CHANGES EVERY ITERATION]
+        EP[New random episode from b]
+        Q[Q table gets refined]
+        PI[pi = argmax Q gets updated]
+        RHO[rho = pi/b recalculated]
+    end
+    B -->|generates fresh episode| EP
+    EP -->|weighted returns| Q
+    Q -->|argmax| PI
+    PI -->|new ratio| RHO
+    RHO -.->|used in NEXT iteration| EP
+```
+
+| Component | Changes across iterations? | Role |
+|-----------|---------------------------|------|
+| **b** | NEVER | Dumb explorer. Keeps generating random episodes forever. |
+| **Episodes** | YES (new each time) | Each iteration, b produces a fresh random trajectory |
+| **Q(s,a)** | YES (refined each time) | Accumulates weighted returns; gets more accurate |
+| **π** | YES (improved each time) | = argmax Q. As Q improves, π approaches optimal |
+| **ρ = π/b** | YES (because π changes) | The numerator π(a\|s) changes as π improves |
+
+> **The fundamental insight:** b is like a random-walking lab rat in a maze. It generates data by stumbling around — sometimes it stumbles through a useful path, sometimes it doesn't. Over many iterations, enough useful paths accumulate in Q that π converges to optimal. The rat never gets smarter; our *interpretation* of its data gets smarter.
+
 | Aspect                              | On-Policy                                   | Off-Policy                                            |
 | ----------------------------------- | ------------------------------------------- | ----------------------------------------------------- |
 | **Who generates data?**       | π itself (must be exploratory)             | Separate behavior policy b                            |
