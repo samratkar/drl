@@ -1033,6 +1033,7 @@ The solution shows:
 
 ![](assets/images/mc-off-policy-1.png)
 ![](assets/images/mc-off-policy-2.png)
+![](assets/images/mc-off-policy-3.png)
 
 Uses the behavior policy to generate episodes and the target policy (greedy) for learning.
 
