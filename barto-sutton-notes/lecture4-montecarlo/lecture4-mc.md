@@ -21,9 +21,9 @@ deliveries : [2026-05-31]
 - [Chapter 5: Monte Carlo Methods](#chapter-5-monte-carlo-methods)
   - [5.0 Deep Dive: Monte Carlo vs. Dynamic Programming](#50-deep-dive-monte-carlo-vs-dynamic-programming)
     - [1. The Model Requirement (Model-Free vs. Model-Based)](#1-the-model-requirement-model-free-vs-model-based)
-      - [Concrete Example: What does a "Model" look like?](#concrete-example-what-does-a-model-look-like)
+      - [Concrete Example: What does a &#34;Model&#34; look like?](#concrete-example-what-does-a-model-look-like)
     - [2. Bootstrapping vs. Sampling](#2-bootstrapping-vs-sampling)
-    - [3. The "Lookahead" Logic](#3-the-lookahead-logic)
+    - [3. The &#34;Lookahead&#34; Logic](#3-the-lookahead-logic)
     - [4. The Exploration Challenge](#4-the-exploration-challenge)
     - [5. Does MC use the Bellman Equation?](#5-does-mc-use-the-bellman-equation)
     - [Comparison Summary](#comparison-summary)
@@ -53,10 +53,10 @@ deliveries : [2026-05-31]
       - [Step 2: Compute Importance Sampling Ratios](#step-2-compute-importance-sampling-ratios)
       - [Step 3: Update Q-Values](#step-3-update-q-values)
       - [Full Computation Table](#full-computation-table)
-      - [What If the Beginner Took a "Wrong" Action?](#what-if-the-beginner-took-a-wrong-action)
+      - [What If the Beginner Took a &#34;Wrong&#34; Action?](#what-if-the-beginner-took-a-wrong-action)
       - [The Off-Policy MC Control Algorithm (Complete Walkthrough)](#the-off-policy-mc-control-algorithm-complete-walkthrough)
       - [Why ρ = 0 Makes Intuitive Sense](#why-ρ--0-makes-intuitive-sense)
-      - [Summary: Off-Policy MC's Tradeoff](#summary-off-policy-mcs-tradeoff)
+      - [Summary: Off-Policy MC&#39;s Tradeoff](#summary-off-policy-mcs-tradeoff)
     - [5.5 Off-policy Prediction via Importance Sampling](#55-off-policy-prediction-via-importance-sampling)
       - [1. The Importance Sampling Ratio ($\\rho$)](#1-the-importance-sampling-ratio-rho)
       - [2. Ordinary Importance Sampling (OIS)](#2-ordinary-importance-sampling-ois)
@@ -79,15 +79,15 @@ deliveries : [2026-05-31]
       - [When to Use Which](#when-to-use-which)
       - [Numerical Example (same episode, different estimates)](#numerical-example-same-episode-different-estimates)
 - [Chapter 6: Temporal-Difference Learning](#chapter-6-temporal-difference-learning)
-    - [6.1 TD Prediction](#61-td-prediction)
-    - [6.2 Advantages of TD Prediction Methods](#62-advantages-of-td-prediction-methods)
-    - [6.3 Optimality of TD(0)](#63-optimality-of-td0)
-    - [6.4 Sarsa: On-policy TD Control](#64-sarsa-on-policy-td-control)
-    - [6.5 Q-learning: Off-policy TD Control](#65-q-learning-off-policy-td-control)
-      - [Example 6.6: Cliff Walking](#example-66-cliff-walking)
-    - [6.6 Expected Sarsa](#66-expected-sarsa)
-    - [6.7 Maximization Bias and Double Learning](#67-maximization-bias-and-double-learning)
-    - [6.8 Games, Afterstates, and Other Special Cases](#68-games-afterstates-and-other-special-cases)
+  - [6.1 TD Prediction](#61-td-prediction)
+  - [6.2 Advantages of TD Prediction Methods](#62-advantages-of-td-prediction-methods)
+  - [6.3 Optimality of TD(0)](#63-optimality-of-td0)
+  - [6.4 Sarsa: On-policy TD Control](#64-sarsa-on-policy-td-control)
+  - [6.5 Q-learning: Off-policy TD Control](#65-q-learning-off-policy-td-control)
+    - [Example 6.6: Cliff Walking](#example-66-cliff-walking)
+  - [6.6 Expected Sarsa](#66-expected-sarsa)
+  - [6.7 Maximization Bias and Double Learning](#67-maximization-bias-and-double-learning)
+  - [6.8 Games, Afterstates, and Other Special Cases](#68-games-afterstates-and-other-special-cases)
   - [Practice Exercises](#practice-exercises)
 
 ---
@@ -621,13 +621,13 @@ flowchart TD
 
 **They are the same algorithm with one substitution:**
 
-| GPI Step | On-Policy | Off-Policy | What changed? |
-|----------|-----------|------------|---------------|
-| **1. Generate** | π generates episodes | b generates episodes | WHO generates |
-| **2. Returns** | G computed normally | G computed normally | Nothing |
-| **3. Evaluate** | Q ← Q + α[G − Q] | Q ← Q + α[ρG − Q] | Added ρ correction |
-| **4. Improve** | π = argmax Q | π = argmax Q | Nothing |
-| **5. Loop** | Use updated π for next episode | Use same b for next episode | WHO loops |
+| GPI Step              | On-Policy                       | Off-Policy                  | What changed?       |
+| --------------------- | ------------------------------- | --------------------------- | ------------------- |
+| **1. Generate** | π generates episodes           | b generates episodes        | WHO generates       |
+| **2. Returns**  | G computed normally             | G computed normally         | Nothing             |
+| **3. Evaluate** | Q ← Q + α[G − Q]             | Q ← Q + α[ρG − Q]       | Added ρ correction |
+| **4. Improve**  | π = argmax Q                   | π = argmax Q               | Nothing             |
+| **5. Loop**     | Use updated π for next episode | Use same b for next episode | WHO loops           |
 
 The ρ correction in step 3 exists ONLY because episodes came from b instead of π. It mathematically converts "what b experienced" into "what π would have experienced." If b = π, then ρ = 1 everywhere and off-policy reduces exactly to on-policy.
 
@@ -654,13 +654,13 @@ The ρ correction in step 3 exists ONLY because episodes came from b instead of 
 
 **How to pick b initially:** The only hard requirement is **coverage** — b(a|s) > 0 for all (s,a) where π(a|s) > 0. Beyond that, it's a practical choice:
 
-| Choice for b | Coverage? | Data quality | Variance of ρ | When to use |
-|---|---|---|---|---|
-| Uniform random | Perfect | Poor (wastes episodes) | High (ρ products explode) | Simple environments, teaching |
-| ε-greedy with high ε (e.g., 0.5) | Yes | Moderate | Moderate | General purpose |
-| ε-soft version of current Q | Yes | Good (follows best knowledge) | Lower | Practical implementations |
-| Historical logs from old policy | Maybe (check!) | Depends on old policy | Unpredictable | Industry (reusing existing data) |
-| Human demonstrations | Maybe (check!) | High quality | Low (if human ≈ π) | Robotics, games |
+| Choice for b                       | Coverage?      | Data quality                  | Variance of ρ             | When to use                      |
+| ---------------------------------- | -------------- | ----------------------------- | -------------------------- | -------------------------------- |
+| Uniform random                     | Perfect        | Poor (wastes episodes)        | High (ρ products explode) | Simple environments, teaching    |
+| ε-greedy with high ε (e.g., 0.5) | Yes            | Moderate                      | Moderate                   | General purpose                  |
+| ε-soft version of current Q       | Yes            | Good (follows best knowledge) | Lower                      | Practical implementations        |
+| Historical logs from old policy    | Maybe (check!) | Depends on old policy         | Unpredictable              | Industry (reusing existing data) |
+| Human demonstrations               | Maybe (check!) | High quality                  | Low (if human ≈ π)       | Robotics, games                  |
 
 **Can b be improved during learning?** In the standard textbook algorithm (§5.7): **No.** b is fixed. But in practice, people do adapt b — and it creates a spectrum:
 
@@ -672,11 +672,11 @@ flowchart LR
 
 **What happens if you improve b:**
 
-| If you make b... | Effect on ρ | Effect on variance | Effect on coverage | You're moving toward... |
-|---|---|---|---|---|
-| Closer to π | ρ → 1 (smaller corrections) | Lower (good!) | Might lose coverage of actions π doesn't take | On-policy |
-| More random | ρ stays large | Higher (bad!) | Better coverage | Pure off-policy |
-| Exactly = π | ρ = 1 everywhere | Zero (no correction needed) | Only covers what π does | You've reinvented on-policy |
+| If you make b... | Effect on ρ                  | Effect on variance          | Effect on coverage                             | You're moving toward...     |
+| ---------------- | ----------------------------- | --------------------------- | ---------------------------------------------- | --------------------------- |
+| Closer to π     | ρ → 1 (smaller corrections) | Lower (good!)               | Might lose coverage of actions π doesn't take | On-policy                   |
+| More random      | ρ stays large                | Higher (bad!)               | Better coverage                                | Pure off-policy             |
+| Exactly = π     | ρ = 1 everywhere             | Zero (no correction needed) | Only covers what π does                       | You've reinvented on-policy |
 
 **The paradox of improving b:**
 
@@ -684,12 +684,12 @@ flowchart LR
 
 **This is precisely why Q-learning (Chapter 6) was a breakthrough:**
 
-| Problem with off-policy MC | How Q-learning solves it |
-|---|---|
-| Must choose a good b | Any exploratory b works — no careful design needed |
-| ρ products explode over long episodes | No importance sampling at all |
-| Episodes truncated when ρ = 0 | Learns from EVERY step (1-step bootstrap) |
-| Only learns from tails | Learns from every (s,a,r,s') transition |
+| Problem with off-policy MC             | How Q-learning solves it                            |
+| -------------------------------------- | --------------------------------------------------- |
+| Must choose a good b                   | Any exploratory b works — no careful design needed |
+| ρ products explode over long episodes | No importance sampling at all                       |
+| Episodes truncated when ρ = 0         | Learns from EVERY step (1-step bootstrap)           |
+| Only learns from tails                 | Learns from every (s,a,r,s') transition             |
 
 Q-learning achieves off-policy learning by bootstrapping one step at a time: $Q(s,a) \leftarrow Q(s,a) + \alpha[r + \gamma \max_{a'} Q(s',a') - Q(s,a)]$. The $\max_{a'}$ implicitly evaluates the greedy policy (π) while following any exploratory b — without needing ρ.
 
@@ -745,7 +745,7 @@ stateDiagram-v2
 
 b goes Right 75% of the time, Left 25% (exploring).
 
-**Coverage requirement satisfied:** Wherever π(a|s) > 0, we need b(a|s) > 0. Since π only picks R and b(R|s) = 0.75 > 0 ✓
+**Coverage requirement satisfied:** Wherever $π(a \mid s) > 0$, we need $b(a \mid s) > 0$. Since π only picks R and b(R|s) = 0.75 > 0 ✓
 
 #### Episode Generated by Behavior Policy b
 
