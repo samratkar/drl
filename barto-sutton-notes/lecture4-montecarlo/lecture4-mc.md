@@ -39,6 +39,8 @@ deliveries : [2026-05-31]
       - [Monte Carlo with Exploring Starts (MC ES)](#monte-carlo-with-exploring-starts-mc-es)
     - [5.4 Monte Carlo Control without Exploring Starts](#54-monte-carlo-control-without-exploring-starts)
       - [Comparing Exploration Strategies](#comparing-exploration-strategies)
+    - [5.4b Deep Dive: Prediction vs Control — Why Both Exist &amp; Real-Life Significance](#54b-deep-dive-prediction-vs-control--why-both-exist--real-life-significance)
+    - [5.4c Complete Numerical Example: Off-Policy MC (Step-by-Step)](#54c-complete-numerical-example-off-policy-mc-step-by-step)
     - [5.5 Off-policy Prediction via Importance Sampling](#55-off-policy-prediction-via-importance-sampling)
       - [1. The Importance Sampling Ratio ($\\rho$)](#1-the-importance-sampling-ratio-rho)
       - [2. Ordinary Importance Sampling (OIS)](#2-ordinary-importance-sampling-ois)
@@ -247,14 +249,14 @@ def first_visit_mc_q_prediction(pi, env, num_episodes, gamma=1.0):
             next_state, reward, term, trunc, _ = env.step(action)
             episode.append((state, action, reward))
             state, done = next_state, term or trunc
-        
+      
         # 2. Process episode backwards
         G = 0
         sa_in_episode = [(x[0], x[1]) for x in episode]
         for t in range(len(episode) - 1, -1, -1):
             s_t, a_t, r_tp1 = episode[t]
             G = gamma * G + r_tp1
-        
+      
             # Check if this is the first visit to (s_t, a_t) in this episode
             if (s_t, a_t) not in sa_in_episode[:t]:
                 returns_sum[s_t][a_t] += G
@@ -277,7 +279,7 @@ def every_visit_mc_q_prediction(pi, env, num_episodes, gamma=1.0):
         for t in range(len(episode) - 1, -1, -1):
             s_t, a_t, r_tp1 = episode[t]
             G = gamma * G + r_tp1
-        
+      
             # NO CHECK: Update every time (s_t, a_t) appears
             returns_sum[s_t][a_t] += G
             N[s_t][a_t] += 1
@@ -349,6 +351,442 @@ In real-world applications, we cannot always teleport the agent to a random stat
 
 - **$\epsilon$-greedy policy:** Most of the time, pick the action with the highest $q$-value. With probability $\epsilon$, pick an action at random.
 - This ensures that all actions are tried infinitely often even if the agent always starts at the same position.
+
+---
+
+### 5.4b Deep Dive: Prediction vs Control — Why Both Exist & Real-Life Significance
+
+#### The Fundamental Distinction
+
+|                     | **Prediction**                                    | **Control**                                         |
+| ------------------- | ------------------------------------------------------- | --------------------------------------------------------- |
+| **Question**  | "How good is this*specific* policy π?"               | "What is the *best* policy π*?"                       |
+| **Output**    | V_π(s) or Q_π(s,a) — a number                        | π* — a policy (decision rule)                           |
+| **Algorithm** | Policy Evaluation only                                  | GPI = Evaluation + Improvement (iterative)                |
+| **Analogy**   | "If the CEO keeps this strategy, what will revenue be?" | "What strategy should the CEO adopt to maximize revenue?" |
+
+Control *includes* prediction as a subroutine — you must evaluate before you can improve. But prediction is independently valuable.
+
+#### Why Prediction Exists Separately: Real-World Significance
+
+**1. Counterfactual Policy Evaluation (Industry's #1 Use Case)**
+
+A company has an existing recommendation algorithm (policy π_old) running in production. They've designed a new algorithm (π_new) but deploying it is expensive and risky. Can they estimate π_new's performance *without* deploying it?
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  PRODUCTION SYSTEM                                      │
+│                                                         │
+│  π_old (current recommender) ──→ Logs: user clicks,     │
+│                                     purchases, bounces  │
+│                                                         │
+│  Question: "What would happen if we deployed π_new?"    │
+│                                                         │
+│  Answer: Off-policy PREDICTION using logged data        │
+│          (π_new = target, π_old = behavior)             │
+│                                                         │
+│  This is pure evaluation — no improvement loop needed.  │
+└─────────────────────────────────────────────────────────┘
+```
+
+Real examples:
+
+- Netflix evaluating a new ranking algorithm using old viewing logs
+- A hospital estimating the effect of a new treatment protocol using historical patient records
+- An ad platform estimating click-through rate of a new bidding strategy
+
+**2. Safety-Critical Domains (Evaluate Before Deploying)**
+
+In medical treatment, autonomous driving, or industrial control — you cannot "explore" freely. You evaluate candidate policies offline first:
+
+| Domain   | Behavior policy b (generates data) | Target policy π (being evaluated) |
+| -------- | ---------------------------------- | ---------------------------------- |
+| Medicine | Doctor's historical prescriptions  | Proposed new treatment guideline   |
+| Ads      | Current bidding algorithm          | Proposed new algorithm             |
+| Robotics | Safe conservative controller       | Aggressive performance controller  |
+| Finance  | Current trading strategy           | New ML-based strategy              |
+
+**3. Monitoring & Auditing**
+
+You have a deployed system. You're not trying to improve it — you just want to track its performance over time. "Is our policy degrading?" is a prediction question.
+
+**4. Comparing Multiple Candidate Policies**
+
+Evaluate 5 different policies, pick the best one externally (e.g., by a committee). This is prediction × 5, not control.
+
+#### How This Applies Across Methods (DP, MC, TD)
+
+The prediction/control split exists **identically** in all three method families:
+
+**Prediction** (Policy Evaluation — "How good is this given π?")
+
+| Aspect | Dynamic Programming | Monte Carlo | Temporal-Difference |
+|--------|--------------------:|:-----------:|:--------------------|
+| **Algorithm** | Iterative Bellman sweep | Average sampled returns | TD(0) one-step update |
+| **Update rule** | $V(s) = \sum_{a,s',r} \pi \cdot p \cdot [r + \gamma V(s')]$ | $V(s) \approx \text{mean}(G_t)$ | $V(s) \leftarrow V(s) + \alpha[R + \gamma V(s') - V(s)]$ |
+| **Needs model?** | Yes | No | No |
+| **Needs episodes?** | No | Yes (full) | Yes (one step) |
+| **Section** | §4.1 | §5.1 | §6.1 |
+
+**Control** (GPI — "Find the best π*")
+
+| Aspect | Dynamic Programming | Monte Carlo | Temporal-Difference |
+|--------|--------------------:|:-----------:|:--------------------|
+| **On-policy** | Policy Iteration | MC ES / ε-greedy | Sarsa |
+| **Off-policy** | — | Off-policy MC (IS) | Q-learning |
+| **Shortcut** | Value Iteration | — | Expected Sarsa |
+| **Section** | §4.2–4.4 | §5.3–5.7 | §6.4–6.6 |
+
+```mermaid
+graph LR
+    subgraph Prediction ["PREDICTION (Evaluate π)"]
+        DP_P["DP: Bellman Sweep<br/>Exact, needs model"]
+        MC_P["MC: Average Returns<br/>Sampled, full episodes"]
+        TD_P["TD: Bootstrap 1-step<br/>Sampled, online"]
+    end
+    subgraph Control ["CONTROL (Find π*)"]
+        DP_C["DP: Policy/Value Iteration"]
+        MC_C["MC: GPI + ε-greedy or IS"]
+        TD_C["TD: Sarsa / Q-learning"]
+    end
+    DP_P -->|"+ improvement"| DP_C
+    MC_P -->|"+ improvement"| MC_C
+    TD_P -->|"+ improvement"| TD_C
+```
+
+**Why it *feels* less prominent in DP:** DP prediction is computationally trivial — you have the model, so you just iterate the Bellman equation. In MC, prediction alone is non-trivial because:
+
+- You need sufficient samples (exploration problem)
+- Off-policy prediction requires importance sampling (variance/bias tradeoffs)
+- You're limited to states actually visited
+
+#### On-Policy vs Off-Policy: Why Two Approaches?
+
+```mermaid
+flowchart LR
+    subgraph OnPolicy [ON-POLICY]
+        PI_ON[pi epsilon-greedy] -->|generates| EP_ON[Episodes]
+        EP_ON -->|evaluates| Q_ON[Q pi]
+        Q_ON -->|improves| PI_ON
+    end
+
+    subgraph OffPolicy [OFF-POLICY]
+        B[b exploratory] -->|generates| EP_OFF[Episodes]
+        EP_OFF -->|importance sampling| Q_OFF[Q pi corrected]
+        Q_OFF -->|improves| PI_OFF[pi greedy]
+    end
+```
+
+- **On-Policy:** "Learn about π by following π" — the same ε-greedy policy generates data AND gets evaluated/improved. Circular loop.
+- **Off-Policy:** "Learn about π using data from b" — b explores, importance sampling corrects, π (greedy) improves. Two separate roles.
+
+| Aspect | On-Policy | Off-Policy |
+|--------|-----------|------------|
+| **Who generates data?** | π itself (must be exploratory) | Separate behavior policy b |
+| **Who gets evaluated?** | The same exploratory π | A different target π (can be greedy) |
+| **Can learn optimal policy?** | No — π must keep ε > 0 for exploration | Yes — π can be fully deterministic |
+| **Correction needed?** | None — data matches policy being evaluated | Importance sampling (ρ = π/b) |
+| **Variance** | Low (no correction) | High (ρ products can explode) |
+| **Data reuse** | No — old episodes from old π are stale | Yes — any episode from any b works |
+| **Real-world analogy** | Learning to cook by cooking yourself | Learning a chef's technique by watching cooking shows |
+
+**The fundamental tradeoff:**
+
+| | On-Policy | Off-Policy |
+|---|---|---|
+| **Pro** | Simple, stable, low variance | Can learn optimal policy; can reuse data |
+| **Con** | Optimal policy unreachable (ε forces suboptimality) | High variance; episodes truncated by ρ = 0 |
+
+---
+
+### 5.4c Complete Numerical Example: Off-Policy MC (Step-by-Step)
+
+#### The Environment: 3-State Chain
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    S0: S₀
+    S1: S₁
+    S2: S₂
+    T: Terminal
+
+    S0 --> S1: R (reward +1)
+    S0 --> S0: L (reward 0)
+    S1 --> S2: R (reward +2)
+    S1 --> S1: L (reward -1)
+    S2 --> T: R (reward +10)
+    S2 --> S2: L (reward 0)
+```
+
+| Property | Value |
+|----------|-------|
+| **States** | S₀, S₁, S₂, Terminal |
+| **Actions** | L (left), R (right) |
+| **Transitions** | R moves forward, L stays in place |
+| **Rewards** | R(S₀→S₁) = +1, R(S₁→S₂) = +2, R(S₂→T) = +10 |
+| **Discount** | γ = 1.0 (undiscounted for clarity) |
+
+#### The Two Policies
+
+**Target Policy π** (deterministic greedy — the "professional"):
+
+| State | π(L\|s) | π(R\|s) |
+| ----- | -------- | -------- |
+| S₀   | 0.0      | 1.0      |
+| S₁   | 0.0      | 1.0      |
+| S₂   | 0.0      | 1.0      |
+
+π always goes Right.
+
+**Behavior Policy b** (exploratory ε-greedy with ε=0.5 — the "beginner"):
+
+| State | b(L\|s) | b(R\|s) |
+| ----- | ------- | ------- |
+| S₀   | 0.25    | 0.75    |
+| S₁   | 0.25    | 0.75    |
+| S₂   | 0.25    | 0.75    |
+
+b goes Right 75% of the time, Left 25% (exploring).
+
+**Coverage requirement satisfied:** Wherever π(a|s) > 0, we need b(a|s) > 0. Since π only picks R and b(R|s) = 0.75 > 0 ✓
+
+#### Episode Generated by Behavior Policy b
+
+The beginner plays and happens to take these actions:
+
+```
+Step 0: State=S₀, Action=R, Reward=+1  → moves to S₁
+Step 1: State=S₁, Action=R, Reward=+2  → moves to S₂  
+Step 2: State=S₂, Action=R, Reward=+10 → moves to T (terminal)
+```
+
+Episode: S₀, R, +1, S₁, R, +2, S₂, R, +10, T
+
+#### Step 1: Compute Returns (Same for On-Policy and Off-Policy)
+
+Working backwards from the terminal state:
+
+```
+t=2: G₂ = R₃ = +10
+t=1: G₁ = R₂ + γ·G₂ = +2 + 1.0×10 = +12
+t=0: G₀ = R₁ + γ·G₁ = +1 + 1.0×12 = +13
+```
+
+#### Step 2: Compute Importance Sampling Ratios
+
+At each step, ask: "How much more likely would the professional do this vs the beginner?"
+
+```
+                    π(Aₜ|Sₜ)
+Step t:  ρₜ = ─────────────
+                    b(Aₜ|Sₜ)
+
+Step 0:  ρ₀ = π(R|S₀) / b(R|S₀) = 1.0 / 0.75 = 1.333
+Step 1:  ρ₁ = π(R|S₁) / b(R|S₁) = 1.0 / 0.75 = 1.333
+Step 2:  ρ₂ = π(R|S₂) / b(R|S₂) = 1.0 / 0.75 = 1.333
+```
+
+**Cumulative products** (for weighting the full return from each time step):
+
+```
+ρ₀:₂ = ρ₀ × ρ₁ × ρ₂ = 1.333 × 1.333 × 1.333 = 2.370
+ρ₁:₂ = ρ₁ × ρ₂ = 1.333 × 1.333 = 1.778
+ρ₂:₂ = ρ₂ = 1.333
+```
+
+**Interpretation:** The professional is 2.37× more likely to produce this *exact trajectory* than the beginner. Why? Because the beginner only goes R with probability 0.75 at each step, while the professional always goes R. Over 3 steps: (1/0.75)³ = 2.37.
+
+#### Step 3: Update Q-Values
+
+**On-Policy Update** (if we were evaluating b itself):
+
+$$
+Q(S_0, R) \leftarrow Q(S_0, R) + \alpha[G_0 - Q(S_0, R)]
+$$
+
+$$
+Q(S_0, R) \leftarrow 0 + 0.1[13 - 0] = 1.3
+$$
+
+**Off-Policy Update** (evaluating π using data from b):
+
+Using Ordinary Importance Sampling:
+
+$$
+Q(S_0, R) \leftarrow Q(S_0, R) + \alpha[\rho_{0:2} \cdot G_0 - Q(S_0, R)]
+$$
+
+$$
+Q(S_0, R) \leftarrow 0 + 0.1[2.370 \times 13 - 0] = 0.1 \times 30.81 = 3.081
+$$
+
+Using Weighted Importance Sampling (incremental):
+
+$$
+C(S_0, R) \leftarrow C(S_0, R) + \rho_{0:2} = 0 + 2.370 = 2.370
+$$
+
+$$
+Q(S_0, R) \leftarrow Q(S_0, R) + \frac{\rho_{0:2}}{C(S_0, R)}[G_0 - Q(S_0, R)]
+$$
+
+$$
+Q(S_0, R) \leftarrow 0 + \frac{2.370}{2.370}[13 - 0] = 13.0
+$$
+
+#### Full Computation Table
+
+| Time | State | Action | Reward | Return G | ρₜ  | Cumulative ρ | On-policy ΔQ | Off-policy (OIS) ΔQ    |
+| ---- | ----- | ------ | ------ | -------- | ----- | ------------- | ------------- | ----------------------- |
+| t=2  | S₂   | R      | +10    | 10       | 1.333 | 1.333         | α·10 = 1.0  | α·(1.333×10) = 1.333 |
+| t=1  | S₁   | R      | +2     | 12       | 1.333 | 1.778         | α·12 = 1.2  | α·(1.778×12) = 2.133 |
+| t=0  | S₀   | R      | +1     | 13       | 1.333 | 2.370         | α·13 = 1.3  | α·(2.370×13) = 3.081 |
+
+#### What If the Beginner Took a "Wrong" Action?
+
+Now suppose the episode was:
+
+```
+Step 0: State=S₀, Action=R, Reward=+1  → moves to S₁
+Step 1: State=S₁, Action=L, Reward=-1  → stays at S₁ (bad move!)
+Step 2: State=S₁, Action=R, Reward=+2  → moves to S₂
+Step 3: State=S₂, Action=R, Reward=+10 → moves to T
+```
+
+Now at Step 1, the beginner went **Left**, but π would *never* go Left:
+
+```
+ρ₁ = π(L|S₁) / b(L|S₁) = 0.0 / 0.25 = 0
+```
+
+**The cumulative ratio ρ₀:₃ = ρ₀ × ρ₁ × ρ₂ × ρ₃ = 1.333 × 0 × ... = 0**
+
+The entire return from t=0 gets **zeroed out**. We learn NOTHING about Q(S₀, R) from this episode.
+
+```mermaid
+graph LR
+    S0["S₀"] -->|"R, ρ=1.33"| S1a["S₁"]
+    S1a -->|"L, ρ=0 ❌"| S1b["S₁"]
+    S1b -->|"R, ρ=1.33"| S2["S₂"]
+    S2 -->|"R, ρ=1.33"| T["T"]
+
+    style S1a fill:#ff6b6b,stroke:#333
+    style S0 fill:#ff6b6b,stroke:#333
+```
+
+> **Zero-Ratio Truncation:** From S₀'s perspective, this episode is irrelevant to π — the professional would NEVER take action L at S₁, so the trajectory tells us nothing about how π would perform from S₀.
+>
+> **However!** From S₂'s perspective: t=3 happened *after* the bad action. Processing backwards: ρ₃ = 1.333, G₃ = 10 → We CAN still update Q(S₂, R).
+>
+> **This is why off-policy MC processes episodes BACKWARDS** — it learns from tails of episodes even when prefixes contain actions π rejects.
+
+#### The Off-Policy MC Control Algorithm (Complete Walkthrough)
+
+Let's trace through 2 full iterations of off-policy MC control:
+
+**Initialization:**
+
+- Q(s,a) = 0 for all (s,a)
+- C(s,a) = 0 for all (s,a)
+- π(s) = arbitrary (say, all R)
+- b = uniform random: b(L|s) = b(R|s) = 0.5
+
+**Episode 1** (generated by b): S₀→R→S₁→R→S₂→R→T, rewards: +1, +2, +10
+
+Processing backwards (weighted IS):
+
+```
+t=2: G = 10
+     ρ₂ = π(R|S₂)/b(R|S₂) = 1.0/0.5 = 2.0
+     C(S₂,R) = 0 + 2.0 = 2.0
+     Q(S₂,R) = 0 + (2.0/2.0)(10 - 0) = 10.0
+     π(S₂) = argmax[Q(S₂,L)=0, Q(S₂,R)=10] = R ✓ (unchanged)
+     Check: A₂=R = π(S₂)=R → continue ✓
+
+t=1: G = 2 + 1.0×10 = 12
+     ρ₁ = π(R|S₁)/b(R|S₁) = 1.0/0.5 = 2.0
+     W = ρ₂ × ρ₁ = 2.0 × 2.0 = 4.0  (cumulative weight for this step)
+     C(S₁,R) = 0 + 4.0 = 4.0
+     Q(S₁,R) = 0 + (4.0/4.0)(12 - 0) = 12.0
+     π(S₁) = argmax[Q(S₁,L)=0, Q(S₁,R)=12] = R ✓
+     Check: A₁=R = π(S₁)=R → continue ✓
+
+t=0: G = 1 + 1.0×12 = 13
+     ρ₀ = π(R|S₀)/b(R|S₀) = 1.0/0.5 = 2.0
+     W = W × ρ₀ = 4.0 × 2.0 = 8.0
+     C(S₀,R) = 0 + 8.0 = 8.0
+     Q(S₀,R) = 0 + (8.0/8.0)(13 - 0) = 13.0
+     π(S₀) = argmax[Q(S₀,L)=0, Q(S₀,R)=13] = R ✓
+     Check: A₀=R = π(S₀)=R → continue ✓
+```
+
+**After Episode 1:**
+
+| State | Q(s,L) | Q(s,R) | π(s) |
+| ----- | ------ | ------ | ----- |
+| S₀   | 0      | 13.0   | R     |
+| S₁   | 0      | 12.0   | R     |
+| S₂   | 0      | 10.0   | R     |
+
+**Episode 2** (generated by b): S₀→R→S₁→**L**→S₁→R→S₂→R→T, rewards: +1, -1, +2, +10
+
+Processing backwards:
+
+```
+t=3: G = 10
+     ρ₃ = π(R|S₂)/b(R|S₂) = 1.0/0.5 = 2.0
+     C(S₂,R) = 2.0 + 2.0 = 4.0
+     Q(S₂,R) = 10.0 + (2.0/4.0)(10 - 10.0) = 10.0 (no change, same return)
+     Check: A₃=R = π(S₂)=R → continue ✓
+
+t=2: G = 2 + 10 = 12
+     ρ₂ = π(R|S₁)/b(R|S₁) = 1.0/0.5 = 2.0
+     W = 2.0 × 2.0 = 4.0
+     C(S₁,R) = 4.0 + 4.0 = 8.0
+     Q(S₁,R) = 12.0 + (4.0/8.0)(12 - 12.0) = 12.0 (no change)
+     Check: A₂=R = π(S₁)=R → continue ✓
+
+t=1: G = -1 + 12 = 11
+     Action taken: A₁ = L
+     ρ₁ = π(L|S₁)/b(L|S₁) = 0.0/0.5 = 0  ← ZERO!
+   
+     ╔══════════════════════════════════════════════════╗
+     ║  STOP PROCESSING! ρ = 0 means π would never    ║
+     ║  take action L here. This episode is useless    ║
+     ║  for Q(S₁,L) under π (π never goes Left).      ║
+     ║  We also CANNOT update Q(S₀,R) from this       ║
+     ║  episode — the trajectory from S₀ onward       ║
+     ║  includes an action π rejects.                  ║
+     ╚══════════════════════════════════════════════════╝
+   
+     EXIT inner loop. Move to next episode.
+```
+
+**After Episode 2:** Same Q-table as after Episode 1. The "wrong" action at t=1 prevented learning about earlier states. But we *did* update Q(S₂,R) and Q(S₁,R) from the tail of the episode.
+
+#### Why ρ = 0 Makes Intuitive Sense
+
+> **Chess Analogy:** You want to know how a chess *master* would perform. You watch a *beginner* play. At move 15, the beginner blunders (queen to a terrible square). The master would NEVER make that move (π(blunder) = 0).
+>
+> Everything that happened AFTER the blunder is in a game state the master would never reach from this opening. The final score tells us NOTHING about the master's performance from move 1.
+>
+> But — if you look at just the ENDGAME (after the blunder), the beginner might play reasonable moves the master would also play. Those tail segments are still informative for evaluating individual positions.
+
+#### Summary: Off-Policy MC's Tradeoff
+
+| | Advantages | Disadvantages |
+|---|---|---|
+| 1 | Can learn optimal (greedy) policy while exploring freely | High variance from importance sampling products |
+| 2 | Can reuse data from any source (old logs, humans, etc.) | Episodes truncated when b takes actions π wouldn't |
+| 3 | Separates exploration from exploitation completely | Only learns from "tails" of episodes (slow learning) |
+| 4 | — | Longer episodes → exponentially growing ρ products |
+
+```mermaid
+graph LR
+    Problem["Off-policy MC:<br/>High variance,<br/>episode truncation"] -->|"Motivates"| Solution["TD Methods (Ch 6):<br/>Q-learning gets off-policy<br/>WITHOUT importance sampling"]
+    Solution -->|"How?"| Bootstrap["Bootstrap 1-step at a time<br/>max_a Q(s',a) replaces ρ"]
+```
 
 ---
 
