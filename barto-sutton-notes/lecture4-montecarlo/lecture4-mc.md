@@ -1295,7 +1295,9 @@ G₀ = −1 + 0.9 × 10 = 8.0, and ρ₀:₁ = 2.4, ρ₀:₀ = 1.5, ρ₁:₁ =
 
 > **Key Takeaway:** All methods are estimating the same quantity ($Q^\pi$). With infinite data, they all converge to the same answer. The choice is about *finite-sample behavior*: how much variance (noise) vs. bias you're willing to tolerate.
 
----
+**Working Code implementation for Monte Carlo**
+
+[https://nbviewer.org/github/samratkar/drl/blob/main/barto-sutton-notes/lecture4-montecarlo/assets/mc_gpi_pedagogy.ipynb]()
 
 # Chapter 6: Temporal-Difference Learning
 
