@@ -8,7 +8,7 @@ layout: post
 
 ## Chapter 1: Foundational TD Prediction (TD(0))
 
-![TD Backup Diagram](../diagrams/td_backup_diagram.svg)
+![TD Backup Diagram](../../diagrams/td_backup_diagram.svg)
 
 ### Problem 1: The Commuter's Dilemma (MC vs. TD)
 
@@ -137,7 +137,7 @@ Thus, $V(s_1)$ will eventually converge to **99**.
 
 ## Chapter 2: TD Control (SARSA, Q-Learning, Expected SARSA)
 
-![SARSA and Q-Learning Backups](../diagrams/sarsa_q_backup.svg)
+![SARSA and Q-Learning Backups](../../diagrams/sarsa_q_backup.svg)
 
 ### Problem 6: The Cliff Walking Safety (Concept)
 
@@ -256,7 +256,7 @@ Since $Q_1$ and $Q_2$ are independent, the "luck" (noise) in $Q_1$ that made $a^
 
 ## Chapter 3: Advanced TD Concepts
 
-![n-Step TD and Eligibility Traces](../diagrams/advanced_td_diagrams.svg)
+![n-Step TD and Eligibility Traces](../../diagrams/advanced_td_diagrams.svg)
 
 ### Problem 11: Ride-Sharing ETA (n-Step TD)
 
@@ -357,7 +357,7 @@ This creates a positive feedback loop where errors in the network's output are u
 
 ## Chapter 4: Special Cases & Final Synthesis
 
-![The Reinforcement Learning Landscape](../diagrams/td_landscape.svg)
+![The Reinforcement Learning Landscape](../../diagrams/td_landscape.svg)
 
 ### Problem 16: TD vs. DP (Relationship)
 
