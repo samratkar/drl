@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Temporal Difference (TD) Learning - Detailed Solutions
 
 ---

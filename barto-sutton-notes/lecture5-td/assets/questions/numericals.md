@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Temporal Difference (TD) Learning - Question Set
 
 This document contains 20 conceptual and numerical problems on Temporal Difference learning, ranging from foundational prediction to advanced control methods.
