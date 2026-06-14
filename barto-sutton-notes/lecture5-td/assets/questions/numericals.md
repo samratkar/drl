@@ -10,7 +10,7 @@ This document contains 20 conceptual and numerical problems on Temporal Differen
 
 ## Foundational TD Prediction (TD(0))
 
-![TD Backup Diagram](../diagrams/td_backup_diagram.svg)
+<img src="../diagrams/td_backup_diagram.svg" width="800" />
 
 ### Problem 1: The Commuter's Dilemma (MC vs. TD)
 A daily commuter estimates their travel time from home to the office.
@@ -81,7 +81,7 @@ b) If the drone repeats this path 100 times and $s_2$ is always followed by a go
 
 ## TD Control (SARSA, Q-Learning, Expected SARSA)
 
-![SARSA and Q-Learning Backups](../diagrams/sarsa_q_backup.svg)
+<img src="../diagrams/sarsa_q_backup.svg" alt="SARSA and Q-Learning Backups" width="800" />
 
 ### Problem 6: The Cliff Walking Safety (Concept)
 In the famous "Cliff Walking" task:
@@ -165,7 +165,7 @@ c) Briefly state how **Double Q-Learning** solves this using two independent est
 
 ## Advanced TD Concepts
 
-![n-Step TD and Eligibility Traces](../diagrams/advanced_td_diagrams.svg)
+<img src="../diagrams/advanced_td_diagrams.svg" alt="n-Step TD and Eligibility Traces" width="800" />
 
 ### Problem 11: Ride-Sharing ETA (n-Step TD)
 A ride-sharing app predicts the "Wait Time" ($V$) for a user.
@@ -238,7 +238,7 @@ b) Why does the combination of these three often lead to instability in Deep RL 
 
 ## Special Cases & Final Synthesis
 
-![The Reinforcement Learning Landscape](../diagrams/td_landscape.svg)
+<img src="../diagrams/td_landscape.svg" alt="The Reinforcement Learning Landscape" width="800" />
 
 ### Problem 16: TD vs. DP (Relationship)
 Dynamic Programming (DP) and Temporal Difference (TD) learning both rely on bootstrapping.
