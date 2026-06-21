@@ -70,7 +70,6 @@ def generate_palindromes_from_chars(chars: str, max_results: int = 100) -> list:
             
     return results
 
-
 if __name__ == "__main__":
     print("=== Random Palindrome Generator ===")
     length = 7
@@ -83,3 +82,5 @@ if __name__ == "__main__":
     print(f"Generating up to 5 unique palindromes from '{chars}':")
     for p in generate_palindromes_from_chars(chars, max_results=5):
         print(p)
+
+# Give example usage AI!
