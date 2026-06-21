@@ -1,3 +1,25 @@
+"""
+Palindrome Generator Module
+
+This module provides functions to generate random palindromes and palindromes from a given set of characters.
+
+Example Usage:
+    # Generate a random palindrome of length 7
+    >>> from generate_palindromes import generate_random_palindrome
+    >>> print(generate_random_palindrome(7))
+    'abccba' (example output)
+
+    # Generate palindromes from specific characters
+    >>> from generate_palindromes import generate_palindromes_from_chars
+    >>> print(generate_palindromes_from_chars("aabbcc", max_results=3))
+    ['abc cba', 'bca acb', 'cab bac'] (example outputs)
+
+    # Check if a string is a palindrome
+    >>> from generate_palindromes import is_palindrome
+    >>> print(is_palindrome("racecar"))
+    True
+"""
+
 import random
 import string
 from collections import Counter
@@ -70,6 +92,7 @@ def generate_palindromes_from_chars(chars: str, max_results: int = 100) -> list:
             
     return results
 
+
 if __name__ == "__main__":
     print("=== Random Palindrome Generator ===")
     length = 7
@@ -82,5 +105,3 @@ if __name__ == "__main__":
     print(f"Generating up to 5 unique palindromes from '{chars}':")
     for p in generate_palindromes_from_chars(chars, max_results=5):
         print(p)
-
-# Give example usage AI!
