@@ -30,6 +30,7 @@ deliveries : [2026-05-31]
 - [TD Control](#td-control)
   - [Sarsa: On-policy TD Control](#sarsa-on-policy-td-control)
     - [Algorithm: Sarsa](#algorithm-sarsa)
+    - [What does "policy derived from Q" mean?](#what-does-policy-derived-from-q-mean)
     - [Backup Diagram for Sarsa](#backup-diagram-for-sarsa)
     - [Derivation of the SARSA Update Rule from First Principles](#derivation-of-the-sarsa-update-rule-from-first-principles)
   - [Q-learning: Off-policy TD Control](#q-learning-off-policy-td-control)
@@ -453,6 +454,28 @@ For each episode:
         S ← S';  A ← A'
     Until S is terminal
 ```
+
+### What does "policy derived from Q" mean?
+
+In Sarsa, the instruction **"Choose action $A$ using a policy derived from $Q$"** can be broken down into three key aspects:
+
+1. **How the choice is made at a single time step:**
+   * At any given decision point, the agent does **not** execute multiple actions. It must select and execute exactly **one** discrete action $A$ from the set of available actions.
+   * The policy $\pi(a \mid s)$ defines a probability distribution over actions based on the current estimated values $Q(s, a)$. The agent samples a single action $A \sim \pi(a \mid S)$ to execute.
+   * The most common derivation is the **$\varepsilon$-greedy policy**:
+     * With probability $1 - \varepsilon$: Choose the greedy action $A = \arg\max_a Q(S, a)$.
+     * With probability $\varepsilon$: Choose a random action uniformly from all possible actions in $S$.
+   * Another example is the **softmax (Boltzmann) policy**, where selection probability is proportional to action values:
+     $$\pi(a \mid s) = \frac{e^{Q(s, a) / \tau}}{\sum_{a'} e^{Q(s, a') / \tau}}$$
+
+2. **Why we say "all actions will be selected" (Exploration over time):**
+   * Even though the agent chooses only one action at each step, to guarantee convergence to the optimal values, it must visit every state-action pair infinitely many times during training. 
+   * The exploratory mechanism (like the $\varepsilon$ random choice) ensures that **over the long run of many steps/episodes**, every action has a non-zero probability of being tried, so we can correctly estimate all $Q(s, a)$ values.
+
+3. **The "On-Policy" Connection:**
+   * In Sarsa, the action $A'$ used to calculate the TD target in the update rule:
+     $$Q(S, A) \leftarrow Q(S, A) + \alpha [R + \gamma Q(S', A') - Q(S, A)]$$
+     is the **exact same action** that was selected by the policy and actually executed in the next step. Sarsa updates its value estimates based on the action it *actually* took, including exploratory errors.
 
 **Python Implementation:**
 
