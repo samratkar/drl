@@ -31,6 +31,7 @@ deliveries : [2026-05-31]
   - [Sarsa: On-policy TD Control](#sarsa-on-policy-td-control)
     - [Algorithm: Sarsa](#algorithm-sarsa)
     - [What does "policy derived from Q" mean?](#what-does-policy-derived-from-q-mean)
+    - [Sarsa vs. Q-learning: How the "Max" Action is Handled](#sarsa-vs-q-learning-how-the-max-action-is-handled)
     - [Backup Diagram for Sarsa](#backup-diagram-for-sarsa)
     - [Derivation of the SARSA Update Rule from First Principles](#derivation-of-the-sarsa-update-rule-from-first-principles)
   - [Q-learning: Off-policy TD Control](#q-learning-off-policy-td-control)
@@ -476,6 +477,25 @@ In Sarsa, the instruction **"Choose action $A$ using a policy derived from $Q$"*
    * In Sarsa, the action $A'$ used to calculate the TD target in the update rule:
      $$Q(S, A) \leftarrow Q(S, A) + \alpha [R + \gamma Q(S', A') - Q(S, A)]$$
      is the **exact same action** that was selected by the policy and actually executed in the next step. Sarsa updates its value estimates based on the action it *actually* took, including exploratory errors.
+
+### Sarsa vs. Q-learning: How the "Max" Action is Handled
+
+Although both algorithms often use an $\varepsilon$-greedy policy to select actions in the environment, they differ in how they calculate their TD targets:
+
+*   **Sarsa (On-Policy)**:
+    *   Updates using the action $A'$ **actually taken** on the next step:
+        $$Q(S, A) \leftarrow Q(S, A) + \alpha [R + \gamma Q(S', A') - Q(S, A)]$$
+    *   If the agent chooses to explore and takes a random action $A'$ (with probability $\varepsilon$), the update uses that random action's value $Q(S', A')$.
+    *   Therefore, Sarsa learns the value of the exploratory policy and will avoid risky areas (like cliff edges) because it factors in the risk of random exploratory steps.
+*   **Q-learning (Off-Policy)**:
+    *   Updates using the **theoretical maximum** action value, regardless of what next action $A'$ was actually executed in the environment:
+        $$Q(S, A) \leftarrow Q(S, A) + \alpha [R + \gamma \max_a Q(S', a) - Q(S, A)]$$
+    *   Even if the agent behaves exploratory and takes a sub-optimal random step next, the Q-learning update assumes future optimal choices.
+    *   Therefore, Q-learning learns the value of the $100\%$ greedy policy directly, ignoring any exploration penalty.
+*   **Equivalence when $\varepsilon = 0$ (Completely Greedy)**:
+    *   If Sarsa is run with $\varepsilon = 0$, the chosen action $A'$ is always the greedy action: $A' = \arg\max_a Q(S', a)$.
+    *   Substituting this in, Sarsa's update target $Q(S', A')$ becomes $Q(S', \arg\max_a Q(S', a)) = \max_a Q(S', a)$.
+    *   Therefore, **completely greedy Sarsa is mathematically identical to Q-learning**. They only differ in practice when exploration is enabled ($\varepsilon > 0$).
 
 **Python Implementation:**
 
