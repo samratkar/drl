@@ -22,9 +22,11 @@ deliveries : [2026-05-31]
   - [3. Provably convergent](#3-provably-convergent)
   - [4. Empirically faster on Markov tasks](#4-empirically-faster-on-markov-tasks)
 - [Optimality of TD(0) — Batch Methods](#optimality-of-td0--batch-methods)
+  - [Standard (Incremental) TD(0) vs. Batch TD(0)](#standard-incremental-td0-vs-batch-td0)
+  - [Algorithm: Batch TD(0)](#algorithm-batch-td0)
   - [Certainty-Equivalence Estimate](#certainty-equivalence-estimate)
-  - [Example: Random Walk](#example-random-walk)
-    - [The 5-State Random Walk (Example 6.2)](#the-5-state-random-walk-example-62)
+  - [The A-B Example (Example 6.4)](#the-a-b-example-example-64)
+  - [The 5-State Random Walk (Example 6.2)](#the-5-state-random-walk-example-62)
 - [TD Control](#td-control)
   - [Sarsa: On-policy TD Control](#sarsa-on-policy-td-control)
     - [Algorithm: Sarsa](#algorithm-sarsa)
@@ -283,45 +285,129 @@ On tasks that satisfy the Markov property, TD typically converges faster than MC
 
 # Optimality of TD(0) — Batch Methods
 
-What happens if we have a fixed, finite set of experience and repeatedly apply TD or MC to it?
+What happens if we have a fixed, finite set of experience (a batch of episodes) and repeatedly apply TD or MC updates to it? 
+
+Under **batch training**, updates are accumulated over the entire dataset, and the value function is updated only after a complete pass (sweep/epoch). This process is repeated until convergence.
+
+## Standard (Incremental) TD(0) vs. Batch TD(0)
+
+The main difference between standard online TD(0) and batch TD(0) lies in the timing of the value function updates and the stability of learning:
+
+*   **Standard TD(0) (Online/Incremental)**:
+    *   Updates $V(S)$ immediately after every single transition step: $V(S) \leftarrow V(S) + \alpha [R + \gamma V(S') - V(S)]$.
+    *   The new value $V(S)$ is immediately used in the next transition step's update calculation.
+    *   Learning is path-dependent and can be noisy on small datasets since individual outliers immediately skew the active value function.
+*   **Batch TD(0)**:
+    *   Traverses all transitions across all episodes in the batch using a **frozen** value function, accumulating the updates (increments) for each state.
+    *   Only updates $V(S)$ once at the end of the full pass (sweep/epoch): $V(S) \leftarrow V(S) + \sum_{t} \Delta_t(S)$.
+    *   Repeatedly sweeps through the same batch of data until the value function converges.
+    *   Since updates are aggregated before application, learning is order-independent and highly stable.
+
+## Algorithm: Batch TD(0)
+
+```
+Given: A fixed batch of episodes D
+Initialize V(s) arbitrarily for all states s (V(terminal) = 0)
+Parameters: step size α ∈ (0, 1], convergence threshold tolerance > 0
+
+Repeat until convergence (max change in V < tolerance):
+    For all states s:
+        ΔV(s) ← 0  (Initialize accumulated updates)
+        
+    For each episode in batch D:
+        For each step (S, R, S') in the episode:
+            # Accumulate TD error using the frozen value function V
+            ΔV(S) ← ΔV(S) + α [R + γ V(S') - V(S)]
+            
+    # Apply accumulated updates and track max change
+    max_delta ← 0
+    For each state s:
+        max_delta ← max(max_delta, |ΔV(s)|)
+        V(s) ← V(s) + ΔV(s)
+        
+    If max_delta < tolerance:
+        Terminate and output V
+```
+
+**Python Implementation:**
+
+```python
+def batch_td_0_prediction(batch_data, states, gamma=1.0, alpha=0.1, tolerance=1e-4):
+    """
+    Batch TD(0) Prediction: Estimate V for a fixed batch of episodes.
+    
+    Args:
+        batch_data: List of episodes, where each episode is a list of 
+                    (state, reward, next_state, done) tuples.
+        states: Set of all non-terminal and terminal states.
+        gamma: Discount factor.
+        alpha: Learning rate.
+        tolerance: Threshold for convergence.
+        
+    Returns:
+        V: Estimated state-value function (dict).
+    """
+    V = {s: 0.0 for s in states}
+    
+    while True:
+        delta_V = {s: 0.0 for s in states}
+        
+        # Sweep through the entire batch using the current (frozen) V
+        for episode in batch_data:
+            for state, reward, next_state, done in episode:
+                val_next = 0.0 if done else V[next_state]
+                td_error = reward + gamma * val_next - V[state]
+                delta_V[state] += alpha * td_error
+                
+        # Update V after the complete sweep
+        max_change = 0.0
+        for s in states:
+            max_change = max(max_change, abs(delta_V[s]))
+            V[s] += delta_V[s]
+            
+        # Check for convergence
+        if max_change < tolerance:
+            break
+            
+    return V
+```
 
 ## Certainty-Equivalence Estimate
 
-Given a batch of episodes, we can repeatedly present the experience:
+When trained on a batch until convergence:
 
-- **Batch MC**: Converges to the values that minimize the mean-squared error on the observed returns: $\min_V \sum_t (G_t - V(S_t))^2$.
-- **Batch TD(0)**: Converges to the **certainty-equivalence estimate** — the correct values for the maximum-likelihood MDP model estimated from the data.
+*   **Batch MC**: Converges to the values that minimize the mean-squared error on the observed returns in the training data:
+    $$\min_V \sum_t (G_t - V(S_t))^2$$
+*   **Batch TD(0)**: Converges to the **certainty-equivalence estimate** — the correct values for the maximum-likelihood MDP model estimated from the data.
+    *   Even though TD is model-free, batch TD(0) converges to the exact solution of the Bellman equations for an empirical MDP model whose transition probabilities $\hat{P}_{ss'}^a$ and expected rewards $\hat{R}_s^a$ are computed from transition frequencies in the dataset.
 
-These are different! Batch TD computes the values that would be correct **if the observed transition frequencies were the true dynamics**. It builds an implicit model.
+## The A-B Example (Example 6.4)
 
-## Example: Random Walk
-
-Consider this batch of experience:
+Consider this batch of 8 episodes of experience:
 
 ```
-Episode 1:  A → 0, B      (from A, got reward 0, went to B)
-Episode 2:  B → 1          (from B, got reward 1, terminated)
-Episode 3:  B → 1
-Episode 4:  B → 1
-Episode 5:  B → 1
-Episode 6:  B → 1
-Episode 7:  B → 1
-Episode 8:  B → 0          (from B, got reward 0, terminated)
+Episode 1:  A, 0, B, 0   (From state A, get reward 0, transition to B, get reward 0, terminate)
+Episode 2:  B, 1         (From state B, get reward 1, terminate)
+Episode 3:  B, 1
+Episode 4:  B, 1
+Episode 5:  B, 1
+Episode 6:  B, 1
+Episode 7:  B, 1
+Episode 8:  B, 0         (From state B, get reward 0, terminate)
 ```
 
-What is $V(A)$?
+What is the estimated value of state $A$, $V(A)$?
 
-- **Batch MC**: $A$ appeared once, got return $G = 0 + 1 = 1$ (wait... A went to B with reward 0, and B eventually gave reward... but A only appeared in Episode 1). Actually, $A$'s return in Episode 1 is $0 + V(B)$... No: MC uses the actual return. In episode 1, A transitions to B with reward 0, then B gives reward 1. So $G_A = 0 + 1 = 1$... Hmm, but actually we only saw A once, and that one time the return was 0 (if episode ended at B). This depends on the specific setup.
+*   **Batch MC** gives $V(A) = 0$. 
+    *   State $A$ was seen only once (in Episode 1), and the actual return following it was $0$. MC fits this training return perfectly, minimizing the MSE.
+*   **Batch TD(0)** gives $V(A) = 0.75$.
+    *   State $B$ was visited 8 times, and 6 times it transitioned to termination with a reward of 1. So, the empirical estimate is $V(B) = 6/8 = 0.75$.
+    *   The empirical transition model indicates $A$ always goes to $B$ with reward $0$ (probability 1.0).
+    *   Under the Markov assumption and setting $\gamma = 1$, the Bellman equation is $V(A) = R(A \to B) + \gamma V(B) = 0 + 0.75 = 0.75$.
 
-Let's use the classic example from the book (Example 6.4, p. 127):
+Batch TD is superior for **future prediction** when the environment is Markovian because it exploits state-to-state transition structure, leveraging the larger sample size of state $B$ to construct a more accurate estimate for state $A$.
 
-**Batch MC** gives $V(A) = 0$ (the one time A was seen, the return was 0).
-
-**Batch TD** gives $V(A) = 0.75$. Why? TD builds the implicit model: A always goes to B (probability 1), and B gives reward 1 with probability 6/8 = 0.75. So $V(A) = 0 + V(B) = 0.75$.
-
-Batch TD is better for **future prediction** because it exploits the Markov structure: the value of A should depend on the value of B, which we have 8 observations of. Batch MC only has 1 observation of A's return and ignores the Markov link.
-
-### The 5-State Random Walk (Example 6.2)
+## The 5-State Random Walk (Example 6.2)
 
 ```
           A     B     C     D     E
@@ -595,35 +681,15 @@ $$
 
 #### The Derivation Chain (Summary)
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ WHAT WE WANT                                                     │
-│   Q^π(s,a) = E_π[R + γQ^π(S',A') | s, a]   (Bellman equation) │
-└─────────────────────────────────┬───────────────────────────────┘
-                                  │
-                                  ▼ PROBLEM: Can't compute E[...] 
-                                  │          (no model, huge state space)
-                                  │
-┌─────────────────────────────────┴───────────────────────────────┐
-│ APPROXIMATION 1: Replace expectation with single sample          │
-│   Target ≈ r + γQ(s', a')    where (s,a,r,s',a') is observed   │
-└─────────────────────────────────┬───────────────────────────────┘
-                                  │
-                                  ▼ PROBLEM: Single sample is noisy.
-                                  │          Can't just set Q = target.
-                                  │
-┌─────────────────────────────────┴───────────────────────────────┐
-│ APPROXIMATION 2: Robbins-Monro stochastic approximation          │
-│   Move Q partway toward sample target:                           │
-│   Q(s,a) ← Q(s,a) + α [target - Q(s,a)]                       │
-└─────────────────────────────────┬───────────────────────────────┘
-                                  │
-                                  ▼ RESULT
-                                  │
-┌─────────────────────────────────┴───────────────────────────────┐
-│ SARSA UPDATE RULE:                                               │
-│   Q(S,A) ← Q(S,A) + α [R + γQ(S',A') - Q(S,A)]               │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    A["What We Want:<br>Q^π(s,a) = E_π(R + γQ^π(S',A') given s, a)<br>(Bellman equation)"]
+    
+    A -->|"Problem: Can't compute expectation E... (no model, huge state space)"| B["Approximation 1: Replace expectation with single sample<br>Target ≈ r + γQ(s', a')  where (s,a,r,s',a') is observed"]
+    
+    B -->|"Problem: Single sample is noisy. Can't just set Q = target."| C["Approximation 2: Robbins-Monro stochastic approximation<br>Move Q partway toward sample target:<br>Q(s,a) <- Q(s,a) + α (target - Q(s,a))"]
+    
+    C -->|"Result"| D["SARSA Update Rule:<br>Q(S,A) <- Q(S,A) + α (R + γQ(S',A') - Q(S,A))"]
 ```
 
 ---
