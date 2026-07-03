@@ -536,8 +536,15 @@ def sarsa(env, gamma=1.0, alpha=0.1, epsilon=0.1, num_episodes=1000):
 
 ```mermaid
 graph TD
-    sa(("S_t, A_t")) --> r["R_{t+1}"]
-    r --> sa_next(("S_{t+1}, A_{t+1}"))
+    sa1( ) -->|"R_{t+1}"| s2(("S_{t+1}"))
+    s2 -->|"A_{t+1} (ε-greedy)"| sa3( )
+    s2 -.-> sa_other1( )
+    s2 -.-> sa_other2( )
+
+    style sa1 fill:#000,stroke:#333,stroke-width:1px
+    style sa3 fill:#000,stroke:#333,stroke-width:1px
+    style sa_other1 fill:#000,stroke:#333,stroke-width:1px
+    style sa_other2 fill:#000,stroke:#333,stroke-width:1px
 ```
 
 The update uses the **specific** next action $A_{t+1}$ that was actually selected by the policy. This is what makes it on-policy.
@@ -742,4 +749,91 @@ graph TD
 Under the following conditions, SARSA converges to $Q^\pi$ (for a fixed $\pi$) or to $Q^\ast$ (with GLIE policy):
 
 1. **All state-action pairs visited infinitely often:** Every $(s,a)$ must be sampled enough times for the law of large numbers to take effect.
-2. **Step-size conditions
+2. **Step-size conditions:** The step sizes must satisfy the Robbins-Monro conditions: $\sum_t \alpha_t = \infty$ and $\sum_t \alpha_t^2 < \infty$.
+
+---
+
+## Q-learning: Off-policy TD Control
+
+One of the most important breakthroughs in reinforcement learning is Q-learning (Watkins, 1989), an off-policy TD control algorithm.
+
+The update rule for Q-learning is:
+
+$$
+\boxed{Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma \max_a Q(S_{t+1}, a) - Q(S_t, A_t) \right]}
+$$
+
+### Algorithm: Q-learning
+
+```
+Initialize Q(s,a) arbitrarily for all s, a (Q(terminal, ·) = 0)
+Parameters: step size α ∈ (0, 1], small ε > 0
+
+For each episode:
+    Initialize S
+    For each step of episode:
+        Choose A from S using policy derived from Q (e.g., ε-greedy)
+        Take action A, observe R, S'
+        Q(S,A) ← Q(S,A) + α [R + γ max_a Q(S',a) - Q(S,A)]
+        S ← S'
+    Until S is terminal
+```
+
+**Python Implementation:**
+
+```python
+def q_learning(env, gamma=1.0, alpha=0.1, epsilon=0.1, num_episodes=1000):
+    """
+    Q-learning: Off-policy TD Control.
+    """
+    Q = defaultdict(lambda: np.zeros(env.action_space.n))
+  
+    def epsilon_greedy(state):
+        if np.random.random() < epsilon:
+            return env.action_space.sample()
+        return np.argmax(Q[state])
+  
+    for _ in range(num_episodes):
+        state, _ = env.reset()
+        done = False
+      
+        while not done:
+            action = epsilon_greedy(state)
+            next_state, reward, terminated, truncated, _ = env.step(action)
+            done = terminated or truncated
+          
+            # Q-learning update: use the max value over next actions
+            best_next_action = np.argmax(Q[next_state])
+            td_target = reward + gamma * Q[next_state][best_next_action] * (not done)
+            td_error = td_target - Q[state][action]
+            Q[state][action] += alpha * td_error
+          
+            state = next_state
+            
+    return Q
+```
+
+### Backup Diagram for Q-learning
+
+```mermaid
+graph TD
+    sa1( ) -->|"R_{t+1}"| s2(("S_{t+1}"))
+    s2 -->|"max"| sa_max( )
+    s2 -.-> sa_other1( )
+    s2 -.-> sa_other2( )
+
+    style sa1 fill:#000,stroke:#333,stroke-width:1px
+    style sa_max fill:#000,stroke:#333,stroke-width:1px
+    style sa_other1 fill:#000,stroke:#333,stroke-width:1px
+    style sa_other2 fill:#000,stroke:#333,stroke-width:1px
+```
+
+*   **Sarsa Backup Diagram (On-Policy)**: Connects $(S_t, A_t) \to S_{t+1} \to (S_{t+1}, A_{t+1})$, representing that Sarsa propagates the value of the action that was actually chosen by the behavior policy.
+*   **Q-learning Backup Diagram (Off-Policy)**: Connects $(S_t, A_t) \to S_{t+1}$ and then branches to all next state-action pairs, taking the maximum value. The solid line to $(S_{t+1}, a^\ast)$ represents the action chosen by the greedy target policy, while the dotted lines represent other possible actions.
+
+### Why is Q-learning Off-policy?
+
+In Q-learning:
+*   The **behavior policy** (the one that decides how to act in the environment and generate samples) is exploratory, e.g., $\varepsilon$-greedy.
+*   The **target policy** (the policy whose value function is being estimated and optimized) is completely greedy: $\pi(a \mid s) = 1$ if $a = \arg\max_{a'} Q(s, a')$, and $0$ otherwise.
+*   Because the update target uses $\max_a Q(S_{t+1}, a)$, it behaves as if it always follows the greedy target policy, regardless of what exploratory action the behavior policy actually chose.
