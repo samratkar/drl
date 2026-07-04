@@ -837,3 +837,237 @@ In Q-learning:
 *   The **behavior policy** (the one that decides how to act in the environment and generate samples) is exploratory, e.g., $\varepsilon$-greedy.
 *   The **target policy** (the policy whose value function is being estimated and optimized) is completely greedy: $\pi(a \mid s) = 1$ if $a = \arg\max_{a'} Q(s, a')$, and $0$ otherwise.
 *   Because the update target uses $\max_a Q(S_{t+1}, a)$, it behaves as if it always follows the greedy target policy, regardless of what exploratory action the behavior policy actually chose.
+
+---
+
+## Expected Sarsa
+
+Expected Sarsa is an extension of Sarsa that reduces variance by taking the expected value over all possible next actions, rather than sampling a single action $A_{t+1}$. 
+
+The update rule is:
+
+$$
+\boxed{Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma \sum_a \pi(a \mid S_{t+1})\, Q(S_{t+1}, a) - Q(S_t, A_t) \right]}
+$$
+
+Where $\pi(a \mid S_{t+1})$ is the probability of selecting action $a$ in state $S_{t+1}$ under the target policy.
+
+### Why it works:
+*   **On-policy or Off-policy**: Expected Sarsa is traditionally on-policy (where the target policy $\pi$ equals the exploratory behavior policy). However, it can also be off-policy if we choose a target policy $\pi$ different from the behavior policy.
+*   **Variance Reduction**: By averaging over all actions weighted by their probabilities, Expected Sarsa eliminates the variance introduced by the random action selection step in the TD target. 
+*   **Computational Cost**: It is slightly more computationally expensive than Sarsa because it must compute the sum over all possible actions at each step.
+
+### Unifying the Three TD Control Methods
+
+We can think of all three TD control methods (Sarsa, Q-learning, and Expected Sarsa) as updating $Q(S_t, A_t)$ toward a target:
+$$
+\text{Target} = R_{t+1} + \gamma\, \Phi(S_{t+1})
+$$
+
+Where the future value estimate $\Phi(S_{t+1})$ is defined differently for each algorithm:
+
+| Algorithm | Future Value Estimate $\Phi(S_{t+1})$ | Type | Note |
+| :--- | :--- | :--- | :--- |
+| **Sarsa** | $Q(S_{t+1}, A_{t+1})$ | On-policy | Uses the value of the action $A_{t+1}$ actually taken. |
+| **Q-learning** | $\max_a Q(S_{t+1}, a)$ | Off-policy | Uses the value of the greedy action. Equivalent to Expected Sarsa where the target policy is $100\%$ greedy. |
+| **Expected Sarsa** | $\sum_a \pi(a \mid S_{t+1})\, Q(S_{t+1}, a)$ | On/Off-policy | Uses the expected value over all actions under target policy $\pi$. |
+
+---
+
+## Example: Cliff Walking
+
+The Cliff Walking environment (Sutton & Barto, Example 6.6) is a classic gridworld task that illustrates the differences between on-policy and off-policy TD control.
+
+![Cliff Walking Gridworld](./assets/diagrams/cliff_walking_grid.svg)
+
+### Environment Rules:
+*   **Grid:** $4 \times 12$ gridworld.
+*   **States:** Start state at $S = (3,0)$ (bottom-left) and Goal state at $G = (3,11)$ (bottom-right).
+*   **The Cliff:** The bottom row cells $(3, 1)$ through $(3, 10)$. Stepping into the cliff gives a reward of **$-100$** and resets the agent to $S$.
+*   **Normal Step:** All other transitions yield a reward of **$-1$**.
+*   **Actions:** 4 discrete movements: Up, Down, Left, and Right.
+
+### Pathways and Policies Learned:
+1.  **Q-learning (Off-policy)**: Learns the **optimal path** (the lower path, right along the edge of the cliff). This path has a length of 13 steps (expected reward of **$-13$**).
+2.  **Sarsa (On-policy)**: Learns the **safe path** (the upper path, curving one row away from the cliff). This path has a length of 17 steps (expected reward of **$-17$**).
+
+---
+
+### Detailed Mathematical Comparison
+
+During training, both agents act using an $\epsilon$-greedy policy with $\epsilon = 0.1$. This means at any step, there is a $10\%$ chance of taking a random action, meaning a $\frac{\epsilon}{4} = 2.5\%$ chance of choosing any specific action (like Down).
+
+#### 1. Why Q-learning performs poorly online (Falls off the cliff)
+Since Q-learning learns the greedy policy that walks directly along the edge of the cliff:
+*   At each of the 12 steps along the cliff edge, the cliff lies directly below the agent.
+*   The greedy action is **Right**.
+*   The action **Down** is sub-optimal and will only be chosen during exploration.
+*   The probability of selecting **Down** on a single step is:
+    $$
+    P(\text{Down}) = \epsilon \times \frac{1}{\text{number of actions}} = 0.1 \times 0.25 = 0.025 \quad (2.5\%)
+    $$
+*   The probability of **not falling** on a single step is $1 - 0.025 = 0.975$ ($97.5\%$).
+*   The probability of successfully navigating all $N = 12$ steps along the edge without falling even once is:
+    $$
+    P(\text{No Fall}) = (0.975)^{12} \approx 0.738 \quad (73.8\%)
+    $$
+*   Therefore, the probability of **falling off the cliff at least once** during an episode is:
+    $$
+    P(\text{Fall}) = 1 - P(\text{No Fall}) = 1 - 0.738 = 0.262 \quad (26.2\%)
+    $$
+
+Every time the agent falls, it incurs a **$-100$** penalty and is sent back to the start. Mathematically, this forces Q-learning's average reward per episode during training down to around **$-50$**.
+
+#### 2. Why Sarsa performs better online
+Sarsa is on-policy and evaluates the actual exploratory policy. It "sees" the $-100$ rewards from falling off the cliff during exploration. 
+*   To avoid this, Sarsa learns the safe path one row up.
+*   On this path, a random action (like Down) merely moves the agent to the edge of the cliff, not into it. To fall, it would need to take two consecutive Down actions, which is extremely rare ($P \approx 0.025^2 = 0.000625$, or $0.06\%$).
+*   Thus, Sarsa rarely falls during training, achieving a stable average online reward of around **$-22$** (reflecting the safe path's length of 17 plus minor exploration penalties).
+
+---
+
+### Empirical Training Curves
+
+The following plot shows the sum of rewards accumulated per episode by both algorithms during training. Sarsa maintains a much higher online reward, even though Q-learning has discovered the shorter path.
+
+![Sarsa vs Q-learning rewards comparison](./assets/diagrams/cliff_walking_rewards.svg)
+
+### Performance Summary:
+*   **On-line Performance (During Training)**: **Sarsa is better**. By factoring in the risk of its own random exploration, Sarsa avoids the cliff and achieves a much higher average reward ($\approx -22$ vs. $\approx -50$).
+*   **Off-line Performance (Post-Training)**: **Q-learning is better**. If we set $\epsilon = 0$ after training and run the greedy policy, Q-learning travels the optimal path (reward **$-13$**), whereas Sarsa travels a sub-optimal path (reward **$-17$**).
+
+---
+
+## Maximization Bias and Double Learning
+
+### The Problem: Maximization Bias
+
+In many control algorithms (including Sarsa and Q-learning), action selection or target updates involve a maximization step. For example, Q-learning uses:
+$$
+\text{Target} = R_{t+1} + \gamma \max_a Q(S_{t+1}, a)
+$$
+
+If the estimated values $Q(s, a)$ are noisy or have high variance, the maximum of the estimates is a biased estimator of the maximum of the true values. Specifically:
+
+$$
+\mathbb{E}\left[\max_a Q(s, a)\right] \ge \max_a \mathbb{E}\left[Q(s, a)\right] = \max_a q(s, a)
+$$
+
+This positive bias is called **maximization bias**. It can lead to poor performance because the agent overestimates the value of state-action pairs that happen to receive positive noise, leading to sub-optimal action selection.
+
+#### Example: The Two-Action MDP (Example 6.7)
+Consider an MDP starting in state A with two actions: Left and Right.
+*   **Right** leads directly to a terminal state with reward 0.
+*   **Left** leads to state B with reward 0.
+*   From state B, there are many actions (e.g., 10 actions), all of which lead to a terminal state and have true expected rewards of **$-0.1$** (rewards drawn from a normal distribution $\mathcal{N}(-0.1, 1.0)$).
+
+The optimal action from state A is **Right** (expected reward $0$). However, because state B has many noisy actions, the maximum of the estimated Q-values $\max_a Q(B, a)$ will almost always be positive due to noise. Q-learning will therefore overestimate the value of state B and choose to go **Left**, showing clear maximization bias.
+
+---
+
+### Double Q-learning
+
+To solve maximization bias, we use **Double Q-learning** (Hasselt, 2010). The key idea is to decouple the action selection from the action evaluation by maintaining two independent Q-value estimates: $Q_1$ and $Q_2$.
+
+*   We use one estimate ($Q_1$) to find the greedy action: $A^* = \arg\max_a Q_1(S_{t+1}, a)$.
+*   We use the other estimate ($Q_2$) to evaluate its value: $Q_2(S_{t+1}, A^*)$.
+
+Because $Q_1$ and $Q_2$ are updated using independent sets of experience, the estimate $Q_2(S_{t+1}, A^*)$ is unbiased:
+
+$$
+\mathbb{E}\left[Q_2(S_{t+1}, A^*)\right] = q(S_{t+1}, A^*)
+$$
+
+### Algorithm: Double Q-learning
+
+```
+Initialize Q1(s,a) and Q2(s,a) arbitrarily for all s, a (Q(terminal, ·) = 0)
+Parameters: step size α ∈ (0, 1], small ε > 0
+
+For each episode:
+    Initialize S
+    For each step of episode:
+        Choose A from S using policy derived from Q1 and Q2 (e.g., ε-greedy in Q1 + Q2)
+        Take action A, observe R, S'
+        With probability 0.5:
+            A* ← argmax_a Q1(S', a)
+            Q1(S,A) ← Q1(S,A) + α [R + γ Q2(S', A*) - Q1(S,A)]
+        Else:
+            A* ← argmax_a Q2(S', a)
+            Q2(S,A) ← Q2(S,A) + α [R + γ Q1(S', A*) - Q2(S,A)]
+        S ← S'
+    Until S is terminal
+```
+
+---
+
+## Unified View: TD, MC, DP
+
+We can understand the relationships between Dynamic Programming (DP), Monte Carlo (MC), and Temporal-Difference (TD) methods by looking at their backup diagrams and update styles:
+
+```mermaid
+graph TD
+    subgraph "Dynamic Programming (DP)"
+        dp_s((S)) --> dp_a1(a1)
+        dp_s --> dp_a2(a2)
+        dp_a1 --> dp_s1_1((S'))
+        dp_a1 --> dp_s1_2((S'))
+        dp_a2 --> dp_s2_1((S'))
+        dp_a2 --> dp_s2_2((S'))
+    end
+    
+    subgraph "Monte Carlo (MC)"
+        mc_s((S_t)) --> mc_a(A_t) --> mc_s1((S_t+1)) --> mc_a1(A_t+1) --> mc_dots[...] --> mc_term((Terminal))
+    end
+    
+    subgraph "Temporal-Difference (TD)"
+        td_s((S_t)) --> td_a(A_t) --> td_s1((S_t+1))
+    end
+```
+
+### The Backup Diagrams
+*   **DP backups** are **full sweeps** (broad but shallow): they branch to all possible next states under all actions, calculating the mathematical expectation. This requires a transition model.
+*   **MC backups** are **deep sample backups**: they go all the way to the end of the episode. They do not branch (they follow a single sample path) and do not bootstrap (they update using the actual final return $G_t$).
+*   **TD backups** are **shallow sample backups** (one-step lookahead): they branch to the next state-action pair, but only update based on a single-step transition. They bootstrap (update using the next state's estimate) and do not require a model.
+
+---
+
+## Convergence Theory: TD vs MC
+
+### Standard vs. Batch Training
+Under batch training (where the agent repeatedly trains on a fixed, finite set of experiences):
+*   **Monte Carlo** converges to the parameter values that minimize the **mean-squared error** on the training set:
+    $$\sum_{t=1}^T (G_t - V(S_t))^2$$
+    This is the best fit to the observed returns.
+*   **TD(0)** converges to the **certainty-equivalence estimate**. This is the value function of the maximum-likelihood estimate of the underlying MDP. TD(0) assumes the environment is Markovian and fits the process model.
+
+### Markov vs. Non-Markov environments
+*   **TD methods** exploit the Markov property. In Markovian environments, TD converges faster and is more sample-efficient than MC.
+*   **MC methods** do not assume the Markov property. In non-Markovian environments, MC can perform better because it is unbiased by state representations that violate the Markov assumption.
+
+---
+
+## Summary: Key Equations at a Glance
+
+Here is a summary of the TD control update rules:
+
+### Sarsa (On-policy TD Control)
+$$
+Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma\, Q(S_{t+1}, A_{t+1}) - Q(S_t, A_t) \right]
+$$
+
+### Q-learning (Off-policy TD Control)
+$$
+Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma \max_a Q(S_{t+1}, a) - Q(S_t, A_t) \right]
+$$
+
+### Expected Sarsa (On/Off-policy TD Control)
+$$
+Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma \sum_a \pi(a \mid S_{t+1})\, Q(S_{t+1}, a) - Q(S_t, A_t) \right]
+$$
+
+### Double Q-learning (Unbiased Off-policy TD Control)
+$$
+Q_1(S_t, A_t) \leftarrow Q_1(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma\, Q_2\left(S_{t+1}, \arg\max_a Q_1(S_{t+1}, a)\right) - Q_1(S_t, A_t) \right]
+$$
+*(and symmetrically for $Q_2$)*

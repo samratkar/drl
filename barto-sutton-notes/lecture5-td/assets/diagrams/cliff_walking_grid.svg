@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="700" height="360" viewBox="0 0 700 360">
+  <style>
+    .bg { fill: #181825; }
+    .text-title { font-family: 'Inter', system-ui, sans-serif; font-size: 18px; font-weight: bold; fill: #cdd6f4; }
+    .text-subtitle { font-family: 'Inter', system-ui, sans-serif; font-size: 12px; fill: #bac2de; }
+    .cell-normal { fill: #1e1e2e; stroke: #313244; stroke-width: 1.5; }
+    .cell-cliff { fill: #451e2b; stroke: #f38ba8; stroke-width: 1.5; }
+    .cell-start { fill: #1b2b4a; stroke: #89b4fa; stroke-width: 2; }
+    .cell-goal { fill: #1c3d32; stroke: #a6e3a1; stroke-width: 2; }
+    .text-cell { font-family: 'Inter', system-ui, sans-serif; font-size: 13px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; fill: #cdd6f4; }
+    .text-cell-dark { font-family: 'Inter', system-ui, sans-serif; font-size: 13px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; fill: #f38ba8; }
+    .path-sarsa { stroke: #89dceb; stroke-width: 3.5; stroke-dasharray: 6,4; fill: none; stroke-linecap: round; marker-end: url(#arrow-sarsa); }
+    .path-q { stroke: #fab387; stroke-width: 3.5; fill: none; stroke-linecap: round; marker-end: url(#arrow-q); }
+    .legend-text { font-family: 'Inter', system-ui, sans-serif; font-size: 12px; fill: #a6adc8; }
+    .arrow-marker { fill: context-fill; }
+  </style>
+  <rect width="100%" height="100%" class="bg" rx="12"/>
+  <text x="30" y="32" class="text-title">Cliff Walking Gridworld</text>
+  <text x="30" y="50" class="text-subtitle">Comparing pathways learned by Sarsa (safer) vs. Q-learning (optimal but risky)</text>
+  <defs>
+    <marker id="arrow-sarsa" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#89dceb"/>
+    </marker>
+    <marker id="arrow-q" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#fab387"/>
+    </marker>
+  </defs>
+  <rect x="50" y="70" width="50" height="50" class="cell-normal"/>
+  <rect x="100" y="70" width="50" height="50" class="cell-normal"/>
+  <rect x="150" y="70" width="50" height="50" class="cell-normal"/>
+  <rect x="200" y="70" width="50" height="50" class="cell-normal"/>
+  <rect x="250" y="70" width="50" height="50" class="cell-normal"/>
+  <rect x="300" y="70" width="50" height="50" class="cell-normal"/>
+  <rect x="350" y="70" width="50" height="50" class="cell-normal"/>
+  <rect x="400" y="70" width="50" height="50" class="cell-normal"/>
+  <rect x="450" y="70" width="50" height="50" class="cell-normal"/>
+  <rect x="500" y="70" width="50" height="50" class="cell-normal"/>
+  <rect x="550" y="70" width="50" height="50" class="cell-normal"/>
+  <rect x="600" y="70" width="50" height="50" class="cell-normal"/>
+  <rect x="50" y="120" width="50" height="50" class="cell-normal"/>
+  <rect x="100" y="120" width="50" height="50" class="cell-normal"/>
+  <rect x="150" y="120" width="50" height="50" class="cell-normal"/>
+  <rect x="200" y="120" width="50" height="50" class="cell-normal"/>
+  <rect x="250" y="120" width="50" height="50" class="cell-normal"/>
+  <rect x="300" y="120" width="50" height="50" class="cell-normal"/>
+  <rect x="350" y="120" width="50" height="50" class="cell-normal"/>
+  <rect x="400" y="120" width="50" height="50" class="cell-normal"/>
+  <rect x="450" y="120" width="50" height="50" class="cell-normal"/>
+  <rect x="500" y="120" width="50" height="50" class="cell-normal"/>
+  <rect x="550" y="120" width="50" height="50" class="cell-normal"/>
+  <rect x="600" y="120" width="50" height="50" class="cell-normal"/>
+  <rect x="50" y="170" width="50" height="50" class="cell-normal"/>
+  <rect x="100" y="170" width="50" height="50" class="cell-normal"/>
+  <rect x="150" y="170" width="50" height="50" class="cell-normal"/>
+  <rect x="200" y="170" width="50" height="50" class="cell-normal"/>
+  <rect x="250" y="170" width="50" height="50" class="cell-normal"/>
+  <rect x="300" y="170" width="50" height="50" class="cell-normal"/>
+  <rect x="350" y="170" width="50" height="50" class="cell-normal"/>
+  <rect x="400" y="170" width="50" height="50" class="cell-normal"/>
+  <rect x="450" y="170" width="50" height="50" class="cell-normal"/>
+  <rect x="500" y="170" width="50" height="50" class="cell-normal"/>
+  <rect x="550" y="170" width="50" height="50" class="cell-normal"/>
+  <rect x="600" y="170" width="50" height="50" class="cell-normal"/>
+  <rect x="50" y="220" width="50" height="50" class="cell-start"/>
+  <text x="75.0" y="245.0" class="text-cell" fill="#89b4fa">S</text>
+  <rect x="100" y="220" width="50" height="50" class="cell-cliff"/>
+  <text x="125.0" y="245.0" class="text-cell-dark">CLIFF</text>
+  <rect x="150" y="220" width="50" height="50" class="cell-cliff"/>
+  <text x="175.0" y="245.0" class="text-cell-dark">CLIFF</text>
+  <rect x="200" y="220" width="50" height="50" class="cell-cliff"/>
+  <text x="225.0" y="245.0" class="text-cell-dark">CLIFF</text>
+  <rect x="250" y="220" width="50" height="50" class="cell-cliff"/>
+  <text x="275.0" y="245.0" class="text-cell-dark">CLIFF</text>
+  <rect x="300" y="220" width="50" height="50" class="cell-cliff"/>
+  <text x="325.0" y="245.0" class="text-cell-dark">CLIFF</text>
+  <rect x="350" y="220" width="50" height="50" class="cell-cliff"/>
+  <text x="375.0" y="245.0" class="text-cell-dark">CLIFF</text>
+  <rect x="400" y="220" width="50" height="50" class="cell-cliff"/>
+  <text x="425.0" y="245.0" class="text-cell-dark">CLIFF</text>
+  <rect x="450" y="220" width="50" height="50" class="cell-cliff"/>
+  <text x="475.0" y="245.0" class="text-cell-dark">CLIFF</text>
+  <rect x="500" y="220" width="50" height="50" class="cell-cliff"/>
+  <text x="525.0" y="245.0" class="text-cell-dark">CLIFF</text>
+  <rect x="550" y="220" width="50" height="50" class="cell-cliff"/>
+  <text x="575.0" y="245.0" class="text-cell-dark">CLIFF</text>
+  <rect x="600" y="220" width="50" height="50" class="cell-goal"/>
+  <text x="625.0" y="245.0" class="text-cell" fill="#a6e3a1">G</text>
+  <path d="M 71.0 241.0 L 71.0 191.0 L 71.0 141.0 L 121.0 141.0 L 171.0 141.0 L 221.0 141.0 L 271.0 141.0 L 321.0 141.0 L 371.0 141.0 L 421.0 141.0 L 471.0 141.0 L 521.0 141.0 L 571.0 141.0 L 621.0 141.0 L 621.0 191.0 L 621.0 241.0" class="path-sarsa"/>
+  <path d="M 79.0 249.0 L 79.0 199.0 L 129.0 199.0 L 179.0 199.0 L 229.0 199.0 L 279.0 199.0 L 329.0 199.0 L 379.0 199.0 L 429.0 199.0 L 479.0 199.0 L 529.0 199.0 L 579.0 199.0 L 629.0 199.0 L 629.0 249.0" class="path-q"/>
+  <rect x="50" y="300" width="15" height="15" fill="#1e3a5f" stroke="#89b4fa" stroke-width="1" rx="3"/>
+  <text x="75" y="312" class="legend-text">Start State (S)</text>
+  <rect x="180" y="300" width="15" height="15" fill="#1c3d32" stroke="#a6e3a1" stroke-width="1" rx="3"/>
+  <text x="205" y="312" class="legend-text">Goal State (G)</text>
+  <rect x="310" y="300" width="15" height="15" fill="#451e2b" stroke="#f38ba8" stroke-width="1" rx="3"/>
+  <text x="335" y="312" class="legend-text">Cliff (Reward = -100, Reset)</text>
+  <line x1="480" y1="307" x2="510" y2="307" stroke="#89dceb" stroke-width="3" stroke-dasharray="4,3"/>
+  <text x="520" y="312" class="legend-text">Sarsa Path (Safe, Reward = -17)</text>
+  <line x1="480" y1="327" x2="510" y2="327" stroke="#fab387" stroke-width="3"/>
+  <text x="520" y="332" class="legend-text">Q-Learning Path (Optimal, Reward = -13)</text>
+</svg>
