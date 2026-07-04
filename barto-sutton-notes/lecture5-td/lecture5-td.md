@@ -1071,3 +1071,7 @@ $$
 Q_1(S_t, A_t) \leftarrow Q_1(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma\, Q_2\left(S_{t+1}, \arg\max_a Q_1(S_{t+1}, a)\right) - Q_1(S_t, A_t) \right]
 $$
 *(and symmetrically for $Q_2$)*
+
+## Handwritten notes 
+
+1. [Session 1 TD](./assets/TDSession1_7-4-26.pdf)
