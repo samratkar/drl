@@ -840,6 +840,8 @@ In Q-learning:
 
 ---
 
+
+
 ## Expected Sarsa
 
 Expected Sarsa is an elegant temporal-difference (TD) control algorithm that bridges the gap between Sarsa and Q-learning. Instead of updating the action-value function $Q(S_t, A_t)$ toward a sample value $Q(S_{t+1}, A_{t+1})$ (as in Sarsa) or a maximum value $\max_a Q(S_{t+1}, a)$ (as in Q-learning), Expected Sarsa updates it toward the **mathematical expectation** of the next state-action values under the target policy.
@@ -1175,4 +1177,4 @@ $$
 ## Code Implementations
 
 1. [Expected Sarsa Python Script](./assets/expected_sarsa.py)
-2. [Cliff Walking Comparison Notebook](./cliff_walking_comparison.ipynb)
+2. [Cliff Walking Comparison Notebook](./cliff_walking_comparison.ipynb)
