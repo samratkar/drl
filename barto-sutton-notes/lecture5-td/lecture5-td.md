@@ -5,7 +5,7 @@ category : Lectures
 subcategory : temporal-difference
 textbook : [chapter6]
 layout: post
-deliveries : [2026-05-31]
+deliveries : [2026-07-04, 2026-07-11]
 ---
 ## Table of Contents
 
@@ -842,35 +842,131 @@ In Q-learning:
 
 ## Expected Sarsa
 
-Expected Sarsa is an extension of Sarsa that reduces variance by taking the expected value over all possible next actions, rather than sampling a single action $A_{t+1}$. 
+Expected Sarsa is an elegant temporal-difference (TD) control algorithm that bridges the gap between Sarsa and Q-learning. Instead of updating the action-value function $Q(S_t, A_t)$ toward a sample value $Q(S_{t+1}, A_{t+1})$ (as in Sarsa) or a maximum value $\max_a Q(S_{t+1}, a)$ (as in Q-learning), Expected Sarsa updates it toward the **mathematical expectation** of the next state-action values under the target policy.
 
-The update rule is:
+### The Update Rule
+
+The update equation for Expected Sarsa is:
 
 $$
 \boxed{Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma \sum_a \pi(a \mid S_{t+1})\, Q(S_{t+1}, a) - Q(S_t, A_t) \right]}
 $$
 
-Where $\pi(a \mid S_{t+1})$ is the probability of selecting action $a$ in state $S_{t+1}$ under the target policy.
+Where:
+*   $\pi(a \mid S_{t+1})$ is the probability of selecting action $a$ in state $S_{t+1}$ under the target policy.
+*   $\sum_a \pi(a \mid S_{t+1})\, Q(S_{t+1}, a)$ represents the expected value of the next state, given the policy.
 
-### Why it works:
-*   **On-policy or Off-policy**: Expected Sarsa is traditionally on-policy (where the target policy $\pi$ equals the exploratory behavior policy). However, it can also be off-policy if we choose a target policy $\pi$ different from the behavior policy.
-*   **Variance Reduction**: By averaging over all actions weighted by their probabilities, Expected Sarsa eliminates the variance introduced by the random action selection step in the TD target. 
-*   **Computational Cost**: It is slightly more computationally expensive than Sarsa because it must compute the sum over all possible actions at each step.
+---
+
+### Core Mechanics & Theoretical Advantages
+
+#### 1. On-Policy and Off-Policy Flexibility
+Expected Sarsa is a highly versatile algorithm because it separates the **behavior policy** (used to generate actions and explore the environment) from the **target policy** (the policy being evaluated and updated).
+*   **On-Policy Expected Sarsa**: When the target policy $\pi$ is identical to the behavior policy (e.g., the exploratory $\varepsilon$-greedy policy). Even though the agent explores, the updates are computed as the expected value over the exploratory action probabilities, rather than sampling a single exploratory action.
+*   **Off-Policy Expected Sarsa**: When the target policy $\pi$ is different from the behavior policy. For instance, the behavior policy could be highly exploratory ($\varepsilon = 0.5$ or completely random) while the target policy is nearly greedy ($\varepsilon = 0.05$ or $\varepsilon = 0$).
+*   **Generalization of Q-learning**: If the target policy is completely greedy ($\pi(a \mid S_{t+1}) = 1$ for the maximizing action and $0$ otherwise), the summation term simplifies to:
+    $$
+    \sum_a \pi(a \mid S_{t+1})\, Q(S_{t+1}, a) = \max_a Q(S_{t+1}, a)
+    $$
+    This is exactly the Q-learning update. Thus, Expected Sarsa is a generalized algorithm that subsumes Q-learning as a special case.
+
+#### 2. Variance Reduction
+Standard Sarsa is subject to high variance in its updates because it samples the next action $A_{t+1}$ using a stochastic exploratory policy. If the agent accidentally takes a bad exploratory action, Sarsa propagates that bad value into $Q(S_t, A_t)$, even if the bad action is rarely selected.
+By analytically computing the expectation over all next actions, Expected Sarsa **integrates out** the random selection of $A_{t+1}$. This significantly reduces variance in the TD target, leading to more stable updates and faster, more robust convergence.
+
+#### 3. Computational Cost Trade-off
+The primary disadvantage of Expected Sarsa is computational complexity. 
+*   **Sarsa / Q-learning**: Require looking up a single action value ($Q(S_{t+1}, A_{t+1})$ or $\max_a Q(S_{t+1}, a)$), which is an $O(1)$ operation.
+*   **Expected Sarsa**: Requires computing the sum over all possible actions in the action space $|A(S_{t+1})|$. If the action space is large (or continuous), computing the expectation becomes computationally expensive. However, in discrete environments with small action spaces (such as gridworlds), the reduction in variance and improvement in sample efficiency far outweigh the minor computational overhead.
+
+---
+
+### Cliff Walking Performance Comparison (Figure 6.3 / 6.6)
+
+Sutton & Barto (2nd Edition, page 134, Figure 6.3) compares Sarsa, Q-learning, and Expected Sarsa on the **Cliff Walking Gridworld** as a function of the step-size parameter $\alpha$. 
+
+The simulation tracks two distinct evaluation metrics to measure the learning characteristics of the agents:
+
+| Feature | Interim Performance | Asymptotic Performance |
+| :--- | :--- | :--- |
+| **Measurement Window** | **Early stages** of training (e.g., the first 100 episodes). | **Limiting behavior** in the long run (e.g., after 100,000 episodes). |
+| **Core Concept** | Evaluates **learning speed** and **sample efficiency**. | Evaluates **policy quality** and **limiting stability**. |
+| **Real-world Analogy** | How quickly a student picks up a new skill in week 1. | The student's final score on a comprehensive exam. |
+| **RL Significance** | Critical for minimizing online exploration costs/risks. | Critical for maximizing the quality of the final deployed policy. |
+
+Here is a detailed breakdown of these two performance phases:
+
+#### 1. Interim Performance (The Learning Phase)
+*   **Definition**: Interim performance measures how well the algorithm performs **during the early stages of training** while it is actively learning. In Sutton & Barto (Figure 6.3), it is calculated as the average reward per episode obtained over the **first 100 episodes** of learning.
+*   **What it Represents**: It is a direct indicator of **learning speed (sample efficiency)** and **early-stage stability**. 
+*   **Why it Matters**: In real-world applications (e.g., physical robotics, autonomous driving, or financial trading), learning online is expensive and mistakes are costly. We want an algorithm that achieves high rewards quickly and safely without requiring millions of exploratory trials. Expected Sarsa excels in interim performance because its analytical expectation averages out exploration noise, preventing the policy from destabilizing early on.
+
+#### 2. Asymptotic Performance (The Converged Phase)
+*   **Definition**: Asymptotic performance evaluates the **ultimate capability** of the algorithm in the limit (as training episodes approach infinity), after the value function estimates and policy have fully converged. In Sutton & Barto, it is calculated as the average reward per episode obtained over a very large number of episodes (e.g., **100,000 episodes**).
+*   **What it Represents**: It represents the **quality, optimality, and stability of the final policy** that the algorithm is capable of sustaining.
+*   **Why it Matters**: It shows the final performance limit of the algorithm once training is complete. Sarsa and Expected Sarsa both theoretically converge to the "safe path" (yielding an optimal baseline of $-17$ reward plus exploration penalties). However, Sarsa's asymptotic performance degrades severely at large step sizes ($\alpha \ge 0.5$) because high learning rates combine with action-selection sampling noise to destabilize the value estimates, causing the agent to repeatedly walk off the cliff. Expected Sarsa's asymptotic performance remains flat near $-21$ even at $\alpha = 1.0$, demonstrating complete robustness to the step-size parameter.
+
+The plot below represents the reproduced results of this simulation:
+
+![Interim and Asymptotic Performance of TD Control Methods](./assets/diagrams/cliff_walking_performance.svg)
+
+#### Detailed Analysis of the Curves
+
+##### 1. Asymptotic Performance (Solid Lines)
+*   **Expected Sarsa (Asymptotic - Blue Circle Line)**: 
+    Expected Sarsa achieves the best performance and is remarkably robust across the entire range of step-sizes. It maintains an average reward of $\approx -21$ to $-22$ even when the learning rate $\alpha$ is pushed all the way to $1.0$. Because it eliminates action-selection variance, its updates remain stable and do not oscillate, preventing the learned policy from deteriorating at high step-sizes.
+*   **Sarsa (Asymptotic - Red Square Line)**: 
+    Sarsa performs well at small step-sizes ($\alpha \approx 0.1 - 0.2$), achieving a peak reward of $\approx -24$ (Sarsa learns the "safe path" one row away from the cliff, which has a length of 17 steps and yields $\approx -22$ reward, plus exploration penalties). However, as $\alpha$ increases towards $1.0$, Sarsa's asymptotic performance degrades catastrophically, dropping below $-65$. High step-sizes combine with the variance of sampling the next action to make the policy highly unstable, causing Sarsa to frequently fall off the cliff during learning.
+*   **Q-learning (Asymptotic - Green Triangle Line)**: 
+    Q-learning's asymptotic performance is flat and poor, remaining around $-50$ across all values of $\alpha$. This is because Q-learning is off-policy and evaluates the greedy target policy, which walks directly along the edge of the cliff (reward of $-13$). However, the behavior policy actually followed is $\varepsilon$-greedy with $\varepsilon = 0.1$. The $10\%$ exploration rate causes the agent to frequently take exploratory steps into the cliff (getting $-100$ reward and resetting). Because Q-learning's updates do not account for the exploration steps actually taken, the agent continues to follow the optimal edge path and repeatedly falls off the cliff during training.
+
+##### 2. Interim Performance (Dashed Lines)
+*   **Expected Sarsa (Interim - Blue Dashed Circle Line)**: 
+    Expected Sarsa dominates the interim phase for all step-sizes. It starts around $-120$ at $\alpha=0.1$, rises rapidly to a peak of $\approx -45$ around $\alpha \ge 0.5$, and remains stable. This indicates that Expected Sarsa learns much faster and more safely than the other methods from the very beginning of training.
+*   **Sarsa (Interim - Red Dashed Square Line)**: 
+    Sarsa starts around $-135$ at $\alpha=0.1$, rises to a peak of $\approx -65$ at $\alpha \approx 0.7$, and then begins to degrade. It is consistently worse than Expected Sarsa due to the high variance of early-stage exploration.
+*   **Q-learning (Interim - Green Dashed Triangle Line)**: 
+    Q-learning is the worst-performing algorithm during the interim phase. It starts around $-143$ at $\alpha=0.1$ and only reaches a peak of $\approx -70$ at $\alpha = 1.0$. The combination of learning the risky cliff-edge path and having no variance reduction makes Q-learning extremely unstable in early training.
+
+##### Summary of Findings:
+In this environment, **Expected Sarsa is clearly the best method**. It retains Sarsa's key advantage (learning the safe path because it evaluates the exploratory behavior policy) while eliminating the action-selection variance, making it highly robust to the step-size parameter $\alpha$. In fact, at $\alpha = 1.0$, Expected Sarsa achieves its asymptotic performance, which is better than Sarsa's best performance at any step-size.
+
+### Interactive Jupyter Notebook Comparison
+
+To see these concepts in action with a complete implementation, run the [Cliff Walking Comparison Notebook](./cliff_walking_comparison.ipynb).
+
+#### Content of the Code:
+*   **Environment Setup**: Uses Gymnasium's `CliffWalking-v1` gridworld environment.
+*   **TD Agent Class (`TDAgent`)**: Implements the state-action value table ($Q$-table) and functions for action selection ($\varepsilon$-greedy behavior policy) and TD updates.
+    *   `choose_action(state)`: Selects exploratory actions with probability $\varepsilon$ and greedy actions (with random tie-breaking) with probability $1 - \varepsilon$.
+    *   `get_action_probabilities(state)`: Analytical probability vector $\pi(\cdot \mid S_{t+1})$ of selecting each action under the target policy.
+    *   `update_sarsa(...)`: Standard on-policy Sarsa update using the sampled next state-action value $Q(S_{t+1}, A_{t+1})$.
+    *   `update_q_learning(...)`: Off-policy Q-learning update using the maximum action value $\max_a Q(S_{t+1}, a)$.
+    *   `update_expected_sarsa(...)`: Expected Sarsa update using the dot product of action probabilities $\pi(a \mid S_{t+1})$ and their corresponding values $Q(S_{t+1}, a)$.
+*   **Backup Diagrams**: Markdown cells in the notebook embed custom-drawn SVG backup diagrams illustrating the lookahead trees:
+    *   [Sarsa Backup Diagram](./assets/diagrams/sarsa_backup.svg)
+    *   [Q-learning Backup Diagram](./assets/diagrams/q_learning_backup.svg)
+    *   [Expected Sarsa Backup Diagram](./assets/diagrams/expected_sarsa_backup.svg)
+*   **Simulation Loop**: Runs multiple independent runs (to average out random noise) of Sarsa, Q-learning, and Expected Sarsa across a range of learning rates $\alpha \in [0.1, 1.0]$ over 250 episodes.
+*   **Performance Visualization**: Ploting function utilizing Matplotlib to render and display the interim and asymptotic performance curves, verifying the theoretical results.
+
+---
 
 ### Unifying the Three TD Control Methods
 
-We can think of all three TD control methods (Sarsa, Q-learning, and Expected Sarsa) as updating $Q(S_t, A_t)$ toward a target:
+We can understand Sarsa, Q-learning, and Expected Sarsa under a unified framework. Each algorithm updates $Q(S_t, A_t)$ toward a target:
+
 $$
 \text{Target} = R_{t+1} + \gamma\, \Phi(S_{t+1})
 $$
 
-Where the future value estimate $\Phi(S_{t+1})$ is defined differently for each algorithm:
+Where the future value estimate $\Phi(S_{t+1})$ is defined as:
 
-| Algorithm | Future Value Estimate $\Phi(S_{t+1})$ | Type | Note |
+| Algorithm | Future Value Estimate $\Phi(S_{t+1})$ | Target Policy $\pi(a \mid S_{t+1})$ | Update Type |
 | :--- | :--- | :--- | :--- |
-| **Sarsa** | $Q(S_{t+1}, A_{t+1})$ | On-policy | Uses the value of the action $A_{t+1}$ actually taken. |
-| **Q-learning** | $\max_a Q(S_{t+1}, a)$ | Off-policy | Uses the value of the greedy action. Equivalent to Expected Sarsa where the target policy is $100\%$ greedy. |
-| **Expected Sarsa** | $\sum_a \pi(a \mid S_{t+1})\, Q(S_{t+1}, a)$ | On/Off-policy | Uses the expected value over all actions under target policy $\pi$. |
+| **Sarsa** | $Q(S_{t+1}, A_{t+1})$ | On-policy (Exploratory / Behavior Policy) | Sampled action value |
+| **Q-learning** | $\max_a Q(S_{t+1}, a)$ | Off-policy (Greedy Policy: $\pi(A^*) = 1$) | Maximum value |
+| **Expected Sarsa** | $\sum_a \pi(a \mid S_{t+1})\, Q(S_{t+1}, a)$ | Arbitrary (typically Exploratory / Behavior Policy) | Mathematical Expectation |
 
 ---
 
@@ -1075,3 +1171,8 @@ $$
 ## Handwritten notes 
 
 1. [Session 1 TD](./assets/TDSession1_7-4-26.pdf)
+
+## Code Implementations
+
+1. [Expected Sarsa Python Script](./assets/expected_sarsa.py)
+2. [Cliff Walking Comparison Notebook](./cliff_walking_comparison.ipynb)

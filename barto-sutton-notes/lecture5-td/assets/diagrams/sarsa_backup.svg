@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 260" width="160" height="260">
+  <!-- Sarsa Backup Diagram (On-policy) -->
+  <style>
+    .node-action { fill: #1E293B; stroke: #0F172A; stroke-width: 1.5; }
+    .node-state { fill: #FFFFFF; stroke: #3B82F6; stroke-width: 3; }
+    .line-main { stroke: #0F172A; stroke-width: 2.5; fill: none; }
+    .text-label { font-family: 'Inter', system-ui, sans-serif; font-size: 13px; fill: #0F172A; font-weight: 500; }
+    .text-math { font-family: 'Cambria Math', 'Times New Roman', serif; font-style: italic; font-size: 14px; fill: #0F172A; }
+    .title { font-family: 'Inter', system-ui, sans-serif; font-size: 12px; fill: #64748B; font-weight: bold; text-anchor: middle; }
+  </style>
+
+  <!-- Title -->
+  <text x="80" y="20" class="title">SARSA (On-Policy)</text>
+
+  <!-- Top State-Action Node (S_t, A_t) -->
+  <line x1="80" y1="50" x2="80" y2="130" class="line-main" />
+  <circle cx="80" cy="50" r="7" class="node-action" />
+  <text x="92" y="54" class="text-math">(S<t sub="t">t</t>, A<t sub="t">t</t>)</text>
+
+  <!-- Transition Reward R_{t+1} -->
+  <text x="92" y="95" class="text-math" fill="#EF4444">R<t sub="t+1">t+1</t></text>
+
+  <!-- State Node S_{t+1} -->
+  <circle cx="80" cy="130" r="11" class="node-state" />
+  <text x="96" y="134" class="text-math">S<t sub="t+1">t+1</t></text>
+
+  <!-- Bottom State-Action Node (S_{t+1}, A_{t+1}) -->
+  <line x1="80" y1="130" x2="80" y2="210" class="line-main" />
+  <circle cx="80" cy="210" r="7" class="node-action" />
+  <text x="92" y="214" class="text-math">(S<t sub="t+1">t+1</t>, A<t sub="t+1">t+1</t>)</text>
+</svg>
