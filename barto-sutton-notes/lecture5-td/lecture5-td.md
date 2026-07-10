@@ -838,6 +838,44 @@ In Q-learning:
 *   The **target policy** (the policy whose value function is being estimated and optimized) is completely greedy: $\pi(a \mid s) = 1$ if $a = \arg\max_{a'} Q(s, a')$, and $0$ otherwise.
 *   Because the update target uses $\max_a Q(S_{t+1}, a)$, it behaves as if it always follows the greedy target policy, regardless of what exploratory action the behavior policy actually chose.
 
+#### Conceptual Breakdown: Policy Derivation and Exploration
+
+##### 1. "Policy Derived from Q"
+When the algorithm says *"choose $A$ from $S$ using policy derived from $Q$"*, it means the action selection is **dynamic** and computed on the fly based on the current action-value estimates in the $Q$-table. 
+For example, under an $\varepsilon$-greedy policy:
+*   With probability $1 - \varepsilon$, the agent selects the greedy action: $a^* = \arg\max_a Q(S, a)$.
+*   With probability $\varepsilon$, the agent selects a random action from the action space to explore.
+
+There is no static, hardcoded lookup table for action selection; the policy updates itself automatically as the $Q$-values are updated.
+
+##### 2. Action Selection vs. State Transition
+A common point of confusion is how the next state is selected. In reinforcement learning:
+*   The **Agent** selects the action $A_t$ using the policy derived from $Q$.
+*   The **Environment** determines the next state $S_{t+1}$ and reward $R_{t+1}$ based on its transition dynamics $P(S_{t+1} \mid S_t, A_t)$ and reward function. The agent does not choose the next state; it only influences it by choosing different actions.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Agent as Agent
+    participant Env as Environment
+    Note over Agent: Observes State S_t
+    Agent->>Agent: Chooses Action A_t using policy derived from Q (e.g., ε-greedy)
+    Agent->>Env: Executes Action A_t
+    Note over Env: Determines transition based on dynamics P(S_{t+1} | S_t, A_t)
+    Env->>Agent: Returns Reward R_{t+1} and Next State S_{t+1}
+    Note over Agent: Updates Q(S_t, A_t) using max_a Q(S_{t+1}, a)
+```
+
+##### 3. Step-by-Step Updates (Temporal Difference) vs. Episode-by-Episode (Monte Carlo)
+Unlike Monte Carlo methods, Q-learning does not wait for an entire episode to finish before updating the value function. Instead, it performs **step-by-step online updates** (bootstrapping):
+
+| Feature | Q-learning (TD Control) | Monte Carlo Control |
+| :--- | :--- | :--- |
+| **Update Frequency** | **Step-by-step** (after every transition $S_t \to A_t \to R_{t+1} \to S_{t+1}$). | **Episode-by-episode** (only after reaching the terminal state). |
+| **Data Requirement** | Transition tuple $(S_t, A_t, R_{t+1}, S_{t+1})$. | Complete episode history $(S_0, A_0, R_1, \dots, S_T)$. |
+| **Bootstrapping** | Yes (updates $Q(S_t, A_t)$ using the estimate $Q(S_{t+1}, a)$). | No (updates using the actual returns $G_t$ observed). |
+| **Environment Suitability** | Works for both continuing tasks (infinite horizon) and episodic tasks. | Works only for episodic tasks (must terminate to compute returns). |
+
 ---
 
 
