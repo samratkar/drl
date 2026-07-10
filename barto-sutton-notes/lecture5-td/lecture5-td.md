@@ -1208,6 +1208,56 @@ $$
 \mathbb{E}\left[Q_2(S_{t+1}, A^*)\right] = q(S_{t+1}, A^*)
 $$
 
+#### Step-by-Step Walkthrough: How the Spike is Broken
+
+Consider the **Two-Action MDP (Example 6.7)**:
+*   State **$A$** transitions to **Right** (Terminal, $R=0$) or **Left** (transitions to $B$, $R=0$).
+*   State **$B$** has 10 actions, all yielding $R \sim \mathcal{N}(-0.1, 1.0)$ (true expected value is $-0.1$).
+
+##### 1. With One Q-Table (Standard Q-learning)
+This is how the positive overestimation spike is formed and propagated:
+
+```mermaid
+graph TD
+    subgraph Single Q-Table Loop
+        S1[1. Agent visits B: Action 3 randomly gets a high reward spike of +0.8 due to noise] --> S2["2. Table stores this spike: Q(B, Action 3) = +0.8"]
+        S2 --> S3["3. Agent is at A: Updates Q(A, Left) using max_b Q(B, b)"]
+        S3 --> S4["4. The max operator selects Action 3 (+0.8) and evaluates it at +0.8 using the SAME table"]
+        S4 --> S5["5. Q(A, Left) is updated to a positive value (~ +0.8)"]
+        S5 --> S6["6. The agent now falsely believes Left is better than Right (0) and keeps going Left, reinforcing the spike"]
+    end
+```
+
+*   **Step 1:** The agent visits $B$. Due to random noise, Action 3 returns a positive reward of **$+0.8$** (true average is $-0.1$).
+*   **Step 2:** The single $Q$-table is updated: $Q(B, \text{Action } 3) = +0.8$.
+*   **Step 3:** The agent returns to $A$ and updates $Q(A, \text{Left})$ using $\max_b Q(B, b)$.
+*   **Step 4:** The $\max$ operator searches the table, finds $+0.8$ (for Action 3), and evaluates it as $+0.8$ because the selection and evaluation use the **same** table.
+*   **Step 5:** $Q(A, \text{Left})$ is updated towards $+0.8$. The positive noise spike has successfully propagated backward to State $A$.
+*   **Step 6:** The behavior policy (which is $\varepsilon$-greedy derived from this table) now strongly favors going Left because $Q(A, \text{Left}) > Q(A, \text{Right})$. The agent gets trapped in a sub-optimal loop, reinforcing the bias.
+
+##### 2. With Two Q-Tables (Double Q-learning)
+This is how the positive overestimation spike is broken:
+
+```mermaid
+graph TD
+    subgraph Double Q-Table Loop
+        D1[1. Noise occurs at B: Action 3 gets a spike of +0.8 in Q1, but Q2 is trained on different steps and has -0.1] --> D2["2. Agent is at A: Updates Q1(A, Left)"]
+        D2 --> D3["3. SELECTION (using Q1): argmax chooses Action 3 because Q1(B, Action 3) = +0.8"]
+        D3 --> D4["4. EVALUATION (using Q2): We look up Action 3 in Q2, which returns -0.1"]
+        D4 --> D5["5. Q1(A, Left) is updated towards -0.1 (completely neutralizing the +0.8 spike)"]
+        D5 --> D6["6. The agent correctly learns that Left is bad (-0.1 < 0) and chooses Right"]
+    end
+```
+
+*   **Step 1:** $Q_1$ and $Q_2$ are updated on separate steps. In $Q_1(B, \cdot)$, Action 3 has a noise spike of **$+0.8$**. In $Q_2(B, \cdot)$, Action 3 has its normal, unbiased value of **$-0.1$**.
+*   **Step 2:** The agent is at $A$ and updates $Q_1(A, \text{Left})$ using the Double Q-learning target: $Q_2(B, \arg\max_b Q_1(B, b))$.
+*   **Step 3 (Selection):** We look up the best action in $Q_1(B, \cdot)$, which selects **Action 3** because of its $+0.8$ value.
+*   **Step 4 (Evaluation):** Instead of using $+0.8$ from $Q_1$, we evaluate Action 3 using the other table, returning $Q_2(B, \text{Action } 3) = \mathbf{-0.1}$.
+*   **Step 5:** The target value for the update is $-0.1$. The $+0.8$ positive spike is **completely neutralized**.
+*   **Step 6:** $Q_1(A, \text{Left})$ is updated towards $-0.1$. The behavior policy correctly learns that Left is bad ($Q_{\text{behavior}} < 0$) and starts choosing Right (the optimal action).
+
+---
+
 ### Algorithm: Double Q-learning
 
 ```
