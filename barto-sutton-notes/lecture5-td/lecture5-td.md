@@ -896,6 +896,49 @@ Where:
 *   $\pi(a \mid S_{t+1})$ is the probability of selecting action $a$ in state $S_{t+1}$ under the target policy.
 *   $\sum_a \pi(a \mid S_{t+1})\, Q(S_{t+1}, a)$ represents the expected value of the next state, given the policy.
 
+### How is $\pi(a \mid S_{t+1})$ Determined?
+
+Just like in Q-learning, we do not need a predefined, static policy table. Instead, the probabilities $\pi(a \mid S_{t+1})$ are computed **analytically on the fly** directly from the current $Q(S_{t+1}, \cdot)$ values.
+
+#### Example: $\varepsilon$-Greedy Target Policy
+If the target policy $\pi$ is $\varepsilon$-greedy with respect to the current $Q(S_{t+1}, \cdot)$ values:
+
+1. Identify the greedy action(s) for the next state $S_{t+1}$:
+   $$A^* = \arg\max_a Q(S_{t+1}, a)$$
+2. Let $|A|$ be the total number of actions available in that state, and $k$ be the number of actions that tie for the maximum Q-value.
+3. The probability distribution $\pi(a \mid S_{t+1})$ is calculated as:
+   * **For each maximizing action $a \in A^*$:**
+     $$\pi(a \mid S_{t+1}) = \frac{1 - \varepsilon}{k} + \frac{\varepsilon}{|A|}$$
+   * **For each non-maximizing action $a \notin A^*$:**
+     $$\pi(a \mid S_{t+1}) = \frac{\varepsilon}{|A|}$$
+
+#### Python Implementation of $\pi(a \mid S_{t+1})$:
+Here is how this probability vector is computed programmatically in [expected_sarsa.py](file:///c:/github/drl/barto-sutton-notes/lecture5-td/assets/expected_sarsa.py#L15-L30):
+
+```python
+def get_action_probabilities(self, state):
+    q_values = self.Q[state]
+    max_q = np.max(q_values)
+    
+    # Find all actions that achieve the max Q-value (handling ties)
+    best_actions = np.flatnonzero(q_values == max_q)
+    num_best = len(best_actions)
+    
+    # Base probability for all actions: epsilon / |A|
+    probabilities = np.full(self.num_actions, self.epsilon / self.num_actions)
+    
+    # Add (1 - epsilon) divided equally among the best actions
+    probabilities[best_actions] += (1.0 - self.epsilon) / num_best
+    
+    return probabilities
+```
+
+Then, the expected value $\sum_a \pi(a \mid S_{t+1}) Q(S_{t+1}, a)$ is simply computed as the dot product:
+```python
+probs = agent.get_action_probabilities(next_state)
+expected_value = np.sum(probs * agent.Q[next_state])
+```
+
 ---
 
 ### Core Mechanics & Theoretical Advantages
@@ -1091,13 +1134,64 @@ $$
 
 This positive bias is called **maximization bias**. It can lead to poor performance because the agent overestimates the value of state-action pairs that happen to receive positive noise, leading to sub-optimal action selection.
 
+#### The Mechanism: Why a Single Table Causes Overestimation
+
+To see why a single $Q$-table causes this bias, consider how the max operator is computed:
+$$
+\max_a Q(S_{t+1}, a) = Q\left(S_{t+1}, \arg\max_a Q(S_{t+1}, a)\right)
+$$
+
+This equation performs two distinct tasks using the **same** action-value estimates:
+1. **Action Selection:** Finding which action $a^*$ has the largest estimate (using $\arg\max_a$).
+2. **Action Evaluation:** Using the estimated value $Q(S_{t+1}, a^*)$ of that action to calculate the update target.
+
+Because our Q-value estimates are noisy random variables, some estimates will be higher than the true value (positive noise), and others will be lower (negative noise). 
+* The **Action Selection** step is actively searching for the largest estimate, which means it will naturally select the action that has the **largest positive noise spike**.
+* Because the **Action Evaluation** step uses the exact same table, it evaluates the chosen action using that same positive noise spike. 
+
+This coupling systematic forces our updates to be biased upwards. If we instead had independent estimates, a positive noise spike in the selector table would not correlate with a positive noise spike in the evaluator table, neutralizing the bias.
+
 #### Example: The Two-Action MDP (Example 6.7)
 Consider an MDP starting in state A with two actions: Left and Right.
 *   **Right** leads directly to a terminal state with reward 0.
 *   **Left** leads to state B with reward 0.
 *   From state B, there are many actions (e.g., 10 actions), all of which lead to a terminal state and have true expected rewards of **$-0.1$** (rewards drawn from a normal distribution $\mathcal{N}(-0.1, 1.0)$).
 
+Here is the MDP state transition diagram representing the inset of Figure 6.5 in the book:
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'basis'}}}%%
+graph LR
+    A((A)) -->|"left<br>R = 0"| B((B))
+    A -->|"right<br>R = 0"| T1[Terminal]
+    B -->|a_1| T2[Terminal]
+    B -->|a_2| T2
+    B -->|a_3| T2
+    B -->|a_4| T2
+    B -->|a_5| T2
+    B -->|a_6| T2
+    B -->|a_7| T2
+    B -->|a_8| T2
+    B -->|a_9| T2
+    B -->|"a_10<br>R ~ N(-0.1, 1.0)"| T2
+
+    style A fill:#4F46E5,stroke:#312E81,stroke-width:2px,color:#fff
+    style B fill:#10B981,stroke:#065F46,stroke-width:2px,color:#fff
+    style T1 fill:#374151,stroke:#111827,stroke-width:2px,color:#fff
+    style T2 fill:#374151,stroke:#111827,stroke-width:2px,color:#fff
+```
+
 The optimal action from state A is **Right** (expected reward $0$). However, because state B has many noisy actions, the maximum of the estimated Q-values $\max_a Q(B, a)$ will almost always be positive due to noise. Q-learning will therefore overestimate the value of state B and choose to go **Left**, showing clear maximization bias.
+
+##### Q-learning vs. Double Q-learning Performance Graph:
+The plot below compares how Q-learning and Double Q-learning behave in this environment. Q-learning initially learns to strongly favor the `left` action (climbing to around 70-80% probability), and asymptotically stays significantly above the 5% minimum probability baseline of the $\varepsilon$-greedy policy. Double Q-learning is unaffected by the maximization bias and quickly drops to the optimal rate.
+
+![Q-learning vs. Double Q-learning on Maximization Bias](./assets/diagrams/maximization_bias.svg)
+
+> [!NOTE]
+> To generate or refresh this comparison graph, you can run the simulation script:
+> `python barto-sutton-notes/lecture5-td/assets/run_bias_simulation.py`
+> which runs 10,000 independent trials and writes the output directly to the SVG path above.
 
 ---
 
