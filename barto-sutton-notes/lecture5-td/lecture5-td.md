@@ -1220,20 +1220,20 @@ This is how the positive overestimation spike is formed and propagated:
 ```mermaid
 graph TD
     subgraph Single Q-Table Loop
-        S1["[Episode 1] Step 1: Agent starts in A, takes Left to B, chooses Action 3, and terminates with +0.8 reward"] --> S2["[Episode 1] Step 2: Q-table is updated and stores the noise spike: Q(B, Action 3) = +0.8"]
-        S2 --> S3["[Episode 2] Step 3: Next episode starts in A. Agent takes Left, and Q-learning updates Q(A, Left)"]
-        S3 --> S4["Step 4: The update's max operator selects Action 3 (+0.8) and evaluates it at +0.8 using the SAME table"]
-        S4 --> S5["Step 5: Q(A, Left) is updated to a positive value (~ +0.8)"]
-        S5 --> S6["[Subsequent Episodes] Step 6: Agent now falsely believes Left is better than Right (0) and keeps going Left, reinforcing the spike"]
+        S1["[Episode 1] Phase 1: Agent starts in A, takes Left to B, chooses Action 3, and terminates with +0.8 reward"] --> S2["[Episode 1] Phase 2: Q-table is updated and stores the noise spike: Q(B, Action 3) = +0.8"]
+        S2 --> S3["[Episode 2] Phase 3: Next episode starts in A. Agent takes Left, and Q-learning updates Q(A, Left)"]
+        S3 --> S4["Phase 4: The update's max operator selects Action 3 (+0.8) and evaluates it at +0.8 using the SAME table"]
+        S4 --> S5["Phase 5: Q(A, Left) is updated to a positive value (~ +0.8)"]
+        S5 --> S6["[Subsequent Episodes] Phase 6: Agent now falsely believes Left is better than Right (0) and keeps going Left, reinforcing the spike"]
     end
 ```
 
-*   **[Episode 1] Step 1 (Noise at B):** The agent starts in State $A$, takes action **Left** to transition to $B$ (reward $= 0$), and then chooses **Action 3** which leads to termination and randomly yields a noisy reward of **$+0.8$** (despite the true expected value of B being $-0.1$).
-*   **[Episode 1] Step 2 (Update B):** The single $Q$-table is updated with the reward: $Q(B, \text{Action } 3) = +0.8$.
-*   **[Episode 2] Step 3 (Next Episode & Transition):** The next episode starts with the agent in State $A$. The agent takes action **Left** to transition to State $B$.
-*   **[Episode 2] Step 4 (The coupled max target):** During the transition, the Q-learning update targets the maximum value in the next state: $\max_b Q(B, b)$. The $\max$ operator selects Action 3 ($+0.8$) and evaluates it as $+0.8$ because the selection and evaluation use the **same** table.
-*   **[Episode 2] Step 5 (Spike propagates back):** $Q(A, \text{Left})$ is updated towards $+0.8$. The positive noise spike has now propagated backward to State $A$.
-*   **[Subsequent Episodes] Step 6 (Positive feedback trap):** Because $Q(A, \text{Left}) > Q(A, \text{Right}) = 0$, the behavior policy (which is $\varepsilon$-greedy derived from this table) now strongly favors going Left. The agent is trapped in a sub-optimal loop, continuously reinforcing the bias.
+*   **[Episode 1] Phase 1 (Noise at B):** The agent starts in State $A$, takes action **Left** to transition to $B$ (reward $= 0$), and then chooses **Action 3** which leads to termination and randomly yields a noisy reward of **$+0.8$** (despite the true expected value of B being $-0.1$).
+*   **[Episode 1] Phase 2 (Update B):** The single $Q$-table is updated with the reward: $Q(B, \text{Action } 3) = +0.8$.
+*   **[Episode 2] Phase 3 (Next Episode & Transition):** The next episode starts with the agent in State $A$. The agent takes action **Left** to transition to State $B$.
+*   **[Episode 2] Phase 4 (The coupled max target):** During the transition, the Q-learning update targets the maximum value in the next state: $\max_b Q(B, b)$. The $\max$ operator selects Action 3 ($+0.8$) and evaluates it as $+0.8$ because the selection and evaluation use the **same** table.
+*   **[Episode 2] Phase 5 (Spike propagates back):** $Q(A, \text{Left})$ is updated towards $+0.8$. The positive noise spike has now propagated backward to State $A$.
+*   **[Subsequent Episodes] Phase 6 (Positive feedback trap):** Because $Q(A, \text{Left}) > Q(A, \text{Right}) = 0$, the behavior policy (which is $\varepsilon$-greedy derived from this table) now strongly favors going Left. The agent is trapped in a sub-optimal loop, continuously reinforcing the bias.
 
 ##### 2. With Two Q-Tables (Double Q-learning)
 This is how the positive overestimation spike is broken:
@@ -1241,20 +1241,20 @@ This is how the positive overestimation spike is broken:
 ```mermaid
 graph TD
     subgraph Double Q-Table Loop
-        D1["[Episode 1] Step 1: Action 3 gets a spike of +0.8 in Q1, but Q2 is trained on different steps and has -0.1"] --> D2["[Episode 2] Step 2: Next episode starts in A. Agent takes Left, and Double Q-learning updates Q1(A, Left)"]
-        D2 --> D3["Step 3: SELECTION (using Q1): argmax chooses Action 3 because Q1(B, Action 3) = +0.8"]
-        D3 --> D4["Step 4: EVALUATION (using Q2): We look up Action 3 in Q2, which returns -0.1"]
-        D4 --> D5["Step 5: Q1(A, Left) is updated towards -0.1 (completely neutralizing the +0.8 spike)"]
-        D5 --> D6["[Subsequent Episodes] Step 6: Agent correctly learns Left is bad (-0.1 < 0) and chooses Right (0)"]
+        D1["[Episode 1] Phase 1: Action 3 gets a spike of +0.8 in Q1, but Q2 is trained on different steps and has -0.1"] --> D2["[Episode 2] Phase 2: Next episode starts in A. Agent takes Left, and Double Q-learning updates Q1(A, Left)"]
+        D2 --> D3["Phase 3: SELECTION (using Q1): argmax chooses Action 3 because Q1(B, Action 3) = +0.8"]
+        D3 --> D4["Phase 4: EVALUATION (using Q2): We look up Action 3 in Q2, which returns -0.1"]
+        D4 --> D5["Phase 5: Q1(A, Left) is updated towards -0.1 (completely neutralizing the +0.8 spike)"]
+        D5 --> D6["[Subsequent Episodes] Phase 6: Agent correctly learns Left is bad (-0.1 < 0) and chooses Right (0)"]
     end
 ```
 
-*   **[Episode 1] Step 1 (Independent updates at B):** $Q_1$ and $Q_2$ are updated on separate steps. In $Q_1(B, \cdot)$, Action 3 has a noise spike of **$+0.8$**. In $Q_2(B, \cdot)$, Action 3 was updated on different experiences and has its unbiased value of **$-0.1$**.
-*   **[Episode 2] Step 2 (Next Episode & Transition):** The next episode starts. The agent is in State $A$, takes action **Left** to transition to $B$, and we update $Q_1(A, \text{Left})$.
-*   **[Episode 2] Step 3 (Selection using Q1):** We choose which action is best in the next state using $Q_1(B, \cdot)$, which selects **Action 3** because of its $+0.8$ value.
-*   **[Episode 2] Step 4 (Evaluation using Q2):** Instead of using $+0.8$ from $Q_1$, we evaluate Action 3 using $Q_2$, returning $Q_2(B, \text{Action } 3) = \mathbf{-0.1}$.
-*   **[Episode 2] Step 5 (Spike neutralized):** The update target is $-0.1$. The $+0.8$ positive spike is **completely ignored and neutralized**.
-*   **[Subsequent Episodes] Step 6 (Optimal policy maintained):** $Q_1(A, \text{Left})$ is updated towards $-0.1$. The behavior policy correctly learns that Left is bad ($Q_{\text{behavior}} < 0$) and starts choosing Right (the optimal action).
+*   **[Episode 1] Phase 1 (Independent updates at B):** $Q_1$ and $Q_2$ are updated on separate steps. In $Q_1(B, \cdot)$, Action 3 has a noise spike of **$+0.8$**. In $Q_2(B, \cdot)$, Action 3 was updated on different experiences and has its unbiased value of **$-0.1$**.
+*   **[Episode 2] Phase 2 (Next Episode & Transition):** The next episode starts. The agent is in State $A$, takes action **Left** to transition to $B$, and we update $Q_1(A, \text{Left})$.
+*   **[Episode 2] Phase 3 (Selection using Q1):** We choose which action is best in the next state using $Q_1(B, \cdot)$, which selects **Action 3** because of its $+0.8$ value.
+*   **[Episode 2] Phase 4 (Evaluation using Q2):** Instead of using $+0.8$ from $Q_1$, we evaluate Action 3 using $Q_2$, returning $Q_2(B, \text{Action } 3) = \mathbf{-0.1}$.
+*   **[Episode 2] Phase 5 (Spike neutralized):** The update target is $-0.1$. The $+0.8$ positive spike is **completely ignored and neutralized**.
+*   **[Subsequent Episodes] Phase 6 (Optimal policy maintained):** $Q_1(A, \text{Left})$ is updated towards $-0.1$. The behavior policy correctly learns that Left is bad ($Q_{\text{behavior}} < 0$) and starts choosing Right (the optimal action).
 
 ---
 
