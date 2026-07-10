@@ -1163,8 +1163,8 @@ Here is the MDP state transition diagram representing the inset of Figure 6.5 in
 %%{init: {'flowchart': {'curve': 'basis'}}}%%
 graph LR
     A((A)) -->|"left<br>R = 0"| B((B))
-    A -->|"right<br>R = 0"| T1[Terminal]
-    B -->|a_1| T2[Terminal]
+    A -->|"right<br>R = 0"| T1(Terminal)
+    B -->|a_1| T2(Terminal)
     B -->|a_2| T2
     B -->|a_3| T2
     B -->|a_4| T2
