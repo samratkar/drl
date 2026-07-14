@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 350" width="600" height="350">
+  <rect width="600" height="350" fill="#f8f9fa"/>
+  <text x="300" y="30" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle">Policy Network Architecture</text>
+  
+  <!-- State Input -->
+  <rect x="50" y="150" width="80" height="50" fill="#d1ecf1" stroke="#17a2b8" stroke-width="2" rx="8" ry="8"/>
+  <text x="90" y="175" font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle">State (S)</text>
+
+  <!-- Hidden Layers -->
+  <rect x="180" y="110" width="120" height="130" fill="#d4edda" stroke="#28a745" stroke-width="2" rx="8" ry="8"/>
+  <text x="240" y="145" font-family="Arial" font-size="12" font-weight="bold" text-anchor="middle">Hidden Layers</text>
+  <text x="240" y="165" font-family="Arial" font-size="10" text-anchor="middle">Feature Extraction</text>
+  <text x="240" y="215" font-family="Arial" font-size="12" text-anchor="middle">(Parameters θ)</text>
+  
+  <line x1="130" y1="175" x2="180" y2="175" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Output Logits -->
+  <rect x="350" y="110" width="80" height="130" fill="#fcf8e3" stroke="#8a6d3b" stroke-width="2" rx="8" ry="8"/>
+  <text x="390" y="145" font-family="Arial" font-size="12" font-weight="bold" text-anchor="middle">Logits</text>
+  <text x="390" y="165" font-family="Arial" font-size="10" text-anchor="middle">Unscaled</text>
+  <text x="390" y="180" font-family="Arial" font-size="10" text-anchor="middle">Values</text>
+  
+  <line x1="300" y1="175" x2="350" y2="175" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Softmax Output -->
+  <rect x="480" y="70" width="100" height="210" fill="#f8d7da" stroke="#dc3545" stroke-width="2" rx="8" ry="8"/>
+  <text x="530" y="105" font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle">Softmax</text>
+  
+  <circle cx="530" cy="140" r="15" fill="#dc3545"/>
+  <text x="530" y="144" font-family="Arial" font-size="10" fill="#fff" text-anchor="middle">P(A1)</text>
+  
+  <circle cx="530" cy="180" r="15" fill="#dc3545"/>
+  <text x="530" y="184" font-family="Arial" font-size="10" fill="#fff" text-anchor="middle">P(A2)</text>
+  
+  <circle cx="530" cy="220" r="15" fill="#dc3545"/>
+  <text x="530" y="224" font-family="Arial" font-size="10" fill="#fff" text-anchor="middle">P(A3)</text>
+  
+  <text x="530" y="260" font-family="Arial" font-size="12" font-weight="bold" text-anchor="middle">Σ = 1.0</text>
+
+  <line x1="430" y1="175" x2="480" y2="175" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>

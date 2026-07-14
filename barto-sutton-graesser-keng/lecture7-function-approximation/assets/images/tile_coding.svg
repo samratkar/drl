@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <rect x="0" y="0" width="400" height="300" fill="#ffffff" />
+  
+  <!-- Grid 1 (Blue) -->
+  <g stroke="#3498db" stroke-width="2" stroke-dasharray="4" fill="none">
+    <rect x="40" y="40" width="100" height="100" rx="8" ry="8"/>
+    <rect x="140" y="40" width="100" height="100" rx="8" ry="8"/>
+    <rect x="240" y="40" width="100" height="100" rx="8" ry="8"/>
+    <rect x="40" y="140" width="100" height="100" rx="8" ry="8"/>
+    <rect x="140" y="140" width="100" height="100" fill="rgba(52, 152, 219, 0.3)" rx="8" ry="8"/>
+    <rect x="240" y="140" width="100" height="100" rx="8" ry="8"/>
+  </g>
+  <text x="45" y="55" font-family="Arial" font-size="12" fill="#3498db">Tiling 1</text>
+  
+  <!-- Grid 2 (Red, offset) -->
+  <g stroke="#e74c3c" stroke-width="2" fill="none">
+    <rect x="70" y="70" width="100" height="100" rx="8" ry="8"/>
+    <rect x="170" y="70" width="100" height="100" fill="rgba(231, 76, 60, 0.3)" rx="8" ry="8"/>
+    <rect x="270" y="70" width="100" height="100" rx="8" ry="8"/>
+    <rect x="70" y="170" width="100" height="100" rx="8" ry="8"/>
+    <rect x="170" y="170" width="100" height="100" rx="8" ry="8"/>
+    <rect x="270" y="170" width="100" height="100" rx="8" ry="8"/>
+  </g>
+  <text x="275" y="85" font-family="Arial" font-size="12" fill="#e74c3c">Tiling 2 (Offset)</text>
+
+  <!-- State Point S -->
+  <circle cx="190" cy="160" r="5" fill="#000"/>
+  <text x="195" y="155" font-family="Arial" font-size="16" font-weight="bold">s</text>
+  
+  <text x="10" y="290" font-family="Arial" font-size="12" fill="#555">State 's' falls into exactly one tile per tiling. The active features</text>
+  <text x="10" y="305" font-family="Arial" font-size="12" fill="#555">are the blue shaded tile and the red shaded tile.</text>
+</svg>

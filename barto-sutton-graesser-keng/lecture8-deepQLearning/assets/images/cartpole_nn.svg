@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 400" width="700" height="400">
+  <!-- Background -->
+  <rect width="700" height="400" fill="#f8f9fa"/>
+  <text x="350" y="30" font-family="Arial" font-size="18" font-weight="bold" text-anchor="middle">CartPole DQN Architecture</text>
+  
+  <!-- Input Layer -->
+  <rect x="50" y="80" width="120" height="240" fill="#d1ecf1" stroke="#17a2b8" stroke-width="2" rx="8" ry="8"/>
+  <text x="110" y="105" font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle">Input Layer</text>
+  <text x="110" y="125" font-family="Arial" font-size="12" text-anchor="middle">State 's' (4 nodes)</text>
+  
+  <circle cx="110" cy="160" r="15" fill="#17a2b8"/>
+  <text x="110" y="164" font-family="Arial" font-size="10" fill="#fff" text-anchor="middle">pos</text>
+  
+  <circle cx="110" cy="200" r="15" fill="#17a2b8"/>
+  <text x="110" y="204" font-family="Arial" font-size="10" fill="#fff" text-anchor="middle">vel</text>
+  
+  <circle cx="110" cy="240" r="15" fill="#17a2b8"/>
+  <text x="110" y="244" font-family="Arial" font-size="10" fill="#fff" text-anchor="middle">ang</text>
+  
+  <circle cx="110" cy="280" r="15" fill="#17a2b8"/>
+  <text x="110" y="284" font-family="Arial" font-size="10" fill="#fff" text-anchor="middle">ang_vel</text>
+
+  <!-- Hidden Layer 1 -->
+  <rect x="250" y="60" width="100" height="280" fill="#d4edda" stroke="#28a745" stroke-width="2" rx="8" ry="8"/>
+  <text x="300" y="85" font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle">Hidden 1</text>
+  <text x="300" y="105" font-family="Arial" font-size="12" text-anchor="middle">ReLU (24 nodes)</text>
+  
+  <circle cx="300" cy="140" r="10" fill="#28a745"/>
+  <circle cx="300" cy="180" r="10" fill="#28a745"/>
+  <circle cx="300" cy="220" r="10" fill="#28a745"/>
+  <circle cx="300" cy="260" r="2" fill="#28a745"/>
+  <circle cx="300" cy="275" r="2" fill="#28a745"/>
+  <circle cx="300" cy="290" r="2" fill="#28a745"/>
+
+  <!-- Hidden Layer 2 -->
+  <rect x="410" y="60" width="100" height="280" fill="#d4edda" stroke="#28a745" stroke-width="2" rx="8" ry="8"/>
+  <text x="460" y="85" font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle">Hidden 2</text>
+  <text x="460" y="105" font-family="Arial" font-size="12" text-anchor="middle">ReLU (24 nodes)</text>
+  
+  <circle cx="460" cy="140" r="10" fill="#28a745"/>
+  <circle cx="460" cy="180" r="10" fill="#28a745"/>
+  <circle cx="460" cy="220" r="10" fill="#28a745"/>
+  <circle cx="460" cy="260" r="2" fill="#28a745"/>
+  <circle cx="460" cy="275" r="2" fill="#28a745"/>
+  <circle cx="460" cy="290" r="2" fill="#28a745"/>
+
+  <!-- Output Layer -->
+  <rect x="560" y="120" width="100" height="160" fill="#f8d7da" stroke="#dc3545" stroke-width="2" rx="8" ry="8"/>
+  <text x="610" y="145" font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle">Output Layer</text>
+  <text x="610" y="165" font-family="Arial" font-size="12" text-anchor="middle">Linear (2 nodes)</text>
+  
+  <circle cx="610" cy="200" r="15" fill="#dc3545"/>
+  <text x="610" y="204" font-family="Arial" font-size="10" fill="#fff" text-anchor="middle">Q(Left)</text>
+  
+  <circle cx="610" cy="240" r="15" fill="#dc3545"/>
+  <text x="610" y="244" font-family="Arial" font-size="10" fill="#fff" text-anchor="middle">Q(Right)</text>
+
+  <!-- Connections (Input to H1) -->
+  <line x1="170" y1="160" x2="250" y2="140" stroke="#ccc" stroke-width="1"/>
+  <line x1="170" y1="160" x2="250" y2="180" stroke="#ccc" stroke-width="1"/>
+  <line x1="170" y1="200" x2="250" y2="140" stroke="#ccc" stroke-width="1"/>
+  <line x1="170" y1="200" x2="250" y2="180" stroke="#ccc" stroke-width="1"/>
+  
+  <!-- Connections (H1 to H2) -->
+  <line x1="350" y1="140" x2="410" y2="140" stroke="#ccc" stroke-width="1"/>
+  <line x1="350" y1="140" x2="410" y2="180" stroke="#ccc" stroke-width="1"/>
+  <line x1="350" y1="180" x2="410" y2="140" stroke="#ccc" stroke-width="1"/>
+  <line x1="350" y1="180" x2="410" y2="180" stroke="#ccc" stroke-width="1"/>
+  
+  <!-- Connections (H2 to Output) -->
+  <line x1="510" y1="140" x2="560" y2="200" stroke="#ccc" stroke-width="1"/>
+  <line x1="510" y1="140" x2="560" y2="240" stroke="#ccc" stroke-width="1"/>
+  <line x1="510" y1="180" x2="560" y2="200" stroke="#ccc" stroke-width="1"/>
+  <line x1="510" y1="180" x2="560" y2="240" stroke="#ccc" stroke-width="1"/>
+  
+</svg>

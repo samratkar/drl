@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <!-- Background State Space -->
+  <rect x="10" y="10" width="380" height="280" fill="#f0f8ff" stroke="#333" stroke-width="2" rx="8" ry="8"/>
+  <text x="20" y="30" font-family="Arial" font-size="14" fill="#333">2D State Space</text>
+  
+  <!-- Circles (Features) -->
+  <circle cx="100" cy="150" r="70" fill="rgba(255, 99, 71, 0.3)" stroke="#ff6347" stroke-width="2"/>
+  <circle cx="150" cy="120" r="80" fill="rgba(60, 179, 113, 0.3)" stroke="#3cb371" stroke-width="2"/>
+  <circle cx="200" cy="200" r="60" fill="rgba(100, 149, 237, 0.3)" stroke="#6495ed" stroke-width="2"/>
+  <circle cx="250" cy="100" r="75" fill="rgba(255, 165, 0, 0.3)" stroke="#ffa500" stroke-width="2"/>
+  <circle cx="300" cy="180" r="65" fill="rgba(147, 112, 219, 0.3)" stroke="#9370db" stroke-width="2"/>
+  
+  <!-- State Point S -->
+  <circle cx="160" cy="140" r="5" fill="#000"/>
+  <text x="165" y="135" font-family="Arial" font-size="16" font-weight="bold">s</text>
+  
+  <text x="10" y="295" font-family="Arial" font-size="12" fill="#555">Point 's' is active in the red and green features, but not others.</text>
+</svg>
