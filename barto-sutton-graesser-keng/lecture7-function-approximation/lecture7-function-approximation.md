@@ -65,6 +65,10 @@ $$ \overline{VE}(\mathbf{w}) \doteq \sum_{s \in \mathcal{S}} \mu(s) \big[ v_\pi(
 
 We want to find the weights $\mathbf{w}$ that minimize $\overline{VE}$. The standard tool from machine learning is **Stochastic Gradient Descent (SGD)**.
 
+**What does SGD mean in Reinforcement Learning?**
+- **Gradient Descent** is the mathematical process of finding the minimum of an error function by calculating the gradient (the slope) and taking a step in the opposite direction (downhill).
+- **Stochastic** means "randomly determined." In traditional ML, we might calculate the exact gradient using the entire dataset at once (which is computationally expensive). In RL, the agent constantly experiences new individual transitions (states, actions, rewards). Because it updates its weights on-the-fly based on these single, sequentially occurring experiences rather than a static dataset, the process is perfectly modeled as *Stochastic* Gradient Descent.
+
 ### Mathematical Derivation of the SGD Update
 For a single observed state $S_t$, we want to minimize the squared error between the true value and our estimate. We define our objective function $J(\mathbf{w})$ and multiply it by $\frac{1}{2}$ for mathematical convenience (it cancels out the exponent during differentiation):
 
@@ -93,10 +97,15 @@ $$ \mathbf{w}_{t+1} \doteq \mathbf{w}_t + \alpha \big[ v_\pi(S_t) - \hat{v}(S_t,
 ### The "Semi-Gradient" Problem
 In RL, we *don't know* the true $v_\pi(S_t)$. We must use a **target** $U_t$ as a substitute.
 
-*   **Monte Carlo Target:** $U_t = G_t$ (the actual return). This is an unbiased estimate of $v_\pi(S_t)$. Using $G_t$ gives us true SGD.
+*   **Monte Carlo Target:** $U_t = G_t$ (the actual return). The actual return $G_t$ is a fixed number that has already happened; it doesn't depend on our weights $\mathbf{w}$. Taking the derivative is clean, giving us true SGD.
 *   **TD(0) Target:** $U_t = R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w}_t)$. 
 
-Notice the problem with TD(0): The target itself *depends* on the weights $\mathbf{w}_t$! True gradient descent requires the target to be independent of the weights we are updating. Because we ignore the gradient of the target, this is called **Semi-gradient descent**.
+Notice the problem with TD(0): The target itself *depends* on the weights $\mathbf{w}_t$ we are trying to update! 
+
+If we were doing *true* gradient descent, the math would require us to use the product/chain rules to calculate the derivative of the target as well (which would be $\gamma \nabla \hat{v}(S_{t+1}, \mathbf{w}_t)$). 
+However, in TD learning, we explicitly **ignore the gradient of the target**. We freeze the target $R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w}_t)$ and treat it as if it were a fixed, constant number. We *only* calculate the gradient of our current estimate $\hat{v}(S_t, \mathbf{w}_t)$. 
+
+Because we only take the gradient with respect to the estimate and deliberately *ignore* the weight dependency inside the target, we are only doing "half" of a true gradient calculation. Hence, it is called **Semi-gradient descent**.
 
 Semi-gradient methods are not guaranteed to converge as robustly as true SGD, but they learn much faster, can be online, and work for continuing problems.
 
@@ -166,8 +175,7 @@ The Fourier basis is another linear feature construction method. Instead of usin
 ### 5.5 Radial Basis Functions (RBFs)
 RBFs are the continuous counterpart to coarse coding. Instead of a feature being strictly $1$ or $0$ (inside or outside a circle), an RBF feature takes a continuous value between $0$ and $1$ based on the distance from the center of the feature.
 Typically, a Gaussian function is used:
-$x_i(s) = \exp\left(-\frac{||s - c_i||^2}{2\sigma_i^2}
-ight)$
+$x_i(s) = \exp\left(-\frac{||s - c_i||^2}{2\sigma_i^2}\right)$
 where $c_i$ is the center state of the feature and $\sigma_i$ is its width.
 
 ---
@@ -177,7 +185,8 @@ where $c_i$ is the center state of the feature and $\sigma_i$ is its width.
 While linear methods are mathematically well-understood and guarantee convergence for on-policy prediction, they are heavily restricted by the features we hand-craft for them.
 
 **Artificial Neural Networks (ANNs)** are non-linear function approximators. 
-- They automatically learn the features (in their hidden layers) directly from raw state data.
+- **No Hand-Crafting Required:** You still feed inputs into a neural network, but these inputs can be *raw data* rather than carefully engineered features. The hidden layers automatically learn and construct the complex, non-linear, high-level features for you.
+- **Raw Data $\neq$ Random Data:** It is crucial to note that the raw data must still contain the necessary information (the signal) required to solve the task. You cannot feed the network random noise. For example, feeding raw RGB pixels of a video game screen works because the state of the game is visible in the pixels. Feeding the CPU temperature will fail because it contains no relevant information for playing the game. The network extracts the signal, but the signal must be present in the raw input.
 - They drop the convergence guarantees of linear methods (the $\overline{VE}$ landscape has many local optima).
 - Despite losing guarantees, they are the foundation of **Deep Reinforcement Learning (Deep RL)** due to their unparalleled ability to handle raw, high-dimensional inputs like pixels or continuous audio.
 
