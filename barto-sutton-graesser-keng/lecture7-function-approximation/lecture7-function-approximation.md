@@ -65,13 +65,30 @@ $$ \overline{VE}(\mathbf{w}) \doteq \sum_{s \in \mathcal{S}} \mu(s) \big[ v_\pi(
 
 We want to find the weights $\mathbf{w}$ that minimize $\overline{VE}$. The standard tool from machine learning is **Stochastic Gradient Descent (SGD)**.
 
-If we knew the *true* value $v_\pi(S_t)$, the standard SGD update rule to adjust the weights would be:
+### Mathematical Derivation of the SGD Update
+For a single observed state $S_t$, we want to minimize the squared error between the true value and our estimate. We define our objective function $J(\mathbf{w})$ and multiply it by $\frac{1}{2}$ for mathematical convenience (it cancels out the exponent during differentiation):
+
+$$ J(\mathbf{w}) = \frac{1}{2} \big[ v_\pi(S_t) - \hat{v}(S_t, \mathbf{w}) \big]^2 $$
+
+In Gradient Descent, we update weights in the *opposite* direction of the gradient of our error function $J$ to minimize it:
+$$ \mathbf{w}_{t+1} = \mathbf{w}_t - \alpha \nabla_{\mathbf{w}} J(\mathbf{w}_t) $$
+
+Using the chain rule, let's find the gradient $\nabla_{\mathbf{w}} J(\mathbf{w})$:
+1. Bring down the exponent 2 (which cancels with the $\frac{1}{2}$).
+2. Take the derivative of the inside of the brackets: since $v_\pi(S_t)$ is the true environment value and doesn't depend on our weights $\mathbf{w}$, its derivative is 0. The derivative of $-\hat{v}(S_t, \mathbf{w})$ is $-\nabla \hat{v}(S_t, \mathbf{w})$.
+
+$$ \nabla_{\mathbf{w}} J(\mathbf{w}_t) = \big[ v_\pi(S_t) - \hat{v}(S_t, \mathbf{w}_t) \big] \cdot \big( - \nabla \hat{v}(S_t, \mathbf{w}_t) \big) $$
+
+Substituting this back into our SGD update rule, the two negative signs cancel out, leaving us with a positive addition:
 
 $$ \mathbf{w}_{t+1} \doteq \mathbf{w}_t + \alpha \big[ v_\pi(S_t) - \hat{v}(S_t, \mathbf{w}_t) \big] \nabla \hat{v}(S_t, \mathbf{w}_t) $$
 
+### Understanding the Gradient's Role ($\nabla \hat{v}$)
 *   $\alpha$: Step-size / learning rate.
-*   $\big[ v_\pi(S_t) - \hat{v}(S_t, \mathbf{w}_t) \big]$: The error.
-*   $\nabla \hat{v}$: The gradient (direction to change weights to increase the estimate).
+*   $\big[ v_\pi(S_t) - \hat{v}(S_t, \mathbf{w}_t) \big]$: The scalar error (how wrong our prediction was).
+*   $\nabla \hat{v}(S_t, \mathbf{w}_t)$: The **gradient vector** (pronounced *nabla* v-hat). It acts as a compass, indicating the direction we should tweak the weights to make the output of $\hat{v}$ go up.
+  * If we **underestimated** (Error is **positive**): The equation *adds* the gradient to the weights, moving them in the direction that *increases* our value estimate.
+  * If we **overestimated** (Error is **negative**): The equation *subtracts* the gradient from the weights, moving them in the opposite direction to *decrease* our value estimate.
 
 ### The "Semi-Gradient" Problem
 In RL, we *don't know* the true $v_\pi(S_t)$. We must use a **target** $U_t$ as a substitute.
@@ -337,6 +354,110 @@ def AlphaGo_MCTS(root_state, policy_net, value_net, num_simulations):
     # Choose action with highest visit count at the root
     return most_visited_child(root_state)
 ```
+
+---
+
+## 12. Numerical Details: Value Approximation Case Study
+
+To solidify our understanding of function approximation, let's walk through a concrete numerical example based on the **T-Rex Chrome Dino Game**. This example illustrates how to compute value errors and update weights for both on-policy (SARSA) and off-policy (Q-learning) methods using a linear function approximator. More importantly, it demonstrates the **Maximization Bias** inherent in standard Q-learning and how **Double Q-Learning** resolves it.
+
+### Context and Problem Statement
+
+**Environment**: T-Rex Chrome Dino Game
+- **State Space**: Highly dimensional, continuous (e.g., speed, distance to obstacles).
+- **Action Space**: Discrete $\mathcal{A} = \{0: \text{No-Op}, 1: \text{Jump}, 2: \text{Duck}\}$.
+- **Objective**: Learn an optimal policy online with stable learning and fast convergence.
+
+Because the state space is large, tabular methods fail. We must use **function approximation**. We will use a linear approximator:
+$$ \hat{Q}(s, a, \mathbf{\theta}) \approx \mathbf{\theta}^T \mathbf{\phi}(s, a) $$
+
+### Feature Construction
+We use domain knowledge to construct a simple feature vector $\mathbf{\phi}(s, a)$ based on coarse coding:
+- $F_1$: Distance to the first obstacle
+- $F_2$: Height of the first obstacle
+- $F_3$: The action taken (encoded directly into the feature vector for simplicity)
+
+Consider two states:
+- **State $S_1$**: No obstacle nearby. Feature vector without action is $(1, 0)$. 
+  - If action $a=0$ (No-Op) is taken: $\mathbf{\phi}(S_1, a=0) = [1, 0, 0]^T$
+- **State $S_2$**: Approaching an obstacle. Feature vector without action is $(1, 1)$.
+  - If action $a=0$ (No-Op) is taken: $\mathbf{\phi}(S_2, a=0) = [1, 1, 0]^T$
+  - If action $a=1$ (Jump) is taken: $\mathbf{\phi}(S_2, a=1) = [1, 1, 1]^T$
+
+### Initialization & Hyperparameters
+- **Discount factor**: $\gamma = 0.2$
+- **Learning rate**: $\alpha = 0.9$
+- **Primary weights**: $\mathbf{\theta} = [1.0, 0.5, 1.0]^T$
+- **Secondary weights** (for Double Q-learning): $\mathbf{\theta}' = [0.1, 0.3, 1.0]^T$
+
+Let's observe a single transition: 
+**SARSA tuple**: $(S_1, A=0, R=2, S_2, A'=0)$
+
+---
+
+### Step 1: Estimating the Value Error (VE)
+
+First, we calculate the current estimate for the starting state-action pair:
+$$ \hat{Q}(S_1, a=0, \mathbf{\theta}) = \mathbf{\theta}^T \mathbf{\phi}(S_1, 0) = (1.0)(1) + (0.5)(0) + (1.0)(0) = 1.0 $$
+
+#### On-Policy Update (SARSA)
+SARSA uses the actual next action $A'=0$ to compute the target.
+- Next State-Action Value: 
+  $$ \hat{Q}(S_2, a'=0, \mathbf{\theta}) = \mathbf{\theta}^T \mathbf{\phi}(S_2, 0) = (1.0)(1) + (0.5)(1) + (1.0)(0) = 1.5 $$
+- **SARSA Target**: $R + \gamma \hat{Q}(S_2, a'=0, \mathbf{\theta}) = 2 + 0.2(1.5) = 2 + 0.3 = 2.3$
+- **Error**: $\text{Target} - \text{Estimate} = 2.3 - 1.0 = 1.3$
+
+#### Off-Policy Update (Q-Learning)
+Q-Learning evaluates all possible next actions and takes the maximum to compute the target.
+- Action 0 Value: $\hat{Q}(S_2, a'=0, \mathbf{\theta}) = 1.5$
+- Action 1 Value: $\hat{Q}(S_2, a'=1, \mathbf{\theta}) = (1.0)(1) + (0.5)(1) + (1.0)(1) = 2.5$
+- **Max Value**: $\max(1.5, 2.5) = 2.5$
+- **Q-Learning Target**: $R + \gamma \max_{a'} \hat{Q}(S_2, a', \mathbf{\theta}) = 2 + 0.2(2.5) = 2 + 0.5 = 2.5$
+- **Error**: $\text{Target} - \text{Estimate} = 2.5 - 1.0 = 1.5$
+
+---
+
+### Step 2: Updating the Model Parameters
+
+We use Stochastic Gradient Descent (SGD) to update our weights $\mathbf{\theta}$. The gradient of a linear function $\hat{Q}(s,a,\mathbf{\theta}) = \mathbf{\theta}^T \mathbf{\phi}(s,a)$ is simply the feature vector $\mathbf{\phi}(s,a)$.
+$$ \nabla_\mathbf{\theta} \hat{Q}(S_1, a=0, \mathbf{\theta}) = \mathbf{\phi}(S_1, 0) = [1, 0, 0]^T $$
+
+**Update Rule**: $\mathbf{\theta} \leftarrow \mathbf{\theta} + \alpha \cdot \text{Error} \cdot \nabla_\mathbf{\theta} \hat{Q}$
+
+- **SARSA Update**:
+  $$ \mathbf{\theta} \leftarrow [1.0, 0.5, 1.0]^T + 0.9 (1.3) [1, 0, 0]^T = [1.0, 0.5, 1.0]^T + [1.17, 0, 0]^T = [2.17, 0.5, 1.0]^T $$
+
+- **Q-Learning Update**:
+  $$ \mathbf{\theta} \leftarrow [1.0, 0.5, 1.0]^T + 0.9 (1.5) [1, 0, 0]^T = [1.0, 0.5, 1.0]^T + [1.35, 0, 0]^T = [2.35, 0.5, 1.0]^T $$
+
+---
+
+### Step 3: Understanding Maximization Bias and Double Q-Learning
+
+Let's assume the **true value** of the next state $S_2$ is actually much lower: $Q_{true}(S_2, 0) = Q_{true}(S_2, 1) = 0.5$.
+If the true value is $0.5$, the expected target should be:
+$$ \text{Expected Target} = R + \gamma \max_{a'} Q_{true}(S_2, a') = 2 + 0.2(0.5) = 2.1 $$
+
+However, our primary weight vector $\mathbf{\theta}$ is currently noisy. It estimates $\hat{Q}(S_2, 0) = 1.5$ and $\hat{Q}(S_2, 1) = 2.5$. 
+Because standard Q-learning takes the `MAX` over these noisy estimates, it aggressively selects the overestimated value ($2.5$). As computed in Step 1, this results in a Q-learning target of **$2.5$**. 
+This is a severe **Maximization Bias**: the computed target $2.5$ is significantly higher than the true expected target of $2.1$.
+
+#### The Solution: Double Q-Learning
+To prevent maximization bias, Double Q-learning decouples *action selection* from *action evaluation* by using two independent models ($\mathbf{\theta}$ and $\mathbf{\theta}'$).
+
+1. **Action Selection (using $\mathbf{\theta}$)**: 
+   Find the best action using the primary weights.
+   $$ a^* = \arg\max_{a'} \hat{Q}(S_2, a', \mathbf{\theta}) = \arg\max_{a'}(1.5, 2.5) \rightarrow \text{Action } 1 $$
+
+2. **Action Evaluation (using $\mathbf{\theta}'$)**: 
+   Evaluate the chosen action $a^*=1$ using the secondary weights $\mathbf{\theta}' = [0.1, 0.3, 1.0]^T$.
+   $$ \hat{Q}(S_2, a^*=1, \mathbf{\theta}') = \mathbf{\theta}'^T \mathbf{\phi}(S_2, 1) = (0.1)(1) + (0.3)(1) + (1.0)(1) = 1.4 $$
+
+3. **Compute Unbiased Target and Error**:
+   $$ \text{Target}_{DDQN} = R + \gamma \hat{Q}(S_2, a^*=1, \mathbf{\theta}') = 2 + 0.2(1.4) = 2 + 0.28 = 2.28 $$
+   $$ \text{Error}_{DDQN} = 2.28 - 1.0 = 1.28 $$
+
+**Conclusion**: The Double Q-Learning target ($2.28$) is much closer to the true expected target ($2.1$) than the biased standard Q-learning target ($2.5$). By evaluating the selected action with a separate set of weights, we successfully mitigated the positive bias caused by the `MAX` operation!
 
 ---
 

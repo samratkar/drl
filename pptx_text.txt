@@ -1,0 +1,1217 @@
+
+--- ppt/slides/slide1.xml ---
+Session 
+#11: 
+Value Based DRL Methods :
+On/Off Policy 
+Prediction with Approximation
+Section Faculty  
+Raja 
+vadhana
+ (
+raja.vadhana@pilani.bits-pilani.ac.in
+)
+Lead Instructor In Charge : (IC) 
+2024 – 25 
+Second 
+Semester, 
+M.Tech
+ (AIML)
+
+--- ppt/slides/slide2.xml ---
+Agenda for the classes 
+2
+Feature Constructions for Linear Methods 
+Off Policy Function Approximation  
+On 
+Policy 
+Function Approximation
+Deep Q Network
+Double DQN
+Acknowledgements
+: Some of the slides were adopted 
+with permission
+ from the course 
+CSCE-689
+  (Texas A&M University) by Prof.  Guni Sharon
+
+--- ppt/slides/slide3.xml ---
+T-Rex Chrome Dino Game
+3
+State
+ Space : Larger in Dimension
+Action Space : { 0 - No Ops , 1 – Jump , 2 - Duck }
+Choice : Value based function approximation
+Require : Sample efficient learning with fast convergence
+Choice 
+: Off policy – Q learning
+Require : Online stable learning 
+Choice 
+: On policy - SARSA
+Vs
+
+--- ppt/slides/slide4.xml ---
+T-Rex Chrome 
+Dino Game
+Feature selection
+4
+State
+ Space : Larger in Dimension
+Feature Construction
+Lets use coarse coding to construct feature for below sample states S1 & S2:
+Distance to the First obstacle
+Height of first obstacle 
+F2
+F1
+S2: 
+ϕ(
+1
+,
+1
+)
+S1: 
+ϕ(
+1
+,0
+)
+Features are domain dependent 
+requiring 
+expert knowledge
+ 
+
+--- ppt/slides/slide5.xml ---
+T-Rex Chrome 
+Dino Game
+Initialize Hyper parameters
+5
+State
+ Space : Larger in Dimension
+Lets use the assumed hyper parameters & 
+value initialization. The 
+θ
+` 
+is intended to be used in double Q –learning! 
+By default let the policy select action based on 
+ϵ-
+greedy. Assume that only actions {0,1} are designed
+Distance to the First obstacle
+Height of first obstacle 
+F2
+F1
+S2: 
+ϕ(
+1
+,
+1
+)
+S1: 
+ϕ(
+1
+,0
+)
+Initial weights
+: 
+θ=[1.0,0.5]
+θ`
+=[0.5,1.0]
+Discount
+ 
+γ=0.
+2
+Learning 
+rate
+ 
+α=0.
+9
+TD(n) 
+: n=0
+Features are domain dependent 
+requiring 
+expert knowledge
+
+--- ppt/slides/slide6.xml ---
+T-Rex Chrome 
+Dino Game
+Start the Episode
+6
+State
+ Space : Larger in Dimension
+Assume TD(0) 1
+st
+ time step 
+SARSA 
+=
+ (S1, action : 0, reward : 2points, S2, action : 0 )   
+Distance to the First obstacle
+Height of first obstacle 
+F2
+F1
+S2: 
+ϕ(
+1
+,
+1
+)
+S1: 
+ϕ(
+1
+,0
+)
+Initial weights
+: 
+θ=[1.0,0.5,1.0]
+θ`
+=[0.5,1.0,1.0]
+Discount
+ 
+γ=0.
+2
+Learning 
+rate
+ 
+α=0.
+9
+TD(n) 
+: n=0
+Lets use SARSA as well as Q-Learning to perform one iteration of GD on the parameters 
+θ
+ . 
+To estimate Q Value its desirable to encode the actions as a part of the feature vector
+!
+For simplicity lets append the action value with the state vector designed
+Eg
+.,
+ 
+S1
+: 
+ϕ(
+1
+,0
+,0
+)
+ if no action is performed . 
+S2: 
+ϕ(
+1
+,
+1,0
+)
+ if no action is performed
+S3: 
+ϕ(
+1
+,
+1,1
+)
+ 
+if 
+“jump” 
+action is 
+performed
+……
+The parameters are modified to include the design
+
+--- ppt/slides/slide7.xml ---
+On Policy Approximation for Action 
+Value
+SARSA
+ 
+7
+
+--- ppt/slides/slide8.xml ---
+Off 
+Policy Approximation for Action Value 
+Original 
+Q-learning 
+8
+ 
+
+--- ppt/slides/slide9.xml ---
+T-Rex Chrome Dino Game
+Estimate the VE: Value Error
+9
+SARSA = (S1, action : 0, reward : 2points, S2, action : 0 ) 
+Error 
+= Target 
+– Estimate
+Current Estimate =
+ 
+Q(s1,a=0,
+θ
+) = 1
+On policy – 
+SARSA
+Error = 
+r + γ Q(s2′,a′=0,
+θ
+ ) 
+- 
+Q(s1,a=0,
+θ
+)
+=
+ 
+2 + 0.2 
+ 
+ 
+ 
+ 
+= 2.3-1 = 1.3
+ 
+Off policy – Q learning
+Error = 
+r + γ 
+MAX {
+ 
+	
+	Q(s2′,
+a
+′=0,
+θ
+), 
+Q(s2′,a
+′=1,
+θ
+)
+ 
+	
+	}
+ 
+	 
+    
+- 
+Q(s1,a=0,
+θ
+)
+= 
+ 
+2 + 0.2 
+MAX{
+ 
+ 
+ 
+ 
+=
+ 
+2 + 0.2 
+MAX{
+1
+ 
+= 2.5-1 = 1.5
+ 
+Vs
+Initial weights
+: 
+θ=[1.0,0.5,1.0]
+θ`=[0.1,0.3,1.0
+]
+Discount
+ 
+γ=0.
+2
+Learning 
+rate
+ 
+α=0.
+9
+TD(n) 
+: n=0
+S1: 
+ϕ(
+1
+,0
+,0
+)
+S2: 
+ϕ(
+1
+,
+1,0
+)
+
+--- ppt/slides/slide10.xml ---
+T-Rex Chrome Dino Game
+Update the Model Parameters
+10
+SARSA = (S1, action : 0, reward : 2points, S2, action : 0 ) 
+Error 
+= Target 
+– Estimate
+Current Estimate =
+ 
+Q(s1,a=0,
+θ
+) = 1
+On policy – SARSA
+Error =
+ 1.3
+Update the parameter using SGD: 
+θ←θ+α⋅Error⋅∇θ​Q(s1,a=0
+,
+θ
+)
+= 
+ 
+ 
++ 0.9*1.3* 
+ = 
+ 
+ 
+Off policy – Q learning
+Error = 
+1.5
+Update the parameter using SGD: 
+θ←θ+α⋅Error⋅∇θ​Q(s1,a=0
+,
+θ
+)
+= 
+ 
+ 
++ 
+0.9*1.5* 
+ = 
+ 
+ 
+Vs
+Initial weights
+: 
+θ=[1.0,0.5,1.0]
+θ`=[0.1,0.3,1.0
+]
+Discount
+ 
+γ=0.
+2
+Learning 
+rate
+ 
+α=0.
+9
+TD(n) 
+: n=0
+S1: 
+ϕ(
+1
+,0
+,0
+)
+S2: 
+ϕ(
+1
+,
+1,0
+)
+
+--- ppt/slides/slide11.xml ---
+T-Rex Chrome Dino Game
+Optimize the Performance
+11
+SARSA = (S1, action : 0, reward : 2points, S2, action : 0 ) 
+Error 
+= Target 
+– Estimate
+Current Estimate =
+ 
+Q(s1,a=0,
+θ
+) = 1
+Understanding Maximization bias
+Off policy – Q learning
+Error = 
+1.5
+Update the parameter using SGD: 
+θ←θ+α⋅Error⋅∇θ​Q(s1,a=0
+,
+θ
+)
+= 
+ 
+ 
++ 
+0.9*1.5* 
+ = 
+ 
+ 
+Initial weights
+: 
+θ=[1.0,0.5,1.0]
+θ`=[0.1,0.3,1.0
+]
+Discount
+ 
+γ=0.
+2
+Learning 
+rate
+ 
+α=0.
+9
+TD(n) 
+: n=0
+S1: 
+ϕ(
+1
+,0
+,0
+)
+S2: 
+ϕ(
+1
+,
+1,0
+)
+Observation
+: 
+Though it may try to converge faster, it is biased due to MAX function resulting in Maximization bias 
+
+--- ppt/slides/slide12.xml ---
+T-Rex Chrome Dino Game
+Optimize the Performance
+12
+SARSA = (S1, action : 0, reward : 2points, S2, action : 0 ) 
+Error 
+= Target 
+– Estimate
+Current Estimate =
+ 
+Q(s1,a=0,
+θ
+) = 1
+Understanding Maximization bias
+True value of Q(S2,0) = Q(S2,1) = 2.0
+The
+ 
+θ=[1.0,0.5,1.0
+] produces noisy estimates for : 
+Q(S2,0) = 
+1.5 & Q(S2,1
+) = 
+2.5, 
+resulting in 2.5 as target value which is an overestimation due to bias.
+But given above true value target ~2.1 is expected. 
+Solution
+: Decouple the action selection from action evaluation using two independent models!! 
+Off policy – Q learning
+Error = 
+r + γ 
+MAX {
+ 
+	
+	Q(s2′,
+a
+′=0,
+θ
+), 
+Q(s2′,a
+′=1,
+θ
+)
+ 
+	
+	}
+ 
+	 
+    
+- 
+Q(s1,a=0,
+θ
+)
+= 
+ 
+2 + 0.2 
+MAX{
+ 
+ 
+ 
+ 
+=
+ 
+2 + 0.2 
+MAX{
+1
+ 
+= 2.5-1 = 1.5
+ 
+Initial weights
+: 
+θ=[1.0,0.5,1.0]
+θ`=[0.1,0.3,1.0
+]
+Discount
+ 
+γ=0.
+2
+Learning 
+rate
+ 
+α=0.
+9
+TD(n) 
+: n=0
+S1: 
+ϕ(
+1
+,0
+,0
+)
+S2: 
+ϕ(
+1
+,
+1,0
+)
+
+--- ppt/slides/slide13.xml ---
+T-Rex Chrome Dino Game
+Optimize the Performance
+13
+SARSA = (S1, action : 0, reward : 2points, S2, action : 0 ) 
+Error 
+= Target 
+– Estimate
+Current Estimate =
+ 
+Q(s1,a=0,
+θ
+) = 1
+Understanding Maximization bias
+True value of Q(S2,0) = Q(S2,1) = 2.0
+The
+ 
+θ=[1.0,0.5,1.0
+] produces noisy estimates for : 
+Q(S2,0) = 
+1.5 & Q(S2,1
+) = 
+2.5, 
+resulting in 2.5 as target value which is an overestimation due to bias.
+But given above true value target ~2.1 is expected. 
+Solution
+: Decouple the action selection from action evaluation using two independent models!! 
+Off policy – Double Q - Learning
+Instead of 
+MAX
+ function in above target, 
+Use θ 
+for action a` selection in the next state S2
+Use 
+θ
+` 
+for estimating
+ 
+Q(s2
+′,a
+′,
+θ`
+)
+Role of model can be reversed
+Initial weights
+: 
+θ=[1.0,0.5,1.0]
+θ`=[0.1,0.3,1.0
+]
+Discount
+ 
+γ=0.
+2
+Learning 
+rate
+ 
+α=0.
+9
+TD(n) 
+: n=0
+S1: 
+ϕ(
+1
+,0
+,0
+)
+S2: 
+ϕ(
+1
+,
+1,0
+)
+Error = 
+r + γ 
+MAX {
+ 
+		Q(s2′,a′=0,
+θ
+), Q(s2′,a′=1,
+θ
+) 
+		}
+ 
+	     
+- 
+Q(s1,a=0,
+θ
+)
+
+--- ppt/slides/slide14.xml ---
+T-Rex Chrome Dino Game
+Optimize the Performance
+14
+SARSA = (S1, action : 0, reward : 2points, S2, action : 0 ) 
+Error 
+= Target 
+– Estimate
+Current Estimate =
+ 
+Q(s1,a=0,
+θ
+) = 1
+Effect of the Double Q - Learning
+True value of Q(S2,0) = Q(S2,1) = 2.0
+Use θ 
+for action a` selection in the next state S2
+:
+ ARGMAX 
+{ 
+Q(s2
+′,a′=0,
+θ), 
+Q(s2′,a′=1,
+θ) 
+} 
+= 
+ARGMAX 
+{
+ 
+ 
+} 
+= 
+ARGMAX 
+{
+ 
+}
+ 
+ Action a1
+ 
+Off policy – Double Q - Learning
+Instead of 
+MAX
+ function in above target, 
+Use θ 
+for action a` selection in the next state S2
+Use 
+θ
+` 
+for estimating
+ 
+Q(s2
+′,a
+′,
+θ`
+)
+Role of model can be reversed
+Initial weights
+: 
+θ=[1.0,0.5,1.0]
+θ`=[0.1,0.3,1.0
+]
+Discount
+ 
+γ=0.
+2
+Learning 
+rate
+ 
+α=0.
+9
+TD(n) 
+: n=0
+S1: 
+ϕ(
+1
+,0
+,0
+)
+S2: 
+ϕ(
+1
+,
+1,0
+)
+Error = 
+r + γ 
+MAX {
+ 
+		Q(s2′,a′=0,
+θ
+), Q(s2′,a′=1,
+θ
+) 
+		}
+ 
+	     
+- 
+Q(s1,a=0,
+θ
+)
+
+--- ppt/slides/slide15.xml ---
+T-Rex Chrome Dino Game
+Optimize the Performance
+15
+SARSA = (S1, action : 0, reward : 2points, S2, action : 0 ) 
+Error 
+= Target 
+– Estimate
+Current Estimate =
+ 
+Q(s1,a=0,
+θ
+) = 1
+Effect of the Double Q - Learning
+True value of Q(S2,0) = Q(S2,1) = 2.0
+Use θ 
+for action a` selection in the next state 
+S2: 
+Action a1
+Use 
+θ` 
+for estimating
+ 
+Q(s2′,a
+′,
+θ`
+)
+= 
+ 
+ = 1.4
+2+0.2(1.4) =
+ 2.28
+ value is a closer target to 1.0 than 2.5!This reduces overestimation problem
+ 
+Off policy – Double Q - Learning
+Instead of 
+MAX
+ function in above target, 
+Use θ 
+for action a` selection in the next state S2
+Use 
+θ
+` 
+for estimating
+ 
+Q(s2
+′,a
+′,
+θ`
+)
+Role of model can be reversed
+Initial weights
+: 
+θ=[1.0,0.5,1.0]
+θ
+`=[0.1,0.3,1.0
+]
+Discount
+ 
+γ=0.
+2
+Learning 
+rate
+ 
+α=0.
+9
+TD(n) 
+: n=0
+S1: 
+ϕ(
+1
+,0
+,0
+)
+S2: 
+ϕ(
+1
+,
+1,0
+)
+Error = 
+r + γ 
+MAX {
+ 
+		Q(s2′,a′=0,
+θ
+), Q(s2′,a′=1,
+θ
+) 
+		}
+ 
+	     
+- 
+Q(s1,a=0,
+θ
+)
+
+--- ppt/slides/slide16.xml ---
+T-Rex Chrome Dino Game
+Optimize the Performance
+16
+SARSA = (S1, action : 0, reward : 2points, S2, action : 0 ) 
+Error 
+= Target 
+– Estimate
+Current Estimate =
+ 
+Q(s1,a=0,
+θ
+) = 1
+Understanding Maximization bias
+True value of Q(S2,0) = Q(S2,1) = 0.5
+Use θ 
+for action a` selection in the next state 
+S2: 
+Action a1
+Use 
+θ` 
+for estimating
+ 
+Q(s2′,a
+′,
+θ`
+)
+= 
+ 
+ = 1.4
+ 
+Off policy – Double Q - Learning
+Error = 
+r + 
+γ Q(s2
+′
+,
+a
+′=argmax(Q(s2
+′,a
+′,
+θ
+))
+ 
+,
+θ`
+)  
+	     
+- 
+Q(s1,a=0,
+θ
+)
+= 
+ 
+2 + 0.2 
+ 
+ 
+=
+ 
+2
+ 
+=1.28
+Update the parameter using SGD:
+ 
+θ←θ+α⋅Error⋅∇θ​Q(s1,a=0
+,
+θ
+)
+= 
+ 
+ + 
+0.9*
+1.28
+* 
+ = 
+ 
+= 
+ 
+ 
+Initial weights
+: 
+θ=[1.0,0.5,1.0]
+θ`=[0.1,0.3,1.0
+]
+Discount
+ 
+γ=0.
+2
+Learning 
+rate
+ 
+α=0.
+9
+TD(n) 
+: n=0
+S1: 
+ϕ(
+1
+,0
+,0
+)
+S2: 
+ϕ(
+1
+,
+1,0
+)
+
+--- ppt/slides/slide17.xml ---
+T-Rex Chrome Dino Game
+Optimize the Performance
+17
+SARSA = (S1, action : 0, reward : 2points, S2, action : 0 ) 
+Error 
+= Target 
+– Estimate
+Current Estimate =
+ 
+Q(s1,a=0,
+θ
+) = 1
+Every consecutive sequence of states in this  game is mostly highly correlated!! And if non-linear function approximated is used off policy learnt parameter this affects with diverging updates leading to unstable learning. 
+Solution : 
+Use Experience Replay to store & use past experience
+ (
+ie
+.,SARSA 
+). Instead of SGD use , mini Batch GD by randomly sampling from the buffer. This can be used in DQN as well as DDQN.
+Off policy – Double Q - Learning
+Error = 
+r + 
+γ Q(s2
+′
+,
+a
+′=argmax(Q(s2
+′,a
+′,
+θ
+))
+ 
+,
+θ`
+)  
+	     
+- 
+Q(s1,a=0,
+θ
+)
+= 
+ 
+2 + 0.2 
+ 
+ 
+=
+ 
+2
+ 
+=1.28
+Update the parameter using SGD:
+ 
+θ←θ+α⋅Error⋅∇θ​Q(s1,a=0
+,
+θ
+)
+= 
+ 
+ + 
+0.9*
+1.28
+* 
+ = 
+ 
+= 
+ 
+ 
+Initial weights
+: 
+θ=[1.0,0.5,1.0]
+θ`=[0.1,0.3,1.0
+]
+Discount
+ 
+γ=0.
+2
+Learning 
+rate
+ 
+α=0.
+9
+TD(n) 
+: n=0
+S1: 
+ϕ(
+1
+,0
+,0
+)
+S2: 
+ϕ(
+1
+,
+1,0
+)
+
+--- ppt/slides/slide18.xml ---
+Experience replay 
+DQN only stores the last N experience tuples in the replay memory
+Old transitions are overwritten
+Samples uniformly at random from the buffer when performing updates
+Is there room for improvement?
+Important transitions?
+Prioritized sweeping 
+Prioritize deletions from the replay memory
+see prioritized experience reply, https://arxiv.org/abs/1511.05952
+18
+
+--- ppt/slides/slide19.xml ---
+ 
+ 
+19
+Deep Q learning 
+[
+Mnih
+ et al. 2015]
+
+--- ppt/slides/slide20.xml ---
+Q-learning with experience replay
+ 
+20
+
+--- ppt/slides/slide21.xml ---
+Play 
+m
+ episodes (full games)
+Q-learning with experience replay
+21
+
+--- ppt/slides/slide22.xml ---
+ 
+22
+Q-learning with experience replay
+
+--- ppt/slides/slide23.xml ---
+For each time step during the episode
+23
+Q-learning with experience replay
+
+--- ppt/slides/slide24.xml ---
+With small probability select a random action (explore), otherwise select the, currently known, best action (exploit).
+24
+Q-learning with experience replay
+
+--- ppt/slides/slide25.xml ---
+Execute the chosen action and store the (processed) observed transition in the replay memory 
+25
+Q-learning with experience replay
+
+--- ppt/slides/slide26.xml ---
+ 
+26
+Q-learning with experience replay
+
+--- ppt/slides/slide27.xml ---
+ 
+27
+Q-learning with experience replay
+
+--- ppt/slides/slide28.xml ---
+ 
+28
+Q-learning with experience replay
+
+--- ppt/slides/slide29.xml ---
+Results: DQN
+ 
+29
+
+--- ppt/slides/slide30.xml ---
+Results: DQN
+Average predicted action-value on a held-out set of states on Space Invaders (c) and 
+Seaquest
+ (d)
+30
+
+--- ppt/slides/slide31.xml ---
+Normalized between a professional human games tester (100%) and random play (0%)
+E.g., in Pong, DQN achieved a factor of 1.32 higher score on average when compared to a professional human player
+31
+
+--- ppt/slides/slide32.xml ---
+ 
+Deep Q Network : Summary
+Utilizing 
+experience replay has several advantages
+Each step of experience is potentially used in many weight updates, which allows for greater data efficiency
+Learning directly from consecutive samples is inefficient, due to the strong correlations between the samples; randomizing the samples breaks these correlations and therefore reduces the variance of the updates
+The behavior distribution is averaged over many of its previous states, smoothing out learning and avoiding oscillations or divergence in the parameters
+Note
+ that when learning by experience replay, it is necessary to learn off-policy 
+(because our current parameters are different to those used to generate the sample)
+, which motivates the choice of Q-learning
+32
+
+--- ppt/slides/slide33.xml ---
+Double Deep Q networks (DDQN)
+33
+We have two available Q networks. Let's use them for double learning 
+
+--- ppt/slides/slide34.xml ---
+Double Deep Q networks (DDQN)
+ 
+34
+We have two available Q networks. Let's use them for double learning 
+
+--- ppt/slides/slide35.xml ---
+Hasselt et al. 
+2015
+The 
+straight horizontal orange (for DQN) and blue (for Double DQN) lines in the top row are computed by running the corresponding agents after learning concluded, and averaging the actual discounted return obtained from each visited state. These straight lines would match the learning curves at the right side of the plots if there is no bias.
+35
+
+--- ppt/slides/slide36.xml ---
+What did we learn?
+Using deep neural networks as function 
+approximators
+ in RL is tricky
+Sparse samples
+Correlated samples
+Evolving policy (nonstationary sample distribution)
+DQN attempts to address these issues
+Reuse previous transitions at each training (SGD) step
+Randomly sample previous transitions to break correlation
+Use off-policy, TD(0) learning to allow convergence to the true target values (Q*)
+No guarantees for non-linear (DNN) 
+approximators
+36
+
+--- ppt/slides/slide37.xml ---
+Required Readings
+37
+DQN 
+: 
+https://
+arxiv.org/abs/1312.5602
+Chapter – 4 , 5 of Foundations of Deep Reinforcement Learning, 2020 Ed., Laura 
+Graesser
+ & 
+Wah
+ loo 
+Keng
+Chapter 6.7 -  of Introduction to Reinforcement Learning,2
+nd
+ Ed.,  Sutton & 
+Barto
+DDQN : 
+https://
+arxiv.org/abs/1509.06461
+Rainbow : 
+https://
+arxiv.org/abs/1710.02298
+
+--- ppt/slides/slide38.xml ---
+Thank you
+38
