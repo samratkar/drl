@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Solutions to MCQs (Chapter 9)
 
 1. **b) The state space is continuous and too large.** (Tabular methods require a discrete table entry for every possible state).

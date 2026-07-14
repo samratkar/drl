@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Numerical Questions (Lecture 9: Policy Gradients)
 
 **Question 1: The REINFORCE Update**

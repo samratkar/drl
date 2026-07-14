@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Subjective Questions (Chapter 9: Function Approximation)
 
 1. **The Core Trade-off:** Explain the fundamental trade-off introduced when switching from tabular prediction to function approximation in terms of value estimation accuracy and learning speed.

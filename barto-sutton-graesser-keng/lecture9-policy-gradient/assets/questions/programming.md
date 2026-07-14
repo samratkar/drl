@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Programming Questions (Lecture 9: Policy Gradients)
 
 **Question 1: Implementing the REINFORCE Loss in PyTorch**

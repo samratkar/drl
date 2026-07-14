@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Numerical Questions (Lecture 8: Deep Q-Learning)
 
 **Question 1: Target Calculation (DQN vs DDQN)**

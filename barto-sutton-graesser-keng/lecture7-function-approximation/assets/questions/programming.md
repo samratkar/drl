@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Programming Questions (Chapter 9: Function Approximation)
 
 **Question 1: Implementing Semi-gradient TD(0)**

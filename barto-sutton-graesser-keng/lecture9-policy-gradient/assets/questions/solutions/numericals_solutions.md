@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Solutions to Numerical Questions (Lecture 9)
 
 **Question 1 Solution:**

@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Solutions to Programming Questions (Chapter 9)
 
 **Question 1 Solution:**

@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Multiple Choice Questions (Lecture 8: Deep Q-Learning)
 
 1. What is the primary purpose of Experience Replay in DQN?

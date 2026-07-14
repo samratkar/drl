@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Multiple Choice Questions (Lecture 10: PPO)
 
 1. What is the primary problem with standard Policy Gradient methods that PPO attempts to solve?

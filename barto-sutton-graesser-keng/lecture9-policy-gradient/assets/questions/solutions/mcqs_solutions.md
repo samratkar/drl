@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Solutions to MCQs (Lecture 9)
 
 1. **b) Policy Gradients can naturally handle continuous action spaces.** (By outputting parameters of a continuous distribution, like mean and variance of a Gaussian).

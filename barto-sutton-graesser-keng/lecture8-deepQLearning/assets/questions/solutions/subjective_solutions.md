@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Solutions to Subjective Questions (Lecture 8)
 
 1. **The Curse of Dimensionality:** Atari states are raw RGB pixels. Even downsampled to 84x84, the number of possible states is astronomically large ($256^{84\times84\times1}$ for grayscale). A tabular method requires a distinct memory slot for every possible state, which is computationally impossible and prevents generalization. Function approximation solves this by learning a compressed representation (weights) that maps similar pixel inputs to similar Q-values, generalizing across states without memorizing them.

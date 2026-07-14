@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Numerical Questions (Chapter 9: Function Approximation)
 
 **Question 1: Linear Semi-gradient TD Update**

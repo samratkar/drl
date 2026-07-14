@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Multiple Choice Questions (Chapter 9: Function Approximation)
 
 1. Why do tabular methods fail in environments like autonomous driving?

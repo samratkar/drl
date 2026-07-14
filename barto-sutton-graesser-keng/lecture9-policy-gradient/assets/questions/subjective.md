@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Subjective Questions (Lecture 9: Policy Gradients)
 
 1. **Stochastic Policies:** Explain why a deterministic policy (like one learned by Q-learning) would fail in a game of Rock-Paper-Scissors against an intelligent opponent, and how Policy Gradients overcome this.

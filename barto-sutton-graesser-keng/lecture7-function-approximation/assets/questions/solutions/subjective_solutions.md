@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Solutions to Subjective Questions (Chapter 9)
 
 1. **The Core Trade-off:** In tabular methods, we can achieve perfect accuracy for every state (asymptotically) because each state has its own independent parameter. However, learning is extremely slow because visiting one state teaches us nothing about others. Function approximation sacrifices perfect accuracy (we can no longer perfectly represent the value of *every* state due to fewer parameters than states) in exchange for generalization and vastly faster learning, as an update to one state improves the estimates of all similar states.

@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Numerical Questions (Lecture 10: PPO)
 
 **Question 1: PPO Objective Calculation**

@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Solutions to MCQs (Lecture 8)
 
 1. **c) To break the temporal correlations in sequential data, making it pseudo-i.i.d.** (Sequential states $S_t$ and $S_{t+1}$ are highly correlated; random sampling from a buffer destroys this correlation, stabilizing SGD).

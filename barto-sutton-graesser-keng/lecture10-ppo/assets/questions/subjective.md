@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Subjective Questions (Lecture 10: PPO)
 
 1. **Sample Efficiency:** Explain why standard REINFORCE is considered "sample inefficient", and exactly how PPO's clipped objective allows it to be much more sample efficient.

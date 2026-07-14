@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Programming Questions (Lecture 10: PPO)
 
 **Question 1: Implementing the PPO Clipped Loss in PyTorch**

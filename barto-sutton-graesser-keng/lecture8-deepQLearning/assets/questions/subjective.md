@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Subjective Questions (Lecture 8: Deep Q-Learning)
 
 1. **The Curse of Dimensionality:** Explain why tabular Q-learning cannot be used to play Atari video games from raw pixels, and why function approximation (like Deep Neural Networks) solves this.

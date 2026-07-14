@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Solutions to MCQs (Lecture 10)
 
 1. **b) A single excessively large gradient step can destroy the policy, causing fatal unrecoverable divergence.** (Standard PG steps too far, breaking the policy and causing the agent to gather garbage data).

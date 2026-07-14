@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Programming Questions (Lecture 8: Deep Q-Learning)
 
 **Question 1: Implementing the DDQN Target in PyTorch**

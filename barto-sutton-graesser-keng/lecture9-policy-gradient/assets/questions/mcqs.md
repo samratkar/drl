@@ -1,3 +1,7 @@
+---
+layout: post
+---
+
 # Multiple Choice Questions (Lecture 9: Policy Gradients)
 
 1. Which of the following is a primary advantage of Policy Gradient methods over Action-Value methods like DQN?
