@@ -18,11 +18,40 @@ In tabular Q-learning, we maintain a table $Q(s, a)$ containing a discrete value
 
 Consider a self-driving car. If the state is represented by a single RGB camera image of size $256 \times 256$, the number of possible states is $256^{256 \times 256 \times 3}$. This number is vastly larger than the number of atoms in the universe. We cannot store a table this large, nor can we visit every state enough times to learn its value. Discretizing the space (e.g., binning) destroys crucial nuanced information.
 
-**The Solution:** We must use a function approximator. Specifically, we use a Deep Neural Network parameterized by weights $\theta$ to estimate the Q-value:
+**The Solution:** We must use a function approximator. Specifically, we use **one single, global Deep Neural Network** parameterized by weights $\theta$ to handle every possible state in the environment. We pass the current state in as the input, and it estimates the Q-value:
 
 $$ Q(s, a; \theta) \approx q_*(s, a) $$
 
 This allows the agent to **generalize**. If the agent learns to avoid an obstacle in one state, the neural network weights adjust, automatically updating the predicted Q-values for *all similar* states.
+
+### 1.1 The Generalization Magic: One Network for All States
+
+A common misconception is that Deep RL creates a separate neural network for each state. This is incorrect and would defeat the purpose of function approximation! There is exactly **one single, global Neural Network** used for the entire environment.
+
+Here is the step-by-step flow of how one network processes all states:
+1. **Time step $t$:** The agent is in State $A$. The features of State $A$ (e.g., an array of sensor values or pixels) are fed into the input layer of the neural network. The network processes these features through its weights and outputs the Q-values specifically for State $A$.
+2. **Time step $t+1$:** The agent moves to a new state, State $B$. The features of State $B$ are fed into the **exact same** neural network. It processes these new features through the *same shared weights* and outputs a new set of Q-values specifically for State $B$.
+
+```mermaid
+graph TD
+    classDef state fill:#d9edf7,stroke:#31708f,stroke-width:2px;
+    classDef nn fill:#fcf8e3,stroke:#8a6d3b,stroke-width:2px;
+    classDef output fill:#dff0d8,stroke:#3c763d,stroke-width:2px;
+
+    subgraph "Time Step t"
+        S_A(["State A Features<br>(e.g. Pixels)"]):::state --> NN1{"Global Neural Network<br>(Shared Weights &theta;)"}:::nn
+        NN1 --> Q_A["Q-Values for State A<br>[Q(A, up), Q(A, down)]"]:::output
+    end
+
+    subgraph "Time Step t+1"
+        S_B(["State B Features<br>(e.g. Pixels)"]):::state --> NN2{"Exact Same<br>Global Neural Network<br>(Shared Weights &theta;)"}:::nn
+        NN2 --> Q_B["Q-Values for State B<br>[Q(B, up), Q(B, down)]"]:::output
+    end
+```
+
+**Why is this so powerful?**
+Because all states flow through the exact same network, all states share the exact same weights inside the hidden layers. 
+If the agent makes a mistake in State $A$ and updates the neural network's weights $\theta$ to fix it, **those weight updates automatically apply to the entire network**. So, the next time the agent visits State $B$ (which might visually look very similar to State $A$), the neural network will naturally compute smarter Q-values for State $B$, even if the agent has never explicitly trained on State $B$ before! This is true **Generalization**.
 
 ---
 
