@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monte Carlo Methods — Numerical Flashcards</title>
+<style>
+  :root{
+    color-scheme: light;
+    --bg:#f4f1ea; --card:#fffdf8; --ink:#1c1a17; --muted:#6b6459;
+    --accent:#b4531f; --accent2:#2f6b4f; --line:#e0d9cc; --qtint:#fbf6ec; --stint:#f2f6f2;
+    --code:#f5efe3;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;
+    line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  header.top{
+    padding:38px 24px 26px; text-align:center;
+    background:linear-gradient(180deg,#efe7d7,#f4f1ea);
+    border-bottom:1px solid var(--line);
+  }
+  header.top .kicker{
+    font-family:ui-monospace,Menlo,monospace; letter-spacing:.22em; text-transform:uppercase;
+    font-size:12px; color:var(--accent); margin-bottom:8px;
+  }
+  header.top h1{margin:0; font-size:34px; font-weight:700; letter-spacing:-.01em;}
+  header.top p{margin:10px auto 0; max-width:640px; color:var(--muted); font-size:15px;}
+  .toolbar{
+    position:sticky; top:0; z-index:20; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;
+    padding:14px; background:rgba(244,241,234,.92); backdrop-filter:blur(6px); border-bottom:1px solid var(--line);
+  }
+  .btn{
+    font-family:ui-monospace,Menlo,monospace; font-size:13px; letter-spacing:.04em;
+    border:1px solid var(--ink); background:var(--ink); color:#fff; padding:10px 16px;
+    border-radius:8px; cursor:pointer; transition:.15s;
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn.secondary{background:transparent; color:var(--ink);}
+  .btn.secondary:hover{background:var(--ink); color:#fff;}
+  main{max-width:900px; margin:0 auto; padding:28px 20px 80px;}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:16px;
+    box-shadow:0 2px 0 rgba(0,0,0,.03),0 18px 40px -28px rgba(60,40,10,.5);
+    margin:0 0 34px; overflow:hidden;
+  }
+  .card .band{height:6px; background:linear-gradient(90deg,var(--accent),#d98a4e);}
+  .card .body{padding:26px 30px 30px;}
+  .qhead{display:flex; align-items:baseline; gap:12px; margin-bottom:6px;}
+  .qnum{
+    font-family:ui-monospace,Menlo,monospace; font-size:13px; font-weight:700; color:#fff;
+    background:var(--accent); border-radius:6px; padding:3px 9px;
+  }
+  .tag{
+    font-family:ui-monospace,Menlo,monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--accent2); border:1px solid var(--accent2); border-radius:20px; padding:2px 10px;
+  }
+  .question{font-size:18px; margin:10px 0 4px;}
+  .givens{
+    background:var(--qtint); border:1px solid var(--line); border-radius:10px;
+    padding:12px 16px; margin:14px 0; font-size:15px;
+  }
+  .illus{margin:20px 0; text-align:center;}
+  .illus svg{max-width:100%; height:auto;}
+  .illus figcaption{font-size:13px; color:var(--muted); margin-top:8px; font-style:italic;}
+  .reveal{
+    font-family:ui-monospace,Menlo,monospace; font-size:13px; letter-spacing:.04em;
+    background:var(--accent2); color:#fff; border:none; border-radius:8px;
+    padding:9px 16px; cursor:pointer; margin-top:8px;
+  }
+  .solution{display:none; margin-top:20px; padding-top:20px; border-top:2px dashed var(--line);}
+  .solution.show{display:block;}
+  .solution h4{margin:0 0 12px; font-size:15px; letter-spacing:.05em; text-transform:uppercase; color:var(--accent2);}
+  .step{margin:0 0 14px;}
+  .step .lbl{font-weight:700;}
+  .eq{
+    background:var(--code); border:1px solid var(--line); border-radius:8px;
+    padding:10px 14px; margin:8px 0; font-family:"Cambria Math",ui-monospace,Menlo,monospace;
+    font-size:15.5px; overflow-x:auto;
+  }
+  .ans{
+    background:var(--stint); border-left:4px solid var(--accent2); border-radius:0 8px 8px 0;
+    padding:12px 16px; margin-top:14px; font-size:16px;
+  }
+  .ans b{color:var(--accent2);}
+  .src{margin-top:16px; font-size:13.5px; color:var(--muted);}
+  .src a{color:var(--accent); text-decoration:none; border-bottom:1px solid var(--accent);}
+  .src a:hover{background:var(--accent); color:#fff;}
+  .src .bk{font-style:italic;}
+  sub,sup{font-size:.72em;}
+  .frac{display:inline-block; vertical-align:middle; text-align:center;}
+  .frac .n{display:block; border-bottom:1.4px solid currentColor; padding:0 4px;}
+  .frac .d{display:block; padding:0 4px;}
+  footer{text-align:center; color:var(--muted); font-size:13px; padding:20px;}
+
+  /* ---------- PRINT / PDF LAYOUT ---------- */
+  #printRoot{display:none;}
+  @media print{
+    @page{margin:16mm 14mm;}
+    body{background:#fff;}
+    .top,.toolbar,main,footer{display:none !important;}
+    #printRoot{display:block; max-width:none; color:#000; font-size:12pt;}
+    #printRoot .psection-title{
+      font-size:20pt; border-bottom:2px solid #000; padding-bottom:6px; margin:0 0 18px;
+      page-break-after:avoid;
+    }
+    #printRoot .pnew{page-break-before:always;}
+    #printRoot .pitem{margin:0 0 20px; page-break-inside:avoid;}
+    #printRoot .pnum{font-weight:700; font-size:13pt;}
+    #printRoot .ptag{font-size:9pt; text-transform:uppercase; letter-spacing:.08em; color:#2f6b4f; margin-left:8px;}
+    #printRoot .pgiven{background:#f4f1ea; border:1px solid #ccc; padding:8px 10px; margin:8px 0; font-size:11pt;}
+    #printRoot .eq{background:#f2f2f2; border:1px solid #ccc; page-break-inside:avoid;}
+    #printRoot .pans{border-left:3px solid #2f6b4f; padding:8px 12px; margin-top:10px; font-weight:600;}
+    #printRoot .psrc{font-size:9.5pt; color:#555; margin-top:8px;}
+    #printRoot .psrc a{color:#000;}
+    #printRoot svg{max-width:70%; height:auto; display:block; margin:10px auto;}
+    #printRoot figcaption{font-size:9pt; font-style:italic; color:#555; text-align:center;}
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="kicker">Sutton &amp; Barto · Chapter 5</div>
+  <h1>Monte Carlo Methods</h1>
+  <p>Ten numerical flashcards on MC prediction, first-visit vs every-visit, incremental averaging &amp; importance sampling (ordinary vs weighted) — each with a fully worked, step-by-step solution and a diagram.</p>
+</header>
+
+<div class="toolbar">
+  <button class="btn" onclick="exportPDF()">⤓ Export as PDF</button>
+  <button class="btn secondary" onclick="toggleAll(true)">Show all solutions</button>
+  <button class="btn secondary" onclick="toggleAll(false)">Hide all solutions</button>
+</div>
+
+<main id="cards"></main>
+
+<footer>Generated 2026-07-18 · Values grounded in Sutton &amp; Barto, <em>Reinforcement Learning: An Introduction</em>, 2nd ed., Ch. 5 (pp. 91–117). Every answer independently verified in Python.</footer>
+
+<div id="printRoot"></div>
+
+<script>
+/* ============ SVG ILLUSTRATION HELPERS ============ */
+// Reward-timeline chain: nodes with reward-labelled arrows to a terminal
+function chain(nodes, opts){
+  opts = opts || {};
+  const w = opts.w || 560, h = opts.h || 150, r = 30;
+  const n = nodes.length;
+  const gap = (w-80)/(n-1);
+  let s = `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,monospace">`;
+  for(let i=0;i<n-1;i++){
+    const x1=40+i*gap+r, x2=40+(i+1)*gap-r, y=h/2;
+    s+=`<line x1="${x1}" y1="${y}" x2="${x2-8}" y2="${y}" stroke="#b4531f" stroke-width="2.5"/>`;
+    s+=`<polygon points="${x2-8},${y-6} ${x2},${y} ${x2-8},${y+6}" fill="#b4531f"/>`;
+    if(opts.edge && opts.edge[i]!==undefined) s+=`<text x="${(x1+x2)/2}" y="${y-12}" text-anchor="middle" font-size="14" fill="#2f6b4f">${opts.edge[i]}</text>`;
+  }
+  nodes.forEach((nd,i)=>{
+    const x=40+i*gap, y=h/2;
+    const fill = nd.term ? "#efe7d7" : "#fffdf8";
+    const stroke = nd.hi ? "#2f6b4f" : "#1c1a17";
+    if(nd.term){
+      s+=`<rect x="${x-r}" y="${y-r+6}" width="${2*r}" height="${2*r-12}" rx="6" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+    }else{
+      s+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${nd.hi?3:2}"/>`;
+    }
+    s+=`<text x="${x}" y="${y+5}" text-anchor="middle" font-size="15" font-weight="700" fill="#1c1a17">${nd.label}</text>`;
+    if(nd.val) s+=`<text x="${x}" y="${y+r+20}" text-anchor="middle" font-size="13" fill="#6b6459">${nd.val}</text>`;
+  });
+  return s+`</svg>`;
+}
+// Bar chart (returns / values across episodes)
+function bars(items, opts){
+  opts=opts||{}; const w=520,h=220, base=165, bw=64, gap=26, left=60;
+  const vals=items.map(i=>i.v); const mx=Math.max(...vals.map(Math.abs),1);
+  let s=`<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,monospace">`;
+  s+=`<line x1="${left-10}" y1="${base}" x2="${w-20}" y2="${base}" stroke="#1c1a17" stroke-width="1.5"/>`;
+  items.forEach((it,i)=>{
+    const x=left+i*(bw+gap);
+    const hgt=Math.abs(it.v)/mx*110;
+    const y=it.v>=0?base-hgt:base;
+    const col=it.hi?"#2f6b4f":"#c98a5a";
+    s+=`<rect x="${x}" y="${y}" width="${bw}" height="${hgt}" rx="4" fill="${col}" stroke="#1c1a17" stroke-width="${it.hi?2.5:1}"/>`;
+    s+=`<text x="${x+bw/2}" y="${it.v>=0?y-8:y+hgt+16}" text-anchor="middle" font-size="14" font-weight="700" fill="#1c1a17">${it.v}</text>`;
+    s+=`<text x="${x+bw/2}" y="${base+20}" text-anchor="middle" font-size="12" fill="#6b6459">${it.label}</text>`;
+    if(it.hi) s+=`<text x="${x+bw/2}" y="${base+36}" text-anchor="middle" font-size="11" fill="#2f6b4f">◀ mean</text>`;
+  });
+  if(opts.title) s+=`<text x="${w/2}" y="18" text-anchor="middle" font-size="13" fill="#6b6459">${opts.title}</text>`;
+  if(opts.hline!==undefined){
+    const y=base-Math.abs(opts.hline)/mx*110;
+    s+=`<line x1="${left-10}" y1="${y}" x2="${w-20}" y2="${y}" stroke="#2f6b4f" stroke-width="1.6" stroke-dasharray="6 4"/>`;
+    s+=`<text x="${w-24}" y="${y-5}" text-anchor="end" font-size="12" fill="#2f6b4f">${opts.hlabel||('mean='+opts.hline)}</text>`;
+  }
+  return s+`</svg>`;
+}
+// Two-policy comparison: pi (target) vs b (behavior) probabilities per step
+function isChain(steps, opts){
+  opts=opts||{}; const w=opts.w||660,h=180,r=26;
+  const n=steps.length; const gap=(w-100)/(n);
+  let s=`<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,monospace">`;
+  for(let i=0;i<n;i++){
+    const x=50+i*gap, y=h/2;
+    // node
+    s+=`<circle cx="${x}" cy="${y}" r="${r}" fill="#fffdf8" stroke="#1c1a17" stroke-width="2"/>`;
+    s+=`<text x="${x}" y="${y+5}" text-anchor="middle" font-size="14" font-weight="700">${steps[i].s}</text>`;
+    // arrow to next
+    const nx=50+(i+1)*gap;
+    s+=`<line x1="${x+r}" y1="${y}" x2="${nx-r-8}" y2="${y}" stroke="#b4531f" stroke-width="2.5"/>`;
+    s+=`<polygon points="${nx-r-8},${y-6} ${nx-r},${y} ${nx-r-8},${y+6}" fill="#b4531f"/>`;
+    // pi and b labels above/below arrow
+    const mx=(x+r+nx-r)/2;
+    s+=`<text x="${mx}" y="${y-14}" text-anchor="middle" font-size="12" fill="#2f6b4f">π=${steps[i].pi}</text>`;
+    s+=`<text x="${mx}" y="${y+26}" text-anchor="middle" font-size="12" fill="#b4531f">b=${steps[i].b}</text>`;
+  }
+  // terminal
+  const x=50+n*gap, y=h/2;
+  s+=`<rect x="${x-r}" y="${y-r+6}" width="${2*r}" height="${2*r-12}" rx="6" fill="#efe7d7" stroke="#1c1a17" stroke-width="2"/>`;
+  s+=`<text x="${x}" y="${y+5}" text-anchor="middle" font-size="13" font-weight="700">⊤</text>`;
+  s+=`<text x="${w/2}" y="${h-6}" text-anchor="middle" font-size="12" fill="#6b6459">ρ = ∏ π(Aₖ|Sₖ)/b(Aₖ|Sₖ) &nbsp; (MDP dynamics cancel)</text>`;
+  return s+`</svg>`;
+}
+
+/* ============ FLASHCARD DATA ============ */
+const F = (n,d)=>`<span class="frac"><span class="n">${n}</span><span class="d">${d}</span></span>`;
+
+// Source book. file:// link with #page=N opens the PDF at that page (PDF page = printed page + 22).
+const BOOK = "file:///Users/samrat.kar/git/drl/books/BartoSutton.pdf";
+const BOOKNAME = "Sutton &amp; Barto, Reinforcement Learning: An Introduction (2nd ed.)";
+const src = (printed, sec) => ({p:printed, pdf:printed+22, sec});
+
+const cards = [
+{
+  tag:"Discounted Return G₀",
+  q:"Monte Carlo estimates values by averaging complete returns. First compute the full discounted return G₀ for one episode.",
+  givens:"Rewards from t=0: R₁=1, R₂=2, R₃=3, R₄=4, R₅=5 (then terminate). Discount γ = 0.5.",
+  illus: chain([{label:"S₀",hi:true},{label:"S₁"},{label:"S₂"},{label:"S₃"},{label:"S₄"},{label:"⊤",term:true}],{edge:["+1","+2","+3","+4","+5"],w:720}),
+  cap:"An episode's return is the discounted sum of all rewards until termination — the target MC averages.",
+  sol:[
+    {lbl:"1. Return definition.", eq:"G₀ = R₁ + γR₂ + γ²R₃ + γ³R₄ + γ⁴R₅"},
+    {lbl:"2. Powers of γ = 0.5.", eq:"γ⁰=1, γ¹=0.5, γ²=0.25, γ³=0.125, γ⁴=0.0625"},
+    {lbl:"3. Weighted terms.", eq:"1·1 = 1<br>0.5·2 = 1<br>0.25·3 = 0.75<br>0.125·4 = 0.5<br>0.0625·5 = 0.3125"},
+    {lbl:"4. Sum.", eq:"G₀ = 1 + 1 + 0.75 + 0.5 + 0.3125 = 3.5625"},
+  ],
+  ans:"G₀ = <b>3.5625</b>",
+  src: src(55, "§3.3 Returns and Episodes — the discounted return Gₜ")
+},
+{
+  tag:"First-visit MC Prediction",
+  q:"State s is visited (first-visit) in four separate episodes. Estimate V(s) by first-visit Monte Carlo.",
+  givens:"Returns following the first visit to s in each episode: G = 3, −1, 2, 4.",
+  illus: bars([{label:"ep1",v:3},{label:"ep2",v:-1},{label:"ep3",v:2},{label:"ep4",v:4}],{title:"Returns G after first visit to s per episode",hline:2,hlabel:"V(s)=2.0"}),
+  cap:"First-visit MC averages the returns that follow the FIRST time s is reached in each episode.",
+  sol:[
+    {lbl:"1. First-visit MC rule.", eq:"V(s) = average of the returns following the first visit to s across episodes"},
+    {lbl:"2. Collect the four first-visit returns.", eq:"{3, −1, 2, 4}"},
+    {lbl:"3. Sum and divide by count (4).", eq:"V(s) = (3 + (−1) + 2 + 4) / 4 = 8 / 4"},
+    {lbl:"Note.", eq:"First-visit MC is unbiased: each return is an i.i.d. sample of v<sub>π</sub>(s); by the law of large numbers it converges as visits → ∞."},
+  ],
+  ans:"V(s) = <b>2.0</b>",
+  src: src(92, "§5.1 Monte Carlo Prediction — first-visit MC")
+},
+{
+  tag:"First-visit vs Every-visit",
+  q:"In ONE episode, state s is visited twice (at t=0 and t=2). Compute V(s) under first-visit vs every-visit MC. Use γ = 1.",
+  givens:"Trajectory: s(t=0)→ r=2 → x(t=1)→ r=0 → s(t=2)→ r=3 → y(t=3)→ r=1 → terminal. γ = 1.",
+  illus: chain([{label:"s",val:"t=0",hi:true},{label:"x",val:"t=1"},{label:"s",val:"t=2",hi:true},{label:"y",val:"t=3"},{label:"⊤",term:true}],{edge:["+2","0","+3","+1"],w:720}),
+  cap:"s appears twice. First-visit uses only G₀; every-visit averages G from BOTH occurrences.",
+  sol:[
+    {lbl:"1. Return from the first visit (t=0).", eq:"G₀ = 2 + 0 + 3 + 1 = 6"},
+    {lbl:"2. Return from the second visit (t=2).", eq:"G₂ = 3 + 1 = 4"},
+    {lbl:"3. First-visit MC — use only the first occurrence.", eq:"V(s) = G₀ = 6"},
+    {lbl:"4. Every-visit MC — average both occurrences.", eq:"V(s) = (G₀ + G₂)/2 = (6 + 4)/2 = 5.0"},
+  ],
+  ans:"First-visit V(s) = <b>6</b> &nbsp; · &nbsp; Every-visit V(s) = <b>5.0</b>",
+  src: src(92, "§5.1 — first-visit vs every-visit MC")
+},
+{
+  tag:"Incremental Sample-Average",
+  q:"You maintain V(s) as a running sample-average of returns. A new episode gives another return. Update V(s) incrementally.",
+  givens:"Current estimate V(s) = 4.0 (average of n = 5 returns). New return G = 10.",
+  illus: bars([{label:"old V",v:4},{label:"G_new",v:10},{label:"new V",v:5,hi:true}],{title:"Incremental update nudges V toward the new return"}),
+  cap:"Sample-average incremental form: step size 1/(n+1) shrinks as more returns accumulate.",
+  sol:[
+    {lbl:"1. Incremental sample-average rule.", eq:"V ← V + (1/(n+1))·[ G − V ]"},
+    {lbl:"2. This is the (n+1)-th return, so the step size is 1/6.", eq:"step = 1/(5+1) = 1/6"},
+    {lbl:"3. Compute the error and update.", eq:"G − V = 10 − 4 = 6 → V ← 4 + (1/6)·6 = 4 + 1"},
+    {lbl:"Check.", eq:"Equivalent to (sum of all 6 returns)/6. Old sum = 4×5 = 20; new sum = 30; 30/6 = 5.0 ✓"},
+  ],
+  ans:"V(s) = <b>5.0</b>",
+  src: src(109, "§5.6 Incremental Implementation")
+},
+{
+  tag:"Importance-Sampling Ratio",
+  q:"Off-policy MC weights each return by the importance-sampling ratio ρ. Compute ρ for a 3-step episode.",
+  givens:"Target π is deterministic: π(Aₖ|Sₖ)=1 for the actions taken. Behavior probabilities: b = 0.5, 0.25, 0.5.",
+  illus: isChain([{s:"S₀",pi:"1",b:"0.5"},{s:"S₁",pi:"1",b:"0.25"},{s:"S₂",pi:"1",b:"0.5"}]),
+  cap:"ρ is the product of per-step π/b ratios; the environment's transition probabilities cancel out.",
+  sol:[
+    {lbl:"1. Importance-sampling ratio.", eq:"ρ<sub>0:2</sub> = ∏<sub>k=0</sub><sup>2</sup> π(Aₖ|Sₖ) / b(Aₖ|Sₖ)"},
+    {lbl:"2. Per-step ratios.", eq:"1/0.5 = 2 &nbsp;·&nbsp; 1/0.25 = 4 &nbsp;·&nbsp; 1/0.5 = 2"},
+    {lbl:"3. Multiply.", eq:"ρ = 2 × 4 × 2 = 16"},
+    {lbl:"Coverage.", eq:"Valid because every action π can take has b(a|s) &gt; 0. Since π is greedy and b is exploratory, ρ ≥ 1 here."},
+  ],
+  ans:"ρ<sub>0:2</sub> = <b>16</b>",
+  src: src(104, "§5.5 Off-policy Prediction via Importance Sampling — the ratio ρ")
+},
+{
+  tag:"Ordinary Importance Sampling",
+  q:"Two episodes visit s with returns and IS ratios below. Estimate V(s) with ORDINARY importance sampling.",
+  givens:"Episode 1: ρ = 2, G = 4. &nbsp; Episode 2: ρ = 0.5, G = 10.",
+  illus: bars([{label:"ρ₁G₁",v:8},{label:"ρ₂G₂",v:5},{label:"V (÷2)",v:6.5,hi:true}],{title:"Ordinary IS: average the ρ·G terms over episode COUNT"}),
+  cap:"Ordinary IS divides the sum of ρ·G by the number of visits — unbiased but high variance.",
+  sol:[
+    {lbl:"1. Ordinary IS estimator.", eq:"V(s) = ( Σ ρₖ·Gₖ ) / |visits|"},
+    {lbl:"2. Weighted returns.", eq:"ρ₁G₁ = 2×4 = 8 &nbsp; ; &nbsp; ρ₂G₂ = 0.5×10 = 5"},
+    {lbl:"3. Divide by the count (2 episodes).", eq:"V(s) = (8 + 5) / 2 = 13 / 2"},
+    {lbl:"Property.", eq:"Unbiased, but variance can be unbounded (Example 5.5) because ρ can be very large."},
+  ],
+  ans:"V(s) = <b>6.5</b>",
+  src: src(104, "§5.5 — ordinary importance sampling")
+},
+{
+  tag:"Weighted Importance Sampling",
+  q:"Using the SAME two episodes, estimate V(s) with WEIGHTED importance sampling. Compare to ordinary IS.",
+  givens:"Episode 1: ρ = 2, G = 4. &nbsp; Episode 2: ρ = 0.5, G = 10.",
+  illus: bars([{label:"Σρ·G",v:13},{label:"Σρ",v:2.5},{label:"V (÷Σρ)",v:5.2,hi:true}],{title:"Weighted IS: divide by the sum of ratios, not the count"}),
+  cap:"Weighted IS normalises by Σρ instead of the count — biased but far lower (finite) variance.",
+  sol:[
+    {lbl:"1. Weighted IS estimator.", eq:"V(s) = ( Σ ρₖ·Gₖ ) / ( Σ ρₖ )"},
+    {lbl:"2. Numerator.", eq:"Σ ρG = 2×4 + 0.5×10 = 8 + 5 = 13"},
+    {lbl:"3. Denominator.", eq:"Σ ρ = 2 + 0.5 = 2.5"},
+    {lbl:"4. Divide.", eq:"V(s) = 13 / 2.5 = 5.2"},
+    {lbl:"Compare.", eq:"Ordinary IS gave 6.5; weighted IS gives 5.2. Weighted is a ρ-weighted average of returns, so it stays within the range of observed G and is strongly preferred in practice."},
+  ],
+  ans:"V(s) = <b>5.2</b> &nbsp;(vs. 6.5 for ordinary IS)",
+  src: src(105, "§5.5 — weighted importance sampling")
+},
+{
+  tag:"Incremental Weighted IS",
+  q:"Update a weighted-IS estimate incrementally when a new weighted return arrives.",
+  givens:"Current V = 5.0, cumulative weight C = 4.0. New episode: weight W = 2, return G = 8.",
+  illus: bars([{label:"old V",v:5},{label:"G_new",v:8},{label:"new V",v:6,hi:true}],{title:"V moves toward G by fraction W/(C+W)"}),
+  cap:"Incremental weighted-IS keeps a running sum of weights C so the step size is W/(C+W).",
+  sol:[
+    {lbl:"1. Incremental weighted-IS rules.", eq:"C ← C + W &nbsp;;&nbsp; V ← V + (W / C<sub>new</sub>)·[ G − V ]"},
+    {lbl:"2. Update the cumulative weight.", eq:"C<sub>new</sub> = 4.0 + 2 = 6.0"},
+    {lbl:"3. Effective step size.", eq:"W / C<sub>new</sub> = 2 / 6 = 1/3"},
+    {lbl:"4. Apply update.", eq:"V ← 5.0 + (1/3)·(8 − 5.0) = 5.0 + (1/3)·3 = 5.0 + 1"},
+  ],
+  ans:"V(s) = <b>6.0</b>, &nbsp; C = <b>6.0</b>",
+  src: src(109, "§5.6 Incremental Implementation — weighted IS update")
+},
+{
+  tag:"Per-step ρ under ε-greedy",
+  q:"Behavior policy b is ε-greedy; target π is greedy. The agent takes the greedy action at every step of a 2-step tail. Compute ρ.",
+  givens:"ε = 0.5, number of actions |A| = 2. Both steps take the greedy action (π=1 for it).",
+  illus: isChain([{s:"S₀",pi:"1",b:"0.75"},{s:"S₁",pi:"1",b:"0.75"}]),
+  cap:"Under ε-greedy the greedy action has probability 1−ε+ε/|A|; each greedy step contributes 1/that.",
+  sol:[
+    {lbl:"1. Behavior prob of the greedy action.", eq:"b(greedy) = 1 − ε + ε/|A| = 1 − 0.5 + 0.5/2 = 0.5 + 0.25 = 0.75"},
+    {lbl:"2. Per-step ratio (π=1 for greedy action).", eq:"π/b = 1 / 0.75 = 4/3 ≈ 1.3333"},
+    {lbl:"3. Two greedy steps ⇒ multiply.", eq:"ρ = (4/3)² = 16/9 ≈ 1.7778"},
+    {lbl:"Insight.", eq:"ρ &gt; 1 up-weights returns from trajectories the target policy favours. If ANY step had taken a non-greedy action, π=0 there ⇒ ρ=0 and the whole return is discarded."},
+  ],
+  ans:"ρ = (4/3)² = 16/9 ≈ <b>1.7778</b>",
+  src: src(101, "§5.4 MC Control without Exploring Starts — ε-greedy policies")
+},
+{
+  tag:"Off-policy MC over 3 episodes",
+  q:"Estimate V(s) from three behavior-policy episodes using both ordinary and weighted IS. One episode took a non-greedy action.",
+  givens:"Ep1: ρ = 2, G = 10. &nbsp; Ep2: ρ = 0 (non-greedy action taken), G = 6. &nbsp; Ep3: ρ = 4, G = 4.",
+  illus: bars([{label:"ρ₁G₁",v:20},{label:"ρ₂G₂",v:0},{label:"ρ₃G₃",v:16},{label:"Σ",v:36,hi:true}],{title:"ρ=0 episode contributes nothing (inconsistent with π)"}),
+  cap:"An episode where behavior deviated from the greedy target gets ρ=0 and is effectively discarded.",
+  sol:[
+    {lbl:"1. Weighted ρ·G terms.", eq:"ρ₁G₁ = 2×10 = 20 &nbsp;;&nbsp; ρ₂G₂ = 0×6 = 0 &nbsp;;&nbsp; ρ₃G₃ = 4×4 = 16"},
+    {lbl:"2. Sums.", eq:"Σ ρG = 20 + 0 + 16 = 36 &nbsp;;&nbsp; Σ ρ = 2 + 0 + 4 = 6"},
+    {lbl:"3. Ordinary IS (÷ episode count = 3).", eq:"V = 36 / 3 = 12.0"},
+    {lbl:"4. Weighted IS (÷ Σρ = 6).", eq:"V = 36 / 6 = 6.0"},
+    {lbl:"Limitation.", eq:"Because the ρ=0 episode is dropped, off-policy MC learns only from the tails of episodes consistent with π — slow when non-greedy actions are frequent."},
+  ],
+  ans:"Ordinary IS = <b>12.0</b> &nbsp; · &nbsp; Weighted IS = <b>6.0</b>",
+  src: src(103, "§5.5 Off-policy Prediction via Importance Sampling")
+}
+];
+
+/* ============ RENDER SCREEN CARDS ============ */
+const host = document.getElementById('cards');
+cards.forEach((c,i)=>{
+  const steps = c.sol.map(s=>`<div class="step"><span class="lbl">${s.lbl}</span><div class="eq">${s.eq}</div></div>`).join('');
+  host.insertAdjacentHTML('beforeend', `
+  <section class="card">
+    <div class="band"></div>
+    <div class="body">
+      <div class="qhead"><span class="qnum">Q${i+1}</span><span class="tag">${c.tag}</span></div>
+      <div class="question">${c.q}</div>
+      <div class="givens"><b>Given:</b> ${c.givens}</div>
+      <figure class="illus">${c.illus}<figcaption>${c.cap}</figcaption></figure>
+      <button class="reveal" onclick="this.nextElementSibling.classList.toggle('show'); this.textContent=this.nextElementSibling.classList.contains('show')?'Hide solution':'Reveal solution'">Reveal solution</button>
+      <div class="solution">
+        <h4>Worked Solution</h4>
+        ${steps}
+        <div class="ans">✔ ${c.ans}</div>
+        <div class="src">📖 Theory: <span class="bk">${BOOKNAME}</span>, ${c.src.sec} — <a href="${BOOK}#page=${c.src.pdf}" target="_blank">open p.&nbsp;${c.src.p}</a></div>
+      </div>
+    </div>
+  </section>`);
+});
+
+function toggleAll(show){
+  document.querySelectorAll('.solution').forEach(s=>s.classList.toggle('show',show));
+  document.querySelectorAll('.reveal').forEach(b=>b.textContent=show?'Hide solution':'Reveal solution');
+}
+
+/* ============ BUILD PRINT LAYOUT (Questions then Solutions) ============ */
+function buildPrint(){
+  const root=document.getElementById('printRoot');
+  let q=`<h2 class="psection-title">Monte Carlo Methods — Problems</h2>`;
+  cards.forEach((c,i)=>{
+    q+=`<div class="pitem">
+      <div><span class="pnum">Problem ${i+1}.</span><span class="ptag">${c.tag}</span></div>
+      <p>${c.q}</p>
+      <div class="pgiven"><b>Given:</b> ${c.givens}</div>
+      <figure>${c.illus}<figcaption>${c.cap}</figcaption></figure>
+    </div>`;
+  });
+  let s=`<h2 class="psection-title pnew">Worked Solutions</h2>`;
+  cards.forEach((c,i)=>{
+    const steps=c.sol.map(st=>`<div class="step"><b>${st.lbl}</b><div class="eq">${st.eq}</div></div>`).join('');
+    s+=`<div class="pitem">
+      <div><span class="pnum">Solution ${i+1}.</span><span class="ptag">${c.tag}</span></div>
+      ${steps}
+      <div class="pans">✔ ${c.ans}</div>
+      <div class="psrc">📖 Theory: ${BOOKNAME}, ${c.src.sec} — <a href="${BOOK}#page=${c.src.pdf}">p.&nbsp;${c.src.p}</a></div>
+    </div>`;
+  });
+  root.innerHTML=q+s;
+}
+function exportPDF(){
+  buildPrint();
+  window.print();
+}
+</script>
+</body>
+</html>

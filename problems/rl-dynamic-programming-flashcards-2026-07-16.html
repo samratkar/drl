@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dynamic Programming — Numerical Flashcards</title>
+<style>
+  :root{
+    color-scheme: light;
+    --bg:#f4f1ea; --card:#fffdf8; --ink:#1c1a17; --muted:#6b6459;
+    --accent:#b4531f; --accent2:#2f6b4f; --line:#e0d9cc; --qtint:#fbf6ec; --stint:#f2f6f2;
+    --code:#f5efe3;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;
+    line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  header.top{
+    padding:38px 24px 26px; text-align:center;
+    background:linear-gradient(180deg,#efe7d7,#f4f1ea);
+    border-bottom:1px solid var(--line);
+  }
+  header.top .kicker{
+    font-family:ui-monospace,Menlo,monospace; letter-spacing:.22em; text-transform:uppercase;
+    font-size:12px; color:var(--accent); margin-bottom:8px;
+  }
+  header.top h1{margin:0; font-size:34px; font-weight:700; letter-spacing:-.01em;}
+  header.top p{margin:10px auto 0; max-width:660px; color:var(--muted); font-size:15px;}
+  .toolbar{
+    position:sticky; top:0; z-index:20; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;
+    padding:14px; background:rgba(244,241,234,.92); backdrop-filter:blur(6px); border-bottom:1px solid var(--line);
+  }
+  .btn{
+    font-family:ui-monospace,Menlo,monospace; font-size:13px; letter-spacing:.04em;
+    border:1px solid var(--ink); background:var(--ink); color:#fff; padding:10px 16px;
+    border-radius:8px; cursor:pointer; transition:.15s;
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn.secondary{background:transparent; color:var(--ink);}
+  .btn.secondary:hover{background:var(--ink); color:#fff;}
+  main{max-width:900px; margin:0 auto; padding:28px 20px 80px;}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:16px;
+    box-shadow:0 2px 0 rgba(0,0,0,.03),0 18px 40px -28px rgba(60,40,10,.5);
+    margin:0 0 34px; overflow:hidden;
+  }
+  .card .band{height:6px; background:linear-gradient(90deg,var(--accent),#d98a4e);}
+  .card .body{padding:26px 30px 30px;}
+  .qhead{display:flex; align-items:baseline; gap:12px; margin-bottom:6px;}
+  .qnum{
+    font-family:ui-monospace,Menlo,monospace; font-size:13px; font-weight:700; color:#fff;
+    background:var(--accent); border-radius:6px; padding:3px 9px;
+  }
+  .tag{
+    font-family:ui-monospace,Menlo,monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--accent2); border:1px solid var(--accent2); border-radius:20px; padding:2px 10px;
+  }
+  .question{font-size:18px; margin:10px 0 4px;}
+  .givens{
+    background:var(--qtint); border:1px solid var(--line); border-radius:10px;
+    padding:12px 16px; margin:14px 0; font-size:15px;
+  }
+  .illus{margin:20px 0; text-align:center;}
+  .illus svg{max-width:100%; height:auto;}
+  .illus figcaption{font-size:13px; color:var(--muted); margin-top:8px; font-style:italic;}
+  .reveal{
+    font-family:ui-monospace,Menlo,monospace; font-size:13px; letter-spacing:.04em;
+    background:var(--accent2); color:#fff; border:none; border-radius:8px;
+    padding:9px 16px; cursor:pointer; margin-top:8px;
+  }
+  .solution{display:none; margin-top:20px; padding-top:20px; border-top:2px dashed var(--line);}
+  .solution.show{display:block;}
+  .solution h4{margin:0 0 12px; font-size:15px; letter-spacing:.05em; text-transform:uppercase; color:var(--accent2);}
+  .step{margin:0 0 14px;}
+  .step .lbl{font-weight:700;}
+  .eq{
+    background:var(--code); border:1px solid var(--line); border-radius:8px;
+    padding:10px 14px; margin:8px 0; font-family:"Cambria Math",ui-monospace,Menlo,monospace;
+    font-size:15.5px; overflow-x:auto;
+  }
+  .ans{
+    background:var(--stint); border-left:4px solid var(--accent2); border-radius:0 8px 8px 0;
+    padding:12px 16px; margin-top:14px; font-size:16px;
+  }
+  .ans b{color:var(--accent2);}
+  sub,sup{font-size:.72em;}
+  .frac{display:inline-block; vertical-align:middle; text-align:center;}
+  .frac .n{display:block; border-bottom:1.4px solid currentColor; padding:0 4px;}
+  .frac .d{display:block; padding:0 4px;}
+  footer{text-align:center; color:var(--muted); font-size:13px; padding:20px;}
+
+  /* ---------- PRINT / PDF LAYOUT ---------- */
+  #printRoot{display:none;}
+  @media print{
+    @page{margin:16mm 14mm;}
+    body{background:#fff;}
+    .top,.toolbar,main,footer{display:none !important;}
+    #printRoot{display:block; max-width:none; color:#000; font-size:12pt;}
+    #printRoot .psection-title{
+      font-size:20pt; border-bottom:2px solid #000; padding-bottom:6px; margin:0 0 18px;
+      page-break-after:avoid;
+    }
+    #printRoot .pnew{page-break-before:always;}
+    #printRoot .pitem{margin:0 0 20px; page-break-inside:avoid;}
+    #printRoot .pnum{font-weight:700; font-size:13pt;}
+    #printRoot .ptag{font-size:9pt; text-transform:uppercase; letter-spacing:.08em; color:#2f6b4f; margin-left:8px;}
+    #printRoot .pgiven{background:#f4f1ea; border:1px solid #ccc; padding:8px 10px; margin:8px 0; font-size:11pt;}
+    #printRoot .eq{background:#f2f2f2; border:1px solid #ccc; page-break-inside:avoid;}
+    #printRoot .pans{border-left:3px solid #2f6b4f; padding:8px 12px; margin-top:10px; font-weight:600;}
+    #printRoot svg{max-width:60%; height:auto; display:block; margin:10px auto;}
+    #printRoot figcaption{font-size:9pt; font-style:italic; color:#555; text-align:center;}
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="kicker">Sutton &amp; Barto · Chapter 4</div>
+  <h1>Dynamic Programming</h1>
+  <p>Ten numerical flashcards on iterative policy evaluation, policy improvement, policy iteration &amp; value iteration — each with a fully worked, step-by-step solution and a diagram.</p>
+</header>
+
+<div class="toolbar">
+  <button class="btn" onclick="exportPDF()">⤓ Export as PDF</button>
+  <button class="btn secondary" onclick="toggleAll(true)">Show all solutions</button>
+  <button class="btn secondary" onclick="toggleAll(false)">Hide all solutions</button>
+</div>
+
+<main id="cards"></main>
+
+<footer>Generated 2026-07-16 · Values grounded in Sutton &amp; Barto, <em>Reinforcement Learning: An Introduction</em>, 2nd ed., Ch. 4 (pp. 73–90). All arithmetic independently verified in Python.</footer>
+
+<div id="printRoot"></div>
+
+<script>
+/* ============ SVG ILLUSTRATION HELPERS ============ */
+// Transition-chain diagram
+function chain(nodes, opts){
+  opts = opts || {};
+  const w = opts.w || 560, h = opts.h || 150, r = 30;
+  const n = nodes.length;
+  const gap = (w-80)/(n-1);
+  let s = `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,monospace">`;
+  for(let i=0;i<n-1;i++){
+    const x1=40+i*gap+r, x2=40+(i+1)*gap-r, y=h/2;
+    s+=`<line x1="${x1}" y1="${y}" x2="${x2-8}" y2="${y}" stroke="#b4531f" stroke-width="2.5"/>`;
+    s+=`<polygon points="${x2-8},${y-6} ${x2},${y} ${x2-8},${y+6}" fill="#b4531f"/>`;
+    if(opts.edge && opts.edge[i]) s+=`<text x="${(x1+x2)/2}" y="${y-12}" text-anchor="middle" font-size="14" fill="#2f6b4f">${opts.edge[i]}</text>`;
+  }
+  nodes.forEach((nd,i)=>{
+    const x=40+i*gap, y=h/2;
+    const fill = nd.term ? "#efe7d7" : "#fffdf8";
+    const stroke = nd.hi ? "#2f6b4f" : "#1c1a17";
+    if(nd.term){
+      s+=`<rect x="${x-r}" y="${y-r+6}" width="${2*r}" height="${2*r-12}" rx="6" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+    }else{
+      s+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${nd.hi?3:2}"/>`;
+    }
+    s+=`<text x="${x}" y="${y+5}" text-anchor="middle" font-size="15" font-weight="700" fill="#1c1a17">${nd.label}</text>`;
+    if(nd.val) s+=`<text x="${x}" y="${y+r+20}" text-anchor="middle" font-size="13" fill="#6b6459">${nd.val}</text>`;
+  });
+  return s+`</svg>`;
+}
+// Bar chart of action-values
+function bars(items, opts){
+  opts=opts||{}; const w=520,h=210, base=160, bw=70, gap=28, left=60;
+  const vals=items.map(i=>i.v); const mx=Math.max(...vals.map(Math.abs),1);
+  let s=`<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,monospace">`;
+  s+=`<line x1="${left-10}" y1="${base}" x2="${w-20}" y2="${base}" stroke="#1c1a17" stroke-width="1.5"/>`;
+  items.forEach((it,i)=>{
+    const x=left+i*(bw+gap);
+    const hgt=Math.abs(it.v)/mx*110;
+    const y=it.v>=0?base-hgt:base;
+    const col=it.hi?"#2f6b4f":"#c98a5a";
+    s+=`<rect x="${x}" y="${y}" width="${bw}" height="${hgt}" rx="4" fill="${col}" stroke="#1c1a17" stroke-width="${it.hi?2.5:1}"/>`;
+    s+=`<text x="${x+bw/2}" y="${it.v>=0?y-8:y+hgt+16}" text-anchor="middle" font-size="14" font-weight="700" fill="#1c1a17">${it.v}</text>`;
+    s+=`<text x="${x+bw/2}" y="${base+20}" text-anchor="middle" font-size="12" fill="#6b6459">${it.label}</text>`;
+    if(it.hi) s+=`<text x="${x+bw/2}" y="${base+36}" text-anchor="middle" font-size="11" fill="#2f6b4f">◀ greedy</text>`;
+  });
+  if(opts.title) s+=`<text x="${w/2}" y="18" text-anchor="middle" font-size="13" fill="#6b6459">${opts.title}</text>`;
+  return s+`</svg>`;
+}
+// Backup diagram: one parent, weighted branches to children
+function backup(children, opts){
+  opts=opts||{}; const w=opts.w||560,h=250, px=w/2, py=44, r=26;
+  let s=`<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,monospace">`;
+  const n=children.length; const cy=185; const gap=(w-100)/Math.max(n-1,1);
+  children.forEach((c,i)=>{
+    const cx = n===1 ? px : 50+i*gap;
+    s+=`<line x1="${px}" y1="${py+r}" x2="${cx}" y2="${cy-r}" stroke="#b4531f" stroke-width="2.2"/>`;
+    const mx=(px+cx)/2, my=(py+r+cy-r)/2;
+    if(c.p!==undefined) s+=`<text x="${mx-6}" y="${my}" text-anchor="end" font-size="12" fill="#2f6b4f">p=${c.p}</text>`;
+    if(c.r!==undefined) s+=`<text x="${mx+6}" y="${my+13}" text-anchor="start" font-size="12" fill="#b4531f">r=${c.r}</text>`;
+    const fill=c.term?"#efe7d7":"#fffdf8";
+    if(c.term) s+=`<rect x="${cx-r}" y="${cy-r+5}" width="${2*r}" height="${2*r-10}" rx="6" fill="${fill}" stroke="#1c1a17" stroke-width="2"/>`;
+    else s+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="#1c1a17" stroke-width="2"/>`;
+    s+=`<text x="${cx}" y="${cy+4}" text-anchor="middle" font-size="13" font-weight="700">${c.label}</text>`;
+    if(c.val) s+=`<text x="${cx}" y="${cy+r+18}" text-anchor="middle" font-size="12" fill="#6b6459">${c.val}</text>`;
+  });
+  // parent
+  s+=`<circle cx="${px}" cy="${py}" r="${r}" fill="#fffdf8" stroke="#2f6b4f" stroke-width="3"/>`;
+  s+=`<text x="${px}" y="${py+4}" text-anchor="middle" font-size="14" font-weight="700">${opts.parent||'s'}</text>`;
+  if(opts.title) s+=`<text x="${w/2}" y="${h-6}" text-anchor="middle" font-size="12" fill="#6b6459">${opts.title}</text>`;
+  return s+`</svg>`;
+}
+// 4x4 gridworld with per-cell values
+function grid4(vals, opts){
+  opts=opts||{}; const cw=64,ch=52,ox=20,oy=20, cols=4,rows=4;
+  let s=`<svg viewBox="0 0 ${cols*cw+2*ox} ${rows*ch+2*oy}" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,monospace">`;
+  for(let idx=0;idx<16;idx++){
+    const r=Math.floor(idx/4), c=idx%4;
+    const x=ox+c*cw, y=oy+r*ch;
+    const term = (idx===0||idx===15);
+    let fill = term?"#dfeadf":"#fffdf8";
+    if(opts.hi!==undefined && idx===opts.hi) fill="#fbe6cf";
+    s+=`<rect x="${x}" y="${y}" width="${cw}" height="${ch}" fill="${fill}" stroke="#c9c0b0" stroke-width="1.2"/>`;
+    const label = term? "term" : (vals[idx]!==undefined? vals[idx] : "");
+    s+=`<text x="${x+cw/2}" y="${y+ch/2+2}" text-anchor="middle" font-size="14" font-weight="${idx===opts.hi?700:400}" fill="#1c1a17">${label}</text>`;
+    s+=`<text x="${x+4}" y="${y+13}" font-size="9" fill="#a99f8d">${idx}</text>`;
+  }
+  return s+`</svg>`;
+}
+// Two-panel bars comparing q-values of stakes (gambler)
+/* ============ FLASHCARD DATA ============ */
+const cards = [
+{
+  tag:"Iterative Policy Evaluation",
+  q:"Perform one iterative policy-evaluation backup for state <i>s</i> under a stochastic policy. Compute V<sub>k+1</sub>(s).",
+  givens:"Two actions, π(a₁|s)=0.5, π(a₂|s)=0.5. Each is deterministic: a₁ → s′ with r=1; a₂ → s″ with r=0. γ=0.9. Current estimates V<sub>k</sub>(s′)=10, V<sub>k</sub>(s″)=6.",
+  illus: backup([{label:"s′",val:"V=10",p:"π=.5",r:1},{label:"s″",val:"V=6",p:"π=.5",r:0}],{parent:"s",title:"Expected update: average over actions × outcomes"}),
+  cap:"Policy evaluation averages over the policy's action probabilities and the environment's dynamics.",
+  sol:[
+    {lbl:"1. Evaluation backup rule.", eq:"V<sub>k+1</sub>(s) = Σ<sub>a</sub> π(a|s) Σ<sub>s′,r</sub> p(s′,r|s,a)[ r + γ·V<sub>k</sub>(s′) ]"},
+    {lbl:"2. Action-value of a₁.", eq:"q(a₁) = 1 + 0.9 × 10 = 1 + 9 = 10.0"},
+    {lbl:"3. Action-value of a₂.", eq:"q(a₂) = 0 + 0.9 × 6 = 5.4"},
+    {lbl:"4. Weight by the policy.", eq:"V<sub>k+1</sub>(s) = 0.5 × 10.0 + 0.5 × 5.4 = 5.0 + 2.7"},
+  ],
+  ans:"V<sub>k+1</sub>(s) = <b>7.7</b>"
+},
+{
+  tag:"Value Iteration (max)",
+  q:"Perform one value-iteration backup for state <i>s</i> with three available actions. Compute V<sub>k+1</sub>(s).",
+  givens:"γ=1.0. a₁ → s₁ (r=2, V<sub>k</sub>=5); a₂ → s₂ (r=0, V<sub>k</sub>=10); a₃ → s₃ (r=−1, V<sub>k</sub>=12). All deterministic.",
+  illus: bars([{label:"a1",v:7},{label:"a2",v:10},{label:"a3",v:11,hi:true}],{title:"q(s,a) = r + γ·Vk(s′) — value iteration keeps the MAX"}),
+  cap:"Value iteration replaces the policy-average with a maximum over actions (Bellman optimality backup).",
+  sol:[
+    {lbl:"1. Value-iteration backup rule.", eq:"V<sub>k+1</sub>(s) = max<sub>a</sub> Σ<sub>s′,r</sub> p(s′,r|s,a)[ r + γ·V<sub>k</sub>(s′) ]"},
+    {lbl:"2. Compute each action-value (γ=1).", eq:"q(a₁)=2+5=7 &nbsp; q(a₂)=0+10=10 &nbsp; q(a₃)=−1+12=11"},
+    {lbl:"3. Take the maximum.", eq:"V<sub>k+1</sub>(s) = max(7, 10, 11) = 11 &nbsp;(from action a₃)"},
+    {lbl:"Note.", eq:"Value iteration = truncated policy iteration with a single evaluation sweep, then greedy — it is the Bellman optimality equation used as an update."},
+  ],
+  ans:"V<sub>k+1</sub>(s) = <b>11.0</b>, greedy action = a₃"
+},
+{
+  tag:"Policy Improvement (greedy)",
+  q:"Given v<sub>π</sub>, compute the greedy action at state <i>s</i> by evaluating q<sub>π</sub>(s,a) for all four actions.",
+  givens:"γ=0.9, all deterministic. up → r=0, v=8; down → r=−1, v=10; left → r=2, v=5; right → r=0, v=9.",
+  illus: bars([{label:"up",v:7.2},{label:"down",v:8.0},{label:"left",v:6.5},{label:"right",v:8.1,hi:true}],{title:"q_π(s,a) = r + γ·v_π(s′)"}),
+  cap:"The greedy policy picks argmaxₐ q_π(s,a); by the policy-improvement theorem this cannot make things worse.",
+  sol:[
+    {lbl:"1. q_π formula.", eq:"q<sub>π</sub>(s,a) = r + γ·v<sub>π</sub>(s′)"},
+    {lbl:"2. Compute each (γ=0.9).", eq:"up = 0+0.9·8 = 7.2<br>down = −1+0.9·10 = 8.0<br>left = 2+0.9·5 = 6.5<br>right = 0+0.9·9 = 8.1"},
+    {lbl:"3. Take the argmax.", eq:"max(7.2, 8.0, 6.5, 8.1) = 8.1 → action = right"},
+  ],
+  ans:"Greedy action = <b>right</b> &nbsp;(q = 8.1)"
+},
+{
+  tag:"Multi-state Evaluation Sweeps",
+  q:"Run iterative policy evaluation (synchronous) for TWO sweeps on a 2-state MDP; report V(A), V(B) after each sweep.",
+  givens:"States A, B, terminal T. A → B (r=0, prob 1). B → T (r=1, prob 0.5) or B → A (r=0, prob 0.5). γ=1.0. V₀(A)=V₀(B)=0.",
+  illus: chain([{label:"A",val:"V=0",hi:true},{label:"B",val:"V=0"},{label:"T",term:true}],{edge:["r=0",".5: r=1"],w:600}),
+  cap:"Synchronous sweeps use the OLD estimates for every state within a sweep (a full backup of the value array).",
+  sol:[
+    {lbl:"1. Backup equations.", eq:"V(A) ← 0 + γ·V(B)<br>V(B) ← 0.5·(1 + γ·V(T)) + 0.5·(0 + γ·V(A)),  V(T)=0"},
+    {lbl:"2. Sweep 1 (using V₀ = 0 everywhere).", eq:"V(A) = 0 + 1·0 = 0<br>V(B) = 0.5·1 + 0.5·0 = 0.5"},
+    {lbl:"3. Sweep 2 (using sweep-1 values V(A)=0, V(B)=0.5).", eq:"V(A) = 0 + 1·0.5 = 0.5<br>V(B) = 0.5·1 + 0.5·(1·0) = 0.5"},
+  ],
+  ans:"After sweep 1: V(A)=<b>0</b>, V(B)=<b>0.5</b>. After sweep 2: V(A)=<b>0.5</b>, V(B)=<b>0.5</b>."
+},
+{
+  tag:"Action-value from v_π",
+  q:"Compute q<sub>π</sub>(s,a) for a STOCHASTIC action whose outcome is a distribution over two next states.",
+  givens:"Action a: with prob 0.7 → s₁ (r=5), with prob 0.3 → s₂ (r=−2). γ=0.9. v<sub>π</sub>(s₁)=10, v<sub>π</sub>(s₂)=20.",
+  illus: backup([{label:"s₁",val:"v=10",p:"0.7",r:5},{label:"s₂",val:"v=20",p:"0.3",r:-2}],{parent:"s,a",title:"q_π(s,a) = Σ p(s′,r|s,a)[r + γ v_π(s′)]"}),
+  cap:"For a single action, q averages over all (s′, r) outcomes weighted by the transition probabilities.",
+  sol:[
+    {lbl:"1. q_π formula for one action.", eq:"q<sub>π</sub>(s,a) = Σ<sub>s′,r</sub> p(s′,r|s,a)[ r + γ·v<sub>π</sub>(s′) ]"},
+    {lbl:"2. Branch s₁ (prob 0.7).", eq:"0.7 × (5 + 0.9·10) = 0.7 × (5 + 9) = 0.7 × 14 = 9.8"},
+    {lbl:"3. Branch s₂ (prob 0.3).", eq:"0.3 × (−2 + 0.9·20) = 0.3 × (−2 + 18) = 0.3 × 16 = 4.8"},
+    {lbl:"4. Sum the branches.", eq:"q<sub>π</sub>(s,a) = 9.8 + 4.8"},
+  ],
+  ans:"q<sub>π</sub>(s,a) = <b>14.6</b>"
+},
+{
+  tag:"4×4 Gridworld",
+  q:"In Sutton &amp; Barto's 4×4 gridworld under the uniform random policy, compute V₂(1) — the value of state&nbsp;1 after the SECOND evaluation sweep.",
+  givens:"Reward −1 per step, γ=1. Corners (states 0 &amp; 15) terminal. Moving off-grid stays put. After sweep 1, every nonterminal state = −1 (terminal = 0). State 1's neighbors: up→1 (wall), down→5, left→0, right→2.",
+  illus: grid4(["term","−1","−1","−1","−1","−1","−1","−1","−1","−1","−1","−1","−1","−1","−1","term"],{hi:1}),
+  cap:"Grid after sweep 1 (all nonterminal states = −1). We back up the highlighted state 1 for sweep 2.",
+  sol:[
+    {lbl:"1. Uniform-random backup.", eq:"V₂(s) = Σ<sub>a</sub> 0.25 × [ −1 + V₁(s′) ]  over the 4 moves"},
+    {lbl:"2. Neighbor values after sweep 1.", eq:"up → state 1 (wall bounce): V₁=−1<br>down → state 5: V₁=−1<br>left → state 0 (terminal): V₁=0<br>right → state 2: V₁=−1"},
+    {lbl:"3. Apply the four backups.", eq:"V₂(1) = 0.25[(−1−1)+(−1−1)+(−1+0)+(−1−1)]<br>= 0.25[(−2)+(−2)+(−1)+(−2)] = 0.25 × (−7)"},
+  ],
+  ans:"V₂(1) = <b>−1.75</b>"
+},
+{
+  tag:"Policy Improvement Theorem",
+  q:"At state <i>s</i>, v<sub>π</sub>(s)=5. Test whether switching to a new action a′ improves the policy, using the policy-improvement theorem.",
+  givens:"Candidate action a′: deterministic → s₂ (r=3). γ=0.8. v<sub>π</sub>(s₂)=4.",
+  illus: backup([{label:"s₂",val:"v=4",p:"1",r:3}],{parent:"s,a′",title:"Compare q_π(s,a′) against v_π(s)=5"}),
+  cap:"The theorem: if q_π(s,a′) ≥ v_π(s) for all s, the greedy switch yields a policy at least as good everywhere.",
+  sol:[
+    {lbl:"1. Compute q_π(s, a′).", eq:"q<sub>π</sub>(s,a′) = r + γ·v<sub>π</sub>(s₂) = 3 + 0.8 × 4 = 3 + 3.2 = 6.2"},
+    {lbl:"2. Compare with v_π(s).", eq:"q<sub>π</sub>(s,a′) = 6.2  vs.  v<sub>π</sub>(s) = 5"},
+    {lbl:"3. Apply the theorem.", eq:"6.2 ≥ 5 ⇒ the condition q<sub>π</sub>(s,π′(s)) ≥ v<sub>π</sub>(s) holds, so switching to a′ improves (weakly) the policy."},
+  ],
+  ans:"q<sub>π</sub>(s,a′) = <b>6.2</b> &gt; 5 ⇒ <b>yes, a′ is an improvement</b>."
+},
+{
+  tag:"Gambler's Problem",
+  q:"Gambler's problem, value iteration. At capital s=50, choose the stake that maximizes the value. Compare stakes a=50 and a=10.",
+  givens:"Prob of heads p<sub>h</sub>=0.4 (win → s+a, lose → s−a). Goal=100 (reward on reaching 100). γ=1. Current estimates: V(100)=1, V(0)=0, V(60)=0.5, V(40)=0.3.",
+  illus: bars([{label:"a=50",v:0.4,hi:true},{label:"a=10",v:0.38}],{title:"q(50,a) = 0.4·V(win) + 0.6·V(lose)"}),
+  cap:"Each stake is a gamble: win with prob 0.4 to s+a, lose with prob 0.6 to s−a. Value iteration keeps the best stake.",
+  sol:[
+    {lbl:"1. Action-value of a stake.", eq:"q(s,a) = p<sub>h</sub>·V(s+a) + (1−p<sub>h</sub>)·V(s−a)"},
+    {lbl:"2. Bold stake a=50 (win→100, lose→0).", eq:"q(50,50) = 0.4·V(100) + 0.6·V(0) = 0.4·1 + 0.6·0 = 0.40"},
+    {lbl:"3. Timid stake a=10 (win→60, lose→40).", eq:"q(50,10) = 0.4·V(60) + 0.6·V(40) = 0.4·0.5 + 0.6·0.3 = 0.20 + 0.18 = 0.38"},
+    {lbl:"4. Take the max.", eq:"max(0.40, 0.38) = 0.40 → the bold all-in stake a=50 is preferred here."},
+  ],
+  ans:"q(50,50)=<b>0.40</b> &gt; q(50,10)=<b>0.38</b> ⇒ stake <b>a=50</b>."
+},
+{
+  tag:"In-place (Gauss–Seidel) DP",
+  q:"Compare a synchronous sweep with an in-place sweep (update order B then A) on the 2-state MDP. Show that in-place propagates information faster.",
+  givens:"Same MDP as Q4: A → B (r=0); B → T (r=1, p=0.5) or B → A (r=0, p=0.5). γ=1. Start V(A)=V(B)=0. In-place order: update B first, then A (A reads the NEW V(B)).",
+  illus: chain([{label:"B",val:"1st",hi:true},{label:"A",val:"2nd"}],{edge:["update order"],w:480}),
+  cap:"In-place (Gauss–Seidel) DP reuses freshly-updated values within the same sweep, often converging faster.",
+  sol:[
+    {lbl:"1. Synchronous sweep (both read old V=0).", eq:"V(A) = 0 + 1·0 = 0<br>V(B) = 0.5·1 + 0.5·0 = 0.5"},
+    {lbl:"2. In-place, update B first.", eq:"V(B) = 0.5·1 + 0.5·(1·V(A)<sub>old=0</sub>) = 0.5"},
+    {lbl:"3. Then update A using the NEW V(B).", eq:"V(A) = 0 + 1·V(B)<sub>new=0.5</sub> = 0.5"},
+    {lbl:"4. Compare.", eq:"Synchronous: V(A)=0, V(B)=0.5 (A still stale).<br>In-place: V(A)=0.5, V(B)=0.5 — the reward reached A in a single sweep."},
+  ],
+  ans:"Synchronous → V(A)=<b>0</b>; in-place → V(A)=<b>0.5</b>. In-place propagates faster."
+},
+{
+  tag:"Exact Policy Evaluation",
+  q:"Solve the 2-state MDP's value function EXACTLY (to convergence) by treating the Bellman evaluation equations as a linear system.",
+  givens:"A → B (r=0); B → T (r=1, p=0.5) or B → A (r=0, p=0.5). γ=1. Terminal V(T)=0. Find the fixed point v(A), v(B).",
+  illus: chain([{label:"A",val:"v=?",hi:true},{label:"B",val:"v=?"},{label:"T",term:true}],{edge:["r=0",".5: r=1"],w:600}),
+  cap:"At convergence the value function is the unique fixed point of the linear Bellman evaluation equations.",
+  sol:[
+    {lbl:"1. Write the Bellman evaluation equations.", eq:"v(A) = 0 + γ·v(B) = v(B)<br>v(B) = 0.5·(1 + γ·0) + 0.5·(0 + γ·v(A)) = 0.5 + 0.5·v(A)"},
+    {lbl:"2. Substitute v(A) = v(B).", eq:"v(B) = 0.5 + 0.5·v(B)"},
+    {lbl:"3. Solve for v(B).", eq:"v(B) − 0.5·v(B) = 0.5 → 0.5·v(B) = 0.5 → v(B) = 1"},
+    {lbl:"4. Back-substitute.", eq:"v(A) = v(B) = 1"},
+  ],
+  ans:"v(A) = <b>1</b>, v(B) = <b>1</b> &nbsp;(matches the iterative sweeps converging upward from Q4)"
+}
+];
+
+/* ============ RENDER SCREEN CARDS ============ */
+const host = document.getElementById('cards');
+cards.forEach((c,i)=>{
+  const steps = c.sol.map(s=>`<div class="step"><span class="lbl">${s.lbl}</span><div class="eq">${s.eq}</div></div>`).join('');
+  host.insertAdjacentHTML('beforeend', `
+  <section class="card">
+    <div class="band"></div>
+    <div class="body">
+      <div class="qhead"><span class="qnum">Q${i+1}</span><span class="tag">${c.tag}</span></div>
+      <div class="question">${c.q}</div>
+      <div class="givens"><b>Given:</b> ${c.givens}</div>
+      <figure class="illus">${c.illus}<figcaption>${c.cap}</figcaption></figure>
+      <button class="reveal" onclick="this.nextElementSibling.classList.toggle('show'); this.textContent=this.nextElementSibling.classList.contains('show')?'Hide solution':'Reveal solution'">Reveal solution</button>
+      <div class="solution">
+        <h4>Worked Solution</h4>
+        ${steps}
+        <div class="ans">✔ ${c.ans}</div>
+      </div>
+    </div>
+  </section>`);
+});
+
+function toggleAll(show){
+  document.querySelectorAll('.solution').forEach(s=>s.classList.toggle('show',show));
+  document.querySelectorAll('.reveal').forEach(b=>b.textContent=show?'Hide solution':'Reveal solution');
+}
+
+/* ============ BUILD PRINT LAYOUT (Questions then Solutions) ============ */
+function buildPrint(){
+  const root=document.getElementById('printRoot');
+  let q=`<h2 class="psection-title">Dynamic Programming — Problems</h2>`;
+  cards.forEach((c,i)=>{
+    q+=`<div class="pitem">
+      <div><span class="pnum">Problem ${i+1}.</span><span class="ptag">${c.tag}</span></div>
+      <p>${c.q}</p>
+      <div class="pgiven"><b>Given:</b> ${c.givens}</div>
+      <figure>${c.illus}<figcaption>${c.cap}</figcaption></figure>
+    </div>`;
+  });
+  let s=`<h2 class="psection-title pnew">Worked Solutions</h2>`;
+  cards.forEach((c,i)=>{
+    const steps=c.sol.map(st=>`<div class="step"><b>${st.lbl}</b><div class="eq">${st.eq}</div></div>`).join('');
+    s+=`<div class="pitem">
+      <div><span class="pnum">Solution ${i+1}.</span><span class="ptag">${c.tag}</span></div>
+      ${steps}
+      <div class="pans">✔ ${c.ans}</div>
+    </div>`;
+  });
+  root.innerHTML=q+s;
+}
+function exportPDF(){
+  buildPrint();
+  window.print();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RL Numerical Flashcards — 2026-07-16</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #f4f6fa;
+  color: #1a2233;
+  line-height: 1.55;
+}
+header {
+  background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+  color: #fff;
+  padding: 28px 24px 32px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+}
+header h1 { margin: 0 0 6px; font-size: 1.55rem; letter-spacing: -0.01em; }
+header .date { font-size: 1rem; opacity: 0.92; font-weight: 600; }
+header .focus {
+  margin-top: 14px;
+  background: rgba(255,255,255,0.13);
+  border-left: 4px solid #ffd166;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  max-width: 900px;
+}
+header .focus b { color: #ffd166; }
+.hint {
+  max-width: 900px;
+  margin: 14px auto 0;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+.toolbar { margin-top: 16px; }
+#pdfBtn {
+  background: #ffd166;
+  color: #3b2f00;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 20px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+  transition: transform 0.1s, background 0.15s;
+}
+#pdfBtn:hover { background: #ffdb85; }
+#pdfBtn:active { transform: translateY(1px); }
+.toolbar .note { font-size: 0.78rem; opacity: 0.8; margin-top: 6px; }
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 20px 60px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 22px;
+}
+.card {
+  perspective: 1600px;
+  height: 500px;
+  cursor: pointer;
+  outline: none;
+}
+.card:focus-visible .card-inner { box-shadow: 0 0 0 3px #2c5282, 0 6px 18px rgba(0,0,0,0.15); }
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.4,0.2,0.2,1);
+  transform-style: preserve-3d;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(30,58,95,0.12);
+}
+.card.flipped .card-inner { transform: rotateY(180deg); }
+.face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 14px;
+  padding: 20px 22px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.front {
+  background: #ffffff;
+  border: 1px solid #dce3ec;
+}
+.back {
+  background: #fbfcfe;
+  border: 1px solid #c7d4e6;
+  transform: rotateY(180deg);
+}
+.tag {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 9px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+  align-self: flex-start;
+}
+.tag.ch11 { background: #e3ecfa; color: #1e3a5f; }
+.tag.ch10 { background: #e6f4ea; color: #276749; }
+.tag.ch12 { background: #fdeede; color: #9c4221; }
+.tag.found { background: #f0e9fb; color: #553c9a; }
+.q-num { font-size: 0.78rem; color: #8a97a8; font-weight: 700; margin-bottom: 6px; }
+.card h3 { margin: 0 0 12px; font-size: 1.08rem; color: #1e3a5f; }
+.q-body, .a-body { font-size: 0.93rem; }
+.q-body p, .a-body p { margin: 0 0 10px; }
+.given {
+  background: #f2f6fc;
+  border: 1px solid #dce3ec;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 10px 0;
+  font-size: 0.88rem;
+}
+.given b { color: #1e3a5f; }
+.step { margin: 0 0 9px; }
+.step .lbl { font-weight: 700; color: #2c5282; }
+.eq {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  background: #eef2f8;
+  border-radius: 5px;
+  padding: 2px 6px;
+  font-size: 0.86rem;
+  color: #24344d;
+}
+.eqblock {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  background: #eef2f8;
+  border-radius: 6px;
+  padding: 8px 11px;
+  margin: 8px 0;
+  font-size: 0.85rem;
+  color: #24344d;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+.answer {
+  margin-top: auto;
+  background: #fff6da;
+  border: 1px solid #f0d878;
+  border-left: 5px solid #f2c744;
+  border-radius: 8px;
+  padding: 11px 13px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #6b4e00;
+}
+.answer .val { font-family: "SFMono-Regular", Consolas, monospace; color: #8a2b00; }
+.source {
+  margin-top: 12px;
+  font-size: 0.82rem;
+  background: #eef4ff;
+  border: 1px solid #d3e0f5;
+  border-radius: 8px;
+  padding: 9px 12px;
+}
+.source .lbl { font-weight: 700; color: #2c5282; }
+.source a {
+  color: #1e5fbf;
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px dotted #1e5fbf;
+}
+.source a:hover { color: #103d80; }
+.flip-hint { font-size: 0.75rem; color: #9aa6b6; margin-top: 12px; font-style: italic; }
+footer {
+  text-align: center;
+  color: #8a97a8;
+  font-size: 0.8rem;
+  padding: 24px;
+}
+@media (max-width: 500px) {
+  .grid { grid-template-columns: 1fr; }
+  .card { height: 540px; }
+}
+
+/* ---- PRINT / PDF layout: linear document, question then answer, clickable links preserved ---- */
+@media print {
+  body { background: #fff; }
+  header { box-shadow: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .toolbar, .hint, .flip-hint { display: none !important; }
+  main { max-width: none; padding: 12px 6px; }
+  .grid { display: block; }
+  .card {
+    perspective: none;
+    height: auto !important;
+    cursor: default;
+    margin-bottom: 20px;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .card-inner {
+    transform: none !important;
+    height: auto !important;
+    box-shadow: none;
+    transform-style: flat;
+  }
+  .face {
+    position: static !important;
+    inset: auto;
+    backface-visibility: visible !important;
+    -webkit-backface-visibility: visible !important;
+    transform: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    border: 1px solid #cfd8e6;
+    border-radius: 0;
+  }
+  .front { border-bottom: none; border-radius: 8px 8px 0 0; }
+  .back  { border-radius: 0 0 8px 8px; background: #fbfcfe; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .answer, .given, .eqblock, .eq, .source, .tag { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .answer { margin-top: 12px; }
+  .source a { color: #1e5fbf; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Reinforcement Learning — Numerical Problem Flashcards</h1>
+  <div class="date">Thursday, 2026-07-16</div>
+  <div class="focus">
+    <b>Today's chapter focus: Chapter 11 — Off-policy Methods with Approximation</b> (Sutton &amp; Barto).
+    Chapter 11 is partly conceptual (the <i>deadly triad</i>, Baird's counterexample, divergence),
+    but its methods are computable: off-policy semi-gradient TD(0) with importance-sampling ratios,
+    the w→2w divergence example, and the Tsitsiklis &amp; Van Roy divergence rate. The bulk of today's
+    problems come straight from Chapter 11; connecting problems draw on foundational importance
+    sampling and neighboring chapters — Ch. 10 (semi-gradient &amp; differential Sarsa) and Ch. 12
+    (eligibility traces / λ-return).
+  </div>
+  <div class="hint">These are <b>numerical problems with fully worked, step-by-step solutions.</b> Click a card (or focus it and press Enter/Space) to flip and reveal the solution. Each card links to the exact page in the book it was built from.</div>
+  <div class="toolbar">
+    <button id="pdfBtn" type="button">⬇ Download as PDF (question + answer)</button>
+    <div class="note">Opens your browser's print dialog — choose <b>"Save as PDF"</b>. The PDF lays out each problem followed by its worked solution, and the book links stay clickable.</div>
+  </div>
+</header>
+
+<main>
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer>Generated 2026-07-16 · Source: Sutton &amp; Barto, <i>Reinforcement Learning: An Introduction</i> (2nd ed.) · 10 numerical cards · book links open BartoSutton.pdf at the cited page</footer>
+
+<script>
+// Book PDF on this machine. PDF page = printed book page + 22 (verified against chapter starts).
+const BOOK = "file:///Users/samrat.kar/git/drl/books/BartoSutton.pdf";
+function bookLink(printedPage, pdfPage, label){
+  return `<a href="${BOOK}#page=${pdfPage}" target="_blank" rel="noopener">${label} (p. ${printedPage}) ↗</a>`;
+}
+
+const cards = [
+{
+  cls: "ch11", tag: "Ch. 11 · Off-policy",
+  q: "Off-policy semi-gradient TD(0) update with importance sampling",
+  qhtml: `
+    <p>Use linear function approximation, <span class="eq">v̂(s,w) = wᵀx(s)</span>, and perform one off-policy semi-gradient TD(0) update.</p>
+    <div class="given">
+      <b>Given:</b><br>
+      x(S) = [2, 1], x(S') = [1, 3]<br>
+      w = [0.5, −1.0]<br>
+      R = 4, γ = 0.9<br>
+      importance-sampling ratio ρ = 1.5<br>
+      step size α = 0.1
+    </div>
+    <p>Compute the updated weight vector w.</p>`,
+  ahtml: `
+    <div class="step"><span class="lbl">Update rule (Ch. 11):</span>
+      <div class="eqblock">w ← w + α·ρ·δ·∇v̂(S,w),  where  δ = R + γ·v̂(S') − v̂(S)
+∇v̂(S,w) = x(S)  (linear case)</div></div>
+    <div class="step"><span class="lbl">1. Value of S:</span> v̂(S) = 0.5·2 + (−1.0)·1 = 1.0 − 1.0 = <span class="eq">0</span></div>
+    <div class="step"><span class="lbl">2. Value of S':</span> v̂(S') = 0.5·1 + (−1.0)·3 = 0.5 − 3.0 = <span class="eq">−2.5</span></div>
+    <div class="step"><span class="lbl">3. TD error:</span> δ = 4 + 0.9·(−2.5) − 0 = 4 − 2.25 = <span class="eq">1.75</span></div>
+    <div class="step"><span class="lbl">4. Scalar factor:</span> α·ρ·δ = 0.1·1.5·1.75 = <span class="eq">0.2625</span></div>
+    <div class="step"><span class="lbl">5. Increment:</span> 0.2625·[2, 1] = [0.525, 0.2625]</div>
+    <div class="step"><span class="lbl">6. New weights:</span> [0.5 + 0.525, −1.0 + 0.2625]</div>
+    <div class="answer">w = <span class="val">[1.025, −0.7375]</span></div>`,
+  src: bookLink(258, 280, "§11.1 Semi-gradient Methods")
+},
+{
+  cls: "found", tag: "Foundational · Importance Sampling",
+  q: "Importance-sampling ratio over a two-step trajectory",
+  qhtml: `
+    <p>An agent follows behavior policy <span class="eq">b</span> but wants to evaluate target policy <span class="eq">π</span>. Compute the importance-sampling ratio ρ for the observed 2-step trajectory.</p>
+    <div class="given">
+      <b>Given (probabilities of the actions actually taken):</b><br>
+      Step 1: π(A₀|S₀) = 0.8, b(A₀|S₀) = 0.5<br>
+      Step 2: π(A₁|S₁) = 0.6, b(A₁|S₁) = 0.4
+    </div>
+    <p>Find the trajectory ratio ρ<sub>0:1</sub>.</p>`,
+  ahtml: `
+    <div class="step"><span class="lbl">Formula:</span>
+      <div class="eqblock">ρ_{t:T−1} = ∏  π(Aₖ|Sₖ) / b(Aₖ|Sₖ)</div></div>
+    <div class="step"><span class="lbl">1. Per-step ratios:</span></div>
+    <div class="step">Step 1: 0.8 / 0.5 = <span class="eq">1.6</span></div>
+    <div class="step">Step 2: 0.6 / 0.4 = <span class="eq">1.5</span></div>
+    <div class="step"><span class="lbl">2. Multiply:</span> ρ = 1.6 × 1.5</div>
+    <div class="answer">ρ<sub>0:1</sub> = <span class="val">2.4</span></div>
+    <p class="flip-hint">Interpretation: this trajectory is 2.4× more likely under π than under b, so its update is weighted up accordingly.</p>`,
+  src: bookLink(104, 126, "§5.5 Off-policy Prediction via Importance Sampling")
+},
+{
+  cls: "ch11", tag: "Ch. 11 · Deadly Triad",
+  q: "The w→2w divergence example (single weight)",
+  qhtml: `
+    <p>The classic 2-state example (Ch. 11): one transition goes from a state with feature 1 (estimate <span class="eq">w</span>) to a state with feature 2 (estimate <span class="eq">2w</span>). Reward is 0. Perform one expected off-policy semi-gradient TD(0) update and check the direction of change.</p>
+    <div class="given">
+      <b>Given:</b><br>
+      v̂(first state) = w, v̂(second state) = 2w<br>
+      R = 0, γ = 0.9, α = 0.1<br>
+      current w = 10<br>
+      gradient of first state's estimate = 1
+    </div>
+    <p>Compute the new w and state whether it grows or shrinks.</p>`,
+  ahtml: `
+    <div class="step"><span class="lbl">1. TD error:</span>
+      <div class="eqblock">δ = R + γ·(2w) − w = 0 + γ·2w − w = (2γ − 1)·w</div>
+      δ = (2·0.9 − 1)·10 = (1.8 − 1)·10 = 0.8·10 = <span class="eq">8</span></div>
+    <div class="step"><span class="lbl">2. Weight update:</span> Δw = α·δ·(gradient) = 0.1·8·1 = <span class="eq">0.8</span></div>
+    <div class="step"><span class="lbl">3. New weight:</span> w = 10 + 0.8 = 10.8</div>
+    <div class="step"><span class="lbl">4. Growth factor:</span> w ← w·(1 + α(2γ−1)) = 10·(1 + 0.1·0.8) = 10·1.08</div>
+    <div class="answer">w = <span class="val">10.8</span> — it <b>grows</b>. Since 2γ−1 = 0.8 &gt; 0, each update multiplies w by 1.08 &gt; 1, so w <b>diverges</b> to ∞.</div>
+    <p class="flip-hint">This is the deadly triad in miniature: function approx + bootstrapping + off-policy updating.</p>`,
+  src: bookLink(260, 282, "§11.2 Examples of Off-policy Divergence")
+},
+{
+  cls: "ch11", tag: "Ch. 11 · Divergence Rate",
+  q: "Tsitsiklis & Van Roy divergence rate",
+  qhtml: `
+    <p>Even the best least-squares fit at each step can diverge. The weight after k iterations is</p>
+    <div class="eqblock">w_k = ( (6 − 4ε)/5 · γ )^k · w₀</div>
+    <div class="given">
+      <b>Given:</b><br>
+      ε = 0.1, γ = 0.99, w₀ = 1, k = 3
+    </div>
+    <p>Compute w₃ and state whether the sequence diverges.</p>`,
+  ahtml: `
+    <div class="step"><span class="lbl">1. Numerator:</span> 6 − 4ε = 6 − 4·0.1 = 6 − 0.4 = <span class="eq">5.6</span></div>
+    <div class="step"><span class="lbl">2. Divide by 5:</span> 5.6 / 5 = <span class="eq">1.12</span></div>
+    <div class="step"><span class="lbl">3. Multiply by γ:</span> 1.12 · 0.99 = <span class="eq">1.1088</span></div>
+    <div class="step"><span class="lbl">4. Raise to k = 3:</span></div>
+    <div class="step">1.1088² = 1.22944</div>
+    <div class="step">1.22944 · 1.1088 = 1.36320…</div>
+    <div class="step"><span class="lbl">5. Times w₀ = 1:</span></div>
+    <div class="answer">w₃ ≈ <span class="val">1.363</span>. The base 1.1088 &gt; 1, so w_k → ∞: the sequence <b>diverges</b> despite optimal fitting each step.</div>`,
+  src: bookLink(263, 285, "§11.2 (Tsitsiklis & Van Roy counterexample)")
+},
+{
+  cls: "ch11", tag: "Ch. 11 · Expected Sarsa",
+  q: "Off-policy Expected Sarsa update (no importance sampling)",
+  qhtml: `
+    <p>Off-policy Expected Sarsa needs <b>no</b> importance-sampling ratio because it sums over all next actions weighted by the target policy π. Perform one tabular update of q̂(S,A).</p>
+    <div class="given">
+      <b>Given:</b><br>
+      q̂(S,A) = 3.0<br>
+      Next state S' has two actions: q̂(S',a₁) = 5, q̂(S',a₂) = 1<br>
+      Target policy: π(a₁|S') = 0.9, π(a₂|S') = 0.1<br>
+      R = 2, γ = 0.8, α = 0.5
+    </div>
+    <p>Compute the updated q̂(S,A).</p>`,
+  ahtml: `
+    <div class="step"><span class="lbl">Update rule:</span>
+      <div class="eqblock">δ = R + γ·Σ_a π(a|S')·q̂(S',a) − q̂(S,A)
+q̂(S,A) ← q̂(S,A) + α·δ</div></div>
+    <div class="step"><span class="lbl">1. Expected next value:</span> 0.9·5 + 0.1·1 = 4.5 + 0.1 = <span class="eq">4.6</span></div>
+    <div class="step"><span class="lbl">2. TD error:</span> δ = 2 + 0.8·4.6 − 3.0 = 2 + 3.68 − 3.0 = <span class="eq">2.68</span></div>
+    <div class="step"><span class="lbl">3. Update:</span> q̂(S,A) = 3.0 + 0.5·2.68 = 3.0 + 1.34</div>
+    <div class="answer">q̂(S,A) = <span class="val">4.34</span></div>`,
+  src: bookLink(258, 280, "§11.1 Semi-gradient Methods (Expected Sarsa)")
+},
+{
+  cls: "ch11", tag: "Ch. 11 · n-step off-policy",
+  q: "2-step off-policy semi-gradient prediction update",
+  qhtml: `
+    <p>Compute one 2-step off-policy semi-gradient TD update. The n-step return bootstraps from the value two steps ahead, and the whole update is scaled by the product of importance-sampling ratios.</p>
+    <div class="given">
+      <b>Given:</b><br>
+      R<sub>t+1</sub> = 2, R<sub>t+2</sub> = 1, γ = 0.9<br>
+      v̂(S<sub>t+2</sub>) = 3, v̂(S<sub>t</sub>) = 1<br>
+      ρ<sub>t</sub> = 1.5, ρ<sub>t+1</sub> = 0.5<br>
+      α = 0.1, gradient ∇v̂(S<sub>t</sub>) = 1 (single feature)
+    </div>
+    <p>Compute the weight increment Δw.</p>`,
+  ahtml: `
+    <div class="step"><span class="lbl">1. 2-step return:</span>
+      <div class="eqblock">G_{t:t+2} = R_{t+1} + γ·R_{t+2} + γ²·v̂(S_{t+2})</div>
+      = 2 + 0.9·1 + 0.81·3 = 2 + 0.9 + 2.43 = <span class="eq">5.33</span></div>
+    <div class="step"><span class="lbl">2. TD error:</span> δ = G_{t:t+2} − v̂(S_t) = 5.33 − 1 = <span class="eq">4.33</span></div>
+    <div class="step"><span class="lbl">3. Product of IS ratios:</span> ρ_{t:t+1} = 1.5·0.5 = <span class="eq">0.75</span></div>
+    <div class="step"><span class="lbl">4. Increment:</span> Δw = α·ρ_{t:t+1}·δ·∇v̂ = 0.1·0.75·4.33·1</div>
+    <div class="answer">Δw = <span class="val">0.32475</span></div>`,
+  src: bookLink(259, 281, "§11.1 (n-step semi-gradient off-policy)")
+},
+{
+  cls: "ch10", tag: "Ch. 10 · Semi-gradient Sarsa",
+  q: "One-step semi-gradient Sarsa update (linear q̂)",
+  qhtml: `
+    <p>On-policy control with linear function approximation, <span class="eq">q̂(s,a,w) = wᵀx(s,a)</span>. Perform one semi-gradient Sarsa update.</p>
+    <div class="given">
+      <b>Given:</b><br>
+      x(S,A) = [1, 0, 2], x(S',A') = [0, 1, 1]<br>
+      w = [1, 2, −1]<br>
+      R = 1, γ = 1.0, α = 0.1
+    </div>
+    <p>Compute the new weight vector w.</p>`,
+  ahtml: `
+    <div class="step"><span class="lbl">Update rule:</span>
+      <div class="eqblock">w ← w + α[R + γ·q̂(S',A') − q̂(S,A)]·x(S,A)</div></div>
+    <div class="step"><span class="lbl">1. q̂(S,A):</span> 1·1 + 2·0 + (−1)·2 = 1 − 2 = <span class="eq">−1</span></div>
+    <div class="step"><span class="lbl">2. q̂(S',A'):</span> 1·0 + 2·1 + (−1)·1 = 2 − 1 = <span class="eq">1</span></div>
+    <div class="step"><span class="lbl">3. TD error:</span> δ = 1 + 1.0·1 − (−1) = 1 + 1 + 1 = <span class="eq">3</span></div>
+    <div class="step"><span class="lbl">4. Increment:</span> α·δ·x(S,A) = 0.1·3·[1, 0, 2] = [0.3, 0, 0.6]</div>
+    <div class="step"><span class="lbl">5. New weights:</span> [1 + 0.3, 2 + 0, −1 + 0.6]</div>
+    <div class="answer">w = <span class="val">[1.3, 2, −0.4]</span></div>`,
+  src: bookLink(244, 266, "§10.1 Episodic Semi-gradient Control")
+},
+{
+  cls: "ch10", tag: "Ch. 10 · Average Reward",
+  q: "Differential semi-gradient Sarsa update (average-reward)",
+  qhtml: `
+    <p>In the average-reward setting there is no discounting; instead a running estimate R̄ of the reward rate is subtracted. Perform one differential semi-gradient Sarsa update, updating both R̄ and w.</p>
+    <div class="given">
+      <b>Given:</b><br>
+      R = 2, R̄ = 1.5<br>
+      q̂(S',A') = 4, q̂(S,A) = 3<br>
+      x(S,A) = [1, 2], w = [1, 1]<br>
+      α = 0.2, β = 0.1
+    </div>
+    <p>Compute the new R̄ and w.</p>`,
+  ahtml: `
+    <div class="step"><span class="lbl">Update rules:</span>
+      <div class="eqblock">δ = R − R̄ + q̂(S',A') − q̂(S,A)
+R̄ ← R̄ + β·δ
+w ← w + α·δ·x(S,A)</div></div>
+    <div class="step"><span class="lbl">1. Differential TD error:</span> δ = 2 − 1.5 + 4 − 3 = <span class="eq">1.5</span></div>
+    <div class="step"><span class="lbl">2. Update R̄:</span> R̄ = 1.5 + 0.1·1.5 = 1.5 + 0.15 = <span class="eq">1.65</span></div>
+    <div class="step"><span class="lbl">3. Weight increment:</span> α·δ·x = 0.2·1.5·[1, 2] = 0.3·[1, 2] = [0.3, 0.6]</div>
+    <div class="step"><span class="lbl">4. New weights:</span> [1 + 0.3, 1 + 0.6]</div>
+    <div class="answer">R̄ = <span class="val">1.65</span>,  w = <span class="val">[1.3, 1.6]</span></div>`,
+  src: bookLink(251, 273, "§10.3 Differential Semi-gradient Sarsa")
+},
+{
+  cls: "ch12", tag: "Ch. 12 · Eligibility Traces",
+  q: "Semi-gradient TD(λ) update with an accumulating trace",
+  qhtml: `
+    <p>Perform one step of semi-gradient TD(λ) with an accumulating eligibility trace: first decay-and-bump the trace, then apply the weight update.</p>
+    <div class="given">
+      <b>Given:</b><br>
+      previous trace z = [0.2, 0.5]<br>
+      ∇v̂(S,w) = x(S) = [1, 0]<br>
+      γ = 0.9, λ = 0.8, α = 0.1<br>
+      v̂(S) = 1, v̂(S') = 2, R = 0.5<br>
+      previous w = [0.5, 0.5]
+    </div>
+    <p>Compute the new trace z and new weights w.</p>`,
+  ahtml: `
+    <div class="step"><span class="lbl">Update rules:</span>
+      <div class="eqblock">z ← γλ·z + ∇v̂(S,w)
+δ = R + γ·v̂(S') − v̂(S)
+w ← w + α·δ·z</div></div>
+    <div class="step"><span class="lbl">1. Decay factor:</span> γλ = 0.9·0.8 = <span class="eq">0.72</span></div>
+    <div class="step"><span class="lbl">2. New trace:</span> 0.72·[0.2, 0.5] + [1, 0] = [0.144, 0.36] + [1, 0] = <span class="eq">[1.144, 0.36]</span></div>
+    <div class="step"><span class="lbl">3. TD error:</span> δ = 0.5 + 0.9·2 − 1 = 0.5 + 1.8 − 1 = <span class="eq">1.3</span></div>
+    <div class="step"><span class="lbl">4. Weight increment:</span> α·δ·z = 0.1·1.3·[1.144, 0.36] = 0.13·[1.144, 0.36] = [0.14872, 0.0468]</div>
+    <div class="step"><span class="lbl">5. New weights:</span> [0.5 + 0.14872, 0.5 + 0.0468]</div>
+    <div class="answer">z = <span class="val">[1.144, 0.36]</span>,  w = <span class="val">[0.64872, 0.5468]</span></div>`,
+  src: bookLink(293, 315, "§12.2 TD(λ)")
+},
+{
+  cls: "ch12", tag: "Ch. 12 · λ-Return",
+  q: "Compute the λ-return from n-step returns",
+  qhtml: `
+    <p>The λ-return is a weighted average of all n-step returns. Compute it for a short episode that terminates at t+3 (so T−t = 3).</p>
+    <div class="given">
+      <b>Given n-step returns from time t:</b><br>
+      G<sub>t:t+1</sub> = 2, G<sub>t:t+2</sub> = 3<br>
+      Full return G<sub>t</sub> = 3.5 (episode ends at t+3)<br>
+      λ = 0.5
+    </div>
+    <p>Compute G<sub>t</sub><sup>λ</sup>.</p>`,
+  ahtml: `
+    <div class="step"><span class="lbl">Formula (T−t = 3, so T−t−1 = 2):</span>
+      <div class="eqblock">G_t^λ = (1−λ)·Σ_{n=1}^{2} λ^{n−1}·G_{t:t+n}  +  λ^{2}·G_t</div></div>
+    <div class="step"><span class="lbl">1. Weighted sum of n-step returns:</span></div>
+    <div class="step">n=1: λ⁰·G_{t:t+1} = 1·2 = 2</div>
+    <div class="step">n=2: λ¹·G_{t:t+2} = 0.5·3 = 1.5</div>
+    <div class="step">sum = 2 + 1.5 = <span class="eq">3.5</span></div>
+    <div class="step"><span class="lbl">2. Scale by (1−λ):</span> (1 − 0.5)·3.5 = 0.5·3.5 = <span class="eq">1.75</span></div>
+    <div class="step"><span class="lbl">3. Tail (full-return) term:</span> λ²·G_t = 0.25·3.5 = <span class="eq">0.875</span></div>
+    <div class="step"><span class="lbl">4. Add:</span> 1.75 + 0.875</div>
+    <div class="answer">G<sub>t</sub><sup>λ</sup> = <span class="val">2.625</span></div>`,
+  src: bookLink(289, 311, "§12.1 The λ-return")
+}
+];
+
+const grid = document.getElementById("grid");
+cards.forEach((c, i) => {
+  const card = document.createElement("div");
+  card.className = "card";
+  card.tabIndex = 0;
+  card.setAttribute("role", "button");
+  card.setAttribute("aria-label", "Flashcard " + (i+1) + ": " + c.q + ". Activate to reveal solution.");
+  card.innerHTML = `
+    <div class="card-inner">
+      <div class="face front">
+        <span class="tag ${c.cls}">${c.tag}</span>
+        <div class="q-num">Problem ${i+1} of 10</div>
+        <h3>${c.q}</h3>
+        <div class="q-body">${c.qhtml}</div>
+        <div class="source"><span class="lbl">📖 Source:</span> ${c.src}</div>
+        <div class="flip-hint">Click / Enter / Space to see the worked solution →</div>
+      </div>
+      <div class="face back">
+        <span class="tag ${c.cls}">Worked Solution</span>
+        <div class="q-num">Problem ${i+1}</div>
+        <div class="a-body">${c.ahtml}</div>
+        <div class="source"><span class="lbl">📖 Source:</span> ${c.src}</div>
+        <div class="flip-hint">← Click / Enter / Space to flip back</div>
+      </div>
+    </div>`;
+  const flip = () => card.classList.toggle("flipped");
+  card.addEventListener("click", flip);
+  card.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flip(); }
+  });
+  // Let source links work without flipping the card
+  card.querySelectorAll("a").forEach(a => {
+    a.addEventListener("click", (e) => e.stopPropagation());
+    a.setAttribute("tabindex", "0");
+  });
+  grid.appendChild(card);
+});
+
+// Download-as-PDF button: browser print dialog -> "Save as PDF".
+// The @media print stylesheet lays out each question followed by its answer,
+// and anchor links remain clickable in the generated PDF.
+document.getElementById("pdfBtn").addEventListener("click", () => window.print());
+</script>
+</body>
+</html>

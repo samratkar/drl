@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RL Flashcards — 2026-07-18 — Policy Gradient Methods</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #f4f6fa;
+  color: #1a1f2e;
+  line-height: 1.55;
+}
+header {
+  background: linear-gradient(135deg, #2b3a67 0%, #3b5ba5 100%);
+  color: #fff;
+  padding: 32px 24px 28px;
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+}
+header h1 { margin: 0 0 6px; font-size: 1.7rem; letter-spacing: -0.02em; }
+header .date { font-size: 0.95rem; opacity: 0.85; }
+header .focus {
+  display: inline-block;
+  margin-top: 14px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+.hint { text-align: center; color: #5a6478; font-size: 0.85rem; margin: 20px 16px 0; }
+.grid {
+  max-width: 1180px;
+  margin: 20px auto 60px;
+  padding: 0 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+}
+.card {
+  perspective: 1600px;
+  min-height: 260px;
+  cursor: pointer;
+  outline: none;
+}
+.card:focus-visible .inner { box-shadow: 0 0 0 3px #6f8fd6, 0 6px 20px rgba(0,0,0,0.14); }
+.inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 260px;
+  transition: transform 0.6s cubic-bezier(.3,.7,.3,1);
+  transform-style: preserve-3d;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(30,40,80,0.10);
+}
+.card.flipped .inner { transform: rotateY(180deg); }
+.face {
+  position: absolute;
+  inset: 0;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  border-radius: 14px;
+  padding: 22px 22px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.front {
+  background: #ffffff;
+  border: 1px solid #e2e7f0;
+}
+.back {
+  background: #fbfcff;
+  border: 1px solid #d3ddf0;
+  transform: rotateY(180deg);
+}
+.tag {
+  align-self: flex-start;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #3b5ba5;
+  background: #eaf0fb;
+  padding: 3px 10px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+.qnum { color: #9aa4bc; font-weight: 700; margin-right: 6px; }
+.question { font-size: 1.08rem; font-weight: 600; color: #1a2540; margin: 0; }
+.answer { font-size: 0.94rem; color: #26304a; }
+.answer p { margin: 0 0 10px; }
+.answer .eq {
+  display: block;
+  background: #eef2fb;
+  border-left: 3px solid #6f8fd6;
+  padding: 8px 12px;
+  margin: 10px 0;
+  font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.86rem;
+  color: #23345e;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+.flip-note { margin-top: auto; padding-top: 12px; font-size: 0.78rem; color: #97a1b8; }
+footer { text-align:center; color:#8a94ad; font-size:0.8rem; padding: 0 20px 40px; }
+@media (max-width: 520px) {
+  .grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Reinforcement Learning Flashcards</h1>
+  <div class="date">Saturday, July 18, 2026</div>
+  <div class="focus">Chapter Focus: Ch. 13 — Policy Gradient Methods</div>
+</header>
+<p class="hint">Click a card (or focus it and press Enter / Space) to flip between the question and the answer.</p>
+<main class="grid" id="grid"></main>
+<footer>Source: Sutton &amp; Barto, <em>Reinforcement Learning: An Introduction</em> — Ch. 13 (policy gradient), with connecting cards from Ch. 12 (eligibility traces) and foundational value-based ideas.</footer>
+
+<script>
+const cards = [
+  {
+    tag: "Ch.13 · Foundations",
+    q: "What fundamentally distinguishes policy-gradient methods from action-value methods, and what capabilities does the shift unlock?",
+    a: `<p>Action-value methods (like Sarsa or Q-learning) learn an estimate of q(s,a) and then <em>derive</em> a policy from it — usually ε-greedy. Policy-gradient methods instead learn a <strong>parameterized policy π(a|s,θ)</strong> directly and adjust θ by gradient ascent on a scalar performance measure J(θ), without consulting a value function to select actions.</p>
+    <p>This unlocks three things action-value methods struggle with: (1) they can represent <strong>genuinely stochastic optimal policies</strong> (an ε-greedy policy can only tack a fixed exploration rate onto a deterministic greedy choice); (2) they handle <strong>continuous action spaces</strong> naturally by parameterizing a distribution rather than maximizing over infinitely many actions; and (3) the policy changes <strong>smoothly</strong> as θ changes, giving stronger convergence guarantees, whereas ε-greedy action-values can flip the chosen action discontinuously with a tiny value change.</p>`
+  },
+  {
+    tag: "Ch.13 · Core Result",
+    q: "State the policy gradient theorem. Why is it remarkable that it contains no derivative of the state distribution?",
+    a: `<p>The theorem says the gradient of performance is proportional to a sum over states weighted by how often they occur, and over actions weighted by their action-values times the gradient of the policy:</p>
+    <span class="eq">∇J(θ) ∝ Σ_s μ(s) Σ_a q_π(s,a) ∇π(a|s,θ)</span>
+    <p>The remarkable part: even though the state-visitation distribution μ(s) itself depends on θ (changing the policy changes where you spend time), <strong>its derivative never appears</strong>. If it did, we couldn't estimate the gradient from experience, because it would require knowing how the environment's dynamics respond to policy changes.</p>
+    <p>Because μ appears only as a weighting we already sample from by acting in the environment, the gradient becomes an expectation we can estimate purely from trajectories. In the episodic case the constant of proportionality is the average episode length; in the continuing (average-reward) case it is an exact equality.</p>`
+  },
+  {
+    tag: "Ch.13 · REINFORCE",
+    q: "How does REINFORCE turn the policy gradient theorem into a usable stochastic update, and where does its 'log' term come from?",
+    a: `<p>The theorem is an expectation over states and actions. REINFORCE converts the inner action-sum into an expectation over the actions actually taken by multiplying and dividing by π, which produces the score-function form. The update is:</p>
+    <span class="eq">θ ← θ + α · γ^t · G_t · ∇ln π(A_t|S_t,θ)</span>
+    <p>The <strong>∇ln π</strong> term (the "eligibility vector") comes from the identity ∇π = π·∇ln π; dividing by π turns the sum over all actions into an expectation over the sampled action A_t, and the 1/π compensates for how often each action is chosen. Multiplying by the return G_t means actions that preceded high returns are made more probable.</p>
+    <p>It is a <strong>Monte Carlo</strong> method: it needs the complete return G_t, so it's unbiased but has <strong>high variance</strong> and learns only at episode's end.</p>`
+  },
+  {
+    tag: "Ch.13 · Variance",
+    q: "Why can you subtract a baseline b(s) from the return in REINFORCE without biasing the gradient, and why does it help?",
+    a: `<p>The baseline-augmented update is:</p>
+    <span class="eq">θ ← θ + α · γ^t · (G_t − b(S_t)) · ∇ln π(A_t|S_t,θ)</span>
+    <p>It stays unbiased because b(s) does not depend on the action, and Σ_a b(s)∇π(a|s,θ) = b(s)∇Σ_a π(a|s,θ) = b(s)∇1 = 0. So the baseline's expected contribution to the gradient is exactly zero — it changes nothing in expectation.</p>
+    <p>But it changes the <strong>variance</strong> dramatically. If some states simply yield high returns regardless of the action, the raw G_t signal is dominated by that state's overall value, drowning out the useful action-relative signal. Subtracting a baseline — a natural choice being the learned state value v̂(S_t,w) — centers the update on <em>how much better than expected</em> the action did, giving a much cleaner, lower-variance learning signal and faster learning.</p>`
+  },
+  {
+    tag: "Ch.13 · Actor-Critic",
+    q: "REINFORCE-with-baseline and actor-critic both use a learned value function. Why is only the actor-critic's value function a true 'critic'?",
+    a: `<p>The distinction is <strong>bootstrapping</strong>. In REINFORCE-with-baseline, v̂ is used only as a <em>baseline</em> to be subtracted from the full Monte Carlo return G_t; it reduces variance but the target still comes entirely from actual sampled rewards, so it introduces no bias.</p>
+    <p>In one-step actor-critic, the value function forms a <strong>bootstrapped TD target</strong> that replaces the full return:</p>
+    <span class="eq">δ_t = R_{t+1} + γ·v̂(S_{t+1},w) − v̂(S_t,w)</span>
+    <span class="eq">θ ← θ + α · I · δ_t · ∇ln π(A_t|S_t,θ)</span>
+    <p>Here v̂ actively <em>evaluates</em> the action — it "criticizes" — by estimating future value. Bootstrapping introduces <strong>bias</strong> (the critic is imperfect) but slashes variance and, crucially, lets learning happen online at each step rather than waiting for the episode to end. A pure baseline does not bootstrap, so it is not a critic.</p>`
+  },
+  {
+    tag: "Ch.13 · Stochastic Optimum",
+    q: "In the short-corridor gridworld, why does policy gradient beat ε-greedy action-value methods, and what does it reveal?",
+    a: `<p>The short corridor is a small task where, under the available (limited) state features, the agent cannot distinguish certain states, so function approximation forces the same action-probabilities across them. An ε-greedy action-value method can only pick between two <strong>deterministic</strong> greedy policies (go left or go right), both of which are poor because the aliased states genuinely need different treatment — the best it can do is add fixed ε exploration.</p>
+    <p>Policy gradient can set the action probability to <em>any</em> value, and it discovers that the optimal policy is <strong>stochastic</strong>: choosing 'right' with probability ≈ 0.59. This is the key lesson — when the optimal policy is inherently stochastic (often due to state aliasing / partial observability), value-based greedy methods are structurally incapable of representing it, while policy-gradient methods find it directly.</p>`
+  },
+  {
+    tag: "Ch.13 · Continuous Actions",
+    q: "How do policy-gradient methods handle continuous action spaces, and why is this awkward for action-value methods?",
+    a: `<p>Instead of a probability for each discrete action, the policy parameterizes the <strong>parameters of a distribution</strong> over actions. The standard choice is a Gaussian policy:</p>
+    <span class="eq">π(a|s,θ) = Normal( μ(s,θ), σ(s,θ)² )</span>
+    <p>where the mean and standard deviation are functions of state, e.g. μ = θ_μ·x_μ(s) and σ = exp(θ_σ·x_σ(s)) (the exponential keeps σ positive). The agent samples an action from this Gaussian; the same ∇ln π update then adjusts the mean toward good actions and shrinks or grows σ to control exploration automatically.</p>
+    <p>Action-value methods struggle here because selecting the greedy action requires solving argmax_a q(s,a) over a <strong>continuous, possibly infinite</strong> action set at every step — generally intractable — whereas the policy method just draws a sample.</p>`
+  },
+  {
+    tag: "Ch.13 · Continuing Tasks",
+    q: "How does the actor-critic formulation change for continuing (non-episodic) problems, and why is a differential value needed?",
+    a: `<p>In continuing tasks there is no episode boundary and discounting is often replaced by the <strong>average-reward</strong> setting. Performance J(θ) becomes the long-run average reward r̄, and the TD error is redefined in <strong>differential</strong> form:</p>
+    <span class="eq">δ_t = R_{t+1} − r̄ + v̂(S_{t+1},w) − v̂(S_t,w)</span>
+    <p>Here r̄ is a running estimate of the average reward, itself updated from the TD error. Values become <em>differential</em> values — how much better or worse a state is relative to the average — because absolute discounted returns are ill-defined without an episode boundary. The policy and critic updates otherwise keep the same shape (δ scaling ∇ln π for the actor, δ scaling ∇v̂ for the critic). This keeps the whole method well-posed over an infinite horizon.</p>`
+  },
+  {
+    tag: "Ch.12 → Ch.13 · Connection",
+    q: "How do eligibility traces generalize the actor-critic update, and what do they buy you?",
+    a: `<p>Actor-critic can be extended with separate eligibility traces for the policy (actor) and value (critic) parameters, exactly paralleling TD(λ). Each trace accumulates the gradient and decays at rate γλ:</p>
+    <span class="eq">z^θ ← γλ^θ z^θ + I·∇ln π(A|S,θ)</span>
+    <span class="eq">z^w ← γλ^w z^w + ∇v̂(S,w)</span>
+    <span class="eq">θ ← θ + α^θ·δ·z^θ,   w ← w + α^w·δ·z^w</span>
+    <p>The single TD error δ now updates <em>all recently-eligible</em> parameters, not just the current step's. This bridges the one-step actor-critic (λ=0) and the full Monte Carlo REINFORCE-like behavior (λ=1): traces let a reward signal propagate credit backward over many recent decisions in one online pass, typically giving faster credit assignment than pure one-step bootstrapping while keeping O(d) memory and cost.</p>`
+  },
+  {
+    tag: "Foundations → Ch.13 · Connection",
+    q: "REINFORCE (Monte Carlo) vs one-step actor-critic mirrors the classic MC-vs-TD tradeoff. What is that tradeoff and why does it recur here?",
+    a: `<p>The same bias–variance tension that separates Monte Carlo from TD prediction reappears in policy gradient. REINFORCE uses the <strong>full sampled return</strong> G_t — like Monte Carlo, it is <strong>unbiased</strong> but <strong>high variance</strong> and must wait until an episode ends. One-step actor-critic uses a <strong>bootstrapped</strong> TD target R + γv̂(S') — like TD, it introduces <strong>bias</strong> from the imperfect value estimate but has much <strong>lower variance</strong> and learns online at every step.</p>
+    <p>It recurs because both families face the same underlying question: how do you estimate the value of long-term consequences? You can either sample the whole future (accurate but noisy) or trust a learned estimate of it (stable but biased). Eligibility traces (λ) interpolate smoothly between the extremes in both the prediction and the policy-gradient settings — evidence that this tradeoff is a fundamental structural feature of RL, not an artifact of any one algorithm.</p>`
+  }
+];
+
+const grid = document.getElementById("grid");
+cards.forEach((c, i) => {
+  const card = document.createElement("div");
+  card.className = "card";
+  card.tabIndex = 0;
+  card.setAttribute("role", "button");
+  card.setAttribute("aria-label", "Flashcard " + (i+1) + ". Activate to reveal answer.");
+  card.innerHTML = `
+    <div class="inner">
+      <div class="face front">
+        <span class="tag">${c.tag}</span>
+        <p class="question"><span class="qnum">Q${i+1}.</span>${c.q}</p>
+        <div class="flip-note">Tap to reveal the answer ↻</div>
+      </div>
+      <div class="face back">
+        <span class="tag">Answer</span>
+        <div class="answer">${c.a}</div>
+        <div class="flip-note">Tap to return to the question ↻</div>
+      </div>
+    </div>`;
+  const flip = () => card.classList.toggle("flipped");
+  card.addEventListener("click", flip);
+  card.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flip(); }
+  });
+  grid.appendChild(card);
+});
+</script>
+</body>
+</html>

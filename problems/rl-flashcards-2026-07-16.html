@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RL Flashcards — 2026-07-16</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #f4f6fb;
+  color: #1a2230;
+  line-height: 1.6;
+  padding: 32px 20px 60px;
+}
+header {
+  max-width: 1100px;
+  margin: 0 auto 28px;
+  border-bottom: 3px solid #2f5bd6;
+  padding-bottom: 18px;
+}
+header .kicker {
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #2f5bd6;
+  font-weight: 700;
+}
+header h1 { font-size: 1.9rem; margin: 6px 0 4px; font-weight: 800; }
+header .focus {
+  display: inline-block;
+  margin-top: 8px;
+  background: #e6edfd;
+  color: #23407f;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+header .hint { color: #64708a; font-size: 0.86rem; margin-top: 10px; }
+.grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+.card {
+  perspective: 1400px;
+  height: 300px;
+  cursor: pointer;
+  outline: none;
+}
+.card:focus-visible .inner { box-shadow: 0 0 0 3px #2f5bd6; }
+.inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(.4,.2,.2,1);
+  transform-style: preserve-3d;
+  border-radius: 14px;
+}
+.card.flipped .inner { transform: rotateY(180deg); }
+.face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 14px;
+  padding: 22px 22px 44px;
+  overflow-y: auto;
+  box-shadow: 0 4px 16px rgba(30,50,90,0.10);
+}
+.front {
+  background: #ffffff;
+  border: 1px solid #dfe5f2;
+}
+.front .num {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #2f5bd6;
+  text-transform: uppercase;
+}
+.front .q {
+  font-size: 1.12rem;
+  font-weight: 650;
+  margin-top: 14px;
+  color: #14213d;
+}
+.back {
+  background: #17233d;
+  color: #eef2fb;
+  transform: rotateY(180deg);
+  border: 1px solid #17233d;
+}
+.back .a { font-size: 0.96rem; }
+.back .a strong { color: #9fc0ff; }
+.back .eq {
+  display: block;
+  background: rgba(255,255,255,0.08);
+  border-left: 3px solid #6f96ff;
+  padding: 7px 11px;
+  margin: 10px 0;
+  border-radius: 5px;
+  font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.86rem;
+  color: #d6e2ff;
+}
+.flip-tag {
+  position: absolute;
+  bottom: 12px;
+  right: 16px;
+  font-size: 0.72rem;
+  color: #9aa6bf;
+  letter-spacing: 0.06em;
+}
+.back .flip-tag { color: #7f8db0; }
+footer {
+  max-width: 1100px;
+  margin: 40px auto 0;
+  text-align: center;
+  color: #8590a8;
+  font-size: 0.8rem;
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="kicker">Reinforcement Learning · Daily Flashcards</div>
+  <h1>10 Concepts to Master — July 16, 2026</h1>
+  <div class="focus">Chapter focus: Off-policy Methods with Function Approximation &amp; the Deadly Triad (Sutton &amp; Barto, Ch. 11)</div>
+  <div class="hint">Click any card (or focus it and press Enter / Space) to flip and reveal the answer.</div>
+</header>
+
+<main class="grid" id="grid"></main>
+
+<footer>Generated from the RL library in your books folder · Sutton &amp; Barto Ch. 9–11 · Rotates chapters daily.</footer>
+
+<script>
+const cards = [
+  {
+    q: "What is the \"deadly triad,\" and why is it the central danger in off-policy learning with approximation?",
+    a: "The deadly triad is the combination of three ingredients that together can cause value estimates to diverge to infinity: <strong>(1) function approximation</strong> (generalizing across states with a weight vector), <strong>(2) bootstrapping</strong> (update targets that themselves contain estimates, as in TD and DP), and <strong>(3) off-policy training</strong> (learning about a target policy from data drawn under a different behavior distribution). The crucial insight is that <strong>any two of the three are safe</strong> — instability only emerges when all three are present. It is not caused by control, exploration, or learning noise; it can appear even in pure dynamic programming with expected updates."
+  },
+  {
+    q: "Off-policy learning faces two distinct challenges. What are they, and which one is the hard one?",
+    a: "The first challenge is the <strong>changing update target</strong>: because actions come from the behavior policy but we want values under the target policy, the target must be corrected. This is handled cleanly by <strong>importance sampling ratios</strong>. The second, deeper challenge is the <strong>changing update distribution</strong>: the states we update are visited according to the behavior policy, not the on-policy distribution μ that guarantees stability. Semi-gradient methods rely on that on-policy distribution for convergence, so updating under the wrong distribution is what actually breaks stability. The first problem is a solved nuisance; the second is the genuinely hard one."
+  },
+  {
+    q: "Describe Baird's counterexample and why it is so unsettling.",
+    a: "Baird's counterexample is a 7-state MDP where <strong>every reward is zero</strong>, so the true value function is exactly zero and is perfectly representable by the linear features. Despite this ideal setup, <strong>semi-gradient off-policy TD(0) diverges to infinity</strong>. What makes it especially unsettling is that even <strong>semi-gradient DP</strong> — expected updates with no sampling randomness at all — diverges too. This proves divergence is not about noise or exploration but about the interaction of bootstrapping, approximation, and an off-policy update distribution. Switching to the on-policy distribution fixes it."
+  },
+  {
+    q: "Write the semi-gradient off-policy TD(0) update and explain the role of each factor.",
+    a: "The update is:<span class='eq'>w ← w + α · ρ_t · δ_t · ∇v̂(S_t, w)</span> Here <strong>δ_t = R_{t+1} + γ·v̂(S_{t+1}, w) − v̂(S_t, w)</strong> is the TD error, <strong>∇v̂(S_t, w)</strong> is the gradient of the estimate (for linear methods this is just the feature vector x(S_t)), and <strong>ρ_t = π(A_t|S_t)/b(A_t|S_t)</strong> is the per-step importance sampling ratio that corrects for actions being drawn from behavior policy b rather than target policy π. It is called <strong>semi</strong>-gradient because it ignores the dependence of the bootstrapped target on w."
+  },
+  {
+    q: "Why does Expected Sarsa need no importance sampling, even off-policy?",
+    a: "Expected Sarsa forms its target by <strong>explicitly summing over all actions weighted by the target policy π</strong>: the target is R_{t+1} + γ·Σ_a π(a|S_{t+1})·q̂(S_{t+1}, a, w). Because the expectation over the next action is computed analytically under π rather than sampled from the behavior policy, there is no mismatch between the sampled action and the target-policy action to correct for. Importance sampling exists precisely to fix that sampling mismatch, so when you take the expectation directly, the ratio drops out. This also reduces variance relative to sampled, IS-corrected targets."
+  },
+  {
+    q: "If we must break the deadly triad, which of the three ingredients is most practical to give up, and what does it cost?",
+    a: "We essentially <strong>cannot give up function approximation</strong> — it is what makes large problems tractable. <strong>Bootstrapping</strong> is the most practical to relax: using Monte Carlo returns instead of bootstrapped targets restores stability, but at real cost — MC delays learning until episode end and suffers high variance, which is made worse when importance sampling multiplies the returns. <strong>Off-policy learning</strong> is the hardest to abandon because even ε-greedy control is mildly off-policy. Notably, Q-learning with ε-greedy has never been observed to diverge in practice, though it carries no theoretical guarantee."
+  },
+  {
+    q: "What are \"averagers,\" and why are they immune to the deadly triad?",
+    a: "Averagers are function approximators whose prediction for a state is a <strong>convex combination (weighted average) of stored target values</strong> — examples include nearest-neighbor, locally weighted regression, and state aggregation. Because they only interpolate and never extrapolate beyond the range of their targets, their updates are <strong>non-expansive</strong>, which guarantees stability even in the presence of bootstrapping and off-policy updating. The catch is that the most popular and powerful approximators used in practice — <strong>tile coding and artificial neural networks — are NOT averagers</strong>, which is exactly why they can diverge."
+  },
+  {
+    q: "The Tsitsiklis & Van Roy example shows something stronger than 'TD can diverge.' What is it?",
+    a: "Their example shows that divergence is not merely an artifact of TD's semi-gradient shortcut. Even if at every iteration you compute the <strong>best possible least-squares fit</strong> to the current bootstrapped targets — the optimal projection, not an approximate gradient step — the weights can still diverge geometrically:<span class='eq'>w_k = ( (6 − 4ε)/5 · γ )^k · w_0</span> For γ close to 1 the multiplier exceeds 1, so w explodes. The lesson: the instability lives in the <strong>projected Bellman operator itself</strong>, not in the optimization method used to track it."
+  },
+  {
+    q: "How do n-step methods handle off-policy targets, and what makes tree backup special?",
+    a: "For standard n-step off-policy methods, a <strong>product of per-step importance sampling ratios</strong> multiplies the update to correct the multi-step target — but this product can make variance explode as n grows, since many ratios are chained together. <strong>Tree backup</strong> is special because it constructs its n-step target by <strong>branching over all actions at each level weighted by the target policy</strong> (like Expected Sarsa extended over multiple steps), so it achieves off-policy learning <strong>without any importance sampling ratios at all</strong>, sidestepping the variance blow-up entirely."
+  },
+  {
+    q: "Connecting concept: the on-policy TD fixed point has a quality guarantee that off-policy loses. What is it, and why does the guarantee matter?",
+    a: "In on-policy prediction (Ch. 9), semi-gradient TD converges to the <strong>TD fixed point</strong> w_TD = A⁻¹b, and its error is bounded relative to the best achievable:<span class='eq'>VE(w_TD) ≤ (1/(1−γ)) · min_w VE(w)</span> This means the asymptotic error is at most 1/(1−γ) times the smallest possible value error — a firm, if loose, guarantee that TD lands in a sensible neighborhood of the best representable solution. Off-policy training under the wrong distribution voids this guarantee entirely: rather than a bounded suboptimal solution, you can get <strong>unbounded divergence</strong>. This contrast is precisely why the update distribution — not the target correction — is the heart of the off-policy stability problem."
+  }
+];
+
+const grid = document.getElementById('grid');
+cards.forEach((c, i) => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.tabIndex = 0;
+  card.setAttribute('role', 'button');
+  card.setAttribute('aria-label', 'Flashcard ' + (i+1) + '. Question: ' + c.q + '. Activate to reveal answer.');
+  card.innerHTML =
+    '<div class="inner">' +
+      '<div class="face front">' +
+        '<div class="num">Card ' + (i+1) + ' / ' + cards.length + '</div>' +
+        '<div class="q">' + c.q + '</div>' +
+        '<div class="flip-tag">tap to reveal ▸</div>' +
+      '</div>' +
+      '<div class="face back">' +
+        '<div class="a">' + c.a + '</div>' +
+        '<div class="flip-tag">◂ tap to hide</div>' +
+      '</div>' +
+    '</div>';
+  const flip = () => card.classList.toggle('flipped');
+  card.addEventListener('click', flip);
+  card.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); }
+  });
+  grid.appendChild(card);
+});
+</script>
+</body>
+</html>

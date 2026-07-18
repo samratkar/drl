@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TD, Sarsa & Q-Learning — Numerical Flashcards</title>
+<style>
+  :root{
+    color-scheme: light;
+    --bg:#f4f1ea; --card:#fffdf8; --ink:#1c1a17; --muted:#6b6459;
+    --accent:#b4531f; --accent2:#2f6b4f; --line:#e0d9cc; --qtint:#fbf6ec; --stint:#f2f6f2;
+    --code:#f5efe3;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;
+    line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  header.top{
+    padding:38px 24px 26px; text-align:center;
+    background:linear-gradient(180deg,#efe7d7,#f4f1ea);
+    border-bottom:1px solid var(--line);
+  }
+  header.top .kicker{
+    font-family:ui-monospace,Menlo,monospace; letter-spacing:.22em; text-transform:uppercase;
+    font-size:12px; color:var(--accent); margin-bottom:8px;
+  }
+  header.top h1{margin:0; font-size:34px; font-weight:700; letter-spacing:-.01em;}
+  header.top p{margin:10px auto 0; max-width:640px; color:var(--muted); font-size:15px;}
+  .toolbar{
+    position:sticky; top:0; z-index:20; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;
+    padding:14px; background:rgba(244,241,234,.92); backdrop-filter:blur(6px); border-bottom:1px solid var(--line);
+  }
+  .btn{
+    font-family:ui-monospace,Menlo,monospace; font-size:13px; letter-spacing:.04em;
+    border:1px solid var(--ink); background:var(--ink); color:#fff; padding:10px 16px;
+    border-radius:8px; cursor:pointer; transition:.15s;
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn.secondary{background:transparent; color:var(--ink);}
+  .btn.secondary:hover{background:var(--ink); color:#fff;}
+  main{max-width:900px; margin:0 auto; padding:28px 20px 80px;}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:16px;
+    box-shadow:0 2px 0 rgba(0,0,0,.03),0 18px 40px -28px rgba(60,40,10,.5);
+    margin:0 0 34px; overflow:hidden;
+  }
+  .card .band{height:6px; background:linear-gradient(90deg,var(--accent),#d98a4e);}
+  .card .body{padding:26px 30px 30px;}
+  .qhead{display:flex; align-items:baseline; gap:12px; margin-bottom:6px;}
+  .qnum{
+    font-family:ui-monospace,Menlo,monospace; font-size:13px; font-weight:700; color:#fff;
+    background:var(--accent); border-radius:6px; padding:3px 9px;
+  }
+  .tag{
+    font-family:ui-monospace,Menlo,monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--accent2); border:1px solid var(--accent2); border-radius:20px; padding:2px 10px;
+  }
+  .question{font-size:18px; margin:10px 0 4px;}
+  .givens{
+    background:var(--qtint); border:1px solid var(--line); border-radius:10px;
+    padding:12px 16px; margin:14px 0; font-size:15px;
+  }
+  .illus{margin:20px 0; text-align:center;}
+  .illus svg{max-width:100%; height:auto;}
+  .illus figcaption{font-size:13px; color:var(--muted); margin-top:8px; font-style:italic;}
+  .reveal{
+    font-family:ui-monospace,Menlo,monospace; font-size:13px; letter-spacing:.04em;
+    background:var(--accent2); color:#fff; border:none; border-radius:8px;
+    padding:9px 16px; cursor:pointer; margin-top:8px;
+  }
+  .solution{display:none; margin-top:20px; padding-top:20px; border-top:2px dashed var(--line);}
+  .solution.show{display:block;}
+  .solution h4{margin:0 0 12px; font-size:15px; letter-spacing:.05em; text-transform:uppercase; color:var(--accent2);}
+  .step{margin:0 0 14px;}
+  .step .lbl{font-weight:700;}
+  .eq{
+    background:var(--code); border:1px solid var(--line); border-radius:8px;
+    padding:10px 14px; margin:8px 0; font-family:"Cambria Math",ui-monospace,Menlo,monospace;
+    font-size:15.5px; overflow-x:auto;
+  }
+  .ans{
+    background:var(--stint); border-left:4px solid var(--accent2); border-radius:0 8px 8px 0;
+    padding:12px 16px; margin-top:14px; font-size:16px;
+  }
+  .ans b{color:var(--accent2);}
+  .src{margin-top:16px; font-size:13.5px; color:var(--muted);}
+  .src a{color:var(--accent); text-decoration:none; border-bottom:1px solid var(--accent);}
+  .src a:hover{background:var(--accent); color:#fff;}
+  .src .bk{font-style:italic;}
+  sub,sup{font-size:.72em;}
+  .frac{display:inline-block; vertical-align:middle; text-align:center;}
+  .frac .n{display:block; border-bottom:1.4px solid currentColor; padding:0 4px;}
+  .frac .d{display:block; padding:0 4px;}
+  footer{text-align:center; color:var(--muted); font-size:13px; padding:20px;}
+
+  /* ---------- PRINT / PDF LAYOUT ---------- */
+  #printRoot{display:none;}
+  @media print{
+    @page{margin:16mm 14mm;}
+    body{background:#fff;}
+    .top,.toolbar,main,footer{display:none !important;}
+    #printRoot{display:block; max-width:none; color:#000; font-size:12pt;}
+    #printRoot .psection-title{
+      font-size:20pt; border-bottom:2px solid #000; padding-bottom:6px; margin:0 0 18px;
+      page-break-after:avoid;
+    }
+    #printRoot .pnew{page-break-before:always;}
+    #printRoot .pitem{margin:0 0 20px; page-break-inside:avoid;}
+    #printRoot .pnum{font-weight:700; font-size:13pt;}
+    #printRoot .ptag{font-size:9pt; text-transform:uppercase; letter-spacing:.08em; color:#2f6b4f; margin-left:8px;}
+    #printRoot .pgiven{background:#f4f1ea; border:1px solid #ccc; padding:8px 10px; margin:8px 0; font-size:11pt;}
+    #printRoot .eq{background:#f2f2f2; border:1px solid #ccc; page-break-inside:avoid;}
+    #printRoot .pans{border-left:3px solid #2f6b4f; padding:8px 12px; margin-top:10px; font-weight:600;}
+    #printRoot .psrc{font-size:9.5pt; color:#555; margin-top:8px;}
+    #printRoot .psrc a{color:#000;}
+    #printRoot svg{max-width:70%; height:auto; display:block; margin:10px auto;}
+    #printRoot figcaption{font-size:9pt; font-style:italic; color:#555; text-align:center;}
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="kicker">Sutton &amp; Barto · Chapter 6</div>
+  <h1>Temporal-Difference Learning</h1>
+  <p>Ten numerical flashcards on TD(0), Sarsa, Q-learning, Expected Sarsa &amp; Double Q-learning — each with a fully worked, step-by-step solution and a diagram.</p>
+</header>
+
+<div class="toolbar">
+  <button class="btn" onclick="exportPDF()">⤓ Export as PDF</button>
+  <button class="btn secondary" onclick="toggleAll(true)">Show all solutions</button>
+  <button class="btn secondary" onclick="toggleAll(false)">Hide all solutions</button>
+</div>
+
+<main id="cards"></main>
+
+<footer>Generated 2026-07-16 · Values grounded in Sutton &amp; Barto, <em>Reinforcement Learning: An Introduction</em>, 2nd ed., Ch. 6 (pp. 119–138).</footer>
+
+<div id="printRoot"></div>
+
+<script>
+/* ============ SVG ILLUSTRATION HELPERS ============ */
+// Simple two/three-node transition diagram
+function chain(nodes, opts){
+  opts = opts || {};
+  const w = opts.w || 560, h = opts.h || 150, r = 30;
+  const n = nodes.length;
+  const gap = (w-80)/(n-1);
+  let s = `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,monospace">`;
+  // arrows
+  for(let i=0;i<n-1;i++){
+    const x1=40+i*gap+r, x2=40+(i+1)*gap-r, y=h/2;
+    s+=`<line x1="${x1}" y1="${y}" x2="${x2-8}" y2="${y}" stroke="#b4531f" stroke-width="2.5"/>`;
+    s+=`<polygon points="${x2-8},${y-6} ${x2},${y} ${x2-8},${y+6}" fill="#b4531f"/>`;
+    if(opts.edge && opts.edge[i]) s+=`<text x="${(x1+x2)/2}" y="${y-12}" text-anchor="middle" font-size="14" fill="#2f6b4f">${opts.edge[i]}</text>`;
+  }
+  // nodes
+  nodes.forEach((nd,i)=>{
+    const x=40+i*gap, y=h/2;
+    const fill = nd.term ? "#efe7d7" : "#fffdf8";
+    const stroke = nd.hi ? "#2f6b4f" : "#1c1a17";
+    if(nd.term){
+      s+=`<rect x="${x-r}" y="${y-r+6}" width="${2*r}" height="${2*r-12}" rx="6" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+    }else{
+      s+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${nd.hi?3:2}"/>`;
+    }
+    s+=`<text x="${x}" y="${y+5}" text-anchor="middle" font-size="15" font-weight="700" fill="#1c1a17">${nd.label}</text>`;
+    if(nd.val) s+=`<text x="${x}" y="${y+r+20}" text-anchor="middle" font-size="13" fill="#6b6459">${nd.val}</text>`;
+  });
+  return s+`</svg>`;
+}
+// Bar chart of Q-values
+function bars(items, opts){
+  opts=opts||{}; const w=520,h=210, base=160, bw=70, gap=28, left=60;
+  const vals=items.map(i=>i.v); const mx=Math.max(...vals.map(Math.abs),1);
+  let s=`<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,monospace">`;
+  s+=`<line x1="${left-10}" y1="${base}" x2="${w-20}" y2="${base}" stroke="#1c1a17" stroke-width="1.5"/>`;
+  items.forEach((it,i)=>{
+    const x=left+i*(bw+gap);
+    const hgt=Math.abs(it.v)/mx*110;
+    const y=it.v>=0?base-hgt:base;
+    const col=it.hi?"#2f6b4f":"#c98a5a";
+    s+=`<rect x="${x}" y="${y}" width="${bw}" height="${hgt}" rx="4" fill="${col}" stroke="#1c1a17" stroke-width="${it.hi?2.5:1}"/>`;
+    s+=`<text x="${x+bw/2}" y="${it.v>=0?y-8:y+hgt+16}" text-anchor="middle" font-size="14" font-weight="700" fill="#1c1a17">${it.v}</text>`;
+    s+=`<text x="${x+bw/2}" y="${base+20}" text-anchor="middle" font-size="12" fill="#6b6459">${it.label}</text>`;
+    if(it.hi) s+=`<text x="${x+bw/2}" y="${base+36}" text-anchor="middle" font-size="11" fill="#2f6b4f">◀ selected</text>`;
+  });
+  if(opts.title) s+=`<text x="${w/2}" y="18" text-anchor="middle" font-size="13" fill="#6b6459">${opts.title}</text>`;
+  return s+`</svg>`;
+}
+// grid world (cliff) illustration
+function cliff(){
+  const cols=8, rows=3, cw=56, ch=44, ox=30, oy=20;
+  let s=`<svg viewBox="0 0 ${cols*cw+2*ox} ${rows*ch+2*oy+30}" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,monospace">`;
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    const x=ox+c*cw,y=oy+r*ch; let fill="#fffdf8",label="";
+    if(r===rows-1&&c>0&&c<cols-1){fill="#e8b4a0";label="cliff −100";}
+    if(r===rows-1&&c===0){fill="#dfeadf";label="S";}
+    if(r===rows-1&&c===cols-1){fill="#dfeadf";label="G";}
+    s+=`<rect x="${x}" y="${y}" width="${cw}" height="${ch}" fill="${fill}" stroke="#c9c0b0" stroke-width="1"/>`;
+    if(label)s+=`<text x="${x+cw/2}" y="${y+ch/2+4}" text-anchor="middle" font-size="10" fill="#7a3418">${label}</text>`;
+  }
+  // safe path (top) green
+  s+=`<path d="M ${ox+cw/2} ${oy+2.5*ch} L ${ox+cw/2} ${oy+0.5*ch} L ${ox+(cols-0.5)*cw} ${oy+0.5*ch} L ${ox+(cols-0.5)*cw} ${oy+2.5*ch}" fill="none" stroke="#2f6b4f" stroke-width="2.5" stroke-dasharray="5 4"/>`;
+  // risky path (bottom edge) red
+  s+=`<path d="M ${ox+cw/2} ${oy+2.5*ch} L ${ox+(cols-0.5)*cw} ${oy+2.5*ch}" fill="none" stroke="#b4531f" stroke-width="2.5"/>`;
+  s+=`<text x="${ox}" y="${rows*ch+oy+22}" font-size="11" fill="#2f6b4f">— — Sarsa (safe)</text>`;
+  s+=`<text x="${ox+180}" y="${rows*ch+oy+22}" font-size="11" fill="#b4531f">—— Q-learning (optimal/risky)</text>`;
+  return s+`</svg>`;
+}
+
+/* ============ FLASHCARD DATA ============ */
+const F = (n,d,x)=>`<span class="frac"><span class="n">${n}</span><span class="d">${d}</span></span>`;
+
+// Source book. file:// link with #page=N opens the PDF at that page (PDF page = printed page + 22).
+const BOOK = "file:///Users/samrat.kar/git/drl/books/BartoSutton.pdf";
+const BOOKNAME = "Sutton &amp; Barto, Reinforcement Learning: An Introduction (2nd ed.)";
+// helper: printed page -> source link object
+const src = (printed, sec) => ({p:printed, pdf:printed+22, sec});
+
+const cards = [
+{
+  tag:"TD(0) Prediction",
+  q:"A single TD(0) prediction update. Estimate the new value of state S<sub>t</sub> after one transition.",
+  givens:"V(S<sub>t</sub>) = 0.50, reward R<sub>t+1</sub> = 0, γ = 0.9, V(S<sub>t+1</sub>) = 0.80, step size α = 0.1.",
+  illus: chain([{label:"Sₜ",val:"V=0.50",hi:true},{label:"Sₜ₊₁",val:"V=0.80"}],{edge:["R=0"]}),
+  cap:"One step of experience: agent moves Sₜ → Sₜ₊₁ collecting reward 0.",
+  sol:[
+    {lbl:"1. TD update rule.", eq:"V(Sₜ) ← V(Sₜ) + α[ R<sub>t+1</sub> + γ·V(S<sub>t+1</sub>) − V(Sₜ) ]"},
+    {lbl:"2. Compute the TD target.", eq:"R + γ·V(S<sub>t+1</sub>) = 0 + 0.9 × 0.80 = 0.72"},
+    {lbl:"3. Compute the TD error δ.", eq:"δ = target − V(Sₜ) = 0.72 − 0.50 = 0.22"},
+    {lbl:"4. Apply the step size.", eq:"V(Sₜ) ← 0.50 + 0.1 × 0.22 = 0.50 + 0.022"},
+  ],
+  ans:"V(S<sub>t</sub>) = <b>0.522</b> &nbsp;(TD error δ = 0.22)",
+  src: src(120, "§6.1 TD Prediction — the TD(0) update rule")
+},
+{
+  tag:"TD Error & Target",
+  q:"Identify the TD target and the TD error for a single transition.",
+  givens:"R<sub>t+1</sub> = 1, γ = 0.95, V(S<sub>t+1</sub>) = 10, V(S<sub>t</sub>) = 6.",
+  illus: chain([{label:"Sₜ",val:"V=6",hi:true},{label:"Sₜ₊₁",val:"V=10"}],{edge:["R=1"]}),
+  cap:"The target blends the observed reward with the bootstrapped estimate of the next state.",
+  sol:[
+    {lbl:"1. TD target = observed reward + discounted estimate of next state.", eq:"target = R + γ·V(S<sub>t+1</sub>) = 1 + 0.95 × 10 = 1 + 9.5 = 10.5"},
+    {lbl:"2. TD error = target − current estimate.", eq:"δ = 10.5 − 6 = 4.5"},
+    {lbl:"Why it's an estimate.", eq:"The target itself is an estimate for two reasons: it samples the expected reward, AND it uses the estimated V(S<sub>t+1</sub>) rather than the true value."},
+  ],
+  ans:"TD target = <b>10.5</b>, &nbsp; TD error δ = <b>4.5</b>",
+  src: src(120, "§6.1 — TD error δₜ and the TD target")
+},
+{
+  tag:"Sarsa (on-policy)",
+  q:"Perform one Sarsa update for the action-value Q(S<sub>t</sub>, A<sub>t</sub>).",
+  givens:"Q(Sₜ,Aₜ) = 2.0, R<sub>t+1</sub> = −1, γ = 0.9, next state-action Q(S<sub>t+1</sub>,A<sub>t+1</sub>) = 4.0, α = 0.5.",
+  illus: chain([{label:"S,A",val:"Q=2.0",hi:true},{label:"S',A'",val:"Q=4.0"}],{edge:["R=−1"]}),
+  cap:"Sarsa uses the tuple (S, A, R, S', A') — it bootstraps off the action actually taken next.",
+  sol:[
+    {lbl:"1. Sarsa update rule (uses the actual next action A<sub>t+1</sub>).", eq:"Q(S,A) ← Q(S,A) + α[ R + γ·Q(S',A') − Q(S,A) ]"},
+    {lbl:"2. Compute the target.", eq:"R + γ·Q(S',A') = −1 + 0.9 × 4.0 = −1 + 3.6 = 2.6"},
+    {lbl:"3. TD error.", eq:"δ = 2.6 − 2.0 = 0.6"},
+    {lbl:"4. Apply update.", eq:"Q ← 2.0 + 0.5 × 0.6 = 2.0 + 0.3"},
+  ],
+  ans:"Q(S<sub>t</sub>,A<sub>t</sub>) = <b>2.3</b>",
+  src: src(129, "§6.4 Sarsa: On-policy TD Control")
+},
+{
+  tag:"Q-learning (off-policy)",
+  q:"Perform one Q-learning update. From the next state there are four available actions.",
+  givens:"Q(S,A) = 3.0, R = 0, γ = 1.0, α = 0.2. Next-state values: Q(S',up)=5, Q(S',down)=2, Q(S',left)=7, Q(S',right)=1.",
+  illus: bars([{label:"up",v:5},{label:"down",v:2},{label:"left",v:7,hi:true},{label:"right",v:1}],{title:"Q(S',·) — Q-learning takes the max regardless of policy"}),
+  cap:"Off-policy: the target uses max_a Q(S',a) = the greedy action, even if the agent won't take it.",
+  sol:[
+    {lbl:"1. Q-learning update rule.", eq:"Q(S,A) ← Q(S,A) + α[ R + γ·max<sub>a</sub> Q(S',a) − Q(S,A) ]"},
+    {lbl:"2. Find the max over next-state actions.", eq:"max<sub>a</sub> Q(S',a) = max(5, 2, 7, 1) = 7 &nbsp;(action = left)"},
+    {lbl:"3. Compute the target.", eq:"R + γ·7 = 0 + 1.0 × 7 = 7"},
+    {lbl:"4. TD error and update.", eq:"δ = 7 − 3.0 = 4.0 → Q ← 3.0 + 0.2 × 4.0 = 3.0 + 0.8"},
+  ],
+  ans:"Q(S,A) = <b>3.8</b>",
+  src: src(131, "§6.5 Q-learning: Off-policy TD Control")
+},
+{
+  tag:"Expected Sarsa",
+  q:"Perform one Expected Sarsa update using an ε-greedy policy (ε = 0.1) over 4 actions.",
+  givens:"Q(S',·): a1=2, a2=8, a3=4, a4=6. Greedy action = a2. Q(S,A)=5.0, R=1, γ=0.9, α=0.1.",
+  illus: bars([{label:"a1",v:2},{label:"a2",v:8,hi:true},{label:"a3",v:4},{label:"a4",v:6}],{title:"Q(S',·) — Expected Sarsa weights ALL actions by policy prob"}),
+  cap:"Instead of one sampled A', Expected Sarsa averages Q(S',a) weighted by π(a|S').",
+  sol:[
+    {lbl:"1. ε-greedy action probabilities (ε=0.1, 4 actions).", eq:"Non-greedy each: ε/4 = 0.025. Greedy (a2): 1 − ε + ε/4 = 0.9 + 0.025 = 0.925"},
+    {lbl:"2. Expected value of next state under π.", eq:"E = 0.025·2 + 0.925·8 + 0.025·4 + 0.025·6 = 0.05 + 7.4 + 0.10 + 0.15 = 7.70"},
+    {lbl:"3. Target = R + γ·E.", eq:"1 + 0.9 × 7.70 = 1 + 6.93 = 7.93"},
+    {lbl:"4. Update.", eq:"δ = 7.93 − 5.0 = 2.93 → Q ← 5.0 + 0.1 × 2.93 = 5.0 + 0.293"},
+  ],
+  ans:"Expected next value = 7.70, &nbsp; Q(S,A) = <b>5.293</b>",
+  src: src(133, "§6.6 Expected Sarsa")
+},
+{
+  tag:"MC error = Σ TD errors",
+  q:"Verify that the Monte-Carlo error equals the sum of TD errors over a 3-step episode (γ = 1, V held fixed).",
+  givens:"Episode S₀→S₁→S₂→terminal with rewards 0, 0, 1. Estimates V(S₀)=V(S₁)=V(S₂)=0.5, V(terminal)=0.",
+  illus: chain([{label:"S₀",val:"V=.5",hi:true},{label:"S₁",val:"V=.5"},{label:"S₂",val:"V=.5"},{label:"⊤",val:"V=0",term:true}],{edge:["0","0","1"],w:640}),
+  cap:"Random-walk style episode: the terminal reward of 1 propagates back through the TD errors.",
+  sol:[
+    {lbl:"1. TD error at each step: δ<sub>t</sub> = R<sub>t+1</sub> + γV(S<sub>t+1</sub>) − V(S<sub>t</sub>).", eq:"δ₀ = 0 + 0.5 − 0.5 = 0<br>δ₁ = 0 + 0.5 − 0.5 = 0<br>δ₂ = 1 + 0 − 0.5 = 0.5"},
+    {lbl:"2. Sum of TD errors.", eq:"Σ δ<sub>t</sub> = 0 + 0 + 0.5 = 0.5"},
+    {lbl:"3. Monte-Carlo error at S₀ (γ=1 ⇒ return G₀ = 0+0+1 = 1).", eq:"G₀ − V(S₀) = 1 − 0.5 = 0.5"},
+    {lbl:"4. Conclusion.", eq:"Σδ<sub>t</sub> = 0.5 = G₀ − V(S₀) ✓ &nbsp;(the identity holds when V is not updated mid-episode)"},
+  ],
+  ans:"Both equal <b>0.5</b> — the MC error decomposes exactly into the sum of TD errors.",
+  src: src(121, "§6.1 — the MC-error / sum-of-TD-errors identity (Eq. 6.6)")
+},
+{
+  tag:"Double Q-learning",
+  q:"Perform one Double Q-learning update to Q₁, using the standard decoupled max.",
+  givens:"State S' with 2 actions. Q₁(S',L)=1, Q₁(S',R)=3. Q₂(S',L)=2, Q₂(S',R)=0.5. Q₁(S,A)=2.0, R=0, γ=0.9, α=0.5.",
+  illus: bars([{label:"Q₁ L",v:1},{label:"Q₁ R",v:3,hi:true},{label:"Q₂ L",v:2},{label:"Q₂ R",v:0.5}],{title:"argmax chosen from Q₁ (→R); value read from Q₂"}),
+  cap:"Decoupling: Q₁ selects the action, Q₂ supplies its value — this removes maximization bias.",
+  sol:[
+    {lbl:"1. Update rule (updating Q₁).", eq:"Q₁(S,A) ← Q₁(S,A) + α[ R + γ·Q₂(S', argmax<sub>a</sub> Q₁(S',a)) − Q₁(S,A) ]"},
+    {lbl:"2. Pick the greedy action using Q₁.", eq:"argmax<sub>a</sub> Q₁(S',a): Q₁(S',L)=1, Q₁(S',R)=3 → a* = R"},
+    {lbl:"3. Evaluate that action using Q₂.", eq:"Q₂(S', a*) = Q₂(S',R) = 0.5"},
+    {lbl:"4. Target and update.", eq:"target = 0 + 0.9 × 0.5 = 0.45; &nbsp; δ = 0.45 − 2.0 = −1.55<br>Q₁ ← 2.0 + 0.5 × (−1.55) = 2.0 − 0.775"},
+  ],
+  ans:"Q₁(S,A) = <b>1.225</b>",
+  src: src(136, "§6.7 Maximization Bias and Double Learning")
+},
+{
+  tag:"TD(0) over an episode",
+  q:"Run TD(0) for one full episode over a 3-state chain and report the updated value table.",
+  givens:"States A→B→C→terminal, all V initialised to 0. Rewards: A→B = 0, B→C = 0, C→⊤ = 1. α = 0.1, γ = 1.0. Updates applied online (immediately).",
+  illus: chain([{label:"A",val:"0→0",hi:true},{label:"B",val:"0→0"},{label:"C",val:"0→.1"},{label:"⊤",term:true}],{edge:["0","0","1"],w:640}),
+  cap:"With online TD(0), only the last state changes after one episode — reward has not yet propagated back.",
+  sol:[
+    {lbl:"Step A→B (R=0).", eq:"V(A) ← 0 + 0.1[0 + 1·V(B) − V(A)] = 0 + 0.1[0 + 0 − 0] = 0"},
+    {lbl:"Step B→C (R=0).", eq:"V(B) ← 0 + 0.1[0 + 1·V(C) − V(B)] = 0 + 0.1[0 + 0 − 0] = 0"},
+    {lbl:"Step C→⊤ (R=1, V(⊤)=0).", eq:"V(C) ← 0 + 0.1[1 + 1·0 − 0] = 0 + 0.1 × 1 = 0.1"},
+    {lbl:"Key insight.", eq:"Because C was updated AFTER A and B were already read as 0, the reward only reaches C this episode. It propagates one state further per subsequent episode — the hallmark of one-step bootstrapping."},
+  ],
+  ans:"V(A) = <b>0</b>, V(B) = <b>0</b>, V(C) = <b>0.1</b>",
+  src: src(120, "§6.1 TD Prediction — TD(0) applied online over an episode")
+},
+{
+  tag:"Sarsa vs Q-learning (Cliff)",
+  q:"On the Cliff-Walking edge, compare the TD target of Sarsa vs Q-learning for one step. Which is more pessimistic near the cliff?",
+  givens:"From S', two actions: Q(S',up) = −1 (moves away from cliff), Q(S',right) = −100 (steps toward cliff region). R = −1, γ = 1.0. Sarsa happens to sample the exploratory action A' = right.",
+  illus: cliff(),
+  cap:"Cliff-Walking: Q-learning learns the optimal edge path; Sarsa, feeling exploration's cost, prefers the safe detour.",
+  sol:[
+    {lbl:"1. Q-learning target (uses the max — ignores exploration).", eq:"R + γ·max(Q(S',up), Q(S',right)) = −1 + 1·max(−1, −100) = −1 + (−1) = −2"},
+    {lbl:"2. Sarsa target (uses the actually sampled A' = right).", eq:"R + γ·Q(S',right) = −1 + 1·(−100) = −101"},
+    {lbl:"3. Interpretation.", eq:"Sarsa's target is far more pessimistic (−101) because it accounts for the real chance that ε-greedy exploration will step off the cliff. Q-learning's target (−2) reflects only the optimal greedy continuation."},
+    {lbl:"4. Consequence.", eq:"Sarsa therefore learns to avoid the edge (safer, longer path); Q-learning learns the optimal but risky edge path and takes more penalties online."},
+  ],
+  ans:"Q-learning target = <b>−2</b>; Sarsa target = <b>−101</b>. Sarsa is more pessimistic ⇒ safer path.",
+  src: src(132, "Example 6.6 The Cliff Walking (Sarsa vs Q-learning)")
+},
+{
+  tag:"Multi-step Discounted Return",
+  q:"Compute the full discounted return G₀ from a 5-step reward sequence — the quantity Monte-Carlo TD methods estimate.",
+  givens:"Rewards from t=0: R₁=2, R₂=−1, R₃=3, R₄=0, R₅=5. Discount γ = 0.9.",
+  illus: chain([{label:"S₀",hi:true},{label:"S₁"},{label:"S₂"},{label:"S₃"},{label:"S₄"},{label:"⊤",term:true}],{edge:["+2","−1","+3","0","+5"],w:720}),
+  cap:"Return = discounted sum of future rewards; each step is weighted by an extra factor of γ.",
+  sol:[
+    {lbl:"1. Return definition.", eq:"G₀ = R₁ + γR₂ + γ²R₃ + γ³R₄ + γ⁴R₅"},
+    {lbl:"2. Discount factors (γ=0.9).", eq:"γ⁰=1, γ¹=0.9, γ²=0.81, γ³=0.729, γ⁴=0.6561"},
+    {lbl:"3. Weighted terms.", eq:"1·2 = 2.0<br>0.9·(−1) = −0.9<br>0.81·3 = 2.43<br>0.729·0 = 0<br>0.6561·5 = 3.2805"},
+    {lbl:"4. Sum.", eq:"G₀ = 2.0 − 0.9 + 2.43 + 0 + 3.2805 = 6.8105"},
+  ],
+  ans:"G₀ = <b>6.8105</b>",
+  src: src(55, "§3.3 Returns and Episodes — the discounted return Gₜ")
+}
+];
+
+/* ============ RENDER SCREEN CARDS ============ */
+const host = document.getElementById('cards');
+cards.forEach((c,i)=>{
+  const steps = c.sol.map(s=>`<div class="step"><span class="lbl">${s.lbl}</span><div class="eq">${s.eq}</div></div>`).join('');
+  host.insertAdjacentHTML('beforeend', `
+  <section class="card">
+    <div class="band"></div>
+    <div class="body">
+      <div class="qhead"><span class="qnum">Q${i+1}</span><span class="tag">${c.tag}</span></div>
+      <div class="question">${c.q}</div>
+      <div class="givens"><b>Given:</b> ${c.givens}</div>
+      <figure class="illus">${c.illus}<figcaption>${c.cap}</figcaption></figure>
+      <button class="reveal" onclick="this.nextElementSibling.classList.toggle('show'); this.textContent=this.nextElementSibling.classList.contains('show')?'Hide solution':'Reveal solution'">Reveal solution</button>
+      <div class="solution">
+        <h4>Worked Solution</h4>
+        ${steps}
+        <div class="ans">✔ ${c.ans}</div>
+        <div class="src">📖 Theory: <span class="bk">${BOOKNAME}</span>, ${c.src.sec} — <a href="${BOOK}#page=${c.src.pdf}" target="_blank">open p.&nbsp;${c.src.p}</a></div>
+      </div>
+    </div>
+  </section>`);
+});
+
+function toggleAll(show){
+  document.querySelectorAll('.solution').forEach(s=>s.classList.toggle('show',show));
+  document.querySelectorAll('.reveal').forEach(b=>b.textContent=show?'Hide solution':'Reveal solution');
+}
+
+/* ============ BUILD PRINT LAYOUT (Questions then Solutions) ============ */
+function buildPrint(){
+  const root=document.getElementById('printRoot');
+  let q=`<h2 class="psection-title">TD, Sarsa &amp; Q-Learning — Problems</h2>`;
+  cards.forEach((c,i)=>{
+    q+=`<div class="pitem">
+      <div><span class="pnum">Problem ${i+1}.</span><span class="ptag">${c.tag}</span></div>
+      <p>${c.q}</p>
+      <div class="pgiven"><b>Given:</b> ${c.givens}</div>
+      <figure>${c.illus}<figcaption>${c.cap}</figcaption></figure>
+    </div>`;
+  });
+  let s=`<h2 class="psection-title pnew">Worked Solutions</h2>`;
+  cards.forEach((c,i)=>{
+    const steps=c.sol.map(st=>`<div class="step"><b>${st.lbl}</b><div class="eq">${st.eq}</div></div>`).join('');
+    s+=`<div class="pitem">
+      <div><span class="pnum">Solution ${i+1}.</span><span class="ptag">${c.tag}</span></div>
+      ${steps}
+      <div class="pans">✔ ${c.ans}</div>
+      <div class="psrc">📖 Theory: ${BOOKNAME}, ${c.src.sec} — <a href="${BOOK}#page=${c.src.pdf}">p.&nbsp;${c.src.p}</a></div>
+    </div>`;
+  });
+  root.innerHTML=q+s;
+}
+function exportPDF(){
+  buildPrint();
+  window.print();
+}
+</script>
+</body>
+</html>
