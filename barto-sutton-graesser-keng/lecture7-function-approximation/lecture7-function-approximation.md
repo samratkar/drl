@@ -23,7 +23,7 @@ Instead of storing a table, we use a parameterized mathematical function to esti
 
 $$ \hat{v}(s, \mathbf{w}) \approx v_\pi(s) $$
 
-Here, $\mathbf{w} \in \mathbb{R}^d$ is a weight vector. If $d \ll |\mathcal{S}|$ (the number of weights is much smaller than the number of states), updating the weights for one state automatically adjusts the estimated values of many other similar states! This provides the **generalization** we desperately need.
+Here, $\mathbf{w} \in \mathbb{R}^d$ is a weight vector. If $d \ll \mid \mathcal{S} \mid$ (the number of weights is much smaller than the number of states), updating the weights for one state automatically adjusts the estimated values of many other similar states! This provides the **generalization** we desperately need.
 
 ```mermaid
 graph LR
