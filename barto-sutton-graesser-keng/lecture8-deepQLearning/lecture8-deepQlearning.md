@@ -386,7 +386,7 @@ Let's trace a single iteration of the DDQN training loop for our CartPole agent.
 
 ---
 
-## 7. Seminal Research Paper: Mnih et al. (2015) - Nature
+## 7. Seminal Research Paper: Mnih et al. (2015) - Deep Q-Networks (DQN)
 
 * **Title**: [Human-level control through deep reinforcement learning](https://www.nature.com/articles/nature14236)
 * **Authors**: Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Andrei A. Rusu, Joel Veness, Marc G. Bellemare, Alex Graves, Martin Riedmiller, Andreas K. Fidjeland, Georg Ostrovski, Stig Petersen, Charles Beattie, Amir Sadik, Ioannis Antonoglou, Helen King, Dharshan Kumaran, Daan Wierstra, Shane Legg & Demis Hassabis.
@@ -436,18 +436,74 @@ In addition to **Experience Replay** and **Target Networks**, the paper introduc
 
 ---
 
-## 8. Why CNNs? The Rationale vs. Classical Feature Encodings
+## 8. Seminal Research Paper: van Hasselt et al. (2016) - Double DQN
+
+* **Title**: [Deep Reinforcement Learning with Double Q-learning](https://arxiv.org/abs/1509.06461)
+* **Authors**: Hado van Hasselt, Arthur Guez & David Silver.
+* **Published**: *AAAI Conference on Artificial Intelligence* (2016).
+* **Open Access PDF Link**: [arXiv Repository - Double DQN Paper](https://arxiv.org/pdf/1509.06461.pdf)
+
+### 8.1 Context and Motivation
+While the original DQN (2015) successfully learned directly from pixel inputs, it suffered from a persistent structural flaw: **overestimation bias**. 
+* In tabular Q-learning, the $\max$ operator in the target calculation ($R + \gamma \max_{a'} Q(S', a')$) is known to systematically overestimate action-values because it selects the positive noise in estimated value updates. Hado van Hasselt had originally solved this in the tabular case with **Double Q-learning** (NIPS, 2010).
+* In this 2016 paper, the authors scaled this concept to deep networks. They proved that DQN's overestimation bias was even more severe in deep neural networks due to the approximation errors inherent in fitting complex continuous state spaces, leading to poor policies and training instability.
+
+### 8.2 Proving Overestimation Bias exists in DQN
+A common misconception was that overestimation bias only occurred in stochastic environments with highly noisy transitions. The authors proved mathematically and empirically that:
+1. **Universal Bias**: Overestimation bias occurs universally, even in fully deterministic environments, as a consequence of function approximation errors.
+2. **Exploding Estimates**: They showed that in standard DQN, the estimated Q-values continuously grew far above the true discounted return. For example, in *Wizard of Wor* or *Asterix*, DQN's estimated values reached $3\times$ to $5\times$ the actual return, causing the agent to choose suboptimal policies based on exaggerated value estimates.
+3. **DDQN Stability**: Under Double DQN, the estimated values remained stable, matching the true discounted returns of the learned policy closely throughout training.
+
+```mermaid
+graph TD
+    subgraph "DQN target"
+        DQN_Target["y = r + &gamma; Q(s', argmax_a' Q(s', a'; &theta;'); &theta;')"]
+        DQN_Select["Select Action: Target Network (&theta;')"]
+        DQN_Eval["Evaluate Action: Target Network (&theta;')"]
+        DQN_Target -.-> DQN_Select
+        DQN_Target -.-> DQN_Eval
+    end
+
+    subgraph "Double DQN target"
+        DDQN_Target["y = r + &gamma; Q(s', argmax_a' Q(s', a'; &theta;); &theta;')"]
+        DDQN_Select["Select Action: Online Network (&theta;)"]
+        DDQN_Eval["Evaluate Action: Target Network (&theta;')"]
+        DDQN_Target -.-> DDQN_Select
+        DDQN_Target -.-> DDQN_Eval
+    end
+```
+
+### 8.3 The Double DQN Mathematical Decoupling
+The core contribution of the paper is the decoupling of **Action Selection** from **Action Evaluation** inside the Deep Q-Network framework.
+
+Instead of introducing a third neural network, the authors brilliantly realized that they could reuse DQN's existing architecture:
+* **The Selector**: The *Online Network* ($\theta_t$) selects the best action for the next state $s'$:
+  $$ a^* = \text{argmax}_{a} Q(s', a; \theta_t) $$
+* **The Evaluator**: The *Target Network* ($\theta_t^-$) evaluates the value of that selected action:
+  $$ \text{Value} = Q(s', a^*; \theta_t^-) $$
+
+This leads to the Double Q-Learning target formula:
+$$ Y_t^{\text{DoubleQ}} \doteq R_{t+1} + \gamma Q\left(S_{t+1}, \text{argmax}_{a} Q(S_{t+1}, a; \theta_t); \theta_t^-\right) $$
+
+### 8.4 Key Results
+* **Higher Scores**: Double DQN (DDQN) was evaluated on all 49 Atari games and achieved a score exceeding standard DQN on the vast majority of games.
+* **Significant Reductions in Bias**: The paper directly plotted the estimated Q-values alongside the actual average returns. For games like *Wizard of Wor* and *Breakout*, the Q-value estimation explosion was completely eliminated.
+* **Robustness**: DDQN showed far less sensitivity to hyperparameter variations and initialization seeds, indicating that overestimation was a primary driver of training divergence in DQN.
+
+---
+
+## 9. Why CNNs? The Rationale vs. Classical Feature Encodings
 
 A common question is: *Why did DeepMind use a Convolutional Neural Network (CNN) to process the Atari screens? Can't we just feed raw pixel coordinates, or use the coarse/tile encoding techniques from earlier lectures?*
 
 To understand the design decisions behind DQN, we must compare how CNNs extract spatial features versus how classical coordinate-based or tile coding methods scale to high-dimensional images.
 
-### 8.1 The Limitations of Pixel Coordinates and Flat MLPs
+### 9.1 The Limitations of Pixel Coordinates and Flat MLPs
 If we flatten an image (e.g., $84 \times 84 = 7,056$ pixels) and feed it directly into a standard fully-connected Multi-Layer Perceptron (MLP) or use raw coordinates:
 1. **Loss of Spatial Topology**: A flat vector treats pixels that are visually adjacent (e.g., pixel $(x, y)$ and pixel $(x, y+1)$) as completely independent. The network must spend millions of training samples just to "relearn" the basic 2D geometry of the grid.
 2. **No Translation Invariance**: If an object (like a ball in *Breakout*) shifts 3 pixels to the right, its visual representation in a flat vector changes completely. An MLP or a coordinate-based model has to learn what a "ball" is at *every single coordinate* on the screen individually.
 
-### 8.2 The Curse of Dimensionality in Tile/Coarse Coding
+### 9.2 The Curse of Dimensionality in Tile/Coarse Coding
 Tile coding and coarse coding are highly efficient for low-dimensional continuous spaces (e.g., CartPole state space of 4 dimensions). However, they completely fail when applied directly to images:
 * **Exponential Scaling**: The number of tiles required scales exponentially with the number of state dimensions:
   $$ \text{Total Tiles} \approx (\text{Bins per dimension})^{\text{Dimensions}} $$
@@ -455,7 +511,7 @@ Tile coding and coarse coding are highly efficient for low-dimensional continuou
   $$ 2^{7056} \approx 1.5 \times 10^{2124} $$
   This is far larger than the number of atoms in the observable universe. We cannot store, let alone compute, a tile-coded representation of an image.
 
-### 8.3 Rationale and Advantages of CNNs
+### 9.3 Rationale and Advantages of CNNs
 CNNs solve these limitations by using three core principles:
 
 | Principle | Explanation | RL Advantage |
@@ -466,7 +522,7 @@ CNNs solve these limitations by using three core principles:
 
 ---
 
-### 8.4 Are Coarse and Tile Coding Still Relevant in the Age of CNNs?
+### 9.4 Are Coarse and Tile Coding Still Relevant in the Age of CNNs?
 Yes! While CNNs dominate high-dimensional vision tasks, classical feature encoding methods (like tile coding, radial basis functions, and coarse coding) remain highly relevant in modern RL for several reasons:
 
 1. **Ultra-Low Compute & Edge Devices**:
@@ -480,7 +536,7 @@ Yes! While CNNs dominate high-dimensional vision tasks, classical feature encodi
 4. **Hybrid Architectures**:
    * Modern hybrid systems use a CNN to compress a high-dimensional image into a small, low-dimensional feature vector, which is then passed to a tile coder or RBF network for rapid, stable linear value estimation at the final layer.
 
-### 8.5 The Conceptual Bridge: CNNs as Learnable, Hierarchical Coarse Coding
+### 9.5 The Conceptual Bridge: CNNs as Learnable, Hierarchical Coarse Coding
 
 Your intuition is spot on! At a high conceptual level, **a CNN can be viewed as a learnable, multi-layered, hierarchical extension of coarse coding.** 
 
@@ -507,7 +563,7 @@ While conceptually similar, they differ in execution:
 
 ---
 
-## Practice Exercises
+## 10. Practice Exercises
 
 Test your understanding of Deep Q-Learning and DDQN with these exercises:
 
