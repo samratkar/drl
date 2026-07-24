@@ -346,14 +346,50 @@ Let's evaluate the feature vector for state $s = (2.2, 1.7)$. We calculate which
     $$ i_y = \lfloor \frac{y - 1.0}{2.0} \rfloor = \lfloor \frac{1.7 - 1.0}{2.0} \rfloor = \lfloor 0.35 \rfloor = 0 $$
     *   **Active Tile**: $(0, 0)$ in Tiling 3.
 
-##### Calculating the Value
-In a global weight vector $\mathbf{w}$, these three active tiles map to specific weight indices:
-*   Tiling 1, Tile $(1, 0) \rightarrow$ weight index $10$ with value $w_{10} = 4.2$
-*   Tiling 2, Tile $(0, 0) \rightarrow$ weight index $21$ with value $w_{21} = -1.5$
-*   Tiling 3, Tile $(0, 0) \rightarrow$ weight index $36$ with value $w_{36} = 0.8$
+##### Understanding Weight Indices and Value Summation
 
-The estimated value $\hat{v}(s, \mathbf{w})$ is the sum of these active weights:
-$$ \hat{v}(s, \mathbf{w}) = w_{10} + w_{21} + w_{36} = 4.2 + (-1.5) + 0.8 = 3.5 $$
+To understand how the value $\hat{v}(s, \mathbf{w})$ is calculated, we must look at how Tile Coding structures its weights and features:
+
+1.  **The Global Weight Vector ($\mathbf{w}$)**:
+    Instead of a lookup table, the model stores all weights in a single, flat 1D array $\mathbf{w}$. The size of this array is the total number of tiles across all tilings. For our example, let's assume each tiling is a **$4 \times 4$ grid** (width = 4, height = 4), which contains $16$ tiles per grid. With $3$ grids in total, we have $3 \times 16 = 48$ total tiles.
+    
+    To map a 2D tile coordinate $(i_x, i_y)$ of Tiling $k$ (where $k \in \{1, 2, 3\}$) to a flat 1D global index in $\mathbf{w}$, we use two formulas:
+    *   **Local Index (Row-Major Order)**: Flattening a 2D grid of width 4:
+        $$ \text{index}_{\text{local}} = i_y \times \text{width} + i_x = i_y \times 4 + i_x $$
+    *   **Global Index**: Shifting by $16$ tiles for each preceding grid:
+        $$ \text{index}_{\text{global}} = (k - 1) \times 16 + \text{index}_{\text{local}} $$
+
+    For our state $s = (2.2, 1.7)$, the active tiles map to global indices as follows:
+    *   **Tiling 1 ($k=1$)**, Active Tile $(1, 0)$:
+        $$ \text{index}_{\text{local}} = 0 \times 4 + 1 = 1 \implies \text{index}_{\text{global}} = (1 - 1) \times 16 + 1 = 1 $$
+        *(Assigned weight $w_{1} = 4.2$)*
+    *   **Tiling 2 ($k=2$)**, Active Tile $(0, 0)$:
+        $$ \text{index}_{\text{local}} = 0 \times 4 + 0 = 0 \implies \text{index}_{\text{global}} = (2 - 1) \times 16 + 0 = 16 $$
+        *(Assigned weight $w_{16} = -1.5$)*
+    *   **Tiling 3 ($k=3$)**, Active Tile $(0, 0)$:
+        $$ \text{index}_{\text{local}} = 0 \times 4 + 0 = 0 \implies \text{index}_{\text{global}} = (3 - 1) \times 16 + 0 = 32 $$
+        *(Assigned weight $w_{32} = 0.8$)*
+
+2.  **The Sparse Feature Vector ($\mathbf{x}(s)$)**:
+    The feature vector $\mathbf{x}(s)$ is a binary vector of the same length as the weight vector ($48$ dimensions). Since our state $s$ only falls into one tile per tiling, only the features at indices $1$, $16$, and $32$ are active ($1.0$). All other $45$ features are inactive ($0.0$):
+    $$ \mathbf{x}(s) = [0, \underset{\text{index 1}}{1}, 0, \dots, \underset{\text{index 16}}{1}, \dots, \underset{\text{index 32}}{1}, \dots, 0]^T $$
+
+3.  **Why the Value is the Sum of Active Weights**:
+    The linear value function is defined as the dot product:
+    $$ \hat{v}(s, \mathbf{w}) \doteq \mathbf{w}^T \mathbf{x}(s) = \sum_{i=0}^{d-1} w_i x_i(s) $$
+    
+    When we compute this dot product, every element is multiplied by $0.0$ except the active features:
+    $$ 
+    \begin{aligned}
+    \hat{v}(s, \mathbf{w}) &= (w_0 \times 0) + (w_{1} \times 1) + \dots + (w_{16} \times 1) + \dots + (w_{32} \times 1) + \dots + (w_{47} \times 0) \\
+    &= w_{1} + w_{16} + w_{32} \\
+    &= 4.2 + (-1.5) + 0.8 = 3.5
+    \end{aligned}
+    $$
+    
+    **Key Takeaway**: Because of this sparse binary structure, the flight computer doesn't need to do any multiplications. It simply identifies which tiles are active, looks up their weights, and sums them. This makes tile coding incredibly fast!
+
+![Tile Coding Numerical Example Grid](./assets/images/tile_coding_numerical.svg)
 
 ---
 
