@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="100%" height="100%">
+  <!-- Definitions for elements -->
+  <defs>
+    <!-- Map grid pattern -->
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e2e8f0" stroke-width="0.5" />
+    </pattern>
+    <!-- VOR Navigation Beacon Symbol -->
+    <g id="vor">
+      <polygon points="0,-6 5,3 -5,3" fill="none" stroke="#0284c7" stroke-width="1.5" />
+      <circle cx="0" cy="0" r="1.5" fill="#0284c7" />
+    </g>
+    <!-- Airport Symbol -->
+    <g id="airport">
+      <circle cx="0" cy="0" r="5" fill="none" stroke="#334155" stroke-width="1.5" />
+      <line x1="-8" y1="0" x2="8" y2="0" stroke="#334155" stroke-width="1.5" />
+      <line x1="0" y1="-8" x2="0" y2="8" stroke="#334155" stroke-width="1.5" />
+    </g>
+    <!-- Ownship Airplane (Blue) -->
+    <g id="ownship-plane">
+      <!-- Shadow -->
+      <path d="M0,-16 L3,-6 L16,-2 L16,1 L3,-1 L0,7 L5,11 L5,13 L0,11 L-5,13 L-5,11 L0,7 L-3,-1 L-16,1 L-16,-2 L-3,-6 Z" fill="#000" fill-opacity="0.15" transform="translate(2, 4)" />
+      <!-- Body -->
+      <path d="M0,-16 L3,-6 L16,-2 L16,1 L3,-1 L0,7 L5,11 L5,13 L0,11 L-5,13 L-5,11 L0,7 L-3,-1 L-16,1 L-16,-2 L-3,-6 Z" fill="#0ea5e9" stroke="#0284c7" stroke-width="1.5" />
+      <circle cx="0" cy="-4" r="2" fill="#fff" />
+    </g>
+    <!-- Intruder Airplane (Red) -->
+    <g id="intruder-plane">
+      <!-- Shadow -->
+      <path d="M0,-16 L3,-6 L16,-2 L16,1 L3,-1 L0,7 L5,11 L5,13 L0,11 L-5,13 L-5,11 L0,7 L-3,-1 L-16,1 L-16,-2 L-3,-6 Z" fill="#000" fill-opacity="0.15" transform="translate(2, 4)" />
+      <!-- Body -->
+      <path d="M0,-16 L3,-6 L16,-2 L16,1 L3,-1 L0,7 L5,11 L5,13 L0,11 L-5,13 L-5,11 L0,7 L-3,-1 L-16,1 L-16,-2 L-3,-6 Z" fill="#ef4444" stroke="#dc2626" stroke-width="1.5" />
+      <circle cx="0" cy="-4" r="2" fill="#fff" />
+    </g>
+  </defs>
+
+  <!-- 1. Water Background -->
+  <rect width="600" height="400" fill="#e0f2fe" />
+
+  <!-- 2. Landmass (Stylized Coastline) -->
+  <path d="M -10,-10 
+           L 610,-10 
+           L 610,120 
+           C 550,110 520,150 490,130 
+           C 460,110 440,180 410,160 
+           C 380,140 360,210 320,190 
+           C 280,170 250,230 210,210 
+           C 180,190 160,260 120,240 
+           C 90,220 70,300 30,280 
+           C 10,270 -10,320 -10,310 Z" 
+        fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
+
+  <!-- 3. Navigation Grid Overlay -->
+  <rect width="600" height="400" fill="url(#grid)" opacity="0.6" />
+
+  <!-- 4. Waypoints / VORs -->
+  <g transform="translate(180, 80)"><use href="#vor" /><text x="10" y="4" font-family="sans-serif" font-size="9" fill="#0284c7" font-weight="bold">VOR HFD</text></g>
+  <g transform="translate(420, 200)"><use href="#vor" /><text x="10" y="4" font-family="sans-serif" font-size="9" fill="#0284c7" font-weight="bold">VOR PVD</text></g>
+
+  <!-- 5. Flight Plans (Routes) -->
+  <!-- Ownship Route: KBOS to KJFK -->
+  <path d="M 480,100 L 120,320" stroke="#0ea5e9" stroke-width="2" stroke-dasharray="6,4" opacity="0.6" />
+  <!-- Intruder Route: KORH to KPVD -->
+  <path d="M 220,90 L 380,260" stroke="#ef4444" stroke-width="2" stroke-dasharray="6,4" opacity="0.6" />
+
+  <!-- Route Nodes -->
+  <!-- KBOS (Boston Logan) -->
+  <g transform="translate(480, 100)">
+    <use href="#airport" />
+    <text x="12" y="-4" font-family="sans-serif" font-size="10" font-weight="bold" fill="#334155">Origin: KBOS</text>
+  </g>
+  <!-- KJFK (New York JFK) -->
+  <g transform="translate(120, 320)">
+    <use href="#airport" />
+    <text x="-12" y="18" font-family="sans-serif" font-size="10" font-weight="bold" fill="#334155" text-anchor="end">Destination: KJFK</text>
+  </g>
+  <!-- KORH (Worcester) -->
+  <g transform="translate(220, 90)">
+    <use href="#airport" />
+    <text x="-12" y="-8" font-family="sans-serif" font-size="9" fill="#475569" text-anchor="end">Origin: KORH</text>
+  </g>
+  <!-- KPVD (Providence) -->
+  <g transform="translate(380, 260)">
+    <use href="#airport" />
+    <text x="12" y="14" font-family="sans-serif" font-size="9" fill="#475569">Destination: KPVD</text>
+  </g>
+
+  <!-- 6. Coarse Coding Receptive Fields (Centered on Ownship) -->
+  <!-- Centered at Ownship position: (310, 204) -->
+  <g transform="translate(310, 204)" opacity="0.85">
+    <!-- Coarse Resolution Fields (Large) -->
+    <circle cx="0" cy="0" r="130" fill="none" stroke="#0ea5e9" stroke-opacity="0.1" stroke-width="1.5" />
+    <circle cx="-15" cy="10" r="100" fill="none" stroke="#0ea5e9" stroke-opacity="0.15" stroke-width="1.5" />
+    <circle cx="10" cy="-20" r="85" fill="none" stroke="#0ea5e9" stroke-opacity="0.2" stroke-width="1.5" />
+    
+    <!-- Medium Resolution Fields -->
+    <circle cx="5" cy="5" r="60" fill="none" stroke="#0ea5e9" stroke-opacity="0.3" stroke-width="1.5" />
+    <circle cx="-5" cy="-10" r="45" fill="none" stroke="#0ea5e9" stroke-opacity="0.4" stroke-width="1.5" />
+    
+    <!-- Fine Resolution Fields (Small, dense around aircraft) -->
+    <circle cx="2" cy="-2" r="30" fill="none" stroke="#0ea5e9" stroke-opacity="0.6" stroke-width="1.5" />
+    <circle cx="-3" cy="2" r="20" fill="none" stroke="#0ea5e9" stroke-opacity="0.7" stroke-width="1.5" />
+    <circle cx="1" cy="1" r="12" fill="none" stroke="#0ea5e9" stroke-opacity="0.8" stroke-width="1.5" />
+
+    <!-- Protected Danger Zone (Critical Boundary) -->
+    <circle cx="0" cy="0" r="30" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-width="2" />
+    <line x1="0" y1="0" x2="21" y2="-21" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="2,2" />
+    <text x="25" y="-25" font-family="sans-serif" font-size="9" font-weight="bold" fill="#dc2626">Protected Zone (500m)</text>
+  </g>
+
+  <!-- 7. Active Feature Indicator Lines -->
+  <!-- Show which fields the intruder is currently activating -->
+  <line x1="290" y1="164" x2="310" y2="204" stroke="#475569" stroke-width="1" stroke-dasharray="2,2" />
+  <text x="305" y="178" font-family="sans-serif" font-size="9" fill="#475569" text-anchor="end">Relative Position vector s</text>
+
+  <!-- 8. Aircraft Instances -->
+  <!-- Ownship (Blue): KBOS->KJFK (Heading 238.5 deg) -->
+  <g transform="translate(310, 204) rotate(238.5)">
+    <use href="#ownship-plane" />
+  </g>
+  <text x="325" y="218" font-family="sans-serif" font-size="11" font-weight="bold" fill="#0284c7">Ownship (Origin of State Space)</text>
+
+  <!-- Intruder (Red): KORH->KPVD (Heading 136.7 deg) -->
+  <g transform="translate(290, 164) rotate(136.7)">
+    <use href="#intruder-plane" />
+  </g>
+  <text x="275" y="152" font-family="sans-serif" font-size="11" font-weight="bold" fill="#dc2626" text-anchor="end">Intruder Aircraft</text>
+
+  <!-- Legend -->
+  <rect x="15" y="15" width="220" height="90" rx="4" fill="#ffffff" fill-opacity="0.9" stroke="#cbd5e1" stroke-width="1" />
+  <text x="25" y="32" font-family="sans-serif" font-size="11" font-weight="bold" fill="#1e293b">Airspace Simulation Legend</text>
+  
+  <!-- Legend Item 1 -->
+  <circle cx="30" cy="50" r="6" fill="#0ea5e9" fill-opacity="0.1" stroke="#0ea5e9" stroke-width="1.5" />
+  <text x="45" y="53" font-family="sans-serif" font-size="10" fill="#334155">Coarse Coding Fields (Receptive Fields)</text>
+  
+  <!-- Legend Item 2 -->
+  <circle cx="30" cy="70" r="6" fill="#ef4444" fill-opacity="0.1" stroke="#ef4444" stroke-width="1.5" />
+  <text x="45" y="73" font-family="sans-serif" font-size="10" fill="#334155">Protected Zone (Collision Danger)</text>
+
+  <!-- Legend Item 3 -->
+  <line x1="20" y1="90" x2="40" y2="90" stroke="#475569" stroke-width="1.5" stroke-dasharray="4,2" />
+  <text x="45" y="93" font-family="sans-serif" font-size="10" fill="#334155">Flight Plan Route</text>
+</svg>

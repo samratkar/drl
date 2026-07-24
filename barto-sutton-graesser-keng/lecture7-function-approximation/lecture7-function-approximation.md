@@ -168,17 +168,124 @@ Under a greedy policy, the agent would choose action `Fast` because $\hat{q}(s, 
 If linear methods are so great, how do we get the features $\mathbf{x}(s)$? We can't just feed raw continuous coordinates into a linear model and expect complex behavior. We need to construct clever features.
 
 ### 5.1 Polynomials
-For a 2D state $s=(s_1, s_2)$, polynomial features of order 2 would be:
-$\mathbf{x}(s) = (1, s_1, s_2, s_1 s_2, s_1^2, s_2^2)^T$
-This allows the linear model to represent curves.
+
+For a multi-dimensional state $s$, the features can be constructed as combinations of its coordinates. Note that $s_1$ and $s_2$ do **not** represent two different states; instead, they represent the individual dimensions (features/coordinates) of a **single** multidimensional state $s = (s_1, s_2)^T$.
+
+For a 2D state $s=(s_1, s_2)^T$, polynomial features of order 2 would be:
+$$ \mathbf{x}(s) = \begin{bmatrix} 1 \\ s_1 \\ s_2 \\ s_1 s_2 \\ s_1^2 \\ s_2^2 \end{bmatrix} $$
+
+This maps the low-dimensional state into a higher-dimensional feature space, allowing a linear model to represent non-linear relationships and curves (since $\hat{v}(s, \mathbf{w}) = \mathbf{w}^T\mathbf{x}(s)$ will contain quadratic terms like $s_1^2$, $s_2^2$, and interaction terms like $s_1s_2$).
+
+#### How the Terms are Decided
+
+A polynomial of degree (or order) $k$ in multiple variables includes all possible products of those variables where the sum of their exponents is less than or equal to $k$. For a 2D state $(s_1, s_2)$, any term $s_1^p s_2^q$ must satisfy $p + q \leq 2$ (where $p, q \geq 0$):
+
+| Term | $p$ (Exponent of $s_1$) | $q$ (Exponent of $s_2$) | Sum ($p+q$) | Order | Category |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| $1$ | 0 | 0 | 0 | Order 0 | Bias / Constant |
+| $s_1$ | 1 | 0 | 1 | Order 1 | Linear |
+| $s_2$ | 0 | 1 | 1 | Order 1 | Linear |
+| $s_1 s_2$ | 1 | 1 | 2 | Order 2 | Interaction / Cross-Product |
+| $s_1^2$ | 2 | 0 | 2 | Order 2 | Quadratic |
+| $s_2^2$ | 0 | 2 | 2 | Order 2 | Quadratic |
+
+#### Why the Interaction Term ($s_1 s_2$) is Crucial
+
+In reinforcement learning, state dimensions are rarely independent. The interaction term $s_1 s_2$ allows the linear model to capture **dependencies between dimensions**. 
+
+For example, in autonomous driving, let $s_1$ be the "distance to the car ahead" and $s_2$ be the "braking pressure". Evaluating them independently ($s_1^2$ and $s_2^2$) can only tell the model "braking hard is uncomfortable" or "being close to a car is bad". But with the interaction term $s_1 s_2$, the model can learn: *"braking hard ($s_2$) when the distance is very small ($s_1$) is good/necessary"*.
+
+#### Numerical Example:
+Suppose a robot's state $s$ represents its 2D position $(x, y)$ on a coordinate plane:
+*   $s = (s_1, s_2)^T = (2.0, 3.0)^T$ (where $s_1 = 2.0$ and $s_2 = 3.0$).
+
+The feature vector $\mathbf{x}(s)$ is computed solely from this single state's coordinates:
+$$ \mathbf{x}(s) = \begin{bmatrix} 1 \\ s_1 \\ s_2 \\ s_1 s_2 \\ s_1^2 \\ s_2^2 \end{bmatrix} = \begin{bmatrix} 1.0 \\ 2.0 \\ 3.0 \\ 2.0 \times 3.0 \\ 2.0^2 \\ 3.0^2 \end{bmatrix} = \begin{bmatrix} 1.0 \\ 2.0 \\ 3.0 \\ 6.0 \\ 4.0 \\ 9.0 \end{bmatrix} $$
+
+If the model has weights $\mathbf{w} = \begin{bmatrix} 0.1 \\ 0.2 \\ 0.3 \\ 0.05 \\ 0.1 \\ -0.05 \end{bmatrix}$, the value estimate for this state $s$ is:
+$$ \hat{v}(s, \mathbf{w}) = \mathbf{w}^T \mathbf{x}(s) = (0.1 \times 1.0) + (0.2 \times 2.0) + (0.3 \times 3.0) + (0.05 \times 6.0) + (0.1 \times 4.0) + (-0.05 \times 9.0) = 1.65 $$
+
 
 ### 5.2 Coarse Coding
+
 Imagine spreading circles (receptive fields) across the state space. A feature $x_i(s)$ is $1$ if the state $s$ falls inside circle $i$, and $0$ otherwise.
 
 ![Coarse Coding Diagram](./assets/images/coarse_coding.svg)
 
 *   Because circles overlap, a single state activates multiple features.
 *   Moving slightly changes maybe 1 or 2 features, providing smooth generalization.
+
+#### Why is it called "Coarse" Coding?
+
+The term **"coarse"** refers to the low resolution (large size) of the individual features. 
+
+1. **Coarse Features $\rightarrow$ Fine Representation**: 
+   Individually, each feature is "coarse" (imprecise). Knowing that feature $x_A(s) = 1$ only tells you the state is somewhere inside a large circle. However, because these large circles overlap, the **intersection** of active features provides a very **fine** (precise) representation of the state. If features $A$, $B$, and $C$ are all $1$, the agent must be located in the tiny overlapping region shared by all three circles.
+2. **Resolution and Generalization**:
+   * **Larger (coarser) features** lead to broader generalization: learning at one state point updates a wide surrounding area because they share many active features.
+   * **Smaller (finer) features** lead to narrow generalization: learning is localized to a small area, allowing the agent to learn finer details but requiring more data.
+
+#### Numerical Example:
+
+Suppose we have a 2D state space representing an agent's position on a grid. We define three overlapping circular features ($A, B, C$), each with a radius of $3.0$ units:
+*   **Circle $A$**: Centered at $(3.0, 3.0)$
+*   **Circle $B$**: Centered at $(5.0, 3.0)$
+*   **Circle $C$**: Centered at $(4.0, 5.0)$
+
+![Coarse Coding Example Diagram](./assets/images/coarse_coding_example.svg)
+
+For any state $s = (x, y)$, the feature vector is $\mathbf{x}(s) = [x_A, x_B, x_C]^T$ where:
+$$ x_i(s) = \begin{cases} 1 & \text{if } \text{distance}(s, \text{center}_i) \leq 3.0 \\ 0 & \text{otherwise} \end{cases} $$
+
+Let's evaluate two different states:
+
+1. **State $s_1 = (4.0, 3.0)$** (in the middle of the circles):
+   *   $\text{distance to } A = \sqrt{(4.0-3.0)^2 + (3.0-3.0)^2} = 1.0 \leq 3.0 \implies x_A = 1$
+   *   $\text{distance to } B = \sqrt{(4.0-5.0)^2 + (3.0-3.0)^2} = 1.0 \leq 3.0 \implies x_B = 1$
+   *   $\text{distance to } C = \sqrt{(4.0-4.0)^2 + (3.0-5.0)^2} = 2.0 \leq 3.0 \implies x_C = 1$
+   *   **Feature Vector**: $\mathbf{x}(s_1) = [1, 1, 1]^T$
+
+2. **State $s_2 = (1.5, 2.0)$** (on the far left):
+   *   $\text{distance to } A = \sqrt{(1.5-3.0)^2 + (2.0-3.0)^2} = \sqrt{2.25 + 1.0} \approx 1.80 \leq 3.0 \implies x_A = 1$
+   *   $\text{distance to } B = \sqrt{(1.5-5.0)^2 + (2.0-3.0)^2} = \sqrt{12.25 + 1.0} \approx 3.64 > 3.0 \implies x_B = 0$
+   *   $\text{distance to } C = \sqrt{(1.5-4.0)^2 + (2.0-5.0)^2} = \sqrt{6.25 + 9.0} \approx 3.91 > 3.0 \implies x_C = 0$
+   *   **Feature Vector**: $\mathbf{x}(s_2) = [1, 0, 0]^T$
+
+#### Coarse Coding vs. Raw Coordinates / Polynomials: Key Rationale
+
+Why not just feed raw coordinate features (like $[x, y]$ or polynomial terms like $[1, x, y, xy, x^2, y^2]$) to a linear model?
+
+1.  **Local vs. Global Generalization (Global Interference)**:
+    *   **Polynomials**: Polynomial features are active *everywhere* across the state space. If the agent updates the weights based on an experience at $x = 1.0$, it changes the estimated value of states far away at $x = 100.0$. This is called **global interference** and can cause the agent to unlearn (forget) optimal behaviors in one area while training in another.
+    *   **Coarse Coding**: A circular feature is only active ($1.0$) when the agent is inside that specific circle, and $0.0$ everywhere else. If you update the weights for Circle $A$ (centered at $(3,3)$), it only adjusts the values of states near $(3,3)$. A state on the other side of the map remains completely untouched. This is called **local generalization**.
+2.  **Representational Capacity (Sharp Boundaries)**:
+    *   **Polynomials**: Polynomial functions are smooth and continuous. They struggle to represent sharp boundaries (like cliffs or step functions). 
+    *   **Coarse Coding**: Since features are defined by region membership, having many overlapping circles allows the model to approximate step-changes, cliffs, and multiple local peaks/valleys easily and stably.
+
+#### Case Study: Aircraft Collision Avoidance in Airspace
+
+Consider an automated collision avoidance system (similar to ACAS X) for an aircraft (the **ownship**). 
+
+*   **State Space**: The relative 2D position $(x, y)$ of an intruder aircraft, where the ownship is always at the origin $(0, 0)$.
+*   **System Value**: We want to approximate the state value function $v(s)$, where a state represents high danger (negative value) if the intruder is inside a small "Protected Zone" (radius $r_p = 500$ meters) and safe (zero value) otherwise.
+
+![Airspace Collision Avoidance Coarse Coding](./assets/images/airspace_coarse_coding.svg)
+
+##### 1. Attempting with a Raw Coordinate / Polynomial Model
+If we approximate the value function using raw coordinates and a quadratic polynomial model:
+$$ \hat{v}(s, \mathbf{w}) = w_0 + w_1 x + w_2 y + w_3 xy + w_4 x^2 + w_5 y^2 $$
+
+*   **The Issue**: The polynomial model is smooth. It cannot model the sharp step drop at the 500-meter threshold. It will smooth out the danger zone boundary, making the safe zone near the border look dangerous, or underestimating the danger close to the ownship.
+*   **Global Interference**: If an intruder aircraft is detected far away (e.g., at $x = 5000$ meters), the polynomial terms like $x^2$ will evaluate to a massive value ($25,000,000$). Any weight updates triggered by this safe, far-away aircraft will dominate the weight adjustments and completely destabilize the critical value predictions close to the ownship (the origin).
+
+##### 2. Solving with Coarse Coding
+Instead, we spread overlapping circular receptive fields across the airspace:
+*   We can place many small circles densely clustered around $(0,0)$ (the ownship) to get highly precise, high-resolution estimates in the critical danger zone.
+*   We place fewer, much larger circles further away where coarse resolution is sufficient (we only need to know "an aircraft is far away", not its exact meter coordinate).
+
+*   **Why this is better**:
+    1.  **Safety Boundaries**: The boundary of the Protected Zone can be cleanly represented by the circles matching the 500-meter radius boundary.
+    2.  **Zero Interference**: An aircraft at $5000$ meters only activates far-away circles. Its value updates will only change the weights of those far-away circles, leaving the critical collision-prevention weights near $(0, 0)$ completely untouched and stable.
 
 ### 5.3 Tile Coding
 Tile coding is a highly computationally efficient form of coarse coding. Instead of random circles, we use overlapping grids (tilings).
