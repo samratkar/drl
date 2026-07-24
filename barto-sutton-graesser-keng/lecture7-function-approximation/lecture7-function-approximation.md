@@ -205,6 +205,29 @@ $$ \mathbf{x}(s) = \begin{bmatrix} 1 \\ s_1 \\ s_2 \\ s_1 s_2 \\ s_1^2 \\ s_2^2 
 If the model has weights $\mathbf{w} = \begin{bmatrix} 0.1 \\ 0.2 \\ 0.3 \\ 0.05 \\ 0.1 \\ -0.05 \end{bmatrix}$, the value estimate for this state $s$ is:
 $$ \hat{v}(s, \mathbf{w}) = \mathbf{w}^T \mathbf{x}(s) = (0.1 \times 1.0) + (0.2 \times 2.0) + (0.3 \times 3.0) + (0.05 \times 6.0) + (0.1 \times 4.0) + (-0.05 \times 9.0) = 1.65 $$
 
+#### How the Weights are Determined
+
+In a real RL environment, these weights are learned through interaction. We initialize the weights to zero or small random numbers: $\mathbf{w} = [0, 0, 0, 0, 0, 0]^T$. 
+
+As the agent explores, we update the weights using **Stochastic Gradient Descent (SGD)** to minimize the squared error between our value prediction $\hat{v}(S_t, \mathbf{w})$ and the observed target value $U_t$ (like the discounted return $G_t$):
+
+$$ \mathbf{w} \leftarrow \mathbf{w} + \alpha \Big[ U_t - \hat{v}(S_t, \mathbf{w}) \Big] \mathbf{x}(S_t) $$
+
+##### Step-by-Step Update Example
+Suppose the agent is at state $s = (2.0, 3.0)^T$, predicting a value of $\hat{v}(s, \mathbf{w}) = 1.65$. The environment yields a target return of $U_t = 2.0$. Let the learning rate be $\alpha = 0.1$.
+1.  **Calculate the Prediction Error ($\delta$)**:
+    $$ \delta = U_t - \hat{v}(s, \mathbf{w}) = 2.0 - 1.65 = 0.35 $$
+2.  **Calculate the Weight Update**:
+    $$ \Delta \mathbf{w} = \alpha \delta \mathbf{x}(s) = 0.1 \times 0.35 \times \begin{bmatrix} 1.0 \\ 2.0 \\ 3.0 \\ 6.0 \\ 4.0 \\ 9.0 \end{bmatrix} = \begin{bmatrix} 0.035 \\ 0.070 \\ 0.105 \\ 0.210 \\ 0.140 \\ 0.315 \end{bmatrix} $$
+3.  **Apply the Update to $\mathbf{w}$**:
+    $$ 
+    \mathbf{w}_{\text{new}} = \mathbf{w} + \Delta \mathbf{w} = \begin{bmatrix} 0.1 + 0.035 \\ 0.2 + 0.070 \\ 0.3 + 0.105 \\ 0.05 + 0.210 \\ 0.1 + 0.140 \\ -0.05 + 0.315 \end{bmatrix} = \begin{bmatrix} 0.135 \\ 0.270 \\ 0.405 \\ 0.260 \\ 0.240 \\ 0.265 \end{bmatrix} 
+    $$
+
+Through thousands of steps like this, the weights converge to values that accurately estimate the expected return for any coordinate.
+
+---
+
 
 ### 5.2 Coarse Coding
 
@@ -249,7 +272,61 @@ Let's evaluate two different states:
    *   $\text{distance to } A = \sqrt{(1.5-3.0)^2 + (2.0-3.0)^2} = \sqrt{2.25 + 1.0} \approx 1.80 \leq 3.0 \implies x_A = 1$
    *   $\text{distance to } B = \sqrt{(1.5-5.0)^2 + (2.0-3.0)^2} = \sqrt{12.25 + 1.0} \approx 3.64 > 3.0 \implies x_B = 0$
    *   $\text{distance to } C = \sqrt{(1.5-4.0)^2 + (2.0-5.0)^2} = \sqrt{6.25 + 9.0} \approx 3.91 > 3.0 \implies x_C = 0$
-   *   **Feature Vector**: $\mathbf{x}(s_2) = [1, 0, 0]^T$
+    *   **Feature Vector**: $\mathbf{x}(s_2) = [1, 0, 0]^T$
+
+#### Calculating the Value in Coarse Coding
+
+Just like in other linear function approximation methods, the agent maintains a weight vector $\mathbf{w}$ corresponding to each circular receptive field:
+*   Weight for Circle $A \rightarrow w_A = 2.5$
+*   Weight for Circle $B \rightarrow w_B = -1.2$
+*   Weight for Circle $C \rightarrow w_C = 0.5$
+
+So the global weight vector is $\mathbf{w} = [2.5, -1.2, 0.5]^T$.
+
+Using the linear value function $\hat{v}(s, \mathbf{w}) = \mathbf{w}^T \mathbf{x}(s) = \sum_{i} w_i x_i(s)$, we calculate the estimated values for our two states:
+
+1.  **For State $s_1$** (which is inside all three circles, activating all features: $\mathbf{x}(s_1) = [1, 1, 1]^T$):
+    $$ \hat{v}(s_1, \mathbf{w}) = (w_A \times 1) + (w_B \times 1) + (w_C \times 1) = 2.5 + (-1.2) + 0.5 = 1.8 $$
+
+2.  **For State $s_2$** (which is only inside Circle $A$, activating only $x_A$: $\mathbf{x}(s_2) = [1, 0, 0]^T$):
+    $$ \hat{v}(s_2, \mathbf{w}) = (w_A \times 1) + (w_B \times 0) + (w_C \times 0) = 2.5 + 0 + 0 = 2.5 $$
+
+#### How the Weights are Learned (The Update Rule)
+
+In reinforcement learning, the weights are not hand-chosen; they are learned iteratively. We want to update the weight vector $\mathbf{w}$ to minimize the Mean Squared Error (MSE) between our prediction $\hat{v}(S_t, \mathbf{w})$ and some target value $U_t$ (like the TD target $R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w})$):
+
+$$ \text{Loss } J(\mathbf{w}) = \frac{1}{2} \Big[ U_t - \hat{v}(S_t, \mathbf{w}) \Big]^2 $$
+
+To minimize this loss, we use **Stochastic Gradient Descent (SGD)**, adjusting $\mathbf{w}$ in the direction of the negative gradient:
+
+$$ \mathbf{w} \leftarrow \mathbf{w} - \alpha \nabla_{\mathbf{w}} J(\mathbf{w}) $$
+
+Calculating the gradient of the loss with respect to the weight vector $\mathbf{w}$:
+$$ 
+\begin{aligned}
+\nabla_{\mathbf{w}} J(\mathbf{w}) &= \nabla_{\mathbf{w}} \left( \frac{1}{2} \Big[ U_t - \hat{v}(S_t, \mathbf{w}) \Big]^2 \right) \\
+&= - \Big[ U_t - \hat{v}(S_t, \mathbf{w}) \Big] \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w})
+\end{aligned}
+$$
+
+Because the value function is linear ($\hat{v}(S_t, \mathbf{w}) = \mathbf{w}^T \mathbf{x}(S_t)$), the gradient of our prediction with respect to the weights is simply the feature vector itself: $\nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w}) = \mathbf{x}(S_t)$.
+
+Substituting this back gives the **General Linear Value Update Rule**:
+
+$$ \mathbf{w} \leftarrow \mathbf{w} + \alpha \Big[ U_t - \hat{v}(S_t, \mathbf{w}) \Big] \mathbf{x}(S_t) $$
+
+##### Simplifying for Coarse Coding (Binary Features)
+If we look at individual components $w_i$ of the weight vector, the update rule becomes:
+
+$$ w_i \leftarrow w_i + \alpha \Big[ U_t - \hat{v}(S_t, \mathbf{w}) \Big] x_i(S_t) $$
+
+Since $x_i(S_t)$ is binary ($0$ or $1$) in coarse coding:
+1.  **Inactive Features ($x_i(S_t) = 0$)**: The weight is not updated at all:
+    $$ w_i \leftarrow w_i $$
+2.  **Active Features ($x_i(S_t) = 1$)**: The weight is adjusted by the learning rate ($\alpha$) times the prediction error:
+    $$ w_i \leftarrow w_i + \alpha \Big[ U_t - \hat{v}(S_t, \mathbf{w}) \Big] $$
+
+---
 
 #### Coarse Coding vs. Raw Coordinates / Polynomials: Key Rationale
 
@@ -370,6 +447,10 @@ To understand how the value $\hat{v}(s, \mathbf{w})$ is calculated, we must look
         $$ \text{index}_{\text{local}} = 0 \times 4 + 0 = 0 \implies \text{index}_{\text{global}} = (3 - 1) \times 16 + 0 = 32 $$
         *(Assigned weight $w_{32} = 0.8$)*
 
+    > [!NOTE]
+    > **Where do these weight values ($4.2$, $-1.5$, and $0.8$) come from?**
+    > These are **exemplary values** representing weights that have already been learned by the agent. At the beginning of training, all weights in the vector $\mathbf{w}$ are typically initialized to $0.0$. As the agent interacts with the environment and receives rewards, it updates these active weights using Temporal Difference (TD) learning or Q-learning update rules (e.g. $w_i \leftarrow w_i + \alpha \delta$). The values shown here are the state of those weights at a specific point in time after some training has occurred.
+
 2.  **The Sparse Feature Vector ($\mathbf{x}(s)$)**:
     The feature vector $\mathbf{x}(s)$ is a binary vector of the same length as the weight vector ($48$ dimensions). Since our state $s$ only falls into one tile per tiling, only the features at indices $1$, $16$, and $32$ are active ($1.0$). All other $45$ features are inactive ($0.0$):
     $$ \mathbf{x}(s) = [0, \underset{\text{index 1}}{1}, 0, \dots, \underset{\text{index 16}}{1}, \dots, \underset{\text{index 32}}{1}, \dots, 0]^T $$
@@ -388,6 +469,32 @@ To understand how the value $\hat{v}(s, \mathbf{w})$ is calculated, we must look
     $$
     
     **Key Takeaway**: Because of this sparse binary structure, the flight computer doesn't need to do any multiplications. It simply identifies which tiles are active, looks up their weights, and sums them. This makes tile coding incredibly fast!
+
+#### How the Weights are Determined (The Update Rule)
+
+Just like in standard coarse coding, the weight vector $\mathbf{w}$ is learned via Stochastic Gradient Descent (SGD) on the prediction loss. The general update equation for each weight index $i$ is:
+
+$$ w_i \leftarrow w_i + \alpha \Big[ U_t - \hat{v}(S_t, \mathbf{w}) \Big] x_i(S_t) $$
+
+Because the feature vector $\mathbf{x}(S_t)$ is sparse and binary (only $m$ active tiles), this update simplifies beautifully:
+*   For all **inactive tiles** ($x_i(S_t) = 0$), their weights are completely untouched: $w_i \leftarrow w_i$.
+*   For the **$m$ active tiles** ($x_i(S_t) = 1$), their weights are updated simultaneously by the learning rate times the prediction error:
+    $$ w_i \leftarrow w_i + \alpha \Big[ U_t - \hat{v}(S_t, \mathbf{w}) \Big] $$
+
+##### Step-by-Step Update Example
+Let's see how our active weights ($w_1, w_{16}, w_{32}$) are updated after one step.
+Suppose our state $s = (2.2, 1.7)$ has estimated value $\hat{v}(s, \mathbf{w}) = 3.5$, but the actual observed target return is $U_t = 5.0$. Let the learning rate be $\alpha = 0.2$.
+1.  **Calculate the Prediction Error ($\delta$)**:
+    $$ \delta = U_t - \hat{v}(s, \mathbf{w}) = 5.0 - 3.5 = 1.5 $$
+2.  **Apply updates specifically to the active tile weights**:
+    *   **Tiling 1, Index 1**:
+        $$ w_1 \leftarrow w_1 + \alpha \delta = 4.2 + (0.2 \times 1.5) = 4.5 $$
+    *   **Tiling 2, Index 16**:
+        $$ w_{16} \leftarrow w_{16} + \alpha \delta = -1.5 + (0.2 \times 1.5) = -1.2 $$
+    *   **Tiling 3, Index 32**:
+        $$ w_{32} \leftarrow w_{32} + \alpha \delta = 0.8 + (0.2 \times 1.5) = 1.1 $$
+
+These local updates shift the value predictions for states falling in this region closer to $5.0$, without affecting weights elsewhere in the environment.
 
 ![Tile Coding Numerical Example Grid](./assets/images/tile_coding_numerical.svg)
 
