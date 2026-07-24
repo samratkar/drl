@@ -125,6 +125,42 @@ $$ \hat{v}(s, \mathbf{w}) \doteq \mathbf{w}^T \mathbf{x}(s) = \sum_{i=1}^d w_i x
     $$ \mathbf{w}_{t+1} \doteq \mathbf{w}_t + \alpha \big[ R_{t+1} + \gamma \mathbf{w}_t^T \mathbf{x}(S_{t+1}) - \mathbf{w}_t^T \mathbf{x}(S_t) \big] \mathbf{x}(S_t) $$
 3.  **Guarantee:** For linear methods, Semi-gradient TD(0) is mathematically guaranteed to converge to a unique global optimum (the TD fixed point). Complex neural networks do not have this guarantee!
 
+### Action-Value Approximation ($q$-value)
+
+For control tasks (where the agent needs to choose actions), we approximate the action-value function $q(s,a)$ instead of the state-value function $v(s)$. In the linear case, the approximated $q$-value is the dot product of the weight vector and a feature vector $\mathbf{x}(s, a)$ constructed for the specific state-action pair:
+
+$$ \hat{q}(s, a, \mathbf{w}) \doteq \mathbf{w}^T \mathbf{x}(s, a) = \sum_{i=1}^d w_i x_i(s, a) $$
+
+#### Numerical Example: Calculating $q$-values
+
+Suppose we have a simple robot navigation task where:
+*   **State $s$**: Defined by the distance to the target destination, $d = 3.0$ meters.
+*   **Actions $a$**: The robot can choose either `Slow` ($a=0$, which runs at $0.0$ m/s) or `Fast` ($a=1$, which runs at $4.0$ m/s).
+*   **Features $\mathbf{x}(s, a)$**: We construct a 3-dimensional feature vector $[x_1, x_2, x_3]^T$ for each state-action pair:
+    *   $x_1$: Bias feature (always $1.0$, providing a baseline value).
+    *   $x_2$: Distance to target ($d = 3.0$ from state $s$).
+    *   $x_3$: Action-speed feature (equals the target speed associated with the chosen action: $0.0$ for `Slow` and $4.0$ for `Fast`).
+
+Let the current weight vector be:
+$$ \mathbf{w} = \begin{bmatrix} -0.5 \\ 2.0 \\ 1.5 \end{bmatrix} $$
+
+We can calculate the estimated $q$-values for both actions at this state:
+
+1.  **For Action $a = \text{Slow}$**:
+    *   The feature vector is:
+        $$ \mathbf{x}(s, \text{Slow}) = \begin{bmatrix} 1.0 \\ 3.0 \\ 0.0 \end{bmatrix} $$
+    *   The estimated $q$-value is:
+        $$ \hat{q}(s, \text{Slow}, \mathbf{w}) = \mathbf{w}^T \mathbf{x}(s, \text{Slow}) = (-0.5 \times 1.0) + (2.0 \times 3.0) + (1.5 \times 0.0) = -0.5 + 6.0 + 0.0 = 5.5 $$
+
+2.  **For Action $a = \text{Fast}$**:
+    *   The feature vector is:
+        $$ \mathbf{x}(s, \text{Fast}) = \begin{bmatrix} 1.0 \\ 3.0 \\ 4.0 \end{bmatrix} $$
+    *   The estimated $q$-value is:
+        $$ \hat{q}(s, \text{Fast}, \mathbf{w}) = \mathbf{w}^T \mathbf{x}(s, \text{Fast}) = (-0.5 \times 1.0) + (2.0 \times 3.0) + (1.5 \times 4.0) = -0.5 + 6.0 + 6.0 = 11.5 $$
+
+Under a greedy policy, the agent would choose action `Fast` because $\hat{q}(s, \text{Fast}, \mathbf{w}) > \hat{q}(s, \text{Slow}, \mathbf{w})$.
+
+
 ---
 
 ## 5. Feature Construction
