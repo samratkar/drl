@@ -283,19 +283,131 @@ Instead, we spread overlapping circular receptive fields across the airspace:
 *   We can place many small circles densely clustered around $(0,0)$ (the ownship) to get highly precise, high-resolution estimates in the critical danger zone.
 *   We place fewer, much larger circles further away where coarse resolution is sufficient (we only need to know "an aircraft is far away", not its exact meter coordinate).
 
-*   **Why this is better**:
     1.  **Safety Boundaries**: The boundary of the Protected Zone can be cleanly represented by the circles matching the 500-meter radius boundary.
     2.  **Zero Interference**: An aircraft at $5000$ meters only activates far-away circles. Its value updates will only change the weights of those far-away circles, leaving the critical collision-prevention weights near $(0, 0)$ completely untouched and stable.
 
+#### Case Study 2: Sleep Apnea Detection from Polysomnography (PSG) Signals
+
+Similarly, coarse coding is highly effective for medical monitoring systems, such as detecting Obstructive Sleep Apnea (OSA) using Polysomnography (PSG) signals.
+
+*   **State Space**: A continuous 3D state vector representing physiological readings:
+    1.  $s_1$: **Blood Oxygen Saturation ($SpO_2$)** ($70\%$ to $100\%$).
+    2.  $s_2$: **Heart Rate Variability (HRV)** ($0.5$ to $15.0$).
+    3.  $s_3$: **Airflow Amplitude** ($0\%$ to $100\%$).
+*   **System Value**: We want to approximate a value function $v(s)$ representing patient safety, which drops sharply (representing danger) when airflow drops to $<10\%$ and $SpO_2$ falls below $90\%$.
+
+![PSG Sleep Apnea Coarse Coding State Space](./assets/images/psg_coarse_coding.svg)
+
+##### Why Coarse Coding is Superior for Wearable PSG Monitors:
+
+1.  **Variable Resolution (Customized Circle Sizes)**:
+    We can customize the size of the circular/spherical receptive fields across the state space:
+    *   **In the Apnea Danger Zone** ($SpO_2 < 90\%$, low airflow): We place many small, highly overlapping circles. This provides very high resolution to detect the exact onset of hypoxia.
+    *   **In the Normal Sleep Zone** ($SpO_2 \geq 95\%$, normal airflow): We place a few very large circles. Since the patient is sleeping safely, we only need a coarse representation. This saves memory and speeds up learning.
+2.  **Representing Non-linear Physiological Thresholds**:
+    A polynomial model would struggle to represent the sharp transition at the $90\% SpO_2$ hypoxia threshold, either smoothing it out or causing unstable oscillations. By placing receptive fields that align with these medical thresholds, coarse coding approximates the step-function boundary cleanly and stably.
+3.  **Local Updates and Zero Interference**:
+    Updates to weights during healthy sleep stages (activating only the large circles in the safe zone) do not affect the weights of the small danger circles. This ensures that the detection criteria for life-threatening apnea events remain stable and uncorrupted by hours of normal sleep data.
+
 ### 5.3 Tile Coding
-Tile coding is a highly computationally efficient form of coarse coding. Instead of random circles, we use overlapping grids (tilings).
+
+Tile coding is a highly computationally efficient form of coarse coding. Instead of random circles, we use overlapping regular grids (tilings).
 
 ![Tile Coding Diagram](./assets/images/tile_coding.svg)
 
 *   A state $s$ falls into exactly one square (tile) per tiling. 
-*   If we have 8 tilings, exactly 8 features will be $1$, and all others will be $0$.
-*   This makes computing the dot product $\mathbf{w}^T \mathbf{x}(s)$ incredibly fast—we just sum the weights of the 8 active tiles! No need to multiply thousands of numbers.
+*   If we have $m$ tilings, exactly $m$ features will be $1$, and all others will be $0$.
+*   This makes computing the dot product $\mathbf{w}^T \mathbf{x}(s)$ incredibly fast—we just sum the weights of the $m$ active tiles! No need to multiply thousands of numbers.
 *   Tile coding is the "gold standard" for linear function approximation in RL.
+
+#### Numerical Example of Tile Coding
+
+Suppose we have a 2D state space where a state is $s = (x, y)$. We use **$m = 3$ tilings** (overlapping grids). 
+*   Each tile is a square of size $2.0 \times 2.0$ units.
+*   The tilings are offset from each other by $(0.5, 0.5)$:
+    *   **Tiling 1**: Origin at $(0.0, 0.0)$
+    *   **Tiling 2**: Origin at $(0.5, 0.5)$
+    *   **Tiling 3**: Origin at $(1.0, 1.0)$
+
+Let's evaluate the feature vector for state $s = (2.2, 1.7)$. We calculate which tile index $(i_x, i_y)$ the state falls into for each tiling:
+
+1.  **For Tiling 1** (Origin: $0.0, 0.0$):
+    $$ i_x = \lfloor \frac{x - 0.0}{2.0} \rfloor = \lfloor \frac{2.2}{2.0} \rfloor = 1 $$
+    $$ i_y = \lfloor \frac{y - 0.0}{2.0} \rfloor = \lfloor \frac{1.7}{2.0} \rfloor = 0 $$
+    *   **Active Tile**: $(1, 0)$ in Tiling 1.
+
+2.  **For Tiling 2** (Origin: $0.5, 0.5$):
+    $$ i_x = \lfloor \frac{x - 0.5}{2.0} \rfloor = \lfloor \frac{2.2 - 0.5}{2.0} \rfloor = \lfloor 0.85 \rfloor = 0 $$
+    $$ i_y = \lfloor \frac{y - 0.5}{2.0} \rfloor = \lfloor \frac{1.7 - 0.5}{2.0} \rfloor = \lfloor 0.60 \rfloor = 0 $$
+    *   **Active Tile**: $(0, 0)$ in Tiling 2.
+
+3.  **For Tiling 3** (Origin: $1.0, 1.0$):
+    $$ i_x = \lfloor \frac{x - 1.0}{2.0} \rfloor = \lfloor \frac{2.2 - 1.0}{2.0} \rfloor = \lfloor 0.60 \rfloor = 0 $$
+    $$ i_y = \lfloor \frac{y - 1.0}{2.0} \rfloor = \lfloor \frac{1.7 - 1.0}{2.0} \rfloor = \lfloor 0.35 \rfloor = 0 $$
+    *   **Active Tile**: $(0, 0)$ in Tiling 3.
+
+##### Calculating the Value
+In a global weight vector $\mathbf{w}$, these three active tiles map to specific weight indices:
+*   Tiling 1, Tile $(1, 0) \rightarrow$ weight index $10$ with value $w_{10} = 4.2$
+*   Tiling 2, Tile $(0, 0) \rightarrow$ weight index $21$ with value $w_{21} = -1.5$
+*   Tiling 3, Tile $(0, 0) \rightarrow$ weight index $36$ with value $w_{36} = 0.8$
+
+The estimated value $\hat{v}(s, \mathbf{w})$ is the sum of these active weights:
+$$ \hat{v}(s, \mathbf{w}) = w_{10} + w_{21} + w_{36} = 4.2 + (-1.5) + 0.8 = 3.5 $$
+
+---
+
+#### Case Study: Aircraft Collision Avoidance with Tile Coding
+
+Let's return to the airspace safety scenario, but now we implement it using **Tile Coding**:
+
+*   **State Space**: Relative position of the intruder aircraft $(x, y) \in [-5000\text{m}, 5000\text{m}]^2$.
+*   **Tile Coding Configuration**:
+    *   Number of tilings: $m = 8$
+    *   Tile width: $1000$ meters
+    *   Offset size: Each tiling is offset by $\frac{1000}{8} = 125$ meters from the previous one (e.g., Tiling $i$ is offset by $-125 \times i$ meters along both axes).
+
+![Tile Coding Airspace Diagram](./assets/images/tile_coding_airspace.svg)
+
+##### Why this is highly effective for Avionics & Airspace:
+
+1.  **High Effective Resolution**:
+    Even though each individual tile is quite large ($1000$ meters) to promote broad generalization, the $8$ overlapping grids create a **diagonal intersection pattern** with an effective resolution of **$125$ meters** (the offset size). This allows the flight computer to detect fine-grained boundary crossings (like the $500\text{m}$ Protected Zone) with high accuracy.
+2.  **Ultra-fast Computation**:
+    Aircraft collision systems must run in real-time on flight hardware with strict timing deadlines.
+    *   Instead of running deep neural networks or complex mathematical functions, the flight computer calculates 8 floor divisions (e.g., $\lfloor \frac{x - \text{offset}_i}{1000} \rfloor$) and sums exactly 8 weights.
+    *   This requires virtually zero CPU processing time and executes in microseconds, ensuring reliable real-time performance.
+3.  **Local Updates and Zero Interference**:
+    If an aircraft is detected at a safe distance (e.g., $4000$ meters), only the tiles covering that far-away area are updated. The weights representing the critical near-collision states (within $500$ meters) remain completely untouched, ensuring safety-critical estimations are never accidentally corrupted by far-away data.
+
+---
+
+#### Case Study 2: Sleep Apnea Detection from Polysomnography (PSG) Signals
+
+Polysomnography (PSG) is the diagnostic standard for sleep disorders. A real-time sleep monitor (like a smart headband or wearable ring) must analyze continuous physiological signals to detect events like **Obstructive Sleep Apnea (OSA)**—a temporary cessation of breathing during sleep.
+
+*   **State Space**: A continuous 3D state vector representing key PSG features:
+    1.  $s_1$: **Blood Oxygen Saturation ($SpO_2$)**: Continuous percentage scale ($70\%$ to $100\%$).
+    2.  $s_2$: **Heart Rate Variability (HRV)**: Measured as LF/HF ratio, a continuous indicator of sympathetic nervous system stress ($0.5$ to $15.0$).
+    3.  $s_3$: **Airflow Amplitude**: Measured via nasal pressure, representing breathing depth ($0\%$ to $100\%$).
+*   **System Value**: We want to approximate a value function $v(s)$ representing the safety of the current sleep state. A state is extremely dangerous (negative value) if the patient is experiencing apnea (airflow drops to $<10\%$ and $SpO_2$ drops below $90\%$).
+
+![PSG Sleep Apnea Tile Coding State Space](./assets/images/psg_tile_coding.svg)
+
+##### Why Tile Coding is superior for Wearable PSG Monitors:
+
+1.  **Handling Multi-Dimensional Continuity**:
+    If we used a tabular representation and discretized the dimensions ($30$ bins for $SpO_2$, $100$ bins for HRV, and $100$ bins for Airflow), we would require a look-up table of $30 \times 100 \times 100 = 300,000$ states. Tabular learning would fail because it cannot generalize: learning that a drop in airflow at $SpO_2=89\%$ is dangerous would tell the lookup table absolutely nothing about the state at $SpO_2=88\%$. 
+    
+    Using Tile Coding with $m = 16$ tilings, the model generalizes across similar continuous readings. If the blood oxygen levels shift slightly, the state remains within the same active tiles, providing smooth value estimates.
+2.  **Strict Power and Resource Constraints**:
+    Wearable sleep monitors run on tiny batteries and low-power microcontrollers. Running a deep neural network on-chip is too computationally expensive and would drain the battery in hours. 
+    
+    Tile coding only requires basic mathematical operations (shifting, division, and floor) to calculate the active tile index for each of the $16$ tilings. The value estimate is then computed by simply adding $16$ float weights. This is exceptionally fast and energy-efficient.
+3.  **Local Generalization Prevents Alarm Errors**:
+    Sleep dynamics vary throughout the night (e.g., normal HRV fluctuations during deep REM sleep). 
+    *   With global approximation methods like **polynomials**, updates from normal sleep states would constantly interfere with and distort the value weights of the critical "Apnea Danger" state.
+    *   With **Tile Coding**, updates during healthy sleep phases only modify tiles in the "safe" region. The weights representing the critical danger zone (hypoxia + zero airflow) are kept isolated and stable, preventing the system from false alarms or failing to trigger when actual apnea occurs.
 
 ---
 
