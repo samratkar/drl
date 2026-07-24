@@ -1,10 +1,10 @@
 ---
-layout: post
 tags : [deep-q-learning]
 title : "Deep Q-Learning & Double DQN"
 category : Lectures
 subcategory : deep-q-learning
 textbook : [graesser-keng-chapter4-5]
+layout: post
 deliveries : []
 ---
 

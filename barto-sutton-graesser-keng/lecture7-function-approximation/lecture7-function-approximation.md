@@ -1,11 +1,10 @@
 ---
-layout: post
 tags : [function-approximation]
 title : "Function Approximation"
 category : Lectures
 subcategory : function-approximation
 textbook : [chapter9]
-layout: 
+layout: post
 deliveries : []
 ---
 

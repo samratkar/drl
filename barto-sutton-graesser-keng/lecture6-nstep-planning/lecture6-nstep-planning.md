@@ -1,11 +1,10 @@
 ---
-layout: post
 tags : [nstep-planning]
 title : "NStep Planning"
 category : Lectures
 subcategory : nstep-plan
 textbook : [chapter7]
-layout: 
+layout: post
 deliveries : []
 ---
 
