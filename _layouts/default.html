@@ -142,7 +142,57 @@
 
     /* Mermaid */
     .mermaid { background: white !important; margin: 2.5rem 0; padding: 1.5rem; border: 1px solid #e2e8f0; border-radius: 0.75rem; display: flex; justify-content: center; }
+
+    /* Blockquotes styling */
+    .markdown-content blockquote {
+      border-left: 4px solid #cbd5e1;
+      padding: 0.5rem 0 0.5rem 1rem;
+      margin: 1.5rem 0;
+      color: #475569;
+      font-style: italic;
+    }
   </style>
+
+  <!-- GitHub Alerts Parser -->
+  <script>
+    function renderAlerts() {
+      const blockquotes = document.querySelectorAll('.markdown-content blockquote');
+      blockquotes.forEach(bq => {
+        const p = bq.querySelector('p') || bq;
+        const html = p.innerHTML;
+        const regex = /\[\!(TIP|NOTE|WARNING|IMPORTANT|CAUTION)\]/i;
+        const match = html.match(regex);
+        if (match) {
+          const type = match[1].toUpperCase();
+          const alerts = {
+            'TIP': { border: 'border-emerald-500', bg: 'bg-emerald-50/50', text: 'text-emerald-900', label: 'Tip', icon: '💡' },
+            'NOTE': { border: 'border-blue-500', bg: 'bg-blue-50/50', text: 'text-blue-900', label: 'Note', icon: 'ℹ️' },
+            'WARNING': { border: 'border-amber-500', bg: 'bg-amber-50/50', text: 'text-amber-900', label: 'Warning', icon: '⚠️' },
+            'IMPORTANT': { border: 'border-indigo-500', bg: 'bg-indigo-50/50', text: 'text-indigo-900', label: 'Important', icon: '📢' },
+            'CAUTION': { border: 'border-red-500', bg: 'bg-red-50/50', text: 'text-red-900', label: 'Caution', icon: '🚨' }
+          };
+          
+          const config = alerts[type];
+          if (config) {
+            p.innerHTML = html.replace(/\[\!(TIP|NOTE|WARNING|IMPORTANT|CAUTION)\]\s*(?:<br\s*\/?>)?\s*/i, '').trim();
+            bq.className = `my-6 pl-5 pr-4 py-4 border-l-4 rounded-r-lg ${config.border} ${config.bg} ${config.text} not-italic`;
+            
+            const header = document.createElement('div');
+            header.className = 'flex items-center gap-2 font-bold mb-2 text-xs uppercase tracking-wide not-italic';
+            header.innerHTML = `<span class="text-base">${config.icon}</span><span>${config.label}</span>`;
+            bq.insertBefore(header, bq.firstChild);
+          }
+        }
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', renderAlerts);
+    } else {
+      renderAlerts();
+    }
+  </script>
+
 
   <!-- MathJax -->
   <script>
