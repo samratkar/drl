@@ -13,7 +13,7 @@ deliveries : []
 *Reference: Graesser, L., & Keng, W. L. (2019). Foundations of Deep Reinforcement Learning. Chapters 4 & 5.*
 
 > [!TIP]
-> **Hands-On Tutorial:** A fully annotated, interactive Jupyter Notebook demonstrating standard DQN and Double DQN on the CartPole-v1 environment is available at [deep_q_learning.ipynb](./assets/deep_q_learning.ipynb). The notebook includes modular PyTorch classes, inline SVG diagrams explaining the data flow, and training performance comparison graphs.
+> **Hands-On Tutorial:** A fully annotated, interactive Jupyter Notebook demonstrating standard DQN and Double DQN on the CartPole-v1 environment is available at [deep_q_learning.ipynb](https://github.com/samratkar/drl/blob/main/barto-sutton-graesser-keng/lecture8-deepQLearning/assets/deep_q_learning.ipynb). The notebook includes modular PyTorch classes, inline SVG diagrams explaining the data flow, and training performance comparison graphs.
 
 
 ## 1. The Limits of Tabular Q-Learning
