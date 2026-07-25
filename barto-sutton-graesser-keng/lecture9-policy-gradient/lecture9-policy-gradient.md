@@ -113,8 +113,33 @@ $$ \nabla J(\theta) = \mathbb{E}_{\pi} [ q_{\pi}(S_t, A_t) \nabla_{\theta} \ln \
 
 Since we don't know the exact $q_{\pi}(S_t, A_t)$, the simplest thing we can do is use a Monte Carlo sample. We play out an entire episode, and use the actual observed Return $G_t$ as an unbiased estimate for $q_{\pi}$.
 
-This gives us the **REINFORCE** update rule:
-$$ \theta_{t+1} = \theta_t + \alpha G_t \nabla_{\theta} \ln \pi(A_t|S_t, \theta) $$
+This is described in **Section 13.3** of Sutton & Barto.
+
+### The $\gamma^t$ Discount Factor in the Update
+In the theoretical derivation of the discounted policy gradient, the objective is defined as the value of the start state $J(\theta) \doteq v_{\pi_{\theta}}(s_0)$. When we use discounting ($\gamma < 1$), states visited later in the episode contribute less to the start state value. 
+
+To account for this mathematically, the update at time step $t$ is scaled by $\gamma^t$:
+$$ \theta_{t+1} = \theta_t + \alpha \gamma^t G_t \nabla_{\theta} \ln \pi(A_t|S_t, \theta) $$
+
+> **Note on Deep RL Practice:** In modern deep reinforcement learning implementations (like those using neural networks for continuous tasks), the $\gamma^t$ term is often omitted (set to 1). This is because the exponential decay of $\gamma^t$ causes updates late in long episodes to become extremely small, leading to slow training of neural networks. However, the $\gamma^t$ term is mathematically required for the gradient of the discounted start-state objective.
+
+---
+
+### REINFORCE Pseudo-code (Sutton & Barto 13.3)
+
+$$
+\begin{array}{l}
+\textbf{Input:} \text{ a differentiable policy parameterization } \pi(a|s, \theta) \\
+\textbf{Parameters:} \text{ step size } \alpha > 0 \\
+\textbf{Initialize:} \text{ policy parameter } \theta \in \mathbb{R}^{d'} \\
+\\
+\textbf{Loop forever (for each episode):} \\
+\quad \text{Generate an episode } S_0, A_0, R_1, \dots, S_{T-1}, A_{T-1}, R_T \text{ following } \pi(\cdot|\cdot, \theta) \\
+\quad \textbf{Loop for each step of the episode } t = 0, 1, \dots, T-1: \\
+\qquad G \leftarrow \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k \\
+\qquad \theta \leftarrow \theta + \alpha \gamma^t G \nabla_{\theta} \ln \pi(A_t | S_t, \theta)
+\end{array}
+$$
 
 ```mermaid
 sequenceDiagram
@@ -133,7 +158,7 @@ sequenceDiagram
     Note over Env, Agent: Phase 2: Learn (Update Weights)
     loop For each step t in trajectory
         Agent->>Agent: Calculate Return G_t
-        Agent->>Agent: Gradient Ascent: θ = θ + α * G_t * ∇lnπ
+        Agent->>Agent: Update θ = θ + α * γ^t * G_t * ∇lnπ
     end
     end
 ```
@@ -143,33 +168,293 @@ Because REINFORCE relies on full Monte Carlo rollouts ($G_t$), it suffers from m
 
 ---
 
-## 4. Reducing Variance: The Baseline
+## 4. REINFORCE with Baseline (Sutton & Barto 13.4)
 
-To fix the variance problem, we can subtract a **baseline** $b(s)$ from the return. Mathematically, subtracting a baseline that depends only on the state (not the action) does not change the expected value of the gradient, but it drastically reduces its variance!
+To fix the variance problem, we can subtract a **baseline** $b(s)$ from the return. The baseline can be any function, as long as it does not depend on the action $a$. 
 
-$$ \nabla J(\theta) = \mathbb{E}_{\pi} [ (G_t - b(S_t)) \nabla_{\theta} \ln \pi(A_t|S_t, \theta) ] $$
+$$ \theta_{t+1} = \theta_t + \alpha \gamma^t (G_t - b(S_t)) \nabla_{\theta} \ln \pi(A_t|S_t, \theta) $$
 
-The most common baseline is the State-Value function $V(s_t)$. 
-The term $(G_t - V(S_t))$ is called the **Advantage**. 
-* If $G_t > V(S_t)$, the action we took resulted in a return *better* than we usually expect from this state. We should increase its probability.
-* If $G_t < V(S_t)$, the action was worse than average. We should decrease its probability.
+The most common baseline is a learned estimate of the state-value function, $\hat{v}(s, \mathbf{w})$.
+The term $(G_t - \hat{v}(S_t, \mathbf{w}))$ is the **Advantage** (how much better this action's outcome was compared to our average expectation of the state).
+
+### Proof of Unbiased Baseline
+We want to prove that subtracting a baseline $b(s)$ that is independent of action $a$ does not introduce any bias to the expected gradient:
+$$ \mathbb{E}_{A_t \sim \pi} [ b(S_t) \nabla_{\theta} \ln \pi(A_t|S_t, \theta) ] = 0 $$
+
+**Proof:**
+For a given state $s$, the expected value of the baseline gradient term is:
+$$ \sum_{a} \pi(a|s, \theta) b(s) \nabla_{\theta} \ln \pi(a|s, \theta) $$
+
+Using the identity $\nabla \ln x = \frac{\nabla x}{x}$:
+$$ = \sum_{a} \pi(a|s, \theta) b(s) \frac{\nabla_{\theta} \pi(a|s, \theta)}{\pi(a|s, \theta)} $$
+
+Simplifying (canceling $\pi(a|s, \theta)$):
+$$ = \sum_{a} b(s) \nabla_{\theta} \pi(a|s, \theta) $$
+
+Since the baseline $b(s)$ has no dependence on the action $a$, we can pull it out of the summation:
+$$ = b(s) \sum_{a} \nabla_{\theta} \pi(a|s, \theta) $$
+
+Now we swap the gradient operator and the summation:
+$$ = b(s) \nabla_{\theta} \sum_{a} \pi(a|s, \theta) $$
+
+Because $\pi(a|s, \theta)$ is a probability distribution over actions, its sum over all possible actions must be exactly $1$:
+$$ \sum_{a} \pi(a|s, \theta) = 1 $$
+
+Substituting this back:
+$$ = b(s) \nabla_{\theta} (1) $$
+
+Since the gradient of a constant is $0$:
+$$ = b(s) \cdot 0 = 0 $$
+
+Therefore, the baseline term contributes exactly $0$ to the expected gradient update. It reduces variance by centering the return values without introducing any bias.
 
 ---
 
-## 5. Actor-Critic Methods
+### REINFORCE with Baseline Pseudo-code (Sutton & Barto 13.4)
 
-While the baseline reduces variance, REINFORCE still requires us to wait until the very end of an episode to calculate $G_t$. 
+$$
+\begin{array}{l}
+\textbf{Input:} \text{ a differentiable policy parameterization } \pi(a|s, \theta) \\
+\textbf{Input:} \text{ a differentiable state-value function parameterization } \hat{v}(s, \mathbf{w}) \\
+\textbf{Parameters:} \text{ step sizes } \alpha > 0, \beta > 0 \\
+\textbf{Initialize:} \text{ policy parameter } \theta \in \mathbb{R}^{d'} \text{ and state-value weights } \mathbf{w} \in \mathbb{R}^d \\
+\\
+\textbf{Loop forever (for each episode):} \\
+\quad \text{Generate an episode } S_0, A_0, R_1, \dots, S_{T-1}, A_{T-1}, R_T \text{ following } \pi(\cdot|\cdot, \theta) \\
+\quad \textbf{Loop for each step of the episode } t = 0, 1, \dots, T-1: \\
+\qquad G \leftarrow \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k \\
+\qquad \delta \leftarrow G - \hat{v}(S_t, \mathbf{w}) \\
+\qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w}) \\
+\qquad \theta \leftarrow \theta + \alpha \gamma^t \delta \nabla_{\theta} \ln \pi(A_t | S_t, \theta)
+\end{array}
+$$
 
-**Actor-Critic methods** solve this by using *bootstrapping* (like TD learning). Instead of using the full Monte Carlo return $G_t$, we train a second neural network (the **Critic**) to estimate the value function $V(s, w)$. We then use the TD Error as our Advantage!
+*(Where $\mathbf{w}$ weights are updated using gradient descent to minimize value estimation MSE, and $\theta$ weights are updated via policy gradient ascent).*
 
-$$ \text{TD Error (Advantage)}: \delta_t = R_{t+1} + \gamma V(S_{t+1}, w) - V(S_t, w) $$
+### Why use Policy Gradient if we are training a State-Value function anyway?
 
-* **The Critic** updates its weights $w$ to minimize the MSE of the TD Error.
-* **The Actor** updates its policy weights $\theta$ using the Critic's TD Error: $\theta_{t+1} = \theta_t + \alpha \delta_t \nabla_{\theta} \ln \pi(A_t|S_t, \theta)$.
+Students often ask: *If we are already training a state-value network $\hat{v}(s, \mathbf{w})$ to act as a baseline, why not just use a value-based method like Q-learning or DQN?*
+
+The answer lies in **decoupling decision-making from update guidance**:
+
+1. **Decoupled Architecture (Decision vs. Update):**
+   * **Value-Based (DQN):** The value function is the *sole decision maker*. To choose an action, the agent must compute Q-values for all actions and run an argmax selection: $A = \text{argmax}_a Q(s,a)$.
+   * **Policy Gradient with Baseline:** The value function is only a *critic/guide* for updating weights. The actual decision-making is done directly by the policy (Actor) $\pi(a|s, \theta)$. The value network $\hat{v}(s, \mathbf{w})$ is **never** used during decision-making.
+
+2. **Key Advantages of this Decoupling:**
+   * **Continuous Action Spaces:** A policy network can directly output parameters of a continuous probability distribution (e.g., the mean and variance of a Gaussian for a steering wheel angle). A value-based network cannot do this because computing $\text{argmax}$ over an infinite continuous space at every step is computationally intractable.
+   * **True Stochastic Policies:** Value-based methods converge to deterministic greedy policies (making them easily exploitable in games like Rock-Paper-Scissors or stuck in partially observable environments). Policy gradients naturally learn true stochastic probabilities.
+   * **Smooth Updates:** Gradient updates to policy weights $\theta$ lead to smooth, incremental changes in action probabilities. In contrast, value-based updates are discontinuous—a small change in a Q-value can cause the argmax to abruptly jump to a completely different action, causing instability.
+   * **Production Efficiency:** Once training is complete, **the value network baseline can be completely discarded**. At test time, you only deploy the policy network, which drastically reduces computational overhead.
+
+![Value-Based vs. Policy-Based Architecture](./assets/images/value_vs_policy_decision.svg)
+
+---
+
+## 5. Actor-Critic Methods (Sutton & Barto 13.5)
+
+### How is Actor-Critic different from REINFORCE with Baseline?
+
+While both methods use a state-value function $V(s)$, they belong to fundamentally different classes of Reinforcement Learning algorithms:
+
+1. **Bootstrapping (TD Learning) vs. Monte Carlo:**
+   * **REINFORCE with Baseline** is a *Monte Carlo* method. The policy update is based on the actual observed return $G_t$, which requires playing out the **entire episode** before any updates can occur. 
+   * **One-Step Actor-Critic** is a *bootstrapping* method. It replaces the full return $G_t$ with a local Temporal Difference (TD) target: $R_{t+1} + \gamma V(S_{t+1}, \mathbf{w})$. Updates occur **online at every single time step** without waiting for the episode to end.
+2. **True Critic Role:**
+   * In REINFORCE with Baseline, the value function is only used as a baseline to reduce variance. It does not affect the expectation of the gradient.
+   * In Actor-Critic, the value function behaves as a **true Critic** because its estimates directly evaluate the action choice immediately via the TD error.
+3. **Bias-Variance Trade-off:**
+   * **REINFORCE** is unbiased but suffers from high variance (because $G_t$ depends on many random actions and states until the end of the episode).
+   * **Actor-Critic** has much lower variance (only depending on a single-step transition $S_t \xrightarrow{A_t} S_{t+1}$) but is biased because the critic's value estimates $V(S_{t+1}, \mathbf{w})$ are initially inaccurate and must be learned.
+
+![REINFORCE vs. Actor-Critic](./assets/images/reinforce_vs_actor_critic.svg)
+
+---
+
+### One-step Actor-Critic (Episodic) Pseudo-code
+
+Below is the episodic one-step Actor-Critic algorithm:
+
+$$
+\begin{array}{l}
+\textbf{Input:} \text{ a differentiable policy parameterization } \pi(a|s, \theta) \\
+\textbf{Input:} \text{ a differentiable state-value function parameterization } \hat{v}(s, \mathbf{w}) \\
+\textbf{Parameters:} \text{ step sizes } \alpha > 0, \beta > 0 \\
+\textbf{Initialize:} \text{ policy parameter } \theta \in \mathbb{R}^{d'} \text{ and state-value weights } \mathbf{w} \in \mathbb{R}^d \\
+\\
+\textbf{Loop forever (for each episode):} \\
+\quad \text{Initialize } S \text{ (first state of episode)} \\
+\quad I \leftarrow 1 \\
+\quad \textbf{Loop while } S \text{ is not terminal:} \\
+\qquad A \sim \pi(\cdot|S, \theta) \\
+\qquad \text{Take action } A, \text{ observe } R, S' \\
+\qquad \delta \leftarrow R + \gamma \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w}) \quad \text{(if } S' \text{ is terminal, } \hat{v}(S', \mathbf{w}) \doteq 0\text{)} \\
+\qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S, \mathbf{w}) \\
+\qquad \theta \leftarrow \theta + \alpha I \delta \nabla_{\theta} \ln \pi(A|S, \theta) \\
+\qquad I \leftarrow \gamma I \\
+\qquad S \leftarrow S'
+\end{array}
+$$
 
 ![Actor-Critic Architecture](./assets/images/actor_critic.svg)
 
-This allows the agent to learn at *every single time step* (online learning) without waiting for the episode to end, significantly speeding up training for infinite-horizon problems!
+---
+
+### Step-by-Step Numerical Example (Episodic Actor-Critic)
+
+Let's calculate a single step of the One-step Actor-Critic update.
+
+#### 1. Setup & Initializations
+* **State Feature Vectors:**
+  * Current state $S_t$: $\mathbf{x}(S_t) = [1.0, 2.0]^T$
+  * Next state $S_{t+1}$: $\mathbf{x}(S_{t+1}) = [0.5, 1.5]^T$
+* **Critic parameter weights:** $\mathbf{w} = [0.5, 0.3]^T$. The value model is linear: $\hat{v}(s, \mathbf{w}) = \mathbf{w}^T \mathbf{x}(s)$.
+* **Actor parameters:** We have 2 discrete actions ($a_1, a_2$). The preference for action $a_i$ is $h(s, a_i, \theta) = \theta_i^T \mathbf{x}(s)$.
+  * $\theta_{a_1} = [0.1, -0.2]^T$
+  * $\theta_{a_2} = [-0.1, 0.2]^T$
+* **Environment transition:** The agent samples action $A_t = a_1$. The observed reward is $R_{t+1} = 1.0$.
+* **Hyperparameters:** Discount factor $\gamma = 0.9$, learning rates $\alpha = 0.2$ (Actor), $\beta = 0.1$ (Critic). Current discount multiplier $I = 1.0$ (at $t=0$).
+
+#### 2. Compute State Value Estimates
+* $\hat{v}(S_t) = \mathbf{w}^T \mathbf{x}(S_t) = [0.5, 0.3] \cdot [1.0, 2.0]^T = 0.5(1.0) + 0.3(2.0) = 1.1$
+* $\hat{v}(S_{t+1}) = \mathbf{w}^T \mathbf{x}(S_{t+1}) = [0.5, 0.3] \cdot [0.5, 1.5]^T = 0.5(0.5) + 0.3(1.5) = 0.7$
+
+#### 3. Compute TD Error (Critic Evaluation)
+$$ \delta_t = R_{t+1} + \gamma \hat{v}(S_{t+1}) - \hat{v}(S_t) $$
+$$ \delta_t = 1.0 + 0.9(0.7) - 1.1 = 1.0 + 0.63 - 1.1 = 0.53 $$
+
+#### 4. Update Critic Parameters
+The gradient of a linear value function is simply the feature vector: $\nabla_{\mathbf{w}} \hat{v}(S_t) = \mathbf{x}(S_t)$.
+$$ \mathbf{w} \leftarrow \mathbf{w} + \beta \delta_t \mathbf{x}(S_t) $$
+$$ \mathbf{w}_{new} = \begin{bmatrix} 0.5 \\ 0.3 \end{bmatrix} + 0.1(0.53) \begin{bmatrix} 1.0 \\ 2.0 \end{bmatrix} = \begin{bmatrix} 0.5 \\ 0.3 \end{bmatrix} + \begin{bmatrix} 0.053 \\ 0.106 \end{bmatrix} = \begin{bmatrix} 0.553 \\ 0.406 \end{bmatrix} $$
+
+#### 5. Update Actor Parameters
+First, compute the action preferences and probability distribution:
+* $h(S_t, a_1) = \theta_{a_1}^T \mathbf{x}(S_t) = [0.1, -0.2] \cdot [1.0, 2.0]^T = 0.1 - 0.4 = -0.3$
+* $h(S_t, a_2) = \theta_{a_2}^T \mathbf{x}(S_t) = [-0.1, 0.2] \cdot [1.0, 2.0]^T = -0.1 + 0.4 = 0.3$
+* Probabilities:
+  * $\pi(a_1|S_t) = \frac{e^{-0.3}}{e^{-0.3} + e^{0.3}} = \frac{0.7408}{0.7408 + 1.8221} \approx 0.289$
+  * $\pi(a_2|S_t) = 1 - 0.289 = 0.711$
+
+Now, compute the log-gradient of the softmax policy for the chosen action $A_t = a_1$:
+* $\nabla_{\theta_{a_1}} \ln \pi(a_1|S_t) = (1 - \pi(a_1|S_t))\mathbf{x}(S_t) = (1 - 0.289)\mathbf{x}(S_t) = 0.711 \begin{bmatrix} 1.0 \\ 2.0 \end{bmatrix} = \begin{bmatrix} 0.711 \\ 1.422 \end{bmatrix}$
+* $\nabla_{\theta_{a_2}} \ln \pi(a_1|S_t) = -\pi(a_2|S_t)\mathbf{x}(S_t) = -0.711 \mathbf{x}(S_t) = -0.711 \begin{bmatrix} 1.0 \\ 2.0 \end{bmatrix} = \begin{bmatrix} -0.711 \\ -1.422 \end{bmatrix}$
+
+Update the Actor weights:
+* $\theta_{a_1} \leftarrow \theta_{a_1} + \alpha I \delta_t \nabla_{\theta_{a_1}} \ln \pi(a_1|S_t)$
+  $$ \theta_{a_1} \leftarrow \begin{bmatrix} 0.1 \\ -0.2 \end{bmatrix} + 0.2(1.0)(0.53) \begin{bmatrix} 0.711 \\ 1.422 \end{bmatrix} = \begin{bmatrix} 0.1 \\ -0.2 \end{bmatrix} + \begin{bmatrix} 0.075 \\ 0.151 \end{bmatrix} = \begin{bmatrix} 0.175 \\ -0.049 \end{bmatrix} $$
+* $\theta_{a_2} \leftarrow \theta_{a_2} + \alpha I \delta_t \nabla_{\theta_{a_2}} \ln \pi(a_1|S_t)$
+  $$ \theta_{a_2} \leftarrow \begin{bmatrix} -0.1 \\ 0.2 \end{bmatrix} + 0.2(1.0)(0.53) \begin{bmatrix} -0.711 \\ -1.422 \end{bmatrix} = \begin{bmatrix} -0.1 \\ 0.2 \end{bmatrix} - \begin{bmatrix} 0.075 \\ 0.151 \end{bmatrix} = \begin{bmatrix} -0.175 \\ 0.049 \end{bmatrix} $$
+
+Notice that because action $a_1$ yielded a positive TD error (better than expected), its parameter weights are updated to make it more likely to be selected in the future, while the weights for $a_2$ are adjusted downwards.
+
+---
+
+## 6. Policy Gradient for Continuing Problems (Sutton & Barto 13.6)
+
+In continuing tasks (which do not terminate), there are no episode boundaries. Discounting is problematic in continuing tasks because the discounted state distribution does not depend on the policy in a way that allows a simple gradient theorem. Thus, we reformulate our objective.
+
+### The Average Reward Objective
+We define the performance objective as the **average reward rate** per time step under policy $\pi$:
+$$ r(\pi) \doteq \lim_{h \to \infty} \frac{1}{h} \sum_{t=1}^{h} \mathbb{E}[R_t | A_{0:t-1} \sim \pi] = \sum_{s} d_{\pi}(s) \sum_{a} \pi(a|s) \sum_{s', r} p(s', r | s, a) r $$
+Where $d_{\pi}(s) \doteq \lim_{t\to\infty} P(S_t = s | S_0, A_{0:t-1} \sim \pi)$ is the steady-state distribution of states under policy $\pi$.
+
+### Differential Value Functions
+Without episodes, values are defined relative to the average reward. These are **differential value functions**:
+$$ v_{\pi}(s) \doteq \mathbb{E} \left[ \sum_{k=t+1}^{\infty} (R_k - r(\pi)) \middle| S_t = s \right] $$
+$$ q_{\pi}(s,a) \doteq \mathbb{E} \left[ \sum_{k=t+1}^{\infty} (R_k - r(\pi)) \middle| S_t = s, A_t = a \right] $$
+
+The Policy Gradient Theorem for continuing tasks holds:
+$$ \nabla J(\theta) = \sum_{s} d_{\pi}(s) \sum_{a} q_{\pi}(s,a) \nabla \pi(a|s, \theta) $$
+where $J(\theta) \doteq r(\pi_{\theta})$.
+
+---
+
+### Continuing Differential Actor-Critic Pseudo-code
+
+This algorithm uses the differential TD error $\delta_t = R_{t+1} - \bar{R}_t + V(S_{t+1}) - V(S_t)$, where $\bar{R}_t$ is a running estimate of the average reward rate:
+
+$$
+\begin{array}{l}
+\textbf{Input:} \text{ a differentiable policy parameterization } \pi(a|s, \theta) \\
+\textbf{Input:} \text{ a differentiable state-value function parameterization } \hat{v}(s, \mathbf{w}) \\
+\textbf{Parameters:} \text{ step sizes } \alpha > 0, \beta > 0, \eta > 0 \\
+\textbf{Initialize:} \text{ policy parameter } \theta \in \mathbb{R}^{d'}, \text{ state-value weights } \mathbf{w} \in \mathbb{R}^d, \text{ and average reward estimate } \bar{R} \in \mathbb{R} \text{ (e.g. to 0)} \\
+\\
+\textbf{Initialize state } S \\
+\textbf{Loop forever (for each step):} \\
+\quad A \sim \pi(\cdot|S, \theta) \\
+\quad \text{Take action } A, \text{ observe } R, S' \\
+\quad \delta \leftarrow R - \bar{R} + \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w}) \\
+\quad \bar{R} \leftarrow \bar{R} + \eta \delta \\
+\quad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S, \mathbf{w}) \\
+\quad \theta \leftarrow \theta + \alpha \delta \nabla_{\theta} \ln \pi(A|S, \theta) \\
+\quad S \leftarrow S'
+\end{array}
+$$
+
+---
+
+## 7. Continuous Action Spaces (Sutton & Barto 13.7)
+
+In continuous action spaces, actions are real numbers (e.g., control forces, motor torques). Rather than estimating probabilities of discrete actions, the policy network parameterizes a **probability density function**.
+
+### Gaussian Policy Parameterization
+A common choice is the Gaussian (normal) distribution:
+$$ \pi(a|s, \theta) = \frac{1}{\sigma(s, \theta)\sqrt{2\pi}} \exp \left( -\frac{(a - \mu(s, \theta))^2}{2\sigma(s, \theta)^2} \right) $$
+
+To represent this, we split the parameter vector $\theta$ into two parts: $\theta = [\theta_{\mu}, \theta_{\sigma}]^T$.
+* $\mu(s, \theta_{\mu})$ is the parameterized mean of the distribution.
+* To guarantee that the standard deviation $\sigma(s, \theta)$ is always positive, we parameterize its logarithm: $\sigma(s, \theta) \doteq \exp(\eta(s, \theta_{\sigma}))$, where $\eta$ is the direct network output.
+
+### Log-Gradient Derivation
+Taking the natural log of the Gaussian PDF:
+$$ \ln \pi(a|s, \theta) = -\ln \sigma(s, \theta) - \ln\sqrt{2\pi} - \frac{(a - \mu(s, \theta))^2}{2\sigma(s, \theta)^2} $$
+
+* **Gradient w.r.t. Mean Parameters $\theta_{\mu}$:**
+  $$ \nabla_{\theta_{\mu}} \ln \pi(a|s, \theta) = \frac{a - \mu(s, \theta)}{\sigma(s, \theta)^2} \nabla_{\theta_{\mu}} \mu(s, \theta_{\mu}) $$
+* **Gradient w.r.t. Standard Deviation Parameters $\theta_{\sigma}$:**
+  $$ \nabla_{\theta_{\sigma}} \ln \pi(a|s, \theta) = \left( \frac{(a - \mu(s, \theta))^2}{\sigma(s, \theta)^2} - 1 \right) \nabla_{\theta_{\sigma}} \eta(s, \theta_{\sigma}) $$
+
+![Gaussian Policy Update](./assets/images/gaussian_policy_update.svg)
+
+---
+
+### Numerical Intuition of the Gaussian Update
+
+Let's look at how the Gaussian policy changes parameters based on the advantage/TD error $\delta_t$.
+
+Assume:
+* Current mean: $\mu(s, \theta) = 5.0$
+* Current standard deviation: $\sigma(s, \theta) = 2.0$
+* Learning update step size: $\alpha = 0.1$
+* TD error (Advantage): $\delta_t = +0.5$ (Action was better than expected)
+
+#### Case 1: An action is sampled above the mean ($a = 7.0$)
+* **Mean Update Direction:**
+  $$ \nabla_{\theta_{\mu}} \ln \pi = \frac{7.0 - 5.0}{2.0^2} = \frac{2.0}{4.0} = +0.5 $$
+  Since $\delta_t = +0.5$ (positive), the mean $\mu$ shifts **to the right (increases)**.
+* **Standard Deviation Update Direction:**
+  $$ \nabla_{\theta_{\sigma}} \ln \pi = \frac{(7.0 - 5.0)^2}{2.0^2} - 1 = \frac{4.0}{4.0} - 1 = 0 $$
+  Because the action is exactly $1$ standard deviation away, the standard deviation $\sigma$ **remains unchanged**.
+
+#### Case 2: An action is sampled far from the mean ($a = 9.0$)
+* **Mean Update Direction:**
+  $$ \nabla_{\theta_{\mu}} \ln \pi = \frac{9.0 - 5.0}{2.0^2} = \frac{4.0}{4.0} = +1.0 $$
+  The mean $\mu$ shifts **to the right (increases)** even faster.
+* **Standard Deviation Update Direction:**
+  $$ \nabla_{\theta_{\sigma}} \ln \pi = \frac{(9.0 - 5.0)^2}{2.0^2} - 1 = \frac{16.0}{4.0} - 1 = +3.0 $$
+  Since the direction is positive and $\delta_t > 0$, the standard deviation $\sigma$ **increases (widens the curve)**.
+  * **Intuition:** A successful action occurred far away. The policy widens its search (increases exploration) to cover this high-reward region.
+
+#### Case 3: An action is sampled very close to the mean ($a = 5.5$)
+* **Mean Update Direction:**
+  $$ \nabla_{\theta_{\mu}} \ln \pi = \frac{5.5 - 5.0}{2.0^2} = \frac{0.5}{4.0} = +0.125 $$
+  The mean $\mu$ shifts slightly to the right.
+* **Standard Deviation Update Direction:**
+  $$ \nabla_{\theta_{\sigma}} \ln \pi = \frac{(5.5 - 5.0)^2}{2.0^2} - 1 = \frac{0.25}{4.0} - 1 = -0.9375 $$
+  Since the direction is negative and $\delta_t > 0$, the standard deviation $\sigma$ **decreases (narrows the curve)**.
+  * **Intuition:** A successful action occurred close to the mean. The policy becomes more precise (reduces exploration) around this successful mean.
 
 ---
 

@@ -12,6 +12,10 @@ deliveries : []
 
 *Reference: Graesser, L., & Keng, W. L. (2019). Foundations of Deep Reinforcement Learning. Chapters 4 & 5.*
 
+> [!TIP]
+> **Hands-On Tutorial:** A fully annotated, interactive Jupyter Notebook demonstrating standard DQN and Double DQN on the CartPole-v1 environment is available at [deep_q_learning.ipynb](./assets/deep_q_learning.ipynb). The notebook includes modular PyTorch classes, inline SVG diagrams explaining the data flow, and training performance comparison graphs.
+
+
 ## 1. The Limits of Tabular Q-Learning
 
 In tabular Q-learning, we maintain a table $Q(s, a)$ containing a discrete value for every single state-action pair. While mathematically guaranteed to converge for small MDPs, this completely breaks down in the real world due to the **Curse of Dimensionality**.

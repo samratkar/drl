@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 340" width="850" height="340">
+  <rect width="850" height="340" fill="#f8f9fa" rx="10" ry="10"/>
+  
+  <text x="425" y="30" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#333" text-anchor="middle">Gaussian Policy Parameterization Updates (Continuous Actions)</text>
+  
+  <!-- Left Side: Mean Update -->
+  <g transform="translate(40, 60)">
+    <rect width="360" height="250" fill="#ffffff" stroke="#dee2e6" stroke-width="1.5" rx="8" ry="8"/>
+    <text x="180" y="25" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#0056b3" text-anchor="middle">1. Updating the Mean (μ)</text>
+    <text x="180" y="42" font-family="Arial, sans-serif" font-size="10" fill="#6c757d" text-anchor="middle">Shifts distribution towards successful actions</text>
+    
+    <!-- Coordinate system -->
+    <line x1="40" y1="200" x2="320" y2="200" stroke="#aaa" stroke-width="1.5"/>
+    <line x1="40" y1="200" x2="40" y2="70" stroke="#aaa" stroke-width="1"/>
+    
+    <!-- Old Gaussian (dotted/dashed) -->
+    <!-- Peak at x=150, y=80 -->
+    <path d="M 50 200 Q 110 200 150 80 T 250 200" fill="none" stroke="#007bff" stroke-width="1.5" stroke-dasharray="3,3"/>
+    <line x1="150" y1="80" x2="150" y2="200" stroke="#007bff" stroke-width="1" stroke-dasharray="2,2"/>
+    <text x="150" y="215" font-family="Arial, sans-serif" font-size="10" fill="#007bff" text-anchor="middle">μ_old</text>
+    
+    <!-- Action Sampled -->
+    <!-- Sample at x=210 -->
+    <circle cx="210" cy="200" r="5" fill="#e040fb"/>
+    <text x="210" y="190" font-family="Arial, sans-serif" font-size="9" fill="#e040fb" font-weight="bold" text-anchor="middle">A_t (Sampled)</text>
+    <text x="210" y="175" font-family="Arial, sans-serif" font-size="9" fill="#28a745" font-weight="bold" text-anchor="middle">Advantage δ &gt; 0</text>
+    
+    <!-- New Gaussian (Solid) -->
+    <!-- Peak shifts right to x=180 -->
+    <path d="M 80 200 Q 140 200 180 80 T 280 200" fill="none" stroke="#28a745" stroke-width="2"/>
+    <line x1="180" y1="80" x2="180" y2="200" stroke="#28a745" stroke-width="1" stroke-dasharray="2,2"/>
+    <text x="186" y="228" font-family="Arial, sans-serif" font-size="10" fill="#28a745" font-weight="bold" text-anchor="middle">μ_new</text>
+    
+    <!-- Shift arrow -->
+    <path d="M 155 120 L 175 120" stroke="#ff8f00" stroke-width="2" marker-end="url(#arrow-orange)"/>
+  </g>
+  
+  <!-- Right Side: Standard Deviation Update -->
+  <g transform="translate(450, 60)">
+    <rect width="360" height="250" fill="#ffffff" stroke="#dee2e6" stroke-width="1.5" rx="8" ry="8"/>
+    <text x="180" y="25" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#880e4f" text-anchor="middle">2. Updating the Std Dev (σ)</text>
+    <text x="180" y="42" font-family="Arial, sans-serif" font-size="10" fill="#6c757d" text-anchor="middle">Modifies scale of exploration based on distance</text>
+    
+    <!-- Coordinate system -->
+    <line x1="40" y1="200" x2="320" y2="200" stroke="#aaa" stroke-width="1.5"/>
+    
+    <!-- Case A: Sample far from mean (x=240, mean=140) -->
+    <path d="M 60 200 Q 110 200 140 100 T 220 200" fill="none" stroke="#007bff" stroke-width="1" stroke-dasharray="3,3"/>
+    <text x="140" y="215" font-family="Arial, sans-serif" font-size="9" fill="#007bff" text-anchor="middle">μ</text>
+    
+    <circle cx="230" cy="200" r="4" fill="#d81b60"/>
+    <text x="230" y="190" font-family="Arial, sans-serif" font-size="8" fill="#d81b60" text-anchor="middle">A_t (Far)</text>
+    
+    <!-- Widened Gaussian (Solid) -->
+    <path d="M 40 200 Q 100 200 140 130 T 260 200" fill="none" stroke="#d81b60" stroke-width="1.5"/>
+    <text x="140" y="85" font-family="Arial, sans-serif" font-size="9" fill="#d81b60" font-weight="bold" text-anchor="middle">Far &amp; Good (δ &gt; 0) → σ increases</text>
+    
+    <!-- Case B: Sample close to mean (x=155, mean=140) -->
+    <!-- Let's draw a narrower Gaussian for close sample -->
+    <path d="M 100 200 Q 130 200 140 60 T 180 200" fill="none" stroke="#00acc1" stroke-width="1.5"/>
+    <circle cx="155" cy="200" r="4" fill="#00acc1"/>
+    <text x="175" y="185" font-family="Arial, sans-serif" font-size="8" fill="#00acc1" text-anchor="start">A_t (Close)</text>
+    <text x="140" y="52" font-family="Arial, sans-serif" font-size="9" fill="#00acc1" font-weight="bold" text-anchor="middle">Close &amp; Good (δ &gt; 0) → σ decreases</text>
+  </g>
+  
+  <!-- Marker Definitions -->
+  <defs>
+    <marker id="arrow-orange" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L6,3 z" fill="#ff8f00"/>
+    </marker>
+  </defs>
+</svg>
