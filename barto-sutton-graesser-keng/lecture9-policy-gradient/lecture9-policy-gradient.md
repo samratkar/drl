@@ -269,32 +269,61 @@ While both methods use a state-value function $V(s)$, they belong to fundamental
 
 ![REINFORCE vs. Actor-Critic](./assets/images/reinforce_vs_actor_critic.svg)
 
----
+### Side-by-Side Algorithm Comparison: REINFORCE with Baseline vs. One-Step Actor-Critic
 
-### One-step Actor-Critic (Episodic) Pseudo-code
-
-Below is the episodic one-step Actor-Critic algorithm:
+To see exactly how these two architectures differ in practice, here is the episodic pseudo-code for both algorithms presented side-by-side:
 
 $$
+\begin{array}{c|c}
+\textbf{REINFORCE with Baseline (Monte Carlo)} & \textbf{One-Step Actor-Critic (Temporal Difference)} \\
+\hline
 \begin{array}{l}
-\textbf{Input:} \text{ a differentiable policy parameterization } \pi(a|s, \theta) \\
-\textbf{Input:} \text{ a differentiable state-value function parameterization } \hat{v}(s, \mathbf{w}) \\
+\textbf{Input:} \text{ policy } \pi(a|s, \theta), \text{ value function } \hat{v}(s, \mathbf{w}) \\
 \textbf{Parameters:} \text{ step sizes } \alpha > 0, \beta > 0 \\
-\textbf{Initialize:} \text{ policy parameter } \theta \in \mathbb{R}^{d'} \text{ and state-value weights } \mathbf{w} \in \mathbb{R}^d \\
+\textbf{Initialize:} \theta \in \mathbb{R}^{d'}, \mathbf{w} \in \mathbb{R}^d \\
 \\
 \textbf{Loop forever (for each episode):} \\
-\quad \text{Initialize } S \text{ (first state of episode)} \\
+\quad \text{Generate an episode } S_0, A_0, R_1, \dots, S_{T-1}, A_{T-1}, R_T \\
+\quad \quad \text{following } \pi(\cdot|\cdot, \theta) \\
+\quad \textbf{Loop for each step of the episode } t = 0, \dots, T-1: \\
+\qquad G \leftarrow \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k \quad \text{(Full Return)} \\
+\qquad \delta \leftarrow G - \hat{v}(S_t, \mathbf{w}) \\
+\qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w}) \\
+\qquad \theta \leftarrow \theta + \alpha \gamma^t \delta \nabla_{\theta} \ln \pi(A_t | S_t, \theta) \\
+\\
+\\
+\end{array}
+&
+\begin{array}{l}
+\textbf{Input:} \text{ policy } \pi(a|s, \theta), \text{ value function } \hat{v}(s, \mathbf{w}) \\
+\textbf{Parameters:} \text{ step sizes } \alpha > 0, \beta > 0 \\
+\textbf{Initialize:} \theta \in \mathbb{R}^{d'}, \mathbf{w} \in \mathbb{R}^d \\
+\\
+\textbf{Loop forever (for each episode):} \\
+\quad \text{Initialize state } S \text{ (first state of episode)} \\
 \quad I \leftarrow 1 \\
 \quad \textbf{Loop while } S \text{ is not terminal:} \\
 \qquad A \sim \pi(\cdot|S, \theta) \\
 \qquad \text{Take action } A, \text{ observe } R, S' \\
-\qquad \delta \leftarrow R + \gamma \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w}) \quad \text{(if } S' \text{ is terminal, } \hat{v}(S', \mathbf{w}) \doteq 0\text{)} \\
+\qquad \delta \leftarrow R + \gamma \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w}) \quad \text{(1-Step TD Error)} \\
 \qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S, \mathbf{w}) \\
 \qquad \theta \leftarrow \theta + \alpha I \delta \nabla_{\theta} \ln \pi(A|S, \theta) \\
 \qquad I \leftarrow \gamma I \\
 \qquad S \leftarrow S'
 \end{array}
+\end{array}
 $$
+
+### Key Algorithmic Differences Explained
+
+| Feature | REINFORCE with Baseline | One-Step Actor-Critic |
+| :--- | :--- | :--- |
+| **Learning Paradigm** | **Monte Carlo (MC)**: Updates are calculated offline using full episode trajectories. | **Temporal Difference (TD)**: Updates are calculated online step-by-step. |
+| **Episode Requirement** | Must wait for the episode to terminate ($S_T$) before any parameters can be updated. | Updates happen at every step; can learn from incomplete episodes or continuing tasks. |
+| **Target Computation** | Uses the actual complete future return: <br> $G_t = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \dots$ | Bootstraps the future return using the Critic's estimate: <br> $R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w})$ |
+| **Error Term ($\delta$)** | $\delta = G_t - \hat{v}(S_t, \mathbf{w})$ <br> *(Difference between actual return and prediction)* | $\delta = R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w}) - \hat{v}(S_t, \mathbf{w})$ <br> *(Local 1-step TD prediction error)* |
+| **Discount Tracking** | Computes the state discount factor directly based on absolute episode step $t$: $\gamma^t$. | Uses a running tracker $I$ initialized to $1$ and scaled by $\gamma$ at each step ($I \leftarrow \gamma I$). |
+| **Bias / Variance Profile** | **Unbiased** updates, but suffers from **high variance** due to accumulation of random rewards. | **Biased** updates (due to bootstrapping on Critic estimates), but has **low variance**. |
 
 ![Actor-Critic Architecture](./assets/images/actor_critic.svg)
 
@@ -370,28 +399,65 @@ where $J(\theta) \doteq r(\pi_{\theta})$.
 
 ---
 
-### Continuing Differential Actor-Critic Pseudo-code
+### Side-by-Side Algorithm Comparison: Episodic TD Actor-Critic vs. Continuing Differential Actor-Critic
 
-This algorithm uses the differential TD error $\delta_t = R_{t+1} - \bar{R}_t + V(S_{t+1}) - V(S_t)$, where $\bar{R}_t$ is a running estimate of the average reward rate:
+To understand the change in update logic when moving from episodic to continuing tasks, here are the two TD-based Actor-Critic algorithms presented side-by-side:
 
 $$
+\begin{array}{c|c}
+\textbf{Episodic One-Step Actor-Critic (Normal TD)} & \textbf{Continuing Differential Actor-Critic (Average Reward)} \\
+\hline
 \begin{array}{l}
-\textbf{Input:} \text{ a differentiable policy parameterization } \pi(a|s, \theta) \\
-\textbf{Input:} \text{ a differentiable state-value function parameterization } \hat{v}(s, \mathbf{w}) \\
+\textbf{Input:} \text{ policy } \pi(a|s, \theta), \text{ value function } \hat{v}(s, \mathbf{w}) \\
+\textbf{Parameters:} \text{ step sizes } \alpha > 0, \beta > 0 \\
+\textbf{Initialize:} \theta \in \mathbb{R}^{d'}, \mathbf{w} \in \mathbb{R}^d \\
+\\
+\textbf{Loop forever (for each episode):} \\
+\quad \text{Initialize state } S \text{ (first state of episode)} \\
+\quad I \leftarrow 1 \\
+\quad \textbf{Loop while } S \text{ is not terminal:} \\
+\qquad A \sim \pi(\cdot|S, \theta) \\
+\qquad \text{Take action } A, \text{ observe } R, S' \\
+\qquad \delta \leftarrow R + \gamma \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w}) \\
+\qquad \quad \text{(if } S' \text{ is terminal, } \hat{v}(S', \mathbf{w}) \doteq 0\text{)} \\
+\qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S, \mathbf{w}) \\
+\qquad \theta \leftarrow \theta + \alpha I \delta \nabla_{\theta} \ln \pi(A|S, \theta) \\
+\qquad I \leftarrow \gamma I \\
+\qquad S \leftarrow S' \\
+\\
+\end{array}
+&
+\begin{array}{l}
+\textbf{Input:} \text{ policy } \pi(a|s, \theta), \text{ value function } \hat{v}(s, \mathbf{w}) \\
 \textbf{Parameters:} \text{ step sizes } \alpha > 0, \beta > 0, \eta > 0 \\
-\textbf{Initialize:} \text{ policy parameter } \theta \in \mathbb{R}^{d'}, \text{ state-value weights } \mathbf{w} \in \mathbb{R}^d, \text{ and average reward estimate } \bar{R} \in \mathbb{R} \text{ (e.g. to 0)} \\
+\textbf{Initialize:} \theta \in \mathbb{R}^{d'}, \mathbf{w} \in \mathbb{R}^d, \text{ average reward estimate } \bar{R} \in \mathbb{R} \\
 \\
 \textbf{Initialize state } S \\
 \textbf{Loop forever (for each step):} \\
-\quad A \sim \pi(\cdot|S, \theta) \\
-\quad \text{Take action } A, \text{ observe } R, S' \\
-\quad \delta \leftarrow R - \bar{R} + \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w}) \\
-\quad \bar{R} \leftarrow \bar{R} + \eta \delta \\
-\quad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S, \mathbf{w}) \\
-\quad \theta \leftarrow \theta + \alpha \delta \nabla_{\theta} \ln \pi(A|S, \theta) \\
-\quad S \leftarrow S'
+\\
+\qquad A \sim \pi(\cdot|S, \theta) \\
+\qquad \text{Take action } A, \text{ observe } R, S' \\
+\qquad \delta \leftarrow R - \bar{R} + \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w}) \\
+\\
+\qquad \bar{R} \leftarrow \bar{R} + \eta \delta \\
+\qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S, \mathbf{w}) \\
+\qquad \theta \leftarrow \theta + \alpha \delta \nabla_{\theta} \ln \pi(A|S, \theta) \\
+\\
+\qquad S \leftarrow S'
+\end{array}
 \end{array}
 $$
+
+### Key Algorithmic Differences Explained
+
+| Feature | Episodic Actor-Critic (Normal TD) | Continuing Differential Actor-Critic |
+| :--- | :--- | :--- |
+| **Task Setting** | **Episodic**: The agent interacts in finite episodes that terminate. | **Continuing**: Interaction is infinite and has no terminal states or boundaries. |
+| **Discounting ($\gamma$)** | Uses a discount factor $\gamma \in [0, 1)$ to ensure infinite sum convergence. | **No discounting ($\gamma = 1$)**: Discounting with function approximation in continuing tasks is mathematically problematic. |
+| **TD Error ($\delta$)** | $\delta = R + \gamma \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w})$ | $\delta = R - \bar{R} + \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w})$ <br> *(Average reward rate is subtracted instead of discounting)* |
+| **Average Reward ($\bar{R}$)** | Not used. | Maintains a running estimate of the long-term average reward rate per step ($\bar{R}$), updated via $\bar{R} \leftarrow \bar{R} + \eta \delta$. |
+| **Discount Tracker ($I$)** | Requires a running decay tracker $I$ to scale policy updates by $\gamma^t$: $\theta \leftarrow \theta + \alpha I \delta \nabla \ln \pi$. | No discount decay tracker is used; all updates are weighted equally. |
+| **Value Function Meaning** | $\hat{v}(s, \mathbf{w})$ estimates the expected **discounted future return** starting from state $s$. | $\hat{v}(s, \mathbf{w})$ estimates the **differential value** (how much better/worse state $s$ is relative to the average reward rate $\bar{R}$). |
 
 ---
 
