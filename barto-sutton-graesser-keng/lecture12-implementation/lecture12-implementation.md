@@ -1,3 +1,13 @@
+---
+layout: post
+tags : [SRL, Gym, RL-Implementation]
+title : "Gymnasium & SLM Implementations"
+category : Lectures
+subcategory : advanced-concepts
+textbook : [graesser-keng-chapter7-9, sutton-barto-chapter8]
+deliveries : []
+---
+
 # Lecture 12: Practical DRL Implementation Frameworks (Gymnasium & SLM Lab)
 
 In the theoretical study of Reinforcement Learning, we often assume clean mathematical formulations of state transitions, actions, and rewards. However, implementing these concepts in code requires robust, standardized software frameworks. 

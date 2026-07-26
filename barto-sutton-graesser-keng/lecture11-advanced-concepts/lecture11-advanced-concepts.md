@@ -1,7 +1,7 @@
 ---
 layout: post
 tags : [combined-methods, model-based-rl, mcts, alphago]
-title : "Combined Methods, Advanced Policy Gradients, and Model-Based RL"
+title : "Advanced Concepts"
 category : Lectures
 subcategory : advanced-concepts
 textbook : [graesser-keng-chapter7-9, sutton-barto-chapter8]
