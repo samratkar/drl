@@ -109,7 +109,40 @@ $$ \nabla J(\theta) = \mathbb{E}_{\pi} [ q_{\pi}(S_t, A_t) \nabla_{\theta} \ln \
 
 ---
 
-## 3. The REINFORCE Algorithm (Monte Carlo Policy Gradient)
+## 3. Policy Parameterizations: Softmax vs. Gaussian
+
+A policy gradient algorithm (whether it is REINFORCE or Actor-Critic) requires a **differentiable policy parameterization** $\pi(a|s, \theta)$. The algorithm update formulas are written in terms of the abstract gradient $\nabla_{\theta} \ln \pi(A_t|S_t, \theta)$.
+
+In practice, how we calculate this gradient and how we select actions depends entirely on the nature of the action space:
+
+### A. Softmax Policy (Discrete Action Spaces)
+For discrete action spaces, the neural network (or function approximator) outputs a real-valued preference $h(s, a, \theta) \in \mathbb{R}$ for each action $a \in \mathcal{A}$. Action probabilities are computed using the **softmax function**:
+$$ \pi(a|s, \theta) \doteq \frac{e^{h(s, a, \theta)}}{\sum_{b \in \mathcal{A}} e^{h(s, b, \theta)}} $$
+
+* **Action Selection Step:**
+  1. Forward pass: Feed state $S_t$ into the network to obtain preferences $h(S_t, a, \theta)$ for all actions.
+  2. Compute probabilities $\pi(a|S_t, \theta)$ using the softmax formula.
+  3. Sample action $A_t$ from the resulting probability distribution.
+* **Log-Gradient Update Step:**
+  The gradient of the log-probability of the chosen action $A_t$ is:
+  $$ \nabla_{\theta} \ln \pi(A_t|S_t, \theta) = \nabla_{\theta} h(S_t, A_t, \theta) - \sum_{b \in \mathcal{A}} \pi(b|S_t, \theta) \nabla_{\theta} h(S_t, b, \theta) $$
+
+### B. Gaussian Policy (Continuous Action Spaces)
+For continuous action spaces (where actions are real numbers), the policy is represented by a probability density function. Typically, we use a **Gaussian (Normal) distribution**:
+$$ \pi(a|s, \theta) \doteq \frac{1}{\sigma(s, \theta)\sqrt{2\pi}} \exp \left( -\frac{(a - \mu(s, \theta))^2}{2\sigma(s, \theta)^2} \right) $$
+
+* **Action Selection Step:**
+  1. Forward pass: Feed state $S_t$ into the network to obtain the mean $\mu(S_t, \theta_{\mu})$ and log-variance/log-std $\eta(S_t, \theta_{\sigma})$.
+  2. Compute standard deviation: $\sigma(S_t, \theta_{\sigma}) = \exp(\eta(S_t, \theta_{\sigma}))$.
+  3. Sample action $A_t \sim \mathcal{N}(\mu(S_t, \theta_{\mu}), \sigma(S_t, \theta_{\sigma})^2)$ (typically using the reparameterization trick: $A_t = \mu(S_t) + \sigma(S_t) \odot \epsilon$ where $\epsilon \sim \mathcal{N}(0, 1)$).
+* **Log-Gradient Update Step:**
+  The gradients with respect to the mean and standard deviation parameters are computed analytically:
+  * Mean: $\nabla_{\theta_{\mu}} \ln \pi(A_t|S_t, \theta) = \frac{A_t - \mu(S_t, \theta)}{\sigma(S_t, \theta)^2} \nabla_{\theta_{\mu}} \mu(S_t, \theta_{\mu})$
+  * Std: $\nabla_{\theta_{\sigma}} \ln \pi(A_t|S_t, \theta) = \left( \frac{(A_t - \mu(S_t, \theta))^2}{\sigma(S_t, \theta)^2} - 1 \right) \nabla_{\theta_{\sigma}} \eta(S_t, \theta_{\sigma})$
+
+---
+
+## 4. The REINFORCE Algorithm (Monte Carlo Policy Gradient)
 
 Since we don't know the exact $q_{\pi}(S_t, A_t)$, the simplest thing we can do is use a Monte Carlo sample. We play out an entire episode, and use the actual observed Return $G_t$ as an unbiased estimate for $q_{\pi}$.
 
@@ -134,10 +167,12 @@ $$
 \textbf{Initialize:} \text{ policy parameter } \theta \in \mathbb{R}^{d'} \\
 \\
 \textbf{Loop forever (for each episode):} \\
-\quad \text{Generate an episode } S_0, A_0, R_1, \dots, S_{T-1}, A_{T-1}, R_T \text{ following } \pi(\cdot|\cdot, \theta) \\
+\quad \text{Generate an episode } S_0, A_0, R_1, \dots, S_{T-1}, A_{T-1}, R_T \text{ where actions are sampled as:} \\
+\quad \quad \bullet \text{ Discrete: compute preferences } h(S_t, a, \theta) \xrightarrow{\text{softmax}} \pi(a|S_t, \theta) \text{ and sample } A_t \\
+\quad \quad \bullet \text{ Continuous: compute } \mu(S_t, \theta), \sigma(S_t, \theta) \text{ and sample } A_t \sim \mathcal{N}(\mu, \sigma^2) \\
 \quad \textbf{Loop for each step of the episode } t = 0, 1, \dots, T-1: \\
 \qquad G \leftarrow \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k \\
-\qquad \theta \leftarrow \theta + \alpha \gamma^t G \nabla_{\theta} \ln \pi(A_t | S_t, \theta)
+\qquad \theta \leftarrow \theta + \alpha \gamma^t G \nabla_{\theta} \ln \pi(A_t | S_t, \theta) \quad \text{(Log-gradient update computed as per Section 3)}
 \end{array}
 $$
 
@@ -208,8 +243,6 @@ $$ = b(s) \cdot 0 = 0 $$
 
 Therefore, the baseline term contributes exactly $0$ to the expected gradient update. It reduces variance by centering the return values without introducing any bias.
 
----
-
 ### REINFORCE with Baseline Pseudo-code (Sutton & Barto 13.4)
 
 $$
@@ -220,12 +253,14 @@ $$
 \textbf{Initialize:} \text{ policy parameter } \theta \in \mathbb{R}^{d'} \text{ and state-value weights } \mathbf{w} \in \mathbb{R}^d \\
 \\
 \textbf{Loop forever (for each episode):} \\
-\quad \text{Generate an episode } S_0, A_0, R_1, \dots, S_{T-1}, A_{T-1}, R_T \text{ following } \pi(\cdot|\cdot, \theta) \\
+\quad \text{Generate an episode } S_0, A_0, R_1, \dots, S_{T-1}, A_{T-1}, R_T \text{ where actions are sampled as:} \\
+\quad \quad \bullet \text{ Discrete: compute preferences } h(S_t, a, \theta) \xrightarrow{\text{softmax}} \pi(a|S_t, \theta) \text{ and sample } A_t \\
+\quad \quad \bullet \text{ Continuous: compute } \mu(S_t, \theta), \sigma(S_t, \theta) \text{ and sample } A_t \sim \mathcal{N}(\mu, \sigma^2) \\
 \quad \textbf{Loop for each step of the episode } t = 0, 1, \dots, T-1: \\
 \qquad G \leftarrow \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k \\
 \qquad \delta \leftarrow G - \hat{v}(S_t, \mathbf{w}) \\
 \qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w}) \\
-\qquad \theta \leftarrow \theta + \alpha \gamma^t \delta \nabla_{\theta} \ln \pi(A_t | S_t, \theta)
+\qquad \theta \leftarrow \theta + \alpha \gamma^t \delta \nabla_{\theta} \ln \pi(A_t | S_t, \theta) \quad \text{(Log-gradient update computed as per Section 3)}
 \end{array}
 $$
 
@@ -283,14 +318,14 @@ $$
 \textbf{Initialize:} \theta \in \mathbb{R}^{d'}, \mathbf{w} \in \mathbb{R}^d \\
 \\
 \textbf{Loop forever (for each episode):} \\
-\quad \text{Generate an episode } S_0, A_0, R_1, \dots, S_{T-1}, A_{T-1}, R_T \\
-\quad \quad \text{following } \pi(\cdot|\cdot, \theta) \\
+\quad \text{Generate episode } S_0, A_0, R_1, \dots, S_{T-1}, A_{T-1}, R_T \\
+\quad \quad \text{sampling actions } A_t \text{ as described in Section 3} \\
 \quad \textbf{Loop for each step of the episode } t = 0, \dots, T-1: \\
 \qquad G \leftarrow \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k \quad \text{(Full Return)} \\
 \qquad \delta \leftarrow G - \hat{v}(S_t, \mathbf{w}) \\
 \qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w}) \\
 \qquad \theta \leftarrow \theta + \alpha \gamma^t \delta \nabla_{\theta} \ln \pi(A_t | S_t, \theta) \\
-\\
+\qquad \quad \text{(Log-gradient updated as per Section 3)} \\
 \\
 \end{array}
 &
@@ -303,11 +338,13 @@ $$
 \quad \text{Initialize state } S \text{ (first state of episode)} \\
 \quad I \leftarrow 1 \\
 \quad \textbf{Loop while } S \text{ is not terminal:} \\
-\qquad A \sim \pi(\cdot|S, \theta) \\
+\qquad \text{Compute policy outputs and sample } A \sim \pi(\cdot|S, \theta) \\
+\qquad \quad \text{(see Section 3)} \\
 \qquad \text{Take action } A, \text{ observe } R, S' \\
 \qquad \delta \leftarrow R + \gamma \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w}) \quad \text{(1-Step TD Error)} \\
 \qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S, \mathbf{w}) \\
 \qquad \theta \leftarrow \theta + \alpha I \delta \nabla_{\theta} \ln \pi(A|S, \theta) \\
+\qquad \quad \text{(Log-gradient updated as per Section 3)} \\
 \qquad I \leftarrow \gamma I \\
 \qquad S \leftarrow S'
 \end{array}
@@ -416,12 +453,14 @@ $$
 \quad \text{Initialize state } S \text{ (first state of episode)} \\
 \quad I \leftarrow 1 \\
 \quad \textbf{Loop while } S \text{ is not terminal:} \\
-\qquad A \sim \pi(\cdot|S, \theta) \\
+\qquad \text{Compute policy outputs and sample } A \sim \pi(\cdot|S, \theta) \\
+\qquad \quad \text{(see Section 3)} \\
 \qquad \text{Take action } A, \text{ observe } R, S' \\
 \qquad \delta \leftarrow R + \gamma \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w}) \\
 \qquad \quad \text{(if } S' \text{ is terminal, } \hat{v}(S', \mathbf{w}) \doteq 0\text{)} \\
 \qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S, \mathbf{w}) \\
 \qquad \theta \leftarrow \theta + \alpha I \delta \nabla_{\theta} \ln \pi(A|S, \theta) \\
+\qquad \quad \text{(Log-gradient updated as per Section 3)} \\
 \qquad I \leftarrow \gamma I \\
 \qquad S \leftarrow S' \\
 \\
@@ -435,13 +474,15 @@ $$
 \textbf{Initialize state } S \\
 \textbf{Loop forever (for each step):} \\
 \\
-\qquad A \sim \pi(\cdot|S, \theta) \\
+\qquad \text{Compute policy outputs and sample } A \sim \pi(\cdot|S, \theta) \\
+\qquad \quad \text{(see Section 3)} \\
 \qquad \text{Take action } A, \text{ observe } R, S' \\
 \qquad \delta \leftarrow R - \bar{R} + \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w}) \\
 \\
 \qquad \bar{R} \leftarrow \bar{R} + \eta \delta \\
 \qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S, \mathbf{w}) \\
 \qquad \theta \leftarrow \theta + \alpha \delta \nabla_{\theta} \ln \pi(A|S, \theta) \\
+\qquad \quad \text{(Log-gradient updated as per Section 3)} \\
 \\
 \qquad S \leftarrow S'
 \end{array}
