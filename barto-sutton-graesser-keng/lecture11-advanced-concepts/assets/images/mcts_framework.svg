@@ -2,20 +2,20 @@
   <defs>
     <!-- Gradients -->
     <linearGradient id="selectedGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#3b82f6" />
-      <stop offset="100%" stop-color="#1d4ed8" />
+      <stop offset="0%" stop-color="#eff6ff" />
+      <stop offset="100%" stop-color="#bfdbfe" />
     </linearGradient>
     <linearGradient id="normalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#94a3b8" />
-      <stop offset="100%" stop-color="#475569" />
+      <stop offset="0%" stop-color="#f8fafc" />
+      <stop offset="100%" stop-color="#cbd5e1" />
     </linearGradient>
     <linearGradient id="newGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f97316" />
-      <stop offset="100%" stop-color="#ea580c" />
+      <stop offset="0%" stop-color="#fff7ed" />
+      <stop offset="100%" stop-color="#fed7aa" />
     </linearGradient>
     <linearGradient id="termGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#10b981" />
-      <stop offset="100%" stop-color="#047857" />
+      <stop offset="0%" stop-color="#ecfdf5" />
+      <stop offset="100%" stop-color="#a7f3d0" />
     </linearGradient>
     <!-- Drop Shadows -->
     <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
@@ -38,11 +38,15 @@
 
   <style>
     .title { font-family: 'Inter', system-ui, sans-serif; font-size: 14px; font-weight: 700; fill: #0f172a; text-anchor: middle; }
-    .label { font-family: 'Inter', system-ui, sans-serif; font-size: 10px; font-weight: 500; fill: #64748b; text-anchor: middle; }
-    .node-text { font-family: 'Inter', system-ui, sans-serif; font-size: 9px; font-weight: 600; fill: #ffffff; text-anchor: middle; }
-    .node-desc { font-family: 'Inter', system-ui, sans-serif; font-size: 8px; fill: #475569; text-anchor: middle; }
-    .math-text { font-family: 'JetBrains Mono', monospace; font-size: 9px; fill: #334155; }
-    .step-num { font-family: 'Inter', system-ui, sans-serif; font-size: 16px; font-weight: 800; fill: #3b82f6; }
+    .label { font-family: 'Inter', system-ui, sans-serif; font-size: 10px; font-weight: 600; fill: #1e293b; text-anchor: middle; }
+    .node-text { font-family: 'Inter', system-ui, sans-serif; font-size: 9px; font-weight: 700; fill: #0f172a; text-anchor: middle; }
+    .node-desc { font-family: 'Inter', system-ui, sans-serif; font-size: 8px; fill: #0f172a; font-weight: 600; text-anchor: middle; }
+    .math-text { font-family: 'JetBrains Mono', monospace; font-size: 9px; fill: #0f172a; font-weight: 600; }
+    .step-num { font-family: 'Inter', system-ui, sans-serif; font-size: 16px; font-weight: 800; fill: #1d4ed8; }
+    circle[fill="url(#selectedGrad)"] { stroke: #3b82f6; stroke-width: 1.5px; }
+    circle[fill="url(#normalGrad)"] { stroke: #94a3b8; stroke-width: 1px; }
+    circle[fill="url(#newGrad)"] { stroke: #f97316; stroke-width: 1.5px; }
+    circle[fill="url(#termGrad)"] { stroke: #10b981; stroke-width: 1.5px; }
   </style>
 
   <!-- BACKGROUND GRID SEPARATORS -->

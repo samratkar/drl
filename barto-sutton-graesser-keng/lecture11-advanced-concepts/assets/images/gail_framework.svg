@@ -2,20 +2,20 @@
   <defs>
     <!-- Gradients -->
     <linearGradient id="expertGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#10b981" />
-      <stop offset="100%" stop-color="#047857" />
+      <stop offset="0%" stop-color="#ecfdf5" />
+      <stop offset="100%" stop-color="#a7f3d0" />
     </linearGradient>
     <linearGradient id="policyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#3b82f6" />
-      <stop offset="100%" stop-color="#1d4ed8" />
+      <stop offset="0%" stop-color="#eff6ff" />
+      <stop offset="100%" stop-color="#bfdbfe" />
     </linearGradient>
     <linearGradient id="discGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ef4444" />
-      <stop offset="100%" stop-color="#b91c1c" />
+      <stop offset="0%" stop-color="#fef2f2" />
+      <stop offset="100%" stop-color="#fca5a5" />
     </linearGradient>
     <linearGradient id="envGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#8b5cf6" />
-      <stop offset="100%" stop-color="#6d28d9" />
+      <stop offset="0%" stop-color="#f5f3ff" />
+      <stop offset="100%" stop-color="#ddd6fe" />
     </linearGradient>
     <!-- Drop Shadow -->
     <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
@@ -29,12 +29,16 @@
 
   <style>
     .title-text { font-family: 'Inter', system-ui, sans-serif; font-size: 16px; font-weight: 800; fill: #0f172a; }
-    .subtitle-text { font-family: 'Inter', system-ui, sans-serif; font-size: 11px; font-weight: 600; fill: #64748b; }
-    .node-title { font-family: 'Inter', system-ui, sans-serif; font-size: 11px; font-weight: 700; fill: #ffffff; text-anchor: middle; }
-    .node-desc { font-family: 'Inter', system-ui, sans-serif; font-size: 9px; fill: #f1f5f9; text-anchor: middle; }
-    .tag-text { font-family: 'Inter', system-ui, sans-serif; font-size: 9px; font-weight: 600; fill: #334155; text-anchor: middle; }
-    .arrow-label { font-family: 'Inter', system-ui, sans-serif; font-size: 10px; font-weight: 600; fill: #475569; }
-    .formula { font-family: 'JetBrains Mono', monospace; font-size: 10px; fill: #1e293b; }
+    .subtitle-text { font-family: 'Inter', system-ui, sans-serif; font-size: 11px; font-weight: 600; fill: #334155; }
+    .node-title { font-family: 'Inter', system-ui, sans-serif; font-size: 11px; font-weight: 700; fill: #0f172a; text-anchor: middle; }
+    .node-desc { font-family: 'Inter', system-ui, sans-serif; font-size: 9px; fill: #1e293b; font-weight: 600; text-anchor: middle; }
+    .tag-text { font-family: 'Inter', system-ui, sans-serif; font-size: 9px; font-weight: 600; fill: #0f172a; text-anchor: middle; }
+    .arrow-label { font-family: 'Inter', system-ui, sans-serif; font-size: 10px; font-weight: 700; fill: #1e293b; }
+    .formula { font-family: 'JetBrains Mono', monospace; font-size: 10px; fill: #0f172a; font-weight: 600; }
+    rect[fill="url(#expertGrad)"] { stroke: #10b981; stroke-width: 1.5px; }
+    rect[fill="url(#policyGrad)"] { stroke: #3b82f6; stroke-width: 1.5px; }
+    rect[fill="url(#discGrad)"] { stroke: #ef4444; stroke-width: 1.5px; }
+    rect[fill="url(#envGrad)"] { stroke: #8b5cf6; stroke-width: 1.5px; }
   </style>
 
   <!-- Title -->
@@ -73,8 +77,9 @@
   <text x="520" y="210" class="node-title" style="font-size:12px;">Discriminator D_φ(s, a)</text>
   <text x="520" y="228" class="node-desc">Classifier trying to distinguish</text>
   <text x="520" y="242" class="node-desc">Expert vs. Agent transitions</text>
-  <line x1="430" y1="250" x2="610" y2="250" stroke="#ffffff" stroke-opacity="0.3" stroke-width="1" />
-  <text x="520" y="262" class="node-desc" style="font-weight:700;">Output: Probability ∈ (0, 1)</text>
+  <line x1="430" y1="250" x2="610" y2="250" stroke="#ef4444" stroke-opacity="0.3" stroke-width="1" />
+  <text x="520" y="262" class="node-desc" style="font-weight:700; fill:#b91c1c;">Output: Probability ∈ (0, 1)</text>
+
 
   <!-- Connections to Discriminator -->
   <!-- Expert to Disc -->

@@ -17,11 +17,11 @@
 
   <style>
     .title { font-family: 'Inter', system-ui, sans-serif; font-size: 15px; font-weight: 800; fill: #0f172a; }
-    .subtitle { font-family: 'Inter', system-ui, sans-serif; font-size: 11px; font-weight: 500; fill: #475569; }
+    .subtitle { font-family: 'Inter', system-ui, sans-serif; font-size: 11px; font-weight: 600; fill: #334155; }
     .label { font-family: 'Inter', system-ui, sans-serif; font-size: 10px; font-weight: 700; fill: #1e293b; }
-    .desc { font-family: 'Inter', system-ui, sans-serif; font-size: 9px; fill: #475569; }
-    .legend-text { font-family: 'Inter', system-ui, sans-serif; font-size: 9px; font-weight: 600; fill: #334155; }
-    .math-code { font-family: 'JetBrains Mono', monospace; font-size: 9px; fill: #0f172a; }
+    .desc { font-family: 'Inter', system-ui, sans-serif; font-size: 9px; fill: #1e293b; }
+    .legend-text { font-family: 'Inter', system-ui, sans-serif; font-size: 9px; font-weight: 700; fill: #1e293b; }
+    .math-code { font-family: 'JetBrains Mono', monospace; font-size: 9px; fill: #0f172a; font-weight: 600; }
   </style>
 
   <!-- Title -->

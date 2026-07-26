@@ -2,20 +2,20 @@
   <defs>
     <!-- Gradients -->
     <linearGradient id="azGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#3b82f6" />
-      <stop offset="100%" stop-color="#1d4ed8" />
+      <stop offset="0%" stop-color="#eff6ff" />
+      <stop offset="100%" stop-color="#bfdbfe" />
     </linearGradient>
     <linearGradient id="mzGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#8b5cf6" />
-      <stop offset="100%" stop-color="#6d28d9" />
+      <stop offset="0%" stop-color="#f5f3ff" />
+      <stop offset="100%" stop-color="#ddd6fe" />
     </linearGradient>
     <linearGradient id="latentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#14b8a6" />
-      <stop offset="100%" stop-color="#0f766e" />
+      <stop offset="0%" stop-color="#f0fdfa" />
+      <stop offset="100%" stop-color="#99f6e4" />
     </linearGradient>
     <linearGradient id="envGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f59e0b" />
-      <stop offset="100%" stop-color="#b45309" />
+      <stop offset="0%" stop-color="#fff7ed" />
+      <stop offset="100%" stop-color="#fed7aa" />
     </linearGradient>
     <!-- Drop Shadow -->
     <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
@@ -29,12 +29,16 @@
 
   <style>
     .header-text { font-family: 'Inter', system-ui, sans-serif; font-size: 16px; font-weight: 800; fill: #0f172a; }
-    .sub-header { font-family: 'Inter', system-ui, sans-serif; font-size: 11px; font-weight: 600; fill: #64748b; }
-    .box-title { font-family: 'Inter', system-ui, sans-serif; font-size: 11px; font-weight: 700; fill: #ffffff; text-anchor: middle; }
-    .box-desc { font-family: 'Inter', system-ui, sans-serif; font-size: 9px; fill: #f1f5f9; text-anchor: middle; }
-    .label-text { font-family: 'Inter', system-ui, sans-serif; font-size: 10px; font-weight: 600; fill: #334155; text-anchor: middle; }
-    .flow-text { font-family: 'Inter', system-ui, sans-serif; font-size: 9px; font-weight: 500; fill: #475569; }
-    .math-expr { font-family: 'JetBrains Mono', monospace; font-size: 9px; fill: #1e293b; }
+    .sub-header { font-family: 'Inter', system-ui, sans-serif; font-size: 11px; font-weight: 600; fill: #334155; }
+    .box-title { font-family: 'Inter', system-ui, sans-serif; font-size: 11px; font-weight: 700; fill: #0f172a; text-anchor: middle; }
+    .box-desc { font-family: 'Inter', system-ui, sans-serif; font-size: 9px; fill: #1e293b; font-weight: 600; text-anchor: middle; }
+    .label-text { font-family: 'Inter', system-ui, sans-serif; font-size: 10px; font-weight: 700; fill: #0f172a; text-anchor: middle; }
+    .flow-text { font-family: 'Inter', system-ui, sans-serif; font-size: 9px; font-weight: 600; fill: #0f172a; }
+    .math-expr { font-family: 'JetBrains Mono', monospace; font-size: 9px; fill: #1e293b; font-weight: 600; }
+    rect[fill="url(#azGrad)"] { stroke: #3b82f6; stroke-width: 1.5px; }
+    rect[fill="url(#mzGrad)"] { stroke: #8b5cf6; stroke-width: 1.5px; }
+    rect[fill="url(#latentGrad)"] { stroke: #14b8a6; stroke-width: 1.5px; }
+    rect[fill="url(#envGrad)"] { stroke: #f59e0b; stroke-width: 1.5px; }
   </style>
 
   <!-- Title -->
@@ -73,8 +77,9 @@
     <rect x="640" y="65" width="220" height="85" rx="6" fill="url(#azGrad)" filter="url(#shadow)" />
     <text x="750" y="85" class="box-title">Neural Network f_θ(s)</text>
     <text x="750" y="105" class="box-desc">Outputs Policy and Value jointly</text>
-    <line x1="650" y1="115" x2="850" y2="115" stroke="#ffffff" stroke-opacity="0.3" stroke-width="1" />
-    <text x="750" y="132" class="box-title" style="font-size:10px; font-weight:400;">p, v = f_θ(s)</text>
+    <line x1="650" y1="115" x2="850" y2="115" stroke="#3b82f6" stroke-opacity="0.3" stroke-width="1" />
+    <text x="750" y="132" class="box-title" style="font-size:10px; font-weight:700; fill:#1d4ed8;">p, v = f_θ(s)</text>
+
 
     <path x="570" y="85" d="M 505 105 Q 505 130 580 130 T 630 115" fill="none" stroke="#64748b" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#arrow)" />
     <text x="550" y="145" class="flow-text" style="font-size:8px;">Evaluate s'</text>
@@ -116,8 +121,9 @@
     <rect x="760" y="60" width="110" height="55" rx="6" fill="url(#mzGrad)" filter="url(#shadow)" />
     <text x="815" y="75" class="box-title">Prediction f_θ</text>
     <text x="815" y="88" class="box-desc">p^k, v^k = f_θ(s^k)</text>
-    <line x1="770" y1="95" x2="860" y2="95" stroke="#ffffff" stroke-opacity="0.3" stroke-width="1" />
-    <text x="815" y="107" class="box-desc" style="font-weight:700;">Policy &amp; Value Head</text>
+    <line x1="770" y1="95" x2="860" y2="95" stroke="#8b5cf6" stroke-opacity="0.3" stroke-width="1" />
+    <text x="815" y="107" class="box-desc" style="font-weight:700; fill:#6d28d9;">Policy &amp; Value Head</text>
+
 
     <!-- Connections -->
     <line x1="150" y1="80" x2="180" y2="80" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)" />
