@@ -1,0 +1,179 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 350" width="100%" height="100%" style="background-color: #ffffff; border-radius: 8px;">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="selectedGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="normalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#94a3b8" />
+      <stop offset="100%" stop-color="#475569" />
+    </linearGradient>
+    <linearGradient id="newGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f97316" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </linearGradient>
+    <linearGradient id="termGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <!-- Drop Shadows -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <drop-shadow dx="0" dy="4" stdDeviation="3" flood-color="#0f172a" flood-opacity="0.1" />
+    </filter>
+    <!-- Markers -->
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#3b82f6" />
+    </marker>
+    <marker id="arrow-orange" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#f97316" />
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#10b981" />
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#ef4444" />
+    </marker>
+  </defs>
+
+  <style>
+    .title { font-family: 'Inter', system-ui, sans-serif; font-size: 14px; font-weight: 700; fill: #0f172a; text-anchor: middle; }
+    .label { font-family: 'Inter', system-ui, sans-serif; font-size: 10px; font-weight: 500; fill: #64748b; text-anchor: middle; }
+    .node-text { font-family: 'Inter', system-ui, sans-serif; font-size: 9px; font-weight: 600; fill: #ffffff; text-anchor: middle; }
+    .node-desc { font-family: 'Inter', system-ui, sans-serif; font-size: 8px; fill: #475569; text-anchor: middle; }
+    .math-text { font-family: 'JetBrains Mono', monospace; font-size: 9px; fill: #334155; }
+    .step-num { font-family: 'Inter', system-ui, sans-serif; font-size: 16px; font-weight: 800; fill: #3b82f6; }
+  </style>
+
+  <!-- BACKGROUND GRID SEPARATORS -->
+  <line x1="250" y1="20" x2="250" y2="330" stroke="#f1f5f9" stroke-width="2" stroke-dasharray="4 4" />
+  <line x1="500" y1="20" x2="500" y2="330" stroke="#f1f5f9" stroke-width="2" stroke-dasharray="4 4" />
+  <line x1="750" y1="20" x2="750" y2="330" stroke="#f1f5f9" stroke-width="2" stroke-dasharray="4 4" />
+
+  <!-- ==================== STEP 1: SELECTION ==================== -->
+  <g transform="translate(0, 0)">
+    <text x="125" y="35" class="title"><tspan class="step-num">1. </tspan>Selection</text>
+    <text x="125" y="52" class="label">Traverse tree using UCB (UCT)</text>
+    
+    <!-- Tree Nodes -->
+    <!-- Root -->
+    <circle cx="125" cy="90" r="14" fill="url(#selectedGrad)" filter="url(#shadow)" />
+    <text x="125" y="93" class="node-text">Root</text>
+    
+    <!-- Level 1 -->
+    <circle cx="90" cy="150" r="12" fill="url(#selectedGrad)" filter="url(#shadow)" />
+    <circle cx="160" cy="150" r="12" fill="url(#normalGrad)" />
+    
+    <!-- Level 2 -->
+    <circle cx="65" cy="210" r="10" fill="url(#normalGrad)" />
+    <circle cx="115" cy="210" r="10" fill="url(#selectedGrad)" filter="url(#shadow)" />
+    <text x="115" y="225" class="node-desc">Leaf Node</text>
+
+    <!-- Connections -->
+    <line x1="117" y1="102" x2="98" y2="138" stroke="#3b82f6" stroke-width="3" marker-end="url(#arrow-blue)" />
+    <line x1="133" y1="102" x2="152" y2="138" stroke="#94a3b8" stroke-width="1.5" />
+    <line x1="84" y1="161" x2="71" y2="199" stroke="#94a3b8" stroke-width="1.5" />
+    <line x1="96" y1="161" x2="109" y2="199" stroke="#3b82f6" stroke-width="3" marker-end="url(#arrow-blue)" />
+
+    <!-- UCT Box -->
+    <rect x="30" y="260" width="190" height="50" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
+    <text x="125" y="278" class="node-desc" style="font-weight: 700; fill: #1e293b;">Selection Policy (UCT):</text>
+    <text x="50" y="295" class="math-text">a* = argmax (Q(s,a) + U(s,a))</text>
+  </g>
+
+  <!-- ==================== STEP 2: EXPANSION ==================== -->
+  <g transform="translate(250, 0)">
+    <text x="125" y="35" class="title"><tspan class="step-num" style="fill:#f97316">2. </tspan>Expansion</text>
+    <text x="125" y="52" class="label">Add a new node to the tree</text>
+    
+    <!-- Tree Nodes -->
+    <!-- Root -->
+    <circle cx="125" cy="90" r="14" fill="url(#normalGrad)" />
+    
+    <!-- Level 1 -->
+    <circle cx="90" cy="150" r="12" fill="url(#normalGrad)" />
+    <circle cx="160" cy="150" r="12" fill="url(#normalGrad)" />
+    
+    <!-- Level 2 -->
+    <circle cx="65" cy="210" r="10" fill="url(#normalGrad)" />
+    <circle cx="115" cy="210" r="10" fill="url(#selectedGrad)" filter="url(#shadow)" />
+    
+    <!-- New Node (Expanded) -->
+    <circle cx="115" cy="270" r="10" fill="url(#newGrad)" filter="url(#shadow)" />
+    <text x="145" y="273" class="node-desc" style="font-weight: 700; fill: #ea580c; text-anchor: start;">New Node</text>
+
+    <!-- Connections -->
+    <line x1="117" y1="102" x2="98" y2="138" stroke="#64748b" stroke-width="1.5" />
+    <line x1="133" y1="102" x2="152" y2="138" stroke="#94a3b8" stroke-width="1.5" />
+    <line x1="84" y1="161" x2="71" y2="199" stroke="#94a3b8" stroke-width="1.5" />
+    <line x1="96" y1="161" x2="109" y2="199" stroke="#64748b" stroke-width="1.5" />
+    <!-- New connection -->
+    <line x1="115" y1="220" x2="115" y2="258" stroke="#f97316" stroke-width="3" marker-end="url(#arrow-orange)" />
+  </g>
+
+  <!-- ==================== STEP 3: SIMULATION ==================== -->
+  <g transform="translate(500, 0)">
+    <text x="125" y="35" class="title"><tspan class="step-num" style="fill:#10b981">3. </tspan>Simulation</text>
+    <text x="125" y="52" class="label">Rollout game with fast policy</text>
+    
+    <!-- Tree Nodes -->
+    <!-- Root -->
+    <circle cx="125" cy="90" r="14" fill="url(#normalGrad)" />
+    
+    <!-- Level 1 -->
+    <circle cx="90" cy="150" r="12" fill="url(#normalGrad)" />
+    
+    <!-- Level 2 -->
+    <circle cx="115" cy="210" r="10" fill="url(#normalGrad)" />
+    
+    <!-- New Node -->
+    <circle cx="115" cy="270" r="10" fill="url(#newGrad)" />
+
+    <!-- Rollout Arrow (Dashed green line) -->
+    <path d="M 125 273 Q 170 280 200 230 T 170 170" fill="none" stroke="#10b981" stroke-dasharray="3 3" stroke-width="2" marker-end="url(#arrow-green)" />
+    <text x="210" y="200" class="node-desc" style="font-weight: 700; fill: #047857; text-anchor: start;">Rollout Policy</text>
+
+    <!-- Terminal State -->
+    <circle cx="160" cy="140" r="12" fill="url(#termGrad)" filter="url(#shadow)" />
+    <text x="160" y="143" class="node-text">R=+1</text>
+    <text x="160" y="122" class="node-desc" style="font-weight: 700; fill: #047857;">Terminal</text>
+
+    <!-- Connections -->
+    <line x1="117" y1="102" x2="98" y2="138" stroke="#94a3b8" stroke-width="1.5" />
+    <line x1="96" y1="161" x2="109" y2="199" stroke="#94a3b8" stroke-width="1.5" />
+    <line x1="115" y1="220" x2="115" y2="258" stroke="#94a3b8" stroke-width="1.5" />
+  </g>
+
+  <!-- ==================== STEP 4: BACKPROPAGATION ==================== -->
+  <g transform="translate(750, 0)">
+    <text x="125" y="35" class="title"><tspan class="step-num" style="fill:#ef4444">4. </tspan>Backpropagation</text>
+    <text x="125" y="52" class="label">Update visit count &amp; values</text>
+    
+    <!-- Tree Nodes -->
+    <!-- Root -->
+    <circle cx="125" cy="90" r="14" fill="url(#selectedGrad)" filter="url(#shadow)" />
+    <text x="100" y="85" class="node-desc" style="fill:#ef4444; font-weight:700;">N++, W+=R</text>
+    
+    <!-- Level 1 -->
+    <circle cx="90" cy="150" r="12" fill="url(#selectedGrad)" filter="url(#shadow)" />
+    <text x="65" y="145" class="node-desc" style="fill:#ef4444; font-weight:700;">N++, W+=R</text>
+    <circle cx="160" cy="150" r="12" fill="url(#normalGrad)" />
+    
+    <!-- Level 2 -->
+    <circle cx="65" cy="210" r="10" fill="url(#normalGrad)" />
+    <circle cx="115" cy="210" r="10" fill="url(#selectedGrad)" filter="url(#shadow)" />
+    <text x="145" y="208" class="node-desc" style="fill:#ef4444; font-weight:700;">N++, W+=R</text>
+    
+    <!-- New Node -->
+    <circle cx="115" cy="270" r="10" fill="url(#newGrad)" filter="url(#shadow)" />
+    <text x="140" y="268" class="node-desc" style="fill:#ef4444; font-weight:700;">N=1, Q=R</text>
+
+    <!-- Upward updates -->
+    <line x1="115" y1="258" x2="115" y2="222" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrow-red)" />
+    <line x1="109" y1="198" x2="96" y2="162" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrow-red)" />
+    <line x1="98" y1="138" x2="117" y2="104" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrow-red)" />
+
+    <line x1="133" y1="102" x2="152" y2="138" stroke="#94a3b8" stroke-width="1.5" />
+    <line x1="84" y1="161" x2="71" y2="199" stroke="#94a3b8" stroke-width="1.5" />
+  </g>
+</svg>

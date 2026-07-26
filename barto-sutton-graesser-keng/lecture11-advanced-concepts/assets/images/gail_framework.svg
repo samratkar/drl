@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 950 480" width="100%" height="100%" style="background-color: #ffffff; border-radius: 8px;">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="expertGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <linearGradient id="policyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="discGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444" />
+      <stop offset="100%" stop-color="#b91c1c" />
+    </linearGradient>
+    <linearGradient id="envGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#6d28d9" />
+    </linearGradient>
+    <!-- Drop Shadow -->
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <drop-shadow dx="0" dy="3" stdDeviation="2" flood-color="#0f172a" flood-opacity="0.08" />
+    </filter>
+    <!-- Arrow Marker -->
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#475569" />
+    </marker>
+  </defs>
+
+  <style>
+    .title-text { font-family: 'Inter', system-ui, sans-serif; font-size: 16px; font-weight: 800; fill: #0f172a; }
+    .subtitle-text { font-family: 'Inter', system-ui, sans-serif; font-size: 11px; font-weight: 600; fill: #64748b; }
+    .node-title { font-family: 'Inter', system-ui, sans-serif; font-size: 11px; font-weight: 700; fill: #ffffff; text-anchor: middle; }
+    .node-desc { font-family: 'Inter', system-ui, sans-serif; font-size: 9px; fill: #f1f5f9; text-anchor: middle; }
+    .tag-text { font-family: 'Inter', system-ui, sans-serif; font-size: 9px; font-weight: 600; fill: #334155; text-anchor: middle; }
+    .arrow-label { font-family: 'Inter', system-ui, sans-serif; font-size: 10px; font-weight: 600; fill: #475569; }
+    .formula { font-family: 'JetBrains Mono', monospace; font-size: 10px; fill: #1e293b; }
+  </style>
+
+  <!-- Title -->
+  <text x="30" y="35" class="title-text">Generative Adversarial Imitation Learning (GAIL) Framework</text>
+  <text x="30" y="52" class="subtitle-text">GAIL matches the agent's state-action distribution to the expert's using a GAN-like minimax game.</text>
+
+  <!-- Outer framework box -->
+  <rect x="25" y="70" width="900" height="380" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5" />
+
+  <!-- 1. Expert Dataset Node -->
+  <rect x="60" y="110" width="180" height="70" rx="6" fill="url(#expertGrad)" filter="url(#shadow)" />
+  <text x="150" y="135" class="node-title">Expert Demonstrations D_E</text>
+  <text x="150" y="150" class="node-desc">Static state-action pairs</text>
+  <text x="150" y="165" class="node-desc" style="font-family:'JetBrains Mono', monospace;">(s_expert, a_expert) ~ d^π*</text>
+
+  <!-- 2. Agent (Generator) Policy Node -->
+  <rect x="60" y="270" width="180" height="70" rx="6" fill="url(#policyGrad)" filter="url(#shadow)" />
+  <text x="150" y="295" class="node-title">Generator Policy π_θ</text>
+  <text x="150" y="310" class="node-desc">Agent policy being optimized</text>
+  <text x="150" y="325" class="node-desc" style="font-family:'JetBrains Mono', monospace;">(s_agent, a_agent) ~ d^π_θ</text>
+
+  <!-- Environment interaction box -->
+  <rect x="60" y="375" width="180" height="45" rx="6" fill="url(#envGrad)" filter="url(#shadow)" />
+  <text x="150" y="395" class="node-title">Environment Dynamics</text>
+  <text x="150" y="408" class="node-desc" style="font-size:8px;">s_{t+1} ~ P(s_t, a_t)</text>
+
+  <!-- Connections: Agent Policy <--> Environment -->
+  <path d="M 90 340 L 90 375" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)" />
+  <text x="75" y="360" class="arrow-label" style="text-anchor:end;">Action a_t</text>
+  
+  <path d="M 210 375 L 210 340" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)" />
+  <text x="220" y="362" class="arrow-label">State s_t</text>
+
+  <!-- 3. Discriminator Node -->
+  <rect x="420" y="180" width="200" height="90" rx="6" fill="url(#discGrad)" filter="url(#shadow)" />
+  <text x="520" y="210" class="node-title" style="font-size:12px;">Discriminator D_φ(s, a)</text>
+  <text x="520" y="228" class="node-desc">Classifier trying to distinguish</text>
+  <text x="520" y="242" class="node-desc">Expert vs. Agent transitions</text>
+  <line x1="430" y1="250" x2="610" y2="250" stroke="#ffffff" stroke-opacity="0.3" stroke-width="1" />
+  <text x="520" y="262" class="node-desc" style="font-weight:700;">Output: Probability ∈ (0, 1)</text>
+
+  <!-- Connections to Discriminator -->
+  <!-- Expert to Disc -->
+  <path d="M 240 145 L 420 200" fill="none" stroke="#10b981" stroke-width="2" marker-end="url(#arrow)" />
+  <text x="325" y="162" class="arrow-label" style="fill:#047857; text-anchor:middle;">Expert (s, a)</text>
+
+  <!-- Agent to Disc -->
+  <path d="M 240 305 L 420 250" fill="none" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow)" />
+  <text x="325" y="292" class="arrow-label" style="fill:#1d4ed8; text-anchor:middle;">Agent (s, a)</text>
+
+  <!-- 4. Surrogate Reward Box -->
+  <rect x="710" y="185" width="180" height="80" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+  <text x="800" y="205" class="tag-text" style="font-size:11px; fill:#ef4444;">Surrogate Reward</text>
+  <text x="800" y="225" class="formula" style="text-anchor:middle; font-weight:700;">R(s, a) = -ln(1 - D_φ(s,a))</text>
+  <text x="800" y="240" class="tag-text" style="font-weight:400; font-size:8px;">High reward if D_φ(s,a) → 1</text>
+  <text x="800" y="252" class="tag-text" style="font-weight:400; font-size:8px;">(agent successfully fools discriminator)</text>
+
+  <!-- Connections: Disc to Reward -->
+  <line x1="620" y1="225" x2="700" y2="225" stroke="#475569" stroke-width="2" marker-end="url(#arrow)" />
+  <text x="660" y="217" class="arrow-label" style="text-anchor:middle;">D_φ score</text>
+
+  <!-- Connection: Reward to Agent Policy (Gradient Update) -->
+  <path d="M 800 265 Q 800 325 500 325 L 250 325" fill="none" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow)" stroke-dasharray="3 3" />
+  <text x="525" y="317" class="arrow-label" style="fill:#1d4ed8; text-anchor:middle;">Policy Gradient Update (TRPO / PPO)</text>
+  <text x="525" y="337" class="formula" style="text-anchor:middle; font-size:9px;">Maximize E_{π_θ}[ R(s,a) ]</text>
+
+  <!-- Discriminator Update Loop -->
+  <path d="M 520 180 Q 520 100 330 100" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#arrow)" />
+  <text x="440" y="92" class="arrow-label" style="fill:#b91c1c; text-anchor:middle;">Discriminator Update</text>
+  <text x="440" y="112" class="formula" style="font-size:8px; text-anchor:middle;">Maximize E_{π^*}[ln D] + E_{π_θ}[ln(1-D)]</text>
+</svg>

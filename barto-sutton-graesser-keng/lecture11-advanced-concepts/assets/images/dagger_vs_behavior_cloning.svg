@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 950 480" width="100%" height="100%" style="background-color: #ffffff; border-radius: 8px;">
+  <defs>
+    <!-- Markers -->
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#10b981" />
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#ef4444" />
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#3b82f6" />
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <drop-shadow dx="0" dy="2" stdDeviation="2" flood-color="#0f172a" flood-opacity="0.08" />
+    </filter>
+  </defs>
+
+  <style>
+    .title { font-family: 'Inter', system-ui, sans-serif; font-size: 15px; font-weight: 800; fill: #0f172a; }
+    .subtitle { font-family: 'Inter', system-ui, sans-serif; font-size: 11px; font-weight: 500; fill: #475569; }
+    .label { font-family: 'Inter', system-ui, sans-serif; font-size: 10px; font-weight: 700; fill: #1e293b; }
+    .desc { font-family: 'Inter', system-ui, sans-serif; font-size: 9px; fill: #475569; }
+    .legend-text { font-family: 'Inter', system-ui, sans-serif; font-size: 9px; font-weight: 600; fill: #334155; }
+    .math-code { font-family: 'JetBrains Mono', monospace; font-size: 9px; fill: #0f172a; }
+  </style>
+
+  <!-- Title -->
+  <text x="30" y="30" class="title">Imitation Learning: Behavior Cloning vs. DAgger</text>
+
+  <!-- ==================== LEFT: BEHAVIOR CLONING ==================== -->
+  <g transform="translate(30, 60)">
+    <rect x="0" y="0" width="410" height="380" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+    <text x="20" y="25" class="title" style="font-size:12px; fill:#ef4444;">1. Behavior Cloning (Offline SL)</text>
+    <text x="20" y="42" class="subtitle">Learns policy mapping states to expert actions from a static dataset.</text>
+
+    <!-- Plot representation -->
+    <!-- Expert Path (Solid green line) -->
+    <path d="M 40 280 C 120 280 120 120 240 120 T 360 120" fill="none" stroke="#10b981" stroke-width="4" filter="url(#shadow)" />
+    <text x="240" y="105" class="legend-text" style="fill:#047857; text-anchor:middle;">Expert Trajectory (Safe)</text>
+
+    <!-- Agent Path (Dashed red line showing drift) -->
+    <path d="M 40 280 C 120 280 120 120 180 150 C 220 180 230 250 280 300 T 360 330" fill="none" stroke="#ef4444" stroke-width="3" stroke-dasharray="4 4" />
+    
+    <!-- Deviation Point -->
+    <circle cx="150" cy="195" r="5" fill="#ef4444" />
+    <line x1="150" y1="195" x2="165" y2="135" stroke="#ef4444" stroke-width="1.5" marker-end="url(#arrow-red)" />
+    <text x="175" y="175" class="desc" style="fill:#ef4444; font-weight:700;">Small Mistake</text>
+
+    <!-- Unrecoverable Drift -->
+    <text x="290" y="270" class="desc" style="fill:#b91c1c; font-weight:800; text-anchor:middle;">Covariate Shift!<tspan x="290" dy="12">Agent enters unvisited states,</tspan><tspan x="290" dy="12">making compounding errors.</tspan></text>
+
+    <!-- Crash Node -->
+    <circle cx="360" cy="330" r="8" fill="#ef4444" />
+    <text x="360" y="348" class="label" style="fill:#b91c1c; text-anchor:middle;">Failure / Crash</text>
+
+    <!-- Math representation -->
+    <rect x="20" y="310" width="180" height="50" rx="4" fill="#ffffff" stroke="#e2e8f0" />
+    <text x="30" y="325" class="math-code" style="font-weight:700;">Behavior Cloning:</text>
+    <text x="30" y="342" class="math-code">Loss = MSE( π(s), a_expert )</text>
+  </g>
+
+  <!-- ==================== RIGHT: DAGGER ==================== -->
+  <g transform="translate(480, 60)">
+    <rect x="0" y="0" width="440" height="380" rx="8" fill="#f8fafc" stroke="#3b82f6" stroke-width="1.5" />
+    <text x="20" y="25" class="title" style="font-size:12px; fill:#1d4ed8;">2. DAgger (Dataset Aggregation)</text>
+    <text x="20" y="42" class="subtitle">Interactive training. Expert labels agent-visited states online.</text>
+
+    <!-- Plot representation -->
+    <!-- Expert Path (Solid green line) -->
+    <path d="M 40 280 C 120 280 120 120 240 120 T 360 120" fill="none" stroke="#10b981" stroke-width="4" filter="url(#shadow)" />
+
+    <!-- Agent Path (Dotted blue line showing recovery) -->
+    <path d="M 40 280 C 120 280 120 120 180 150 C 210 170 230 150 250 135 C 270 120 300 120 360 120" fill="none" stroke="#3b82f6" stroke-width="3" stroke-dasharray="4 4" />
+
+    <!-- Deviation Point -->
+    <circle cx="150" cy="195" r="5" fill="#3b82f6" />
+    
+    <!-- Expert Feedback Action -->
+    <path d="M 210 170 Q 210 140 230 135" fill="none" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrow-green)" />
+    <text x="245" y="165" class="desc" style="fill:#047857; font-weight:700;">Expert Action Label<tspan x="245" dy="12">tells agent how to recover</tspan></text>
+
+    <!-- Recovery Path -->
+    <text x="310" y="105" class="desc" style="fill:#1d4ed8; font-weight:700; text-anchor:middle;">Agent Learns to Recover</text>
+
+    <!-- Process Flow Loop Box -->
+    <rect x="20" y="260" width="400" height="100" rx="6" fill="#ffffff" stroke="#e2e8f0" />
+    <text x="30" y="278" class="math-code" style="font-weight:700; fill:#1d4ed8;">DAgger Iterative Algorithm:</text>
+    <text x="30" y="295" class="math-code">1. Rollout current policy: D_pi = { (s_t) }</text>
+    <text x="30" y="310" class="math-code">2. Query expert for action labels: a*_t = pi_expert(s_t)</text>
+    <text x="30" y="325" class="math-code">3. Aggregate datasets: D = D U { (s_t, a*_t) }</text>
+    <text x="30" y="340" class="math-code">4. Train new policy pi_i+1 on D (Supervised Loss)</text>
+  </g>
+</svg>
