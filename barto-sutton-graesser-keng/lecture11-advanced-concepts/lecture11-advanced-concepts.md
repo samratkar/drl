@@ -516,6 +516,71 @@ Imitation learning is widely used when environment interactions are costly or sa
 3. **Large Language Models (RLHF Alignment):** Pre-training models via Supervised Fine-Tuning (SFT) is a direct application of Behavior Cloning (predicting the next token chosen by human writers). During RLHF (Reinforcement Learning from Human Feedback), a reward model is trained using human preferences (similar to IRL), which then guides the PPO policy alignment.
 4. **Game Playing:** Using human gameplay recordings to bootstrap complex agents (like AlphaGo or OpenAI Five in Dota 2) before initiating reinforcement learning self-play.
 
+## 8. Decision Transformers (DT)
+
+The **Decision Transformer (DT)** (Chen et al., 2021) represents a paradigm shift in Offline Reinforcement Learning by discarding traditional DRL control loop architectures. Instead of using value estimation or policy gradients to maximize rewards, it reformulates RL as a **conditional sequence modeling problem** using a causal GPT-style Transformer.
+
+### 8.1 First Principles of "Upside-Down RL"
+To understand Decision Transformers, we must contrast their information flow with traditional reinforcement learning:
+
+* **Traditional RL ("Forward Flow"):**
+  1. The agent observes a state $S_t$.
+  2. The policy selects an action $A_t = \pi(S_t)$.
+  3. The environment returns a reward $R_{t+1}$.
+  4. The model uses the reward to compute Value functions ($V$ or $Q$), estimating: *"What return will I get if I take action $A_t$ in state $S_t$?"*
+  $$\text{State } S_t \xrightarrow{\pi} \text{Action } A_t \xrightarrow{\text{Env}} \text{Reward } R_{t+1}$$
+
+* **Upside-Down RL ("Reverse Flow"):**
+  1. The agent is prompted with a **target return** (desired future reward) $\hat{R}_t$.
+  2. The agent observes a state $S_t$.
+  3. The model maps the state and target return directly to an action: $A_t = \pi(S_t, \hat{R}_t)$.
+  4. The model answers: *"What action do I need to take right now to achieve this target return?"*
+  $$\langle \text{State } S_t, \text{Target Return } \hat{R}_t \rangle \xrightarrow{\pi} \text{Action } A_t$$
+
+By conditioning the action generation on the desired return, we treat control as **conditioned sequence generation** (similar to how LLMs are prompted with a topic to generate a text paragraph).
+
+### 8.2 DT Architecture and Trajectory Formulation
+During training, DT is fed historical patient or agent trajectories represented as sequences of states, actions, and Returns-to-Go (RTG):
+
+$$\tau = (\hat{R}_1, s_1, a_1, \hat{R}_2, s_2, a_2, \dots, \hat{R}_T, s_T, a_T)$$
+
+* **Return-to-Go (RTG):** Defined as $\hat{R}_t = \sum_{t'=t}^{T} r_{t'}$, representing the remaining accumulated reward we want the agent to receive from step $t$ onward.
+* **Embeddings:** Each element type ($s_t$, $a_t$, and $\hat{R}_t$) has its own dedicated projection layer (e.g., linear layers for continuous values, or MLP/CNN layers for complex states) to map them to a shared embedding dimension $d_{\text{model}}$.
+* **Causal Self-Attention:** The embedded tokens are passed to a causal GPT-style self-attention network. Causal masking ensures that when predicting action $a_t$, the model can only attend to past inputs $(\hat{R}_1, s_1, a_1, \dots, \hat{R}_t, s_t)$.
+* **Objective:** The model is trained offline in a supervised manner to predict the actions taken in the training dataset using cross-entropy loss (for discrete actions) or mean squared error (for continuous actions):
+  $$\mathcal{L} = \sum_{t} \mathcal{D}_{\text{loss}}\left( \text{DT}(\hat{R}_1, s_1, a_1, \dots, s_t), a_t \right)$$
+
+### 8.3 Comparison: DT vs. Other RL Concepts
+The following table summarizes the conceptual differences between Decision Transformers, traditional DRL, Behavior Cloning, and Inverse RL:
+
+| Dimension | Traditional DRL (e.g., DQN, PPO) | Behavior Cloning (BC) | Inverse RL (IRL) | Decision Transformer (DT) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Primary Goal** | Maximize expected cumulative reward | Mimic the demonstrator's action distribution | Recover the underlying reward function $R^*(s,a)$ | Predict actions that achieve a targeted return |
+| **Reward Role** | Environment feedback used to optimize policy/value | Ignored completely (not present in training) | Unknown; inferred from expert actions | Input prompt (Return-to-Go) conditioning behavior |
+| **Optimization Method** | Dynamic Programming / Bellman Updates / Policy Gradients | Supervised learning (supervised action classification) | Minimax optimization / Alternating RL loops | Supervised sequence modeling (next-token prediction) |
+| **Bootstrapping** | Yes (estimates $Q(s,a)$ based on $Q(s',a')$) | No | Yes (during the inner RL loop) | No (supervised learning, no value functions) |
+| **Sensitivity to Bad Data** | Can learn from any data via exploratory trial-and-error | High (mimics bad actions in dataset indiscriminately) | Moderate (depends on quality of expert paths) | Low (can train on suboptimal data and filter it by targeting high returns) |
+
+```
+                       TRADITIONAL DRL ("Forward Flow")
+              ┌─────────┐      Action a      ┌─────────────┐
+              │  State  ├───────────────────►│ Value/Policy│
+              └────▲────┘                    └──────┬──────┘
+                   │                                │
+                   └─────────── Reward r ───────────┘
+                       
+                       DECISION TRANSFORMER ("Upside-Down RL")
+              ┌─────────┐
+              │  State  ├──────────┐
+              └─────────┘          ▼
+                             ┌───────────┐   Action a
+                             │  Causal   ├─────────────►
+              ┌─────────┐    │Transformer│
+              │ Target  ├──────────┘
+              │ Return  │
+              └─────────┘
+```
+
 ---
 
 ## Practice Exercises
