@@ -92,11 +92,77 @@ Thus, **the unknown dynamics of the environment completely drop out of the gradi
 
 ### The Policy Gradient Theorem Formulation
 
-Substituting our simplified trajectory gradient back, we obtain the **Policy Gradient Theorem**:
+Substituting our simplified trajectory gradient back, we obtain the **Policy Gradient Theorem** expressed as a trajectory expectation:
 $$ \nabla J(\theta) = \mathbb{E}_{\tau \sim \pi_{\theta}} \left[ G(\tau) \sum_{t=0}^{T-1} \nabla_{\theta} \ln \pi(A_t|S_t, \theta) \right] $$
 
-By leveraging the temporal structure (past actions cannot be caused by future rewards) and rewriting this over state-action distributions, we can express it in terms of the state-action value function $q_{\pi}(s,a)$:
+To turn this into a practical algorithm that can update parameters at each step, we can rewrite this in terms of the state-action value function $q_{\pi}(s,a)$. The resulting policy gradient formulation is:
 $$ \nabla J(\theta) \propto \sum_{s} \mu(s) \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi(a|s, \theta) $$
+
+---
+
+#### Step-by-Step Derivation & Proportionality
+
+Here is how the gradient of the policy itself ($\nabla_{\theta} \pi(a|s, \theta)$) and the proportionality symbol ($\propto$) arise.
+
+##### 1. Differentiating the State Value Function (Product Rule)
+We define the value of a state $s$ under policy $\pi$ as:
+$$ v_{\pi}(s) = \sum_{a} \pi(a|s, \theta) q_{\pi}(s,a) $$
+
+> **Note on Environment Transition Dynamics:** While $v_{\pi}(s)$ does not write the environment's state transition probabilities $p(s'|s,a)$ explicitly in this step, they are implicitly contained inside the definition of the state-action value function $q_{\pi}(s,a)$. Expanding $q_{\pi}(s,a)$ completely yields $v_{\pi}(s) = \sum_{a} \pi(a|s, \theta) \sum_{s'} p(s'|s,a) \left[ r(s,a,s') + \gamma v_{\pi}(s') \right]$. Using the shorthand $q_{\pi}(s,a)$ keeps the initial differentiation clean.
+
+Taking the gradient with respect to $\theta$ requires the product rule:
+$$ \nabla_{\theta} v_{\pi}(s) = \sum_{a} \left[ \nabla_{\theta} \pi(a|s, \theta) q_{\pi}(s,a) + \pi(a|s, \theta) \nabla_{\theta} q_{\pi}(s,a) \right] $$
+Notice that the first term already contains the policy gradient $\nabla_{\theta} \pi(a|s, \theta)$ directly without a log term.
+
+##### 2. Unrolling the Q-value Recurrence
+The state-action value $q_{\pi}(s,a)$ is defined recursively by the Bellman equation:
+$$ q_{\pi}(s,a) = \sum_{s'} p(s'|s,a) \left[ r(s,a,s') + \gamma v_{\pi}(s') \right] $$
+
+Since the environment dynamics $p(s'|s,a)$ and rewards $r(s,a,s')$ are independent of the policy parameters $\theta$:
+$$ \nabla_{\theta} q_{\pi}(s,a) = \gamma \sum_{s'} p(s'|s,a) \nabla_{\theta} v_{\pi}(s') $$
+
+Substituting this back into the derivative of $v_{\pi}(s)$:
+$$ \nabla_{\theta} v_{\pi}(s) = \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi(a|s, \theta) + \gamma \sum_{s'} \left( \sum_a \pi(a|s, \theta) p(s'|s,a) \right) \nabla_{\theta} v_{\pi}(s') $$
+
+If we denote the one-step state transition probability under policy $\pi$ as $P(s \to s') = \sum_a \pi(a|s, \theta) p(s'|s,a)$, this is a recurrence relation:
+$$ \nabla_{\theta} v_{\pi}(s) = \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi(a|s, \theta) + \gamma \sum_{s'} P(s \to s') \nabla_{\theta} v_{\pi}(s') $$
+
+##### 3. Expanding the Series to Infinity
+Unrolling this recurrence indefinitely over the trajectory yields:
+$$ \nabla_{\theta} v_{\pi}(s) = \sum_{x \in \mathcal{S}} \sum_{k=0}^{\infty} \gamma^k P(s \to x \text{ in } k \text{ steps}) \sum_{a} q_{\pi}(x,a) \nabla_{\theta} \pi(a|x, \theta) $$
+
+##### 4. Defining the Discounted State Visitation Measure $\eta(s)$
+For the start-state objective $J(\theta) \doteq v_{\pi}(s_0)$, the gradient is:
+$$ \nabla_{\theta} J(\theta) = \sum_{s} \underbrace{\left( \sum_{k=0}^{\infty} \gamma^k P(s_0 \to s \text{ in } k \text{ steps}) \right)}_{\eta(s)} \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi(a|s, \theta) $$
+Here, $\eta(s)$ is the **unnormalized discounted state visitation measure**. Since $\eta(s)$ does not sum to $1$, it is not a valid probability distribution. In fact, summing it over all states yields a constant:
+$$ \sum_{s} \eta(s) = \frac{1}{1-\gamma} \quad (\text{or the expected episode length in episodic environments}) $$
+
+##### 5. Normalizing to $\mu(s)$ & Proportionality
+To convert this sum into an expectation, we define the normalized state distribution $\mu(s)$ (which sums to $1$):
+$$ \mu(s) = \frac{\eta(s)}{\sum_{s'} \eta(s')} \implies \eta(s) = \left( \sum_{s'} \eta(s') \right) \mu(s) $$
+
+Substituting this back gives:
+$$ \nabla_{\theta} J(\theta) = \underbrace{\left( \sum_{s'} \eta(s') \right)}_{\text{Constant } C > 0} \sum_{s} \mu(s) \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi(a|s, \theta) $$
+Because the constant multiplier $C$ only scales the step size in gradient ascent, we can drop it by using the proportionality symbol ($\propto$):
+$$ \nabla_{\theta} J(\theta) \propto \sum_{s} \mu(s) \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi(a|s, \theta) $$
+
+---
+
+#### Derivation Flowchart
+
+```mermaid
+graph TD
+    A["State Value Definition:<br/>v_π(s) = Σ_a π(a|s, θ) q_π(s,a)"] --> B["Apply Product Rule:<br/>∇v_π(s) = Σ_a [ ∇π(a|s) q_π(s,a) + π(a|s) ∇q_π(s,a) ]"]
+    B --> C["Differentiate Bellman Equation for Q-Value:<br/>∇q_π(s,a) = γ Σ_s' p(s'|s,a) ∇v_π(s')"]
+    C --> D["Obtain Recurrence Relation:<br/>∇v_π(s) = Σ_a q_π(s,a) ∇π(a|s) + γ Σ_s' P(s → s') ∇v_π(s')"]
+    D --> E["Unroll Recurrence to Infinity:<br/>∇v_π(s) = Σ_x [ Σ_k γ^k P(s → x in k steps) ] Σ_a q_π(x,a) ∇π(a|x)"]
+    E --> F["Define Discounted Visitation Measure:<br/>η(s) = Σ_k γ^k P(s_0 → s in k steps)"]
+    F --> G["Normalize to State Distribution:<br/>μ(s) = η(s) / Σ_s' η(s')"]
+    G --> H["Absorb Normalization Factor into Constant C:<br/>∇J(θ) = C * Σ_s μ(s) Σ_a q_π(s,a) ∇π(a|s)"]
+    H --> I["Final Proportional Formulation:<br/>∇J(θ) ∝ Σ_s μ(s) Σ_a q_π(s,a) ∇π(a|s)"]
+```
+
+---
 
 Which can also be written in expectation form as:
 $$ \nabla J(\theta) = \mathbb{E}_{\pi} [ q_{\pi}(S_t, A_t) \nabla_{\theta} \ln \pi(A_t|S_t, \theta) ] $$
