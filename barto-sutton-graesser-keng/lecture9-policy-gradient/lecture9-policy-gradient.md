@@ -43,46 +43,52 @@ However, taking the gradient of an expectation that *depends on the environment'
 
 ### Step-by-Step Mathematical Derivation
 
-#### 1. Expressing the Expectation as a Sum
-First, write the expectation of the return $J(\theta)$ explicitly as a sum over all possible trajectories $\tau$:
-$$ J(\theta) = \sum_{\tau} P(\tau; \theta) G(\tau) $$
-Where $P(\tau; \theta)$ is the probability of a trajectory $\tau$ occurring when selecting actions according to policy parameters $\theta$.
+#### 1. Expressing the Expectation as a Sum & The Roadblock (Equation 2.6 & 2.7)
+First, write the expectation of the return $J(\theta)$ explicitly as a sum over all possible trajectories $\tau$ (Equation 2.6):
+$$ J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta} [R(\tau)] = \sum_{\tau} P(\tau; \theta) R(\tau) \tag{2.6} $$
+Where $P(\tau; \theta)$ is the probability of a trajectory $\tau$ occurring when selecting actions according to policy parameters $\theta$, and $R(\tau)$ is the return of that trajectory.
 
-If we take the gradient with respect to $\theta$:
-$$ \nabla_{\theta} J(\theta) = \nabla_{\theta} \sum_{\tau} P(\tau; \theta) G(\tau) = \sum_{\tau} \nabla_{\theta} P(\tau; \theta) G(\tau) $$
+If we take the gradient with respect to $\theta$ (Equation 2.7):
+$$ \nabla_{\theta} J(\theta) = \nabla_{\theta} \sum_{\tau} P(\tau; \theta) R(\tau) = \sum_{\tau} \nabla_{\theta} P(\tau; \theta) R(\tau) \tag{2.7} $$
 
-> **The Obstacle:** We cannot easily estimate this sum via simulation because $\nabla_{\theta} P(\tau; \theta)$ is *not* a probability distribution (it does not sum to $1$). We need to rewrite this so we can represent it as an expectation and estimate it using samples.
+> **The Roadblock:** In reinforcement learning, the number of possible trajectories $\tau$ is infinite or too large to sum over. The only way to compute this in practice is to **estimate it by running simulations** (sampling trajectories and averaging their values).
+> For a sum to be estimable via simulation, it **must** be written as an expectation:
+> $$ \text{Expected Value} = \sum_{\tau} P(\tau; \theta) \times \text{Something}(\tau) $$
+> But in our gradient equation, $\nabla_{\theta} P(\tau; \theta)$ is **not** a probability distribution (it does not sum to $1$). Therefore, the sum is not an expectation, and we cannot estimate it by sampling trajectories from our policy. We need to insert $P(\tau; \theta)$ back into the sum.
 
-#### 2. The Likelihood Ratio / Log-Derivative Trick
-Using standard calculus, the derivative of a natural logarithm is:
-$$ \nabla_{\theta} \ln x = \frac{\nabla_{\theta} x}{x} \implies \nabla_{\theta} x = x \nabla_{\theta} \ln x $$
+#### 2. The Likelihood Ratio / Log-Derivative Trick (Equation 2.8 & 2.9)
+Using standard calculus, the derivative of a logarithm $\log(x)$ is $\frac{d}{dx}\log(x) = \frac{1}{x}$. Using the chain rule, this generalizes to:
+$$ \nabla_{\theta} \log x = \frac{\nabla_{\theta} x}{x} \implies \nabla_{\theta} x = x \nabla_{\theta} \log x $$
 
-Applying this identity to the trajectory probability $P(\tau; \theta)$:
-$$ \nabla_{\theta} P(\tau; \theta) = P(\tau; \theta) \nabla_{\theta} \ln P(\tau; \theta) $$
+Applying this identity to the trajectory probability $P(\tau; \theta)$ (Equation 2.8):
+$$ \nabla_{\theta} P(\tau; \theta) = P(\tau; \theta) \nabla_{\theta} \log P(\tau; \theta) \tag{2.8} $$
 
-Substituting this back into our gradient equation gives:
-$$ \nabla_{\theta} J(\theta) = \sum_{\tau} P(\tau; \theta) \nabla_{\theta} \ln P(\tau; \theta) G(\tau) $$
+Substituting this back into our gradient equation gives (Equation 2.9):
+$$ \nabla_{\theta} J(\theta) = \sum_{\tau} P(\tau; \theta) \nabla_{\theta} \log P(\tau; \theta) R(\tau) = \mathbb{E}_{\tau \sim \pi_{\theta}} [ \nabla_{\theta} \log P(\tau; \theta) R(\tau) ] \tag{2.9} $$
 
-Since $P(\tau; \theta)$ is now back in the equation, we can convert this sum back into an expectation:
-$$ \nabla_{\theta} J(\theta) = \mathbb{E}_{\tau \sim \pi_{\theta}} [ \nabla_{\theta} \ln P(\tau; \theta) G(\tau) ] $$
+> **Note on Expectation Conversion:** The explicit trajectory probability term $P(\tau; \theta)$ is absorbed into the expectation symbol ($\mathbb{E}_{\tau \sim \pi_{\theta}}$). In probability, the expected value of any function $f(\tau)$ over a distribution is defined as:
+> $$ \mathbb{E}_{\tau \sim \pi_{\theta}} [f(\tau)] \doteq \sum_{\tau} P(\tau; \theta) f(\tau) $$
+> Here, $f(\tau) = \nabla_{\theta} \log P(\tau; \theta) R(\tau)$. Bringing $P(\tau; \theta)$ back outside the gradient allows us to express the sum as an expectation.
 
-#### 3. Eliminating the Environment Transition Dynamics
+This expectation is now **sampleable**: we can estimate the gradient simply by running our agent in the environment to collect trajectories, calculating the term inside the expectation, and averaging the results.
+
+#### 3. Eliminating the Environment Transition Dynamics (Equation 2.10 & 2.11)
 A trajectory $\tau = (s_0, a_0, s_1, a_1, \dots, s_T)$ is generated by the combination of the policy choosing actions and the environment determining the next states. The probability of the trajectory is:
-$$ P(\tau; \theta) = \rho_0(s_0) \prod_{t=0}^{T-1} \pi(a_t|s_t, \theta) p(s_{t+1}|s_t, a_t) $$
-Where $\rho_0(s_0)$ is the initial state distribution, and $p(s_{t+1}|s_t, a_t)$ represents the environment's transition dynamics.
+$$ P(\tau; \theta) = P(s_0) \prod_{t=0}^{T-1} \pi_{\theta}(a_t|s_t) P(s_{t+1}|s_t, a_t) \tag{2.2} $$
+Where $P(s_0)$ is the initial state distribution, and $P(s_{t+1}|s_t, a_t)$ represents the environment's transition dynamics.
 
-Taking the natural log of this product transforms it into a sum:
-$$ \ln P(\tau; \theta) = \ln \rho_0(s_0) + \sum_{t=0}^{T-1} \ln \pi(a_t|s_t, \theta) + \sum_{t=0}^{T-1} \ln p(s_{t+1}|s_t, a_t) $$
+Taking the logarithm of this product transforms it into a sum (Equation 2.10):
+$$ \log P(\tau; \theta) = \log P(s_0) + \sum_{t=0}^{T-1} \log \pi_{\theta}(a_t|s_t) + \sum_{t=0}^{T-1} \log P(s_{t+1}|s_t, a_t) \tag{2.10} $$
 
 Now, we take the gradient with respect to $\theta$:
-$$ \nabla_{\theta} \ln P(\tau; \theta) = \nabla_{\theta} \ln \rho_0(s_0) + \sum_{t=0}^{T-1} \nabla_{\theta} \ln \pi(a_t|s_t, \theta) + \sum_{t=0}^{T-1} \nabla_{\theta} \ln p(s_{t+1}|s_t, a_t) $$
+$$ \nabla_{\theta} \log P(\tau; \theta) = \nabla_{\theta} \log P(s_0) + \sum_{t=0}^{T-1} \nabla_{\theta} \log \pi_{\theta}(a_t|s_t) + \sum_{t=0}^{T-1} \nabla_{\theta} \log P(s_{t+1}|s_t, a_t) $$
 
-Because the initial state distribution $\rho_0$ and transition dynamics $p$ **do not depend on the policy parameters $\theta$**, their gradients are exactly $0$:
-* $\nabla_{\theta} \ln \rho_0(s_0) = 0$
-* $\nabla_{\theta} \ln p(s_{t+1}|s_t, a_t) = 0$
+Because the initial state distribution $P(s_0)$ and transition dynamics $P(s_{t+1}|s_t, a_t)$ **do not depend on the policy parameters $\theta$**, their gradients are exactly $0$:
+* $\nabla_{\theta} \log P(s_0) = 0$
+* $\nabla_{\theta} \log P(s_{t+1}|s_t, a_t) = 0$
 
-This simplifies to:
-$$ \nabla_{\theta} \ln P(\tau; \theta) = \sum_{t=0}^{T-1} \nabla_{\theta} \ln \pi(a_t|s_t, \theta) $$
+This simplifies to (Equation 2.11):
+$$ \nabla_{\theta} \log P(\tau; \theta) = \sum_{t=0}^{T-1} \nabla_{\theta} \log \pi_{\theta}(a_t|s_t) \tag{2.11} $$
 
 Thus, **the unknown dynamics of the environment completely drop out of the gradient calculation!**
 
@@ -90,13 +96,24 @@ Thus, **the unknown dynamics of the environment completely drop out of the gradi
 
 ---
 
-### The Policy Gradient Theorem Formulation
+### The Policy Gradient Theorem Formulation (Equation 2.5)
 
-Substituting our simplified trajectory gradient back, we obtain the **Policy Gradient Theorem** expressed as a trajectory expectation:
-$$ \nabla J(\theta) = \mathbb{E}_{\tau \sim \pi_{\theta}} \left[ G(\tau) \sum_{t=0}^{T-1} \nabla_{\theta} \ln \pi(A_t|S_t, \theta) \right] $$
+Substituting our simplified trajectory gradient (Equation 2.11) back into our expectation (Equation 2.9), we obtain the **Policy Gradient Theorem** expressed as a trajectory expectation:
+$$ \nabla_{\theta} J(\theta) = \mathbb{E}_{\tau \sim \pi_{\theta}} \left[ \sum_{t=0}^{T-1} \nabla_{\theta} \log \pi_{\theta}(a_t|s_t) R(\tau) \right] \tag{2.5} $$
+
+> **Why is there no explicit $P(\tau; \theta)$ here?**
+> 1. **It is absorbed into the expectation symbol $\mathbb{E}_{\tau \sim \pi_{\theta}}$:** The subscript $\tau \sim \pi_{\theta}$ tells us that trajectories are generated and sampled according to the distribution $P(\tau; \theta)$.
+> 2. **The $\log P(\tau; \theta)$ term inside the expectation is expanded using Equation 2.10 & 2.11:** We expand $\log P(\tau; \theta)$ using **Equation 2.10**. Its gradient simplifies to **Equation 2.11** ($\sum_{t=0}^{T-1} \nabla_{\theta} \log \pi_{\theta}(a_t|s_t)$) because the environment transition probabilities and the initial state distribution do not depend on the policy parameters $\theta$, so their gradients are $0$.
+
+#### Intuition behind the Trajectory Formulation:
+* **Tweaking Action Probabilities:** The policy parameters $\theta$ (e.g., neural network weights) define the policy $\pi_{\theta}(a|s)$. Adjusting $\theta$ shifts the action probabilities.
+* **Trajectory Probability and Return:** The probability of generating a specific trajectory $\tau$ is $P(\tau; \theta)$, which depends directly on the action probabilities. Changing the policy parameters changes the distribution of trajectories generated, which in turn changes the expected return $J(\theta)$.
+* **Reinforcement Multiplier:** The trajectory return $R(\tau)$ scales the update. If a trajectory leads to a high return, the gradient update takes a large step in the direction of $\nabla_\theta \log \pi_{\theta}(a_t|s_t)$, making those actions more probable in the future.
+* **"Backtracking" (Hindsight Credit Assignment):** Since we do not have a transition model of the environment, the agent cannot predict the future while acting. Instead, it completes a rollout, looks back at the sequence of actions taken ($a_0, \dots, a_{T-1}$) in hindsight, and "backtracks" in time to adjust the parameter weights to reinforce the entire action sequence based on the final return $R(\tau)$.
+* **The Log-Derivative Trick:** We cannot directly take the gradient of the expected return because the expectation itself depends on $\theta$. Applying the log-derivative trick ($\nabla_\theta P(\tau; \theta) = P(\tau; \theta) \nabla_\theta \log P(\tau; \theta)$) allows us to reformulate the gradient as an expectation. This enables us to compute gradients by sampling actions from the current policy and taking the gradient of their log-probabilities.
 
 To turn this into a practical algorithm that can update parameters at each step, we can rewrite this in terms of the state-action value function $q_{\pi}(s,a)$. The resulting policy gradient formulation is:
-$$ \nabla J(\theta) \propto \sum_{s} \mu(s) \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi(a|s, \theta) $$
+$$ \nabla J(\theta) \propto \sum_{s} \mu(s) \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a|s) $$
 
 ---
 
@@ -165,10 +182,10 @@ graph TD
 ---
 
 Which can also be written in expectation form as:
-$$ \nabla J(\theta) = \mathbb{E}_{\pi} [ q_{\pi}(S_t, A_t) \nabla_{\theta} \ln \pi(A_t|S_t, \theta) ] $$
+$$ \nabla J(\theta) = \mathbb{E}_{\pi} [ q_{\pi}(S_t, A_t) \nabla_{\theta} \log \pi(A_t|S_t, \theta) ] $$
 
 **Intuition:** 
-* $\nabla_{\theta} \ln \pi(A_t|S_t, \theta)$ points in the parameter space direction that increases the probability of taking action $A_t$ in state $S_t$.
+* $\nabla_{\theta} \log \pi(A_t|S_t, \theta)$ points in the parameter space direction that increases the probability of taking action $A_t$ in state $S_t$.
 * If an action $A_t$ leads to a high Q-value ($q_{\pi} > 0$), we push the weights $\theta$ in the direction of the gradient to **increase** the probability of taking that action again.
 * If the Q-value is low or negative, we push the probabilities **down**.
 * Scaling the gradient by $q_{\pi}(S_t, A_t)$ ensures that we reinforce good actions heavily and penalize poor actions.
@@ -177,7 +194,7 @@ $$ \nabla J(\theta) = \mathbb{E}_{\pi} [ q_{\pi}(S_t, A_t) \nabla_{\theta} \ln \
 
 ## 3. Policy Parameterizations: Softmax vs. Gaussian
 
-A policy gradient algorithm (whether it is REINFORCE or Actor-Critic) requires a **differentiable policy parameterization** $\pi(a|s, \theta)$. The algorithm update formulas are written in terms of the abstract gradient $\nabla_{\theta} \ln \pi(A_t|S_t, \theta)$.
+A policy gradient algorithm (whether it is REINFORCE or Actor-Critic) requires a **differentiable policy parameterization** $\pi(a|s, \theta)$. The algorithm update formulas are written in terms of the abstract gradient $\nabla_{\theta} \log \pi(A_t|S_t, \theta)$.
 
 In practice, how we calculate this gradient and how we select actions depends entirely on the nature of the action space:
 
@@ -191,7 +208,7 @@ $$ \pi(a|s, \theta) \doteq \frac{e^{h(s, a, \theta)}}{\sum_{b \in \mathcal{A}} e
   3. Sample action $A_t$ from the resulting probability distribution.
 * **Log-Gradient Update Step:**
   The gradient of the log-probability of the chosen action $A_t$ is:
-  $$ \nabla_{\theta} \ln \pi(A_t|S_t, \theta) = \nabla_{\theta} h(S_t, A_t, \theta) - \sum_{b \in \mathcal{A}} \pi(b|S_t, \theta) \nabla_{\theta} h(S_t, b, \theta) $$
+  $$ \nabla_{\theta} \log \pi(A_t|S_t, \theta) = \nabla_{\theta} h(S_t, A_t, \theta) - \sum_{b \in \mathcal{A}} \pi(b|S_t, \theta) \nabla_{\theta} h(S_t, b, \theta) $$
 
 ### B. Gaussian Policy (Continuous Action Spaces)
 For continuous action spaces (where actions are real numbers), the policy is represented by a probability density function. Typically, we use a **Gaussian (Normal) distribution**:
@@ -203,8 +220,8 @@ $$ \pi(a|s, \theta) \doteq \frac{1}{\sigma(s, \theta)\sqrt{2\pi}} \exp \left( -\
   3. Sample action $A_t \sim \mathcal{N}(\mu(S_t, \theta_{\mu}), \sigma(S_t, \theta_{\sigma})^2)$ (typically using the reparameterization trick: $A_t = \mu(S_t) + \sigma(S_t) \odot \epsilon$ where $\epsilon \sim \mathcal{N}(0, 1)$).
 * **Log-Gradient Update Step:**
   The gradients with respect to the mean and standard deviation parameters are computed analytically:
-  * Mean: $\nabla_{\theta_{\mu}} \ln \pi(A_t|S_t, \theta) = \frac{A_t - \mu(S_t, \theta)}{\sigma(S_t, \theta)^2} \nabla_{\theta_{\mu}} \mu(S_t, \theta_{\mu})$
-  * Std: $\nabla_{\theta_{\sigma}} \ln \pi(A_t|S_t, \theta) = \left( \frac{(A_t - \mu(S_t, \theta))^2}{\sigma(S_t, \theta)^2} - 1 \right) \nabla_{\theta_{\sigma}} \eta(S_t, \theta_{\sigma})$
+  * Mean: $\nabla_{\theta_{\mu}} \log \pi(A_t|S_t, \theta) = \frac{A_t - \mu(S_t, \theta)}{\sigma(S_t, \theta)^2} \nabla_{\theta_{\mu}} \mu(S_t, \theta_{\mu})$
+  * Std: $\nabla_{\theta_{\sigma}} \log \pi(A_t|S_t, \theta) = \left( \frac{(A_t - \mu(S_t, \theta))^2}{\sigma(S_t, \theta)^2} - 1 \right) \nabla_{\theta_{\sigma}} \eta(S_t, \theta_{\sigma})$
 
 ---
 
@@ -218,7 +235,7 @@ This is described in **Section 13.3** of Sutton & Barto.
 In the theoretical derivation of the discounted policy gradient, the objective is defined as the value of the start state $J(\theta) \doteq v_{\pi_{\theta}}(s_0)$. When we use discounting ($\gamma < 1$), states visited later in the episode contribute less to the start state value. 
 
 To account for this mathematically, the update at time step $t$ is scaled by $\gamma^t$:
-$$ \theta_{t+1} = \theta_t + \alpha \gamma^t G_t \nabla_{\theta} \ln \pi(A_t|S_t, \theta) $$
+$$ \theta_{t+1} = \theta_t + \alpha \gamma^t G_t \nabla_{\theta} \log \pi(A_t|S_t, \theta) $$
 
 > **Note on Deep RL Practice:** In modern deep reinforcement learning implementations (like those using neural networks for continuous tasks), the $\gamma^t$ term is often omitted (set to 1). This is because the exponential decay of $\gamma^t$ causes updates late in long episodes to become extremely small, leading to slow training of neural networks. However, the $\gamma^t$ term is mathematically required for the gradient of the discounted start-state objective.
 
@@ -238,7 +255,7 @@ $$
 \quad \quad \bullet \text{ Continuous: compute } \mu(S_t, \theta), \sigma(S_t, \theta) \text{ and sample } A_t \sim \mathcal{N}(\mu, \sigma^2) \\
 \quad \textbf{Loop for each step of the episode } t = 0, 1, \dots, T-1: \\
 \qquad G \leftarrow \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k \\
-\qquad \theta \leftarrow \theta + \alpha \gamma^t G \nabla_{\theta} \ln \pi(A_t | S_t, \theta) \quad \text{(Log-gradient update computed as per Section 3)}
+\qquad \theta \leftarrow \theta + \alpha \gamma^t G \nabla_{\theta} \log \pi(A_t | S_t, \theta) \quad \text{(Log-gradient update computed as per Section 3)}
 \end{array}
 $$
 
@@ -259,7 +276,7 @@ sequenceDiagram
     Note over Env, Agent: Phase 2: Learn (Update Weights)
     loop For each step t in trajectory
         Agent->>Agent: Calculate Return G_t
-        Agent->>Agent: Update θ = θ + α * γ^t * G_t * ∇lnπ
+        Agent->>Agent: Update θ = θ + α * γ^t * G_t * ∇logπ
     end
     end
 ```
@@ -273,20 +290,20 @@ Because REINFORCE relies on full Monte Carlo rollouts ($G_t$), it suffers from m
 
 To fix the variance problem, we can subtract a **baseline** $b(s)$ from the return. The baseline can be any function, as long as it does not depend on the action $a$. 
 
-$$ \theta_{t+1} = \theta_t + \alpha \gamma^t (G_t - b(S_t)) \nabla_{\theta} \ln \pi(A_t|S_t, \theta) $$
+$$ \theta_{t+1} = \theta_t + \alpha \gamma^t (G_t - b(S_t)) \nabla_{\theta} \log \pi(A_t|S_t, \theta) $$
 
 The most common baseline is a learned estimate of the state-value function, $\hat{v}(s, \mathbf{w})$.
 The term $(G_t - \hat{v}(S_t, \mathbf{w}))$ is the **Advantage** (how much better this action's outcome was compared to our average expectation of the state).
 
 ### Proof of Unbiased Baseline
 We want to prove that subtracting a baseline $b(s)$ that is independent of action $a$ does not introduce any bias to the expected gradient:
-$$ \mathbb{E}_{A_t \sim \pi} [ b(S_t) \nabla_{\theta} \ln \pi(A_t|S_t, \theta) ] = 0 $$
+$$ \mathbb{E}_{A_t \sim \pi} [ b(S_t) \nabla_{\theta} \log \pi(A_t|S_t, \theta) ] = 0 $$
 
 **Proof:**
 For a given state $s$, the expected value of the baseline gradient term is:
-$$ \sum_{a} \pi(a|s, \theta) b(s) \nabla_{\theta} \ln \pi(a|s, \theta) $$
+$$ \sum_{a} \pi(a|s, \theta) b(s) \nabla_{\theta} \log \pi(a|s, \theta) $$
 
-Using the identity $\nabla \ln x = \frac{\nabla x}{x}$:
+Using the identity $\nabla \log x = \frac{\nabla x}{x}$:
 $$ = \sum_{a} \pi(a|s, \theta) b(s) \frac{\nabla_{\theta} \pi(a|s, \theta)}{\pi(a|s, \theta)} $$
 
 Simplifying (canceling $\pi(a|s, \theta)$):
@@ -326,7 +343,7 @@ $$
 \qquad G \leftarrow \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k \\
 \qquad \delta \leftarrow G - \hat{v}(S_t, \mathbf{w}) \\
 \qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w}) \\
-\qquad \theta \leftarrow \theta + \alpha \gamma^t \delta \nabla_{\theta} \ln \pi(A_t | S_t, \theta) \quad \text{(Log-gradient update computed as per Section 3)}
+\qquad \theta \leftarrow \theta + \alpha \gamma^t \delta \nabla_{\theta} \log \pi(A_t | S_t, \theta) \quad \text{(Log-gradient update computed as per Section 3)}
 \end{array}
 $$
 
@@ -390,7 +407,7 @@ $$
 \qquad G \leftarrow \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k \quad \text{(Full Return)} \\
 \qquad \delta \leftarrow G - \hat{v}(S_t, \mathbf{w}) \\
 \qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w}) \\
-\qquad \theta \leftarrow \theta + \alpha \gamma^t \delta \nabla_{\theta} \ln \pi(A_t | S_t, \theta) \\
+\qquad \theta \leftarrow \theta + \alpha \gamma^t \delta \nabla_{\theta} \log \pi(A_t | S_t, \theta) \\
 \qquad \quad \text{(Log-gradient updated as per Section 3)} \\
 \\
 \end{array}
@@ -409,7 +426,7 @@ $$
 \qquad \text{Take action } A, \text{ observe } R, S' \\
 \qquad \delta \leftarrow R + \gamma \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w}) \quad \text{(1-Step TD Error)} \\
 \qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S, \mathbf{w}) \\
-\qquad \theta \leftarrow \theta + \alpha I \delta \nabla_{\theta} \ln \pi(A|S, \theta) \\
+\qquad \theta \leftarrow \theta + \alpha I \delta \nabla_{\theta} \log \pi(A|S, \theta) \\
 \qquad \quad \text{(Log-gradient updated as per Section 3)} \\
 \qquad I \leftarrow \gamma I \\
 \qquad S \leftarrow S'
@@ -469,13 +486,13 @@ First, compute the action preferences and probability distribution:
   * $\pi(a_2|S_t) = 1 - 0.289 = 0.711$
 
 Now, compute the log-gradient of the softmax policy for the chosen action $A_t = a_1$:
-* $\nabla_{\theta_{a_1}} \ln \pi(a_1|S_t) = (1 - \pi(a_1|S_t))\mathbf{x}(S_t) = (1 - 0.289)\mathbf{x}(S_t) = 0.711 \begin{bmatrix} 1.0 \\ 2.0 \end{bmatrix} = \begin{bmatrix} 0.711 \\ 1.422 \end{bmatrix}$
-* $\nabla_{\theta_{a_2}} \ln \pi(a_1|S_t) = -\pi(a_2|S_t)\mathbf{x}(S_t) = -0.711 \mathbf{x}(S_t) = -0.711 \begin{bmatrix} 1.0 \\ 2.0 \end{bmatrix} = \begin{bmatrix} -0.711 \\ -1.422 \end{bmatrix}$
-
+* $\nabla_{\theta_{a_1}} \log \pi(a_1|S_t) = (1 - \pi(a_1|S_t))\mathbf{x}(S_t) = (1 - 0.289)\mathbf{x}(S_t) = 0.711 \begin{bmatrix} 1.0 \\ 2.0 \end{bmatrix} = \begin{bmatrix} 0.711 \\ 1.422 \end{bmatrix}$
+* $\nabla_{\theta_{a_2}} \log \pi(a_1|S_t) = -\pi(a_2|S_t)\mathbf{x}(S_t) = -0.711 \mathbf{x}(S_t) = -0.711 \begin{bmatrix} 1.0 \\ 2.0 \end{bmatrix} = \begin{bmatrix} -0.711 \\ -1.422 \end{bmatrix}$
+ 
 Update the Actor weights:
-* $\theta_{a_1} \leftarrow \theta_{a_1} + \alpha I \delta_t \nabla_{\theta_{a_1}} \ln \pi(a_1|S_t)$
+* $\theta_{a_1} \leftarrow \theta_{a_1} + \alpha I \delta_t \nabla_{\theta_{a_1}} \log \pi(a_1|S_t)$
   $$ \theta_{a_1} \leftarrow \begin{bmatrix} 0.1 \\ -0.2 \end{bmatrix} + 0.2(1.0)(0.53) \begin{bmatrix} 0.711 \\ 1.422 \end{bmatrix} = \begin{bmatrix} 0.1 \\ -0.2 \end{bmatrix} + \begin{bmatrix} 0.075 \\ 0.151 \end{bmatrix} = \begin{bmatrix} 0.175 \\ -0.049 \end{bmatrix} $$
-* $\theta_{a_2} \leftarrow \theta_{a_2} + \alpha I \delta_t \nabla_{\theta_{a_2}} \ln \pi(a_1|S_t)$
+* $\theta_{a_2} \leftarrow \theta_{a_2} + \alpha I \delta_t \nabla_{\theta_{a_2}} \log \pi(a_1|S_t)$
   $$ \theta_{a_2} \leftarrow \begin{bmatrix} -0.1 \\ 0.2 \end{bmatrix} + 0.2(1.0)(0.53) \begin{bmatrix} -0.711 \\ -1.422 \end{bmatrix} = \begin{bmatrix} -0.1 \\ 0.2 \end{bmatrix} - \begin{bmatrix} 0.075 \\ 0.151 \end{bmatrix} = \begin{bmatrix} -0.175 \\ 0.049 \end{bmatrix} $$
 
 Notice that because action $a_1$ yielded a positive TD error (better than expected), its parameter weights are updated to make it more likely to be selected in the future, while the weights for $a_2$ are adjusted downwards.
@@ -525,7 +542,7 @@ $$
 \qquad \delta \leftarrow R + \gamma \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w}) \\
 \qquad \quad \text{(if } S' \text{ is terminal, } \hat{v}(S', \mathbf{w}) \doteq 0\text{)} \\
 \qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S, \mathbf{w}) \\
-\qquad \theta \leftarrow \theta + \alpha I \delta \nabla_{\theta} \ln \pi(A|S, \theta) \\
+\qquad \theta \leftarrow \theta + \alpha I \delta \nabla_{\theta} \log \pi(A|S, \theta) \\
 \qquad \quad \text{(Log-gradient updated as per Section 3)} \\
 \qquad I \leftarrow \gamma I \\
 \qquad S \leftarrow S' \\
@@ -547,7 +564,7 @@ $$
 \\
 \qquad \bar{R} \leftarrow \bar{R} + \eta \delta \\
 \qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S, \mathbf{w}) \\
-\qquad \theta \leftarrow \theta + \alpha \delta \nabla_{\theta} \ln \pi(A|S, \theta) \\
+\qquad \theta \leftarrow \theta + \alpha \delta \nabla_{\theta} \log \pi(A|S, \theta) \\
 \qquad \quad \text{(Log-gradient updated as per Section 3)} \\
 \\
 \qquad S \leftarrow S'
@@ -563,7 +580,7 @@ $$
 | **Discounting ($\gamma$)** | Uses a discount factor $\gamma \in [0, 1)$ to ensure infinite sum convergence. | **No discounting ($\gamma = 1$)**: Discounting with function approximation in continuing tasks is mathematically problematic. |
 | **TD Error ($\delta$)** | $\delta = R + \gamma \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w})$ | $\delta = R - \bar{R} + \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w})$ <br> *(Average reward rate is subtracted instead of discounting)* |
 | **Average Reward ($\bar{R}$)** | Not used. | Maintains a running estimate of the long-term average reward rate per step ($\bar{R}$), updated via $\bar{R} \leftarrow \bar{R} + \eta \delta$. |
-| **Discount Tracker ($I$)** | Requires a running decay tracker $I$ to scale policy updates by $\gamma^t$: $\theta \leftarrow \theta + \alpha I \delta \nabla \ln \pi$. | No discount decay tracker is used; all updates are weighted equally. |
+| **Discount Tracker ($I$)** | Requires a running decay tracker $I$ to scale policy updates by $\gamma^t$: $\theta \leftarrow \theta + \alpha I \delta \nabla \log \pi$. | No discount decay tracker is used; all updates are weighted equally. |
 | **Value Function Meaning** | $\hat{v}(s, \mathbf{w})$ estimates the expected **discounted future return** starting from state $s$. | $\hat{v}(s, \mathbf{w})$ estimates the **differential value** (how much better/worse state $s$ is relative to the average reward rate $\bar{R}$). |
 
 ---
@@ -581,13 +598,13 @@ To represent this, we split the parameter vector $\theta$ into two parts: $\thet
 * To guarantee that the standard deviation $\sigma(s, \theta)$ is always positive, we parameterize its logarithm: $\sigma(s, \theta) \doteq \exp(\eta(s, \theta_{\sigma}))$, where $\eta$ is the direct network output.
 
 ### Log-Gradient Derivation
-Taking the natural log of the Gaussian PDF:
-$$ \ln \pi(a|s, \theta) = -\ln \sigma(s, \theta) - \ln\sqrt{2\pi} - \frac{(a - \mu(s, \theta))^2}{2\sigma(s, \theta)^2} $$
+Taking the logarithm of the Gaussian PDF:
+$$ \log \pi(a|s, \theta) = -\log \sigma(s, \theta) - \log\sqrt{2\pi} - \frac{(a - \mu(s, \theta))^2}{2\sigma(s, \theta)^2} $$
 
 * **Gradient w.r.t. Mean Parameters $\theta_{\mu}$:**
-  $$ \nabla_{\theta_{\mu}} \ln \pi(a|s, \theta) = \frac{a - \mu(s, \theta)}{\sigma(s, \theta)^2} \nabla_{\theta_{\mu}} \mu(s, \theta_{\mu}) $$
+  $$ \nabla_{\theta_{\mu}} \log \pi(a|s, \theta) = \frac{a - \mu(s, \theta)}{\sigma(s, \theta)^2} \nabla_{\theta_{\mu}} \mu(s, \theta_{\mu}) $$
 * **Gradient w.r.t. Standard Deviation Parameters $\theta_{\sigma}$:**
-  $$ \nabla_{\theta_{\sigma}} \ln \pi(a|s, \theta) = \left( \frac{(a - \mu(s, \theta))^2}{\sigma(s, \theta)^2} - 1 \right) \nabla_{\theta_{\sigma}} \eta(s, \theta_{\sigma}) $$
+  $$ \nabla_{\theta_{\sigma}} \log \pi(a|s, \theta) = \left( \frac{(a - \mu(s, \theta))^2}{\sigma(s, \theta)^2} - 1 \right) \nabla_{\theta_{\sigma}} \eta(s, \theta_{\sigma}) $$
 
 ![Gaussian Policy Update](./assets/images/gaussian_policy_update.svg)
 
@@ -605,27 +622,27 @@ Assume:
 
 #### Case 1: An action is sampled above the mean ($a = 7.0$)
 * **Mean Update Direction:**
-  $$ \nabla_{\theta_{\mu}} \ln \pi = \frac{7.0 - 5.0}{2.0^2} = \frac{2.0}{4.0} = +0.5 $$
+  $$ \nabla_{\theta_{\mu}} \log \pi = \frac{7.0 - 5.0}{2.0^2} = \frac{2.0}{4.0} = +0.5 $$
   Since $\delta_t = +0.5$ (positive), the mean $\mu$ shifts **to the right (increases)**.
 * **Standard Deviation Update Direction:**
-  $$ \nabla_{\theta_{\sigma}} \ln \pi = \frac{(7.0 - 5.0)^2}{2.0^2} - 1 = \frac{4.0}{4.0} - 1 = 0 $$
+  $$ \nabla_{\theta_{\sigma}} \log \pi = \frac{(7.0 - 5.0)^2}{2.0^2} - 1 = \frac{4.0}{4.0} - 1 = 0 $$
   Because the action is exactly $1$ standard deviation away, the standard deviation $\sigma$ **remains unchanged**.
 
 #### Case 2: An action is sampled far from the mean ($a = 9.0$)
 * **Mean Update Direction:**
-  $$ \nabla_{\theta_{\mu}} \ln \pi = \frac{9.0 - 5.0}{2.0^2} = \frac{4.0}{4.0} = +1.0 $$
+  $$ \nabla_{\theta_{\mu}} \log \pi = \frac{9.0 - 5.0}{2.0^2} = \frac{4.0}{4.0} = +1.0 $$
   The mean $\mu$ shifts **to the right (increases)** even faster.
 * **Standard Deviation Update Direction:**
-  $$ \nabla_{\theta_{\sigma}} \ln \pi = \frac{(9.0 - 5.0)^2}{2.0^2} - 1 = \frac{16.0}{4.0} - 1 = +3.0 $$
+  $$ \nabla_{\theta_{\sigma}} \log \pi = \frac{(9.0 - 5.0)^2}{2.0^2} - 1 = \frac{16.0}{4.0} - 1 = +3.0 $$
   Since the direction is positive and $\delta_t > 0$, the standard deviation $\sigma$ **increases (widens the curve)**.
   * **Intuition:** A successful action occurred far away. The policy widens its search (increases exploration) to cover this high-reward region.
 
 #### Case 3: An action is sampled very close to the mean ($a = 5.5$)
 * **Mean Update Direction:**
-  $$ \nabla_{\theta_{\mu}} \ln \pi = \frac{5.5 - 5.0}{2.0^2} = \frac{0.5}{4.0} = +0.125 $$
+  $$ \nabla_{\theta_{\mu}} \log \pi = \frac{5.5 - 5.0}{2.0^2} = \frac{0.5}{4.0} = +0.125 $$
   The mean $\mu$ shifts slightly to the right.
 * **Standard Deviation Update Direction:**
-  $$ \nabla_{\theta_{\sigma}} \ln \pi = \frac{(5.5 - 5.0)^2}{2.0^2} - 1 = \frac{0.25}{4.0} - 1 = -0.9375 $$
+  $$ \nabla_{\theta_{\sigma}} \log \pi = \frac{(5.5 - 5.0)^2}{2.0^2} - 1 = \frac{0.25}{4.0} - 1 = -0.9375 $$
   Since the direction is negative and $\delta_t > 0$, the standard deviation $\sigma$ **decreases (narrows the curve)**.
   * **Intuition:** A successful action occurred close to the mean. The policy becomes more precise (reduces exploration) around this successful mean.
 
