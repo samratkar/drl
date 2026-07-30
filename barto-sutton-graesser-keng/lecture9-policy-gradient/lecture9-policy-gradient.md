@@ -150,12 +150,15 @@ $$
 \textbf{Initialize:} \text{ policy parameter } \theta \in \mathbb{R}^{d'} \\
 \\
 \textbf{Loop forever (for each episode):} \\
+\quad \textbf{Phase 1: Action Selection (Rollout)} \\
 \quad \text{Generate an episode } S_0, A_0, R_1, \dots, S_{T-1}, A_{T-1}, R_T \text{ where actions are sampled as:} \\
 \quad \quad \bullet \text{ Discrete: compute preferences } h(S_t, a, \theta) \xrightarrow{\text{softmax}} \pi_{\theta}(a|S_t) \text{ and sample } A_t \\
 \quad \quad \bullet \text{ Continuous: compute } \mu(S_t, \theta), \sigma(S_t, \theta) \text{ and sample } A_t \sim \mathcal{N}(\mu, \sigma^2) \\
+\\
+\quad \textbf{Phase 2: Weight Update (Learning)} \\
 \quad \textbf{Loop for each step of the episode } t = 0, 1, \dots, T-1: \\
 \qquad G \leftarrow \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k \\
-\qquad \theta \leftarrow \theta + \alpha \gamma^t G \nabla_{\theta} \log \pi_{\theta}(A_t | S_t) \quad \text{(Log-gradient update computed as per Section 5)}
+\qquad \theta \leftarrow \theta + \alpha \gamma^t G \nabla_{\theta} \log \pi_{\theta}(A_t | S_t) \quad \text{(Policy Parameter Update)}
 \end{array}
 $$
 
@@ -245,18 +248,32 @@ $$
 \textbf{Initialize:} \text{ policy parameter } \theta \in \mathbb{R}^{d'} \text{ and state-value weights } \mathbf{w} \in \mathbb{R}^d \\
 \\
 \textbf{Loop forever (for each episode):} \\
+\quad \textbf{Phase 1: Action Selection (Rollout)} \\
 \quad \text{Generate an episode } S_0, A_0, R_1, \dots, S_{T-1}, A_{T-1}, R_T \text{ where actions are sampled as:} \\
 \quad \quad \bullet \text{ Discrete: compute preferences } h(S_t, a, \theta) \xrightarrow{\text{softmax}} \pi_{\theta}(a|S_t) \text{ and sample } A_t \\
 \quad \quad \bullet \text{ Continuous: compute } \mu(S_t, \theta), \sigma(S_t, \theta) \text{ and sample } A_t \sim \mathcal{N}(\mu, \sigma^2) \\
+\\
+\quad \textbf{Phase 2: Weight Update (Learning)} \\
 \quad \textbf{Loop for each step of the episode } t = 0, 1, \dots, T-1: \\
 \qquad G \leftarrow \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k \\
-\qquad \delta \leftarrow G - \hat{v}(S_t, \mathbf{w}) \\
-\qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w}) \\
-\qquad \theta \leftarrow \theta + \alpha \gamma^t \delta \nabla_{\theta} \log \pi_{\theta}(A_t | S_t) \quad \text{(Log-gradient update computed as per Section 5)}
+\qquad \delta \leftarrow G - \hat{v}(S_t, \mathbf{w}) \quad \text{(Compute Advantage/TD Error)} \\
+\qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w}) \quad \text{(State-Value / Baseline Weights Update)} \\
+\qquad \theta \leftarrow \theta + \alpha \gamma^t \delta \nabla_{\theta} \log \pi_{\theta}(A_t | S_t) \quad \text{(Policy Weights Update)}
 \end{array}
 $$
 
-*(Where $\mathbf{w}$ weights are updated using gradient descent to minimize value estimation MSE, and $\theta$ weights are updated via policy gradient ascent).*
+*(Where policy parameters $\theta$ are updated via gradient ascent to maximize expected return, and baseline weights $\mathbf{w}$ are updated via gradient descent to minimize mean squared error of value predictions).*
+
+### Remark: The Role and Necessity of Baseline Weights $\mathbf{w}$ in the Algorithm
+
+Students often ask: *Why does the algorithm require a separate set of weights $\mathbf{w}$ and a specific update step for them?*
+
+Here is why maintaining and learning the baseline weight vector $\mathbf{w}$ is critical:
+1. **Defining the Baseline $\hat{v}(s, \mathbf{w})$:** The baseline $b(s)$ in the policy gradient update is chosen to be $\hat{v}(S_t, \mathbf{w})$, our neural network's (or function approximator's) current estimate of the state value.
+2. **Computing the Advantage ($\delta$):** The update scales the policy gradient by $\delta = G_t - \hat{v}(S_t, \mathbf{w})$. This acts as the **Advantage**, indicating how much better (or worse) the return from this action was compared to the expected value of that state.
+3. **The Policy is a Moving Target:** The true value function of a state $v_\pi(s)$ depends on the current policy $\pi_\theta$. Because the policy parameters $\theta$ change at every step, the policy itself changes. A static baseline would quickly become obsolete. Therefore, we must continuously update the value weights $\mathbf{w}$ via stochastic gradient descent:
+   $$ \mathbf{w} \leftarrow \mathbf{w} + \beta \delta_t \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w}) $$
+   This ensures $\hat{v}(S_t, \mathbf{w})$ tracks the true expected returns under the *current* policy, keeping the advantage $\delta_t$ properly centered around $0$ and successfully reducing variance throughout training.
 
 ### Why use Policy Gradient if we are training a State-Value function anyway?
 
