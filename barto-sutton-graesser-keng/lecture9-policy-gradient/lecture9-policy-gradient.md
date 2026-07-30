@@ -52,9 +52,22 @@ If we take the gradient with respect to $\theta$ (Equation 2.7):
 $$ \nabla_{\theta} J(\theta) = \nabla_{\theta} \sum_{\tau} P(\tau; \theta) R(\tau) = \sum_{\tau} \nabla_{\theta} P(\tau; \theta) R(\tau) \tag{2.7} $$
 
 > **The Roadblock:** In reinforcement learning, the number of possible trajectories $\tau$ is infinite or too large to sum over. The only way to compute this in practice is to **estimate it by running simulations** (sampling trajectories and averaging their values).
-> For a sum to be estimable via simulation, it **must** be written as an expectation:
-> $$ \text{Expected Value} = \sum_{\tau} P(\tau; \theta) \times \text{Something}(\tau) $$
-> But in our gradient equation, $\nabla_{\theta} P(\tau; \theta)$ is **not** a probability distribution (it does not sum to $1$). Therefore, the sum is not an expectation, and we cannot estimate it by sampling trajectories from our policy. We need to insert $P(\tau; \theta)$ back into the sum.
+> 
+> **Why do we want to convert the sum into an expected value?**
+> Calculating the exact gradient requires summing over all possible trajectories $\tau$ (Equation 2.7). For tasks with large or continuous state/action spaces (like Chess, Atari, or driving), the number of possible trajectories is infinite or astronomically large. We cannot write a computer program to loop through and sum them all.
+> 
+> To bypass this, we must **approximate** the sum by taking a random sample (running a few episodes in a simulator). In statistics, the **Law of Large Numbers** allows us to estimate a sum via sampling *only* if the sum is structured as an expected value over a valid probability distribution $P(\tau; \theta)$:
+> $$ \text{Expected Value} = \sum_{\tau} P(\tau; \theta) \times f(\tau) = \mathbb{E}_{\tau \sim \pi_{\theta}} [f(\tau)] \approx \frac{1}{N} \sum_{i=1}^N f(\tau_i) $$
+> If it is in this form, we simply let the agent play the game $N$ times to collect sample trajectories $\tau_1, \dots, \tau_N$, compute $f(\tau_i)$ for each, and take the average.
+> 
+> **Why is Equation 2.7 not an expectation?**
+> In our gradient equation (Equation 2.7), the scaling term is the gradient $\nabla_{\theta} P(\tau; \theta)$ rather than the probability distribution $P(\tau; \theta)$. The term $\nabla_{\theta} P(\tau; \theta)$ is **not** a valid probability distribution because:
+> 1. **It can be negative:** Since it represents the derivative (rate of change) of a probability, it will be negative if tweaking parameters makes a trajectory less likely. Probabilities cannot be negative.
+> 2. **It sums to $0$, not $1$:** Since the probabilities of all trajectories must sum to $1$ ($\sum_{\tau} P(\tau; \theta) = 1$), taking the gradient of both sides shows that the sum of the gradients must be $0$:
+>    $$ \sum_{\tau} \nabla_{\theta} P(\tau; \theta) = \nabla_{\theta} \sum_{\tau} P(\tau; \theta) = \nabla_{\theta} (1) = 0 $$
+> 
+> Because $\nabla_{\theta} P(\tau; \theta)$ is not a valid probability distribution, we cannot sample trajectories from it. Therefore, we cannot estimate the sum in Equation 2.7 via simulation. We need to mathematically transform the sum to insert the probability distribution $P(\tau; \theta)$ back outside the gradient so it becomes a sampleable expected value:
+> $$ \nabla_{\theta} J(\theta) = \sum_{\tau} P(\tau; \theta) \times \left[ \nabla_{\theta} \log P(\tau; \theta) R(\tau) \right] = \mathbb{E}_{\tau \sim \pi_{\theta}} [ \nabla_{\theta} \log P(\tau; \theta) R(\tau) ] $$
 
 #### 2. The Likelihood Ratio / Log-Derivative Trick (Equation 2.8 & 2.9)
 Using standard calculus, the derivative of a logarithm $\log(x)$ is $\frac{d}{dx}\log(x) = \frac{1}{x}$. Using the chain rule, this generalizes to:
