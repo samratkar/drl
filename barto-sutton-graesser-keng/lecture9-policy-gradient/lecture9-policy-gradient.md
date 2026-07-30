@@ -225,13 +225,22 @@ Because REINFORCE relies on full Monte Carlo rollouts ($G_t$), it suffers from m
 
 To fix the variance problem, we can subtract a **baseline** $b(s)$ from the return. The baseline can be any function, as long as it does not depend on the action $a$. 
 
+The **Policy Gradient Theorem with Baseline** (Sutton & Barto Equation 13.10) generalizes the policy gradient theorem to:
+$$ \nabla_{\theta} J(\theta) \propto \sum_{s} d(s) \sum_{a} (q_{\pi}(s,a) - b(s)) \nabla_{\theta} \pi_{\theta}(a|s) \tag{Eq. 13.10 (Sutton and Barto)} $$
+
+This leads directly to the REINFORCE with Baseline update rule:
 $$ \theta_{t+1} = \theta_t + \alpha \gamma^t (G_t - b(S_t)) \nabla_{\theta} \log \pi_{\theta}(A_t|S_t) \tag{Eq. 13.8 (Sutton and Barto)} $$
 
 The most common baseline is a learned estimate of the state-value function, $\hat{v}(s, \mathbf{w})$.
 The term $(G_t - \hat{v}(S_t, \mathbf{w}))$ is the **Advantage** (how much better this action's outcome was compared to our average expectation of the state).
 
 ### Proof of Unbiased Baseline
-We want to prove that subtracting a baseline $b(s)$ that is independent of action $a$ does not introduce any bias to the expected gradient:
+We want to prove that subtracting a baseline $b(s)$ that is independent of action $a$ does not introduce any bias to the expected gradient. The proof demonstrates that the expected value of the baseline gradient term is exactly zero.
+
+While the individual steps of this proof are not numbered as separate equations in Sutton & Barto (they are presented as inline derivation steps on Page 329), the core identity showing that the subtracted quantity is zero is:
+$$ \sum_{a} b(s) \nabla_{\theta} \pi_{\theta}(a|s) = b(s) \nabla_{\theta} \sum_{a} \pi_{\theta}(a|s) = b(s) \nabla_{\theta} (1) = 0 \tag{Baseline Identity (Sutton and Barto, Page 329)} $$
+
+Let's walk through the full expectation proof step-by-step:
 $$ \mathbb{E}_{A_t \sim \pi} [ b(S_t) \nabla_{\theta} \log \pi_{\theta}(A_t|S_t) ] = 0 $$
 
 **Proof:**
