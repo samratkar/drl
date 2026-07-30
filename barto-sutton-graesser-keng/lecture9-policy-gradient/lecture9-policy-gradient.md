@@ -299,18 +299,111 @@ The answer lies in **decoupling decision-making from update guidance**:
 
 In the REINFORCE and REINFORCE with Baseline algorithms, we use the abstract mathematical gradient $\nabla_{\theta} \log \pi_{\theta}(A_t|S_t)$. In practice, how does a neural network actually compute this gradient, and how does the agent sample actions? 
 
-### How and Where Parameterization Integrates into the Algorithm
+To understand this transition, let's first look at the entire **REINFORCE with Baseline** algorithm:
 
-A policy network represents the policy parameters $\theta$. The parameterization is inserted at two distinct phases in the algorithm's loop:
+$$
+\begin{array}{l}
+\textbf{Input:} \text{ a differentiable policy parameterization } \pi_{\theta}(a|s) \\
+\textbf{Input:} \text{ a differentiable state-value function parameterization } \hat{v}(s, \mathbf{w}) \\
+\textbf{Parameters:} \text{ step sizes } \alpha > 0, \beta > 0 \\
+\textbf{Initialize:} \text{ policy parameter } \theta \in \mathbb{R}^{d'} \text{ and state-value weights } \mathbf{w} \in \mathbb{R}^d \\
+\\
+\textbf{Loop forever (for each episode):} \\
+\quad \color{blue}{\textbf{Phase 1: Action Selection (Rollout Loop)}} \\
+\quad \text{Generate an episode } S_0, A_0, R_1, \dots, S_{T-1}, A_{T-1}, R_T \text{ where actions are sampled as:} \\
+\quad \quad \bullet \text{ Discrete: compute preferences } h(S_t, a, \theta) \xrightarrow{\text{softmax}} \pi_{\theta}(a|S_t) \text{ and sample } A_t \\
+\quad \quad \bullet \text{ Continuous: compute } \mu(S_t, \theta), \sigma(S_t, \theta) \text{ and sample } A_t \sim \mathcal{N}(\mu, \sigma^2) \\
+\\
+\quad \color{red}{\textbf{Phase 2: Weight Update (Learning Loop)}} \\
+\quad \textbf{Loop for each step of the episode } t = 0, 1, \dots, T-1: \\
+\qquad G \leftarrow \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k \\
+\qquad \delta \leftarrow G - \hat{v}(S_t, \mathbf{w}) \\
+\qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w}) \\
+\qquad \theta \leftarrow \theta + \alpha \gamma^t \delta \color{darkorange}{\nabla_{\theta} \log \pi_{\theta}(A_t | S_t)} \quad \text{(Abstract Gradient Term)}
+\end{array}
+$$
 
-1. **Action Selection (During Rollout/Simulation Loop):**
-   * **When:** At every time step $t$ while interacting with the environment.
-   * **Where:** In the step `Sample action` $A_t \sim \pi_\theta(\cdot|S_t)$.
-   * **How:** The agent feeds the current state $S_t$ as input to the neural network. The network performs a forward pass and outputs the parameters of a probability distribution. The agent then samples action $A_t$ from this distribution to execute in the environment.
-2. **Weight Update (During Learning/Optimization Loop):**
-   * **When:** At the end of the episode (in REINFORCE) when computing the gradient ascent step.
-   * **Where:** In the update formula step $\theta \leftarrow \theta + \alpha \dots \nabla_\theta \log \pi_\theta(A_t|S_t)$.
-   * **How:** The agent retrieves the state $S_t$ and the action $A_t$ that was actually selected. It computes the analytical derivative of the log-probability of $A_t$ under the current network parameters, $\nabla_\theta \log \pi_\theta(A_t|S_t)$, and backpropagates this gradient to update the weights $\theta$.
+Let's point out and analyze exactly where and how parameterization is inserted at these two phases:
+
+### Phase 1: Action Selection (Rollout Loop)
+* **When:** At every time step $t$ during environment interaction.
+* **Where:** Located in the rollout step `Generate an episode ... where actions are sampled as`.
+* **How:** 
+  1. The agent feeds the current state $S_t$ into the policy network.
+  2. The network performs a forward pass to calculate either action preferences $h(S_t, a, \theta)$ (for discrete spaces) or mean and standard deviation $\mu(S_t), \sigma(S_t)$ (for continuous spaces).
+  3. The agent samples $A_t$ from the resulting probability distribution and executes it in the environment.
+
+### Phase 2: Weight Update (Learning Loop)
+* **When:** In the learning loop, after the rollout is complete.
+* **Where:** Located in the update step $\theta \leftarrow \theta + \alpha \gamma^t \delta \nabla_{\theta} \log \pi_{\theta}(A_t | S_t)$.
+* **How:** 
+  1. The agent retrieves the state $S_t$ and the action $A_t$ that was actually selected during the rollout.
+  2. It computes the analytical derivative of the log-probability of $A_t$ under the current network parameters, $\nabla_{\theta} \log \pi_{\theta}(A_t | S_t)$.
+  3. The optimizer backpropagates this gradient to adjust the weights $\theta$, shifting the distribution to make the action more likely (if advantage $\delta > 0$) or less likely (if advantage $\delta < 0$).
+
+---
+
+### Side-by-Side Algorithm Comparison: Softmax vs. Gaussian Implementation
+
+To see exactly how these parameterizations are implemented in practice, here is the REINFORCE with Baseline algorithm for both Softmax and Gaussian policies side-by-side:
+
+$$
+\begin{array}{c|c}
+\textbf{Softmax Policy (Discrete Action Space)} & \textbf{Gaussian Policy (Continuous Action Space)} \\
+\hline
+\begin{array}{l}
+\color{purple}{\textbf{Input:} \text{ preference model } h(s, a, \theta)} \\
+\textbf{Input:} \text{ value function } \hat{v}(s, \mathbf{w}) \\
+\textbf{Parameters:} \alpha > 0, \beta > 0 \\
+\color{purple}{\textbf{Initialize:} \theta \in \mathbb{R}^{d'}}, \mathbf{w} \in \mathbb{R}^d \\
+\\
+\textbf{Loop forever (for each episode):} \\
+\quad \color{blue}{\textbf{Phase 1: Action Selection (Rollout)}} \\
+\quad \text{Generate episode } S_0, A_0, R_1, \dots, R_T \text{ following } \pi_{\theta}: \\
+\qquad \text{For each step } t: \\
+\qquad \quad \color{purple}{h(S_t, a, \theta) \leftarrow \text{Model}(S_t)} \\
+\qquad \quad \color{purple}{\pi_{\theta}(a|S_t) \leftarrow \frac{e^{h(S_t, a, \theta)}}{\sum_b e^{h(S_t, b, \theta)}}} \\
+\qquad \quad \color{purple}{\text{Sample } A_t \sim \text{Categorical}(\pi_{\theta}(\cdot|S_t))} \\
+\\
+\quad \color{red}{\textbf{Phase 2: Weight Update (Learning)}} \\
+\quad \text{For each step } t = 0, \dots, T-1: \\
+\qquad G \leftarrow \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k \\
+\qquad \delta \leftarrow G - \hat{v}(S_t, \mathbf{w}) \\
+\qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w}) \\
+\qquad \color{purple}{\theta \leftarrow \theta + \alpha \gamma^t \delta \nabla_{\theta} \log \pi_{\theta}(A_t | S_t)} \\
+\qquad \quad \color{purple}{\text{where analytical log-gradient is:}} \\
+\qquad \quad \color{purple}{\nabla_{\theta} \log \pi_{\theta}(A_t | S_t) =} \\
+\qquad \quad \color{purple}{\nabla_{\theta} h(S_t, A_t, \theta) - \sum_b \pi_{\theta}(b|S_t) \nabla_{\theta} h(S_t, b, \theta)}
+\end{array}
+&
+\begin{array}{l}
+\color{teal}{\textbf{Input:} \text{ mean model } \mu(s, \theta_{\mu}), \text{ log-std model } \eta(s, \theta_{\sigma})} \\
+\textbf{Input:} \text{ value function } \hat{v}(s, \mathbf{w}) \\
+\textbf{Parameters:} \alpha > 0, \beta > 0 \\
+\color{teal}{\textbf{Initialize:} \theta = [\theta_{\mu}, \theta_{\sigma}]^T}, \mathbf{w} \in \mathbb{R}^d \\
+\\
+\textbf{Loop forever (for each episode):} \\
+\quad \color{blue}{\textbf{Phase 1: Action Selection (Rollout)}} \\
+\quad \text{Generate episode } S_0, A_0, R_1, \dots, R_T \text{ following } \pi_{\theta}: \\
+\qquad \text{For each step } t: \\
+\qquad \quad \color{teal}{\mu(S_t, \theta_{\mu}), \eta(S_t, \theta_{\sigma}) \leftarrow \text{Model}(S_t)} \\
+\qquad \quad \color{teal}{\sigma(S_t, \theta_{\sigma}) \leftarrow \exp(\eta(S_t, \theta_{\sigma}))} \\
+\qquad \quad \color{teal}{\text{Sample } A_t = \mu(S_t, \theta_{\mu}) + \sigma(S_t, \theta_{\sigma}) \cdot \epsilon,} \\
+\qquad \quad \quad \color{teal}{\text{where } \epsilon \sim \mathcal{N}(0, 1)} \\
+\\
+\quad \color{red}{\textbf{Phase 2: Weight Update (Learning)}} \\
+\quad \text{For each step } t = 0, \dots, T-1: \\
+\qquad G \leftarrow \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k \\
+\qquad \delta \leftarrow G - \hat{v}(S_t, \mathbf{w}) \\
+\qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w}) \\
+\qquad \color{teal}{\theta_{\mu} \leftarrow \theta_{\mu} + \alpha \gamma^t \delta \nabla_{\theta_{\mu}} \log \pi_{\theta}(A_t | S_t)} \\
+\qquad \color{teal}{\theta_{\sigma} \leftarrow \theta_{\sigma} + \alpha \gamma^t \delta \nabla_{\theta_{\sigma}} \log \pi_{\theta}(A_t | S_t)} \\
+\qquad \quad \color{teal}{\text{where analytical log-gradients are:}} \\
+\qquad \quad \color{teal}{\nabla_{\theta_{\mu}} \log \pi_{\theta}(A_t | S_t) = \frac{A_t - \mu(S_t)}{\sigma(S_t)^2} \nabla_{\theta_{\mu}} \mu(S_t, \theta_{\mu})} \\
+\qquad \quad \color{teal}{\nabla_{\theta_{\sigma}} \log \pi_{\theta}(A_t | S_t) = \left( \frac{(A_t - \mu(S_t))^2}{\sigma(S_t)^2} - 1 \right) \nabla_{\theta_{\sigma}} \eta(S_t, \theta_{\sigma})}
+\end{array}
+\end{array}
+$$
 
 ---
 
