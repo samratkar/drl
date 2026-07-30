@@ -288,11 +288,11 @@ A policy network represents the policy parameters $\theta$. The parameterization
 
 1. **Action Selection (During Rollout/Simulation Loop):**
    * **When:** At every time step $t$ while interacting with the environment.
-   * **Where:** In the step `Sample action A_t ~ \pi_\theta(\cdot|S_t)`.
+   * **Where:** In the step `Sample action` $A_t \sim \pi_\theta(\cdot|S_t)$.
    * **How:** The agent feeds the current state $S_t$ as input to the neural network. The network performs a forward pass and outputs the parameters of a probability distribution. The agent then samples action $A_t$ from this distribution to execute in the environment.
 2. **Weight Update (During Learning/Optimization Loop):**
    * **When:** At the end of the episode (in REINFORCE) when computing the gradient ascent step.
-   * **Where:** In the update formula step `\theta \leftarrow \theta + \alpha \dots \nabla_\theta \log \pi_\theta(A_t|S_t)`.
+   * **Where:** In the update formula step $\theta \leftarrow \theta + \alpha \dots \nabla_\theta \log \pi_\theta(A_t|S_t)$.
    * **How:** The agent retrieves the state $S_t$ and the action $A_t$ that was actually selected. It computes the analytical derivative of the log-probability of $A_t$ under the current network parameters, $\nabla_\theta \log \pi_\theta(A_t|S_t)$, and backpropagates this gradient to update the weights $\theta$.
 
 ---
