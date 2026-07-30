@@ -127,40 +127,7 @@ $$ \nabla_{\theta} J(\theta) = \mathbb{E}_{\tau \sim \pi_{\theta}} \left[ \sum_{
 
 ---
 
-## 3. Policy Parameterizations: Softmax vs. Gaussian
-
-A policy gradient algorithm (whether it is REINFORCE or Actor-Critic) requires a **differentiable policy parameterization** $\pi_{\theta}(a|s)$. The algorithm update formulas are written in terms of the abstract gradient $\nabla_{\theta} \log \pi_{\theta}(A_t|S_t)$.
-
-In practice, how we calculate this gradient and how we select actions depends entirely on the nature of the action space:
-
-### A. Softmax Policy (Discrete Action Spaces)
-For discrete action spaces, the neural network (or function approximator) outputs a real-valued preference $h(s, a, \theta) \in \mathbb{R}$ for each action $a \in \mathcal{A}$. Action probabilities are computed using the **softmax function**:
-$$ \pi_{\theta}(a|s) \doteq \frac{e^{h(s, a, \theta)}}{\sum_{b \in \mathcal{A}} e^{h(s, b, \theta)}} \tag{Eq. 13.2 (Sutton and Barto)} $$
-
-* **Action Selection Step:**
-  1. Forward pass: Feed state $S_t$ into the network to obtain preferences $h(S_t, a, \theta)$ for all actions.
-  2. Compute probabilities $\pi_{\theta}(a|S_t)$ using the softmax formula.
-  3. Sample action $A_t$ from the resulting probability distribution.
-* **Log-Gradient Update Step:**
-  The gradient of the log-probability of the chosen action $A_t$ is:
-  $$ \nabla_{\theta} \log \pi_{\theta}(A_t|S_t) = \nabla_{\theta} h(S_t, A_t, \theta) - \sum_{b \in \mathcal{A}} \pi_{\theta}(b|S_t) \nabla_{\theta} h(S_t, b, \theta) $$
-
-### B. Gaussian Policy (Continuous Action Spaces)
-For continuous action spaces (where actions are real numbers), the policy is represented by a probability density function. Typically, we use a **Gaussian (Normal) distribution**:
-$$ \pi_{\theta}(a|s) \doteq \frac{1}{\sigma(s, \theta)\sqrt{2\pi}} \exp \left( -\frac{(a - \mu(s, \theta))^2}{2\sigma(s, \theta)^2} \right) \tag{Eq. 13.19 (Sutton and Barto)} $$
-
-* **Action Selection Step:**
-  1. Forward pass: Feed state $S_t$ into the network to obtain the mean $\mu(S_t, \theta_{\mu})$ and log-variance/log-std $\eta(S_t, \theta_{\sigma})$.
-  2. Compute standard deviation: $\sigma(S_t, \theta_{\sigma}) = \exp(\eta(S_t, \theta_{\sigma}))$.
-  3. Sample action $A_t \sim \mathcal{N}(\mu(S_t, \theta_{\mu}), \sigma(S_t, \theta_{\sigma})^2)$ (typically using the reparameterization trick: $A_t = \mu(S_t) + \sigma(S_t) \odot \epsilon$ where $\epsilon \sim \mathcal{N}(0, 1)$).
-* **Log-Gradient Update Step:**
-  The gradients with respect to the mean and standard deviation parameters are computed analytically:
-  * Mean: $\nabla_{\theta_{\mu}} \log \pi_{\theta}(A_t|S_t) = \frac{A_t - \mu(S_t, \theta)}{\sigma(S_t, \theta)^2} \nabla_{\theta_{\mu}} \mu(S_t, \theta_{\mu})$
-  * Std: $\nabla_{\theta_{\sigma}} \log \pi_{\theta}(A_t|S_t) = \left( \frac{(A_t - \mu(S_t, \theta))^2}{\sigma(S_t, \theta)^2} - 1 \right) \nabla_{\theta_{\sigma}} \eta(S_t, \theta_{\sigma})$
-
----
-
-## 4. The REINFORCE Algorithm (Monte Carlo Policy Gradient)
+## 3. The REINFORCE Algorithm (Monte Carlo Policy Gradient)
 
 Since we don't know the exact $q_{\pi}(S_t, A_t)$, the simplest thing we can do is use a Monte Carlo sample. We play out an entire episode, and use the actual observed Return $G_t$ as an unbiased estimate for $q_{\pi}$.
 
@@ -174,23 +141,21 @@ $$ \theta_{t+1} = \theta_t + \alpha \gamma^t G_t \nabla_{\theta} \log \pi_{\thet
 
 > **Note on Deep RL Practice:** In modern deep reinforcement learning implementations (like those using neural networks for continuous tasks), the $\gamma^t$ term is often omitted (set to 1). This is because the exponential decay of $\gamma^t$ causes updates late in long episodes to become extremely small, leading to slow training of neural networks. However, the $\gamma^t$ term is mathematically required for the gradient of the discounted start-state objective.
 
----
-
 ### REINFORCE Pseudo-code (Sutton & Barto 13.3)
 
 $$
 \begin{array}{l}
-\textbf{Input:} \text{ a differentiable policy parameterization } \pi(a|s, \theta) \\
+\textbf{Input:} \text{ a differentiable policy parameterization } \pi_{\theta}(a|s) \\
 \textbf{Parameters:} \text{ step size } \alpha > 0 \\
 \textbf{Initialize:} \text{ policy parameter } \theta \in \mathbb{R}^{d'} \\
 \\
 \textbf{Loop forever (for each episode):} \\
 \quad \text{Generate an episode } S_0, A_0, R_1, \dots, S_{T-1}, A_{T-1}, R_T \text{ where actions are sampled as:} \\
-\quad \quad \bullet \text{ Discrete: compute preferences } h(S_t, a, \theta) \xrightarrow{\text{softmax}} \pi(a|S_t, \theta) \text{ and sample } A_t \\
+\quad \quad \bullet \text{ Discrete: compute preferences } h(S_t, a, \theta) \xrightarrow{\text{softmax}} \pi_{\theta}(a|S_t) \text{ and sample } A_t \\
 \quad \quad \bullet \text{ Continuous: compute } \mu(S_t, \theta), \sigma(S_t, \theta) \text{ and sample } A_t \sim \mathcal{N}(\mu, \sigma^2) \\
 \quad \textbf{Loop for each step of the episode } t = 0, 1, \dots, T-1: \\
 \qquad G \leftarrow \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k \\
-\qquad \theta \leftarrow \theta + \alpha \gamma^t G \nabla_{\theta} \log \pi(A_t | S_t, \theta) \quad \text{(Log-gradient update computed as per Section 3)}
+\qquad \theta \leftarrow \theta + \alpha \gamma^t G \nabla_{\theta} \log \pi_{\theta}(A_t | S_t) \quad \text{(Log-gradient update computed as per Section 5)}
 \end{array}
 $$
 
@@ -202,7 +167,7 @@ sequenceDiagram
     rect rgb(240, 248, 255)
     Note over Env, Agent: Phase 1: Rollout (Generate Trajectory)
     loop Until Terminal State
-        Agent->>Env: Sample action A_t ~ π(a|s, θ)
+        Agent->>Env: Sample action A_t ~ π_theta(a|s)
         Env-->>Agent: Return R_{t+1}, S_{t+1}
     end
     end
@@ -211,7 +176,7 @@ sequenceDiagram
     Note over Env, Agent: Phase 2: Learn (Update Weights)
     loop For each step t in trajectory
         Agent->>Agent: Calculate Return G_t
-        Agent->>Agent: Update θ = θ + α * γ^t * G_t * ∇logπ
+        Agent->>Agent: Update θ = θ + α * γ^t * G_t * ∇logπ_theta
     end
     end
 ```
@@ -274,20 +239,20 @@ Therefore, the baseline term contributes exactly $0$ to the expected gradient up
 
 $$
 \begin{array}{l}
-\textbf{Input:} \text{ a differentiable policy parameterization } \pi(a|s, \theta) \\
+\textbf{Input:} \text{ a differentiable policy parameterization } \pi_{\theta}(a|s) \\
 \textbf{Input:} \text{ a differentiable state-value function parameterization } \hat{v}(s, \mathbf{w}) \\
 \textbf{Parameters:} \text{ step sizes } \alpha > 0, \beta > 0 \\
 \textbf{Initialize:} \text{ policy parameter } \theta \in \mathbb{R}^{d'} \text{ and state-value weights } \mathbf{w} \in \mathbb{R}^d \\
 \\
 \textbf{Loop forever (for each episode):} \\
 \quad \text{Generate an episode } S_0, A_0, R_1, \dots, S_{T-1}, A_{T-1}, R_T \text{ where actions are sampled as:} \\
-\quad \quad \bullet \text{ Discrete: compute preferences } h(S_t, a, \theta) \xrightarrow{\text{softmax}} \pi(a|S_t, \theta) \text{ and sample } A_t \\
+\quad \quad \bullet \text{ Discrete: compute preferences } h(S_t, a, \theta) \xrightarrow{\text{softmax}} \pi_{\theta}(a|S_t) \text{ and sample } A_t \\
 \quad \quad \bullet \text{ Continuous: compute } \mu(S_t, \theta), \sigma(S_t, \theta) \text{ and sample } A_t \sim \mathcal{N}(\mu, \sigma^2) \\
 \quad \textbf{Loop for each step of the episode } t = 0, 1, \dots, T-1: \\
 \qquad G \leftarrow \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k \\
 \qquad \delta \leftarrow G - \hat{v}(S_t, \mathbf{w}) \\
 \qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w}) \\
-\qquad \theta \leftarrow \theta + \alpha \gamma^t \delta \nabla_{\theta} \log \pi(A_t | S_t, \theta) \quad \text{(Log-gradient update computed as per Section 3)}
+\qquad \theta \leftarrow \theta + \alpha \gamma^t \delta \nabla_{\theta} \log \pi_{\theta}(A_t | S_t) \quad \text{(Log-gradient update computed as per Section 5)}
 \end{array}
 $$
 
@@ -301,7 +266,7 @@ The answer lies in **decoupling decision-making from update guidance**:
 
 1. **Decoupled Architecture (Decision vs. Update):**
    * **Value-Based (DQN):** The value function is the *sole decision maker*. To choose an action, the agent must compute Q-values for all actions and run an argmax selection: $A = \text{argmax}_a Q(s,a)$.
-   * **Policy Gradient with Baseline:** The value function is only a *critic/guide* for updating weights. The actual decision-making is done directly by the policy (Actor) $\pi(a|s, \theta)$. The value network $\hat{v}(s, \mathbf{w})$ is **never** used during decision-making.
+   * **Policy Gradient with Baseline:** The value function is only a *critic/guide* for updating weights. The actual decision-making is done directly by the policy (Actor) $\pi_{\theta}(a|s)$. The value network $\hat{v}(s, \mathbf{w})$ is **never** used during decision-making.
 
 2. **Key Advantages of this Decoupling:**
    * **Continuous Action Spaces:** A policy network can directly output parameters of a continuous probability distribution (e.g., the mean and variance of a Gaussian for a steering wheel angle). A value-based network cannot do this because computing $\text{argmax}$ over an infinite continuous space at every step is computationally intractable.
@@ -313,7 +278,133 @@ The answer lies in **decoupling decision-making from update guidance**:
 
 ---
 
-## 5. Actor-Critic Methods (Sutton & Barto 13.5)
+## 5. Policy Parameterizations: Translating Theory into Practice
+
+In the REINFORCE and REINFORCE with Baseline algorithms, we use the abstract mathematical gradient $\nabla_{\theta} \log \pi_{\theta}(A_t|S_t)$. In practice, how does a neural network actually compute this gradient, and how does the agent sample actions? 
+
+### How and Where Parameterization Integrates into the Algorithm
+
+A policy network represents the policy parameters $\theta$. The parameterization is inserted at two distinct phases in the algorithm's loop:
+
+1. **Action Selection (During Rollout/Simulation Loop):**
+   * **When:** At every time step $t$ while interacting with the environment.
+   * **Where:** In the step `Sample action A_t ~ \pi_\theta(\cdot|S_t)`.
+   * **How:** The agent feeds the current state $S_t$ as input to the neural network. The network performs a forward pass and outputs the parameters of a probability distribution. The agent then samples action $A_t$ from this distribution to execute in the environment.
+2. **Weight Update (During Learning/Optimization Loop):**
+   * **When:** At the end of the episode (in REINFORCE) when computing the gradient ascent step.
+   * **Where:** In the update formula step `\theta \leftarrow \theta + \alpha \dots \nabla_\theta \log \pi_\theta(A_t|S_t)`.
+   * **How:** The agent retrieves the state $S_t$ and the action $A_t$ that was actually selected. It computes the analytical derivative of the log-probability of $A_t$ under the current network parameters, $\nabla_\theta \log \pi_\theta(A_t|S_t)$, and backpropagates this gradient to update the weights $\theta$.
+
+---
+
+### Comparison of Parameterization Methods
+
+Depending on the action space of the task, we handle action selection and gradient calculation using one of two parameterizations:
+
+| Parameterization | Softmax Policy | Gaussian Policy |
+| :--- | :--- | :--- |
+| **Action Space** | **Discrete** (finite set of distinct choices) | **Continuous** (infinite real-valued numbers) |
+| **Network Outputs** | Real-valued preferences (logits) $h(s, a, \theta)$ for each action | Mean $\mu(s, \theta_\mu)$ and log-variance/log-std $\eta(s, \theta_\sigma)$ |
+| **Action Selection** | Softmax probabilities: sample $A_t \sim \text{Categorical}(\mathbf{p})$ | Reparameterization trick: $A_t = \mu(s) + \sigma(s) \odot \epsilon$, $\epsilon \sim \mathcal{N}(0, 1)$ |
+| **Log-Gradient** | $\nabla_\theta h(S_t, A_t) - \sum_b \pi_\theta(b|S_t) \nabla_\theta h(S_t, b)$ | Analytical Gaussian log-likelihood gradients w.r.t. mean and std |
+
+---
+
+### A. Softmax Policy (Discrete Action Spaces)
+
+#### 1. Use Cases & Examples
+Softmax policies are used when the agent must choose from a discrete, countable set of actions.
+* **Examples:**
+  * **Gridworld:** Moving in 4 cardinal directions (North, South, East, West).
+  * **Atari Pong:** Actions such as (Move Up, Move Down, Stay).
+  * **Chess:** A finite set of legal moves on the board.
+  * **Game Controllers:** Pressing or not pressing buttons (A, B, Up, Down, Left, Right).
+
+#### 2. Practical Implementation (Rollout Loop)
+The neural network outputs a vector of real numbers $h(s, a, \theta) \in \mathbb{R}$ (called **logits** or **action preferences**) for each possible action $a$. We convert these preferences into a valid probability distribution using the **softmax function**:
+$$ \pi_{\theta}(a|s) \doteq \frac{e^{h(s, a, \theta)}}{\sum_{b \in \mathcal{A}} e^{h(s, b, \theta)}} \tag{Eq. 13.2 (Sutton and Barto)} $$
+
+* **Rollout Insertion:** The agent feeds state $S_t$ into the network, computes $\pi_{\theta}(a|S_t)$ for all actions, and samples action $A_t \sim \pi_{\theta}(\cdot|S_t)$.
+
+#### 3. Log-Gradient Calculation (Learning Loop)
+When updating, we compute the gradient of the log-probability of the action $A_t$ that was actually taken:
+$$ \nabla_{\theta} \log \pi_{\theta}(A_t|S_t) = \nabla_{\theta} h(S_t, A_t, \theta) - \sum_{b \in \mathcal{A}} \pi_{\theta}(b|S_t) \nabla_{\theta} h(S_t, b, \theta) $$
+
+* **Intuition:** The gradient increases the parameter weights for the selected action $A_t$ (first term) and decreases the weights for all actions proportional to their probabilities (second term). If the return is positive, $A_t$ becomes more likely; if negative, it becomes less likely.
+
+---
+
+### B. Gaussian Policy (Continuous Action Spaces)
+
+#### 1. Use Cases & Examples
+Gaussian policies are used when actions are real-valued numbers representing continuous control.
+* **Examples:**
+  * **Self-Driving Car:** Steering wheel angle (e.g., from $-180^\circ$ to $+180^\circ$) and acceleration/braking pedal pressure (from $0.0$ to $1.0$).
+  * **Robotics:** Joint torques in Newton-meters (e.g., controlling a robotic arm's motor forces).
+  * **Industrial Heating/Cooling:** Continuous temperature or flow valve adjustment.
+
+#### 2. Practical Implementation (Rollout Loop)
+Because the action space is infinite, the neural network cannot output probabilities for individual actions. Instead, the network outputs the parameters of a probability density function. For a 1D continuous action, it outputs the mean $\mu(s, \theta_{\mu})$ and a parameter $\eta(s, \theta_{\sigma})$ representing the log standard deviation.
+* **Why parameterize log standard deviation $\eta$?** 
+  Standard deviation $\sigma$ must always be strictly positive. If the network directly outputted $\sigma$, gradient steps could make it negative. By outputting $\eta \doteq \log \sigma$, we can compute standard deviation as $\sigma(s, \theta) \doteq \exp(\eta(s, \theta_{\sigma}))$, which is guaranteed to be positive for any real number $\eta$.
+* **The Reparameterization Trick:** 
+  To sample an action $A_t$ from $\mathcal{N}(\mu, \sigma^2)$ in code:
+  $$ A_t = \mu(S_t, \theta_\mu) + \sigma(S_t, \theta_\sigma) \cdot \epsilon \quad \text{where } \epsilon \sim \mathcal{N}(0, 1) $$
+  This is critical because direct sampling is non-differentiable. Separating the stochastic noise $\epsilon$ allows gradients to flow through $\mu$ and $\sigma$ back into the network weights.
+
+The Gaussian policy probability density function is:
+$$ \pi_{\theta}(a|s) = \frac{1}{\sigma(s, \theta)\sqrt{2\pi}} \exp \left( -\frac{(a - \mu(s, \theta))^2}{2\sigma(s, \theta)^2} \right) \tag{Eq. 13.19 (Sutton and Barto)} $$
+
+#### 3. Log-Gradient Calculation (Learning Loop)
+Taking the logarithm of the Gaussian PDF:
+$$ \log \pi_{\theta}(a|s) = -\log \sigma(s, \theta) - \log\sqrt{2\pi} - \frac{(a - \mu(s, \theta))^2}{2\sigma(s, \theta)^2} $$
+
+* **Gradient w.r.t. Mean Parameters $\theta_{\mu}$:**
+  $$ \nabla_{\theta_{\mu}} \log \pi_{\theta}(a|s) = \frac{a - \mu(s, \theta)}{\sigma(s, \theta)^2} \nabla_{\theta_{\mu}} \mu(s, \theta_{\mu}) $$
+* **Gradient w.r.t. Standard Deviation Parameters $\theta_{\sigma}$:**
+  $$ \nabla_{\theta_{\sigma}} \log \pi_{\theta}(a|s) = \left( \frac{(a - \mu(s, \theta))^2}{\sigma(s, \theta)^2} - 1 \right) \nabla_{\theta_{\sigma}} \eta(s, \theta_{\sigma}) $$
+
+---
+
+### Numerical Intuition of the Gaussian Update
+
+Let's look at how the Gaussian policy changes parameters based on the advantage/TD error $\delta_t$.
+
+Assume:
+* Current mean: $\mu(s, \theta) = 5.0$
+* Current standard deviation: $\sigma(s, \theta) = 2.0$
+* Learning update step size: $\alpha = 0.1$
+* TD error (Advantage): $\delta_t = +0.5$ (Action was better than expected)
+
+#### Case 1: An action is sampled above the mean ($a = 7.0$)
+* **Mean Update Direction:**
+  $$ \nabla_{\theta_{\mu}} \log \pi = \frac{7.0 - 5.0}{2.0^2} = \frac{2.0}{4.0} = +0.5 $$
+  Since $\delta_t = +0.5$ (positive), the mean $\mu$ shifts **to the right (increases)**.
+* **Standard Deviation Update Direction:**
+  $$ \nabla_{\theta_{\sigma}} \log \pi = \frac{(7.0 - 5.0)^2}{2.0^2} - 1 = \frac{4.0}{4.0} - 1 = 0 $$
+  Because the action is exactly $1$ standard deviation away, the standard deviation $\sigma$ **remains unchanged**.
+
+#### Case 2: An action is sampled far from the mean ($a = 9.0$)
+* **Mean Update Direction:**
+  $$ \nabla_{\theta_{\mu}} \log \pi = \frac{9.0 - 5.0}{2.0^2} = \frac{4.0}{4.0} = +1.0 $$
+  The mean $\mu$ shifts **to the right (increases)** even faster.
+* **Standard Deviation Update Direction:**
+  $$ \nabla_{\theta_{\sigma}} \log \pi = \frac{(9.0 - 5.0)^2}{2.0^2} - 1 = \frac{16.0}{4.0} - 1 = +3.0 $$
+  Since the direction is positive and $\delta_t > 0$, the standard deviation $\sigma$ **increases (widens the curve)**.
+  * **Intuition:** A successful action occurred far away. The policy widens its search (increases exploration) to cover this high-reward region.
+
+#### Case 3: An action is sampled very close to the mean ($a = 5.5$)
+* **Mean Update Direction:**
+  $$ \nabla_{\theta_{\mu}} \log \pi = \frac{5.5 - 5.0}{2.0^2} = \frac{0.5}{4.0} = +0.125 $$
+  The mean $\mu$ shifts slightly to the right.
+* **Standard Deviation Update Direction:**
+  $$ \nabla_{\theta_{\sigma}} \log \pi = \frac{(5.5 - 5.0)^2}{2.0^2} - 1 = \frac{0.25}{4.0} - 1 = -0.9375 $$
+  Since the direction is negative and $\delta_t > 0$, the standard deviation $\sigma$ **decreases (narrows the curve)**.
+  * **Intuition:** A successful action occurred close to the mean. The policy becomes more precise (reduces exploration) around this successful mean.
+
+---
+
+## 6. Actor-Critic Methods (Sutton & Barto 13.5)
 
 ### The Limitations of REINFORCE & The Need for Improvisation
 While REINFORCE (with or without baseline) is a mathematically sound policy gradient method, it has three critical limitations that create the need for improvisation:
@@ -583,13 +674,13 @@ $$
 \quad I \leftarrow 1 \\
 \quad \textbf{Loop while } S \text{ is not terminal:} \\
 \qquad \text{Compute policy outputs and sample } A \sim \pi_{\theta}(\cdot|S) \\
-\qquad \quad \text{(see Section 3)} \\
+\qquad \quad \text{(see Section 5)} \\
 \qquad \text{Take action } A, \text{ observe } R, S' \\
 \qquad \delta \leftarrow R + \gamma \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w}) \\
 \qquad \quad \text{(if } S' \text{ is terminal, } \hat{v}(S', \mathbf{w}) \doteq 0\text{)} \\
 \qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S, \mathbf{w}) \\
 \qquad \theta \leftarrow \theta + \alpha I \delta \nabla_{\theta} \log \pi_{\theta}(A|S) \\
-\qquad \quad \text{(Log-gradient updated as per Section 3)} \\
+\qquad \quad \text{(Log-gradient updated as per Section 5)} \\
 \qquad I \leftarrow \gamma I \\
 \qquad S \leftarrow S' \\
 \\
@@ -604,14 +695,14 @@ $$
 \textbf{Loop forever (for each step):} \\
 \\
 \qquad \text{Compute policy outputs and sample } A \sim \pi_{\theta}(\cdot|S) \\
-\qquad \quad \text{(see Section 3)} \\
+\qquad \quad \text{(see Section 5)} \\
 \qquad \text{Take action } A, \text{ observe } R, S' \\
 \qquad \delta \leftarrow R - \bar{R} + \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w}) \\
 \\
 \qquad \bar{R} \leftarrow \bar{R} + \eta \delta \\
 \qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S, \mathbf{w}) \\
 \qquad \theta \leftarrow \theta + \alpha \delta \nabla_{\theta} \log \pi_{\theta}(A|S) \\
-\qquad \quad \text{(Log-gradient updated as per Section 3)} \\
+\qquad \quad \text{(Log-gradient updated as per Section 5)} \\
 \\
 \qquad S \leftarrow S'
 \end{array}
@@ -629,70 +720,7 @@ $$
 | **Discount Tracker ($I$)** | Requires a running decay tracker $I$ to scale policy updates by $\gamma^t$: $\theta \leftarrow \theta + \alpha I \delta \nabla \log \pi$. | No discount decay tracker is used; all updates are weighted equally. |
 | **Value Function Meaning** | $\hat{v}(s, \mathbf{w})$ estimates the expected **discounted future return** starting from state $s$. | $\hat{v}(s, \mathbf{w})$ estimates the **differential value** (how much better/worse state $s$ is relative to the average reward rate $\bar{R}$). |
 
----
 
-## 7. Continuous Action Spaces (Sutton & Barto 13.7)
-
-In continuous action spaces, actions are real numbers (e.g., control forces, motor torques). Rather than estimating probabilities of discrete actions, the policy network parameterizes a **probability density function**.
-
-### Gaussian Policy Parameterization
-A common choice is the Gaussian (normal) distribution:
-$$ \pi_{\theta}(a|s) = \frac{1}{\sigma(s, \theta)\sqrt{2\pi}} \exp \left( -\frac{(a - \mu(s, \theta))^2}{2\sigma(s, \theta)^2} \right) $$
-
-To represent this, we split the parameter vector $\theta$ into two parts: $\theta = [\theta_{\mu}, \theta_{\sigma}]^T$.
-* $\mu(s, \theta_{\mu})$ is the parameterized mean of the distribution.
-* To guarantee that the standard deviation $\sigma(s, \theta)$ is always positive, we parameterize its logarithm: $\sigma(s, \theta) \doteq \exp(\eta(s, \theta_{\sigma}))$, where $\eta$ is the direct network output.
-
-### Log-Gradient Derivation
-Taking the logarithm of the Gaussian PDF:
-$$ \log \pi_{\theta}(a|s) = -\log \sigma(s, \theta) - \log\sqrt{2\pi} - \frac{(a - \mu(s, \theta))^2}{2\sigma(s, \theta)^2} $$
-
-* **Gradient w.r.t. Mean Parameters $\theta_{\mu}$:**
-  $$ \nabla_{\theta_{\mu}} \log \pi_{\theta}(a|s) = \frac{a - \mu(s, \theta)}{\sigma(s, \theta)^2} \nabla_{\theta_{\mu}} \mu(s, \theta_{\mu}) $$
-* **Gradient w.r.t. Standard Deviation Parameters $\theta_{\sigma}$:**
-  $$ \nabla_{\theta_{\sigma}} \log \pi_{\theta}(a|s) = \left( \frac{(a - \mu(s, \theta))^2}{\sigma(s, \theta)^2} - 1 \right) \nabla_{\theta_{\sigma}} \eta(s, \theta_{\sigma}) $$
-
-![Gaussian Policy Update](./assets/images/gaussian_policy_update.svg)
-
----
-
-### Numerical Intuition of the Gaussian Update
-
-Let's look at how the Gaussian policy changes parameters based on the advantage/TD error $\delta_t$.
-
-Assume:
-* Current mean: $\mu(s, \theta) = 5.0$
-* Current standard deviation: $\sigma(s, \theta) = 2.0$
-* Learning update step size: $\alpha = 0.1$
-* TD error (Advantage): $\delta_t = +0.5$ (Action was better than expected)
-
-#### Case 1: An action is sampled above the mean ($a = 7.0$)
-* **Mean Update Direction:**
-  $$ \nabla_{\theta_{\mu}} \log \pi = \frac{7.0 - 5.0}{2.0^2} = \frac{2.0}{4.0} = +0.5 $$
-  Since $\delta_t = +0.5$ (positive), the mean $\mu$ shifts **to the right (increases)**.
-* **Standard Deviation Update Direction:**
-  $$ \nabla_{\theta_{\sigma}} \log \pi = \frac{(7.0 - 5.0)^2}{2.0^2} - 1 = \frac{4.0}{4.0} - 1 = 0 $$
-  Because the action is exactly $1$ standard deviation away, the standard deviation $\sigma$ **remains unchanged**.
-
-#### Case 2: An action is sampled far from the mean ($a = 9.0$)
-* **Mean Update Direction:**
-  $$ \nabla_{\theta_{\mu}} \log \pi = \frac{9.0 - 5.0}{2.0^2} = \frac{4.0}{4.0} = +1.0 $$
-  The mean $\mu$ shifts **to the right (increases)** even faster.
-* **Standard Deviation Update Direction:**
-  $$ \nabla_{\theta_{\sigma}} \log \pi = \frac{(9.0 - 5.0)^2}{2.0^2} - 1 = \frac{16.0}{4.0} - 1 = +3.0 $$
-  Since the direction is positive and $\delta_t > 0$, the standard deviation $\sigma$ **increases (widens the curve)**.
-  * **Intuition:** A successful action occurred far away. The policy widens its search (increases exploration) to cover this high-reward region.
-
-#### Case 3: An action is sampled very close to the mean ($a = 5.5$)
-* **Mean Update Direction:**
-  $$ \nabla_{\theta_{\mu}} \log \pi = \frac{5.5 - 5.0}{2.0^2} = \frac{0.5}{4.0} = +0.125 $$
-  The mean $\mu$ shifts slightly to the right.
-* **Standard Deviation Update Direction:**
-  $$ \nabla_{\theta_{\sigma}} \log \pi = \frac{(5.5 - 5.0)^2}{2.0^2} - 1 = \frac{0.25}{4.0} - 1 = -0.9375 $$
-  Since the direction is negative and $\delta_t > 0$, the standard deviation $\sigma$ **decreases (narrows the curve)**.
-  * **Intuition:** A successful action occurred close to the mean. The policy becomes more precise (reduces exploration) around this successful mean.
-
----
 
 ## Practice Exercises
 
