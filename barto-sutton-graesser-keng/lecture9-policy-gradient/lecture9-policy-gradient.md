@@ -125,56 +125,67 @@ $$ \nabla_{\theta} J(\theta) = \mathbb{E}_{\tau \sim \pi_{\theta}} \left[ \sum_{
 * **"Backtracking" (Hindsight Credit Assignment):** Since we do not have a transition model of the environment, the agent cannot predict the future while acting. Instead, it completes a rollout, looks back at the sequence of actions taken ($a_0, \dots, a_{T-1}$) in hindsight, and "backtracks" in time to adjust the parameter weights to reinforce the entire action sequence based on the final return $R(\tau)$.
 * **The Log-Derivative Trick:** We cannot directly take the gradient of the expected return because the expectation itself depends on $\theta$. Applying the log-derivative trick ($\nabla_\theta P(\tau; \theta) = P(\tau; \theta) \nabla_\theta \log P(\tau; \theta)$) allows us to reformulate the gradient as an expectation. This enables us to compute gradients by sampling actions from the current policy and taking the gradient of their log-probabilities.
 
-To turn this into a practical algorithm that can update parameters at each step, we can rewrite this in terms of the state-action value function $q_{\pi}(s,a)$. The resulting policy gradient formulation is:
-$$ \nabla J(\theta) \propto \sum_{s} \mu(s) \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a|s) $$
+To turn this into a practical algorithm that can update parameters at each step, we can rewrite this in terms of the state-action value function $q_{\pi}(s,a)$. The resulting policy gradient formulation is (Equation 6.1):
+$$ \nabla_{\theta} J(\theta) \propto \sum_{s} \mu(s) \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a|s) \tag{6.1} $$
+
+> **How does this lead to the Actor-Critic Architecture?**
+> The Policy Gradient Theorem in proportionality form (Equation 6.1) requires the true action-value function $q_{\pi}(s,a)$ to evaluate the actions taken. In model-free reinforcement learning, the true $q_{\pi}(s,a)$ is unknown.
+> * **The Actor:** The policy network $\pi_{\theta}(a|s)$ which selects actions (we update its parameters in the direction of the policy gradient $\nabla_{\theta} \pi_{\theta}(a|s)$).
+> * **The Critic:** Rather than waiting for full Monte Carlo rollouts to estimate the return (as in REINFORCE), the **Actor-Critic architecture** parameterizes a second network (the Critic) with weights $\mathbf{w}$ to approximate the value function term, i.e., $\hat{q}(s,a; \mathbf{w}) \approx q_{\pi}(s,a)$ or $\hat{v}(s; \mathbf{w}) \approx v_{\pi}(s)$ via Temporal Difference (TD) learning.
+> Thus, the Critic evaluates the action choices of the Actor, allowing the Actor to make policy gradient updates online at every single time step.
 
 ---
 
 #### Step-by-Step Derivation & Proportionality
 
-Here is how the gradient of the policy itself ($\nabla_{\theta} \pi(a|s, \theta)$) and the proportionality symbol ($\propto$) arise.
+Here is how the gradient of the policy itself ($\nabla_{\theta} \pi_{\theta}(a|s)$) and the proportionality symbol ($\propto$) arise.
 
-##### 1. Differentiating the State Value Function (Product Rule)
-We define the value of a state $s$ under policy $\pi$ as:
-$$ v_{\pi}(s) = \sum_{a} \pi(a|s, \theta) q_{\pi}(s,a) $$
+##### 1. Differentiating the State Value Function (Product Rule) (Equation 6.2)
+We define the value of a state $s$ under policy $\pi_\theta$ as:
+$$ v_{\pi}(s) = \sum_{a} \pi_{\theta}(a|s) q_{\pi}(s,a) $$
 
-> **Note on Environment Transition Dynamics:** While $v_{\pi}(s)$ does not write the environment's state transition probabilities $p(s'|s,a)$ explicitly in this step, they are implicitly contained inside the definition of the state-action value function $q_{\pi}(s,a)$. Expanding $q_{\pi}(s,a)$ completely yields $v_{\pi}(s) = \sum_{a} \pi(a|s, \theta) \sum_{s'} p(s'|s,a) \left[ r(s,a,s') + \gamma v_{\pi}(s') \right]$. Using the shorthand $q_{\pi}(s,a)$ keeps the initial differentiation clean.
+> **Note on Environment Transition Dynamics:** While $v_{\pi}(s)$ does not write the environment's state transition probabilities $p(s'|s,a)$ explicitly in this step, they are implicitly contained inside the definition of the state-action value function $q_{\pi}(s,a)$. Expanding $q_{\pi}(s,a)$ completely yields $v_{\pi}(s) = \sum_{a} \pi_{\theta}(a|s) \sum_{s'} p(s'|s,a) \left[ r(s,a,s') + \gamma v_{\pi}(s') \right]$. Using the shorthand $q_{\pi}(s,a)$ keeps the initial differentiation clean.
 
-Taking the gradient with respect to $\theta$ requires the product rule:
-$$ \nabla_{\theta} v_{\pi}(s) = \sum_{a} \left[ \nabla_{\theta} \pi(a|s, \theta) q_{\pi}(s,a) + \pi(a|s, \theta) \nabla_{\theta} q_{\pi}(s,a) \right] $$
-Notice that the first term already contains the policy gradient $\nabla_{\theta} \pi(a|s, \theta)$ directly without a log term.
+Taking the gradient with respect to $\theta$ requires the product rule (Equation 6.2):
+$$ \nabla_{\theta} v_{\pi}(s) = \sum_{a} \left[ \nabla_{\theta} \pi_{\theta}(a|s) q_{\pi}(s,a) + \pi_{\theta}(a|s) \nabla_{\theta} q_{\pi}(s,a) \right] \tag{6.2} $$
+Notice that the first term already contains the policy gradient $\nabla_{\theta} \pi_{\theta}(a|s)$ directly without a log term.
 
-##### 2. Unrolling the Q-value Recurrence
+##### 2. Unrolling the Q-value Recurrence (Equation 6.3 & 6.4)
 The state-action value $q_{\pi}(s,a)$ is defined recursively by the Bellman equation:
 $$ q_{\pi}(s,a) = \sum_{s'} p(s'|s,a) \left[ r(s,a,s') + \gamma v_{\pi}(s') \right] $$
 
-Since the environment dynamics $p(s'|s,a)$ and rewards $r(s,a,s')$ are independent of the policy parameters $\theta$:
-$$ \nabla_{\theta} q_{\pi}(s,a) = \gamma \sum_{s'} p(s'|s,a) \nabla_{\theta} v_{\pi}(s') $$
+Since the environment dynamics $p(s'|s,a)$ and rewards $r(s,a,s')$ are independent of the policy parameters $\theta$, taking the gradient yields (Equation 6.3):
+$$ \nabla_{\theta} q_{\pi}(s,a) = \gamma \sum_{s'} p(s'|s,a) \nabla_{\theta} v_{\pi}(s') \tag{6.3} $$
 
-Substituting this back into the derivative of $v_{\pi}(s)$:
-$$ \nabla_{\theta} v_{\pi}(s) = \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi(a|s, \theta) + \gamma \sum_{s'} \left( \sum_a \pi(a|s, \theta) p(s'|s,a) \right) \nabla_{\theta} v_{\pi}(s') $$
+Substituting this back into the derivative of $v_{\pi}(s)$ (Equation 6.4):
+$$ \nabla_{\theta} v_{\pi}(s) = \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a|s) + \gamma \sum_{s'} \left( \sum_a \pi_{\theta}(a|s) p(s'|s,a) \right) \nabla_{\theta} v_{\pi}(s') \tag{6.4} $$
 
-If we denote the one-step state transition probability under policy $\pi$ as $P(s \to s') = \sum_a \pi(a|s, \theta) p(s'|s,a)$, this is a recurrence relation:
-$$ \nabla_{\theta} v_{\pi}(s) = \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi(a|s, \theta) + \gamma \sum_{s'} P(s \to s') \nabla_{\theta} v_{\pi}(s') $$
+If we denote the one-step state transition probability under policy $\pi_\theta$ as $P(s \to s') = \sum_a \pi_{\theta}(a|s) p(s'|s,a)$, this is a recurrence relation:
+$$ \nabla_{\theta} v_{\pi}(s) = \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a|s) + \gamma \sum_{s'} P(s \to s') \nabla_{\theta} v_{\pi}(s') $$
 
-##### 3. Expanding the Series to Infinity
-Unrolling this recurrence indefinitely over the trajectory yields:
-$$ \nabla_{\theta} v_{\pi}(s) = \sum_{x \in \mathcal{S}} \sum_{k=0}^{\infty} \gamma^k P(s \to x \text{ in } k \text{ steps}) \sum_{a} q_{\pi}(x,a) \nabla_{\theta} \pi(a|x, \theta) $$
+##### 3. Expanding the Series to Infinity (Equation 6.5)
+Unrolling this recurrence indefinitely over the trajectory yields (Equation 6.5):
+$$ \nabla_{\theta} v_{\pi}(s) = \sum_{x \in \mathcal{S}} \sum_{k=0}^{\infty} \gamma^k P(s \to x \text{ in } k \text{ steps}) \sum_{a} q_{\pi}(x,a) \nabla_{\theta} \pi_{\theta}(a|x) \tag{6.5} $$
 
-##### 4. Defining the Discounted State Visitation Measure $\eta(s)$
-For the start-state objective $J(\theta) \doteq v_{\pi}(s_0)$, the gradient is:
-$$ \nabla_{\theta} J(\theta) = \sum_{s} \underbrace{\left( \sum_{k=0}^{\infty} \gamma^k P(s_0 \to s \text{ in } k \text{ steps}) \right)}_{\eta(s)} \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi(a|s, \theta) $$
-Here, $\eta(s)$ is the **unnormalized discounted state visitation measure**. Since $\eta(s)$ does not sum to $1$, it is not a valid probability distribution. In fact, summing it over all states yields a constant:
+##### 4. Defining the Discounted State Visitation Measure $\eta(s)$ (Equation 6.6 & 6.7)
+For the start-state objective $J(\theta) \doteq v_{\pi}(s_0)$, the gradient is (Equation 6.7):
+$$ \nabla_{\theta} J(\theta) = \sum_{s} \underbrace{\left( \sum_{k=0}^{\infty} \gamma^k P(s_0 \to s \text{ in } k \text{ steps}) \right)}_{\eta(s) \text{ (Equation 6.6)}} \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a|s) \tag{6.7} $$
+
+Where $\eta(s)$ is the **unnormalized discounted state visitation measure** (Equation 6.6):
+$$ \eta(s) = \sum_{k=0}^{\infty} \gamma^k P(s_0 \to s \text{ in } k \text{ steps}) \tag{6.6} $$
+
+Since $\eta(s)$ does not sum to $1$, it is not a valid probability distribution. In fact, summing it over all states yields a constant:
 $$ \sum_{s} \eta(s) = \frac{1}{1-\gamma} \quad (\text{or the expected episode length in episodic environments}) $$
 
-##### 5. Normalizing to $\mu(s)$ & Proportionality
-To convert this sum into an expectation, we define the normalized state distribution $\mu(s)$ (which sums to $1$):
-$$ \mu(s) = \frac{\eta(s)}{\sum_{s'} \eta(s')} \implies \eta(s) = \left( \sum_{s'} \eta(s') \right) \mu(s) $$
+##### 5. Normalizing to $\mu(s)$ & Proportionality (Equation 6.8 & 6.1)
+To convert this sum into an expectation, we define the normalized state distribution $\mu(s)$ (which sums to $1$) (Equation 6.8):
+$$ \mu(s) = \frac{\eta(s)}{\sum_{s'} \eta(s')} \implies \eta(s) = \left( \sum_{s'} \eta(s') \right) \mu(s) \tag{6.8} $$
 
 Substituting this back gives:
-$$ \nabla_{\theta} J(\theta) = \underbrace{\left( \sum_{s'} \eta(s') \right)}_{\text{Constant } C > 0} \sum_{s} \mu(s) \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi(a|s, \theta) $$
-Because the constant multiplier $C$ only scales the step size in gradient ascent, we can drop it by using the proportionality symbol ($\propto$):
-$$ \nabla_{\theta} J(\theta) \propto \sum_{s} \mu(s) \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi(a|s, \theta) $$
+$$ \nabla_{\theta} J(\theta) = \underbrace{\left( \sum_{s'} \eta(s') \right)}_{\text{Constant } C > 0} \sum_{s} \mu(s) \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a|s) $$
+
+Because the constant multiplier $C$ only scales the step size in gradient ascent, we can drop it by using the proportionality symbol ($\propto$) to get the final proportional formulation (Equation 6.1):
+$$ \nabla_{\theta} J(\theta) \propto \sum_{s} \mu(s) \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a|s) \tag{6.1} $$
 
 ---
 
