@@ -618,6 +618,56 @@ $$ \nabla_{\theta} J(\theta) = \mathbb{E}_{\pi} [ q_{\pi}(S_t, A_t) \nabla_{\the
 
 ---
 
+### Define and Explain from Scratch: The Evolution of Actor-Critic
+
+To truly understand **Actor-Critic methods**, we must trace how they evolve directly from **REINFORCE with Baseline**. Let's break down this evolution from first principles.
+
+#### 1. The Starting Point: REINFORCE with Baseline
+In REINFORCE with Baseline, we use the policy gradient update:
+$$ \theta_{t+1} = \theta_t + \alpha \gamma^t (G_t - \hat{v}(S_t, \mathbf{w})) \nabla_{\theta} \log \pi_{\theta}(A_t|S_t) $$
+
+Here, we have two function approximators:
+* **The Policy $\pi_{\theta}(a|s)$:** Determines which actions to take.
+* **The State-Value baseline $\hat{v}(s, \mathbf{w})$:** Provides a baseline to reduce variance.
+
+##### Architecture Diagram: REINFORCE with Baseline
+![REINFORCE with Baseline Flowchart](./assets/images/reinforce_baseline_flowchart.svg)
+
+#### 2. The Bottleneck: Monte Carlo Rollouts
+The core limitation of REINFORCE is its reliance on the actual return $G_t$. To calculate $G_t = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \dots$, the agent must play out the entire episode until the terminal state $S_T$. This creates two massive problems:
+1. We cannot perform any updates during the episode (offline updates only).
+2. The return $G_t$ accumulates noise from all future actions, resulting in high variance.
+
+#### 3. The Evolution: Bootstrapping and Temporal Difference (TD)
+We want to update the policy weights $\theta$ at *every single time step $t$* without waiting for the episode to end. How can we replace the future return $G_t$ with something we can compute immediately?
+
+Recall the Bellman equation relation for the true state-action value $q_{\pi}(S_t, A_t)$:
+$$ q_{\pi}(S_t, A_t) = \mathbb{E}_{\pi} \left[ R_{t+1} + \gamma v_{\pi}(S_{t+1}) \middle| S_t, A_t \right] $$
+
+Instead of estimating $q_{\pi}(S_t, A_t)$ using the sample return $G_t$ (like in REINFORCE), we can **bootstrap**: we approximate $q_{\pi}(S_t, A_t)$ using our current learned estimate of the state-value function $\hat{v}(S_{t+1}, \mathbf{w})$ at the next step:
+$$ q_{\pi}(S_t, A_t) \approx R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w}) $$
+
+Now, if we substitute this estimate into the Policy Gradient Theorem with Baseline equation, our advantage/error term becomes:
+$$ q_{\pi}(S_t, A_t) - \hat{v}(S_t, \mathbf{w}) \approx R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w}) - \hat{v}(S_t, \mathbf{w}) $$
+
+This is exactly the **Temporal Difference (TD) error**, denoted as $\delta_t$:
+$$ \delta_t = R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w}) - \hat{v}(S_t, \mathbf{w}) $$
+
+By substituting the TD error $\delta_t$ for $(G_t - \hat{v}(S_t, \mathbf{w}))$, we arrive at the online, step-by-step **Actor-Critic update rule**:
+$$ \theta_{t+1} = \theta_t + \alpha \gamma^t \delta_t \nabla_{\theta} \log \pi_{\theta}(A_t|S_t) $$
+
+#### 4. Why is it called "Actor-Critic"?
+This bootstrapping modification fundamentally changes the role of the state-value function, splitting the system into two interactive components:
+* **The Actor (Policy $\pi_{\theta}$):** Controls the agent's behavior by selecting actions. The Actor is updated to maximize the evaluation score provided by the Critic.
+* **The Critic (State-Value $\hat{v}(s, \mathbf{w})$):** Evaluates the action taken by the Actor. Rather than just acting as a passive baseline (like in REINFORCE), the Critic actively guides the Actor's updates by computing the TD error $\delta_t$.
+  * If $\delta_t > 0$, the action $A_t$ led to a state that was better than expected; the Critic approves, reinforcing that action.
+  * If $\delta_t < 0$, the action led to a state worse than expected; the Critic disapproves, reducing the probability of that action.
+
+##### Architecture Diagram: Actor-Critic
+![Actor-Critic Flowchart](./assets/images/actor_critic_flowchart.svg)
+
+---
+
 ### How is Actor-Critic different from REINFORCE with Baseline?
 
 While both methods use a state-value function $V(s)$, they belong to fundamentally different classes of Reinforcement Learning algorithms:

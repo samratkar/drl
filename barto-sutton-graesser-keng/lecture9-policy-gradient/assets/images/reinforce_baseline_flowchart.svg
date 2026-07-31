@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 380" width="600" height="380">
+  <rect width="600" height="380" fill="#fcfcfc" rx="10" ry="10" stroke="#dee2e6" stroke-width="1"/>
+  
+  <text x="300" y="30" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#333" text-anchor="middle">REINFORCE with Baseline Flowchart (Monte Carlo)</text>
+  
+  <!-- Flow lines and connectors -->
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L6,3 z" fill="#495057"/>
+    </marker>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#007bff"/>
+      <stop offset="100%" stop-color="#0056b3"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#28a745"/>
+      <stop offset="100%" stop-color="#1e7e34"/>
+    </linearGradient>
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fd7e14"/>
+      <stop offset="100%" stop-color="#d35400"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rollout Loop Area (Dashed Box) -->
+  <rect x="20" y="60" width="560" height="150" fill="none" stroke="#6c757d" stroke-dasharray="5,5" stroke-width="1.5" rx="8" ry="8"/>
+  <text x="35" y="80" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#6c757d">Episode Rollout Phase (Repeat for t = 0 to T-1)</text>
+
+  <!-- State S_t -->
+  <rect x="40" y="110" width="80" height="40" fill="#e9ecef" stroke="#495057" stroke-width="1.5" rx="5" ry="5"/>
+  <text x="80" y="135" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#333" text-anchor="middle">State S_t</text>
+
+  <!-- Arrow State -> Policy -->
+  <line x1="120" y1="130" x2="150" y2="130" stroke="#495057" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Policy Network (Actor) -->
+  <rect x="150" y="100" width="120" height="60" fill="url(#blueGrad)" stroke="#004085" stroke-width="1.5" rx="5" ry="5"/>
+  <text x="210" y="128" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#fff" text-anchor="middle">Policy Network</text>
+  <text x="210" y="145" font-family="Arial, sans-serif" font-size="10" fill="#e2f0d9" text-anchor="middle">π_θ(a|s)</text>
+
+  <!-- Arrow Policy -> Action -->
+  <line x1="270" y1="130" x2="300" y2="130" stroke="#495057" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Action A_t -->
+  <circle cx="320" cy="130" r="20" fill="#e1f5fe" stroke="#0288d1" stroke-width="1.5"/>
+  <text x="320" y="134" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#01579b" text-anchor="middle">Action A_t</text>
+
+  <!-- Arrow Action -> Environment -->
+  <line x1="340" y1="130" x2="370" y2="130" stroke="#495057" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Environment -->
+  <rect x="370" y="110" width="90" height="40" fill="#343a40" stroke="#212529" stroke-width="1.5" rx="5" ry="5"/>
+  <text x="415" y="135" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#fff" text-anchor="middle">Environment</text>
+
+  <!-- Arrow Env -> S_t+1, R_t+1 -->
+  <line x1="460" y1="130" x2="490" y2="130" stroke="#495057" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Next Step Info -->
+  <rect x="490" y="105" width="75" height="50" fill="#f8f9fa" stroke="#6c757d" stroke-width="1" rx="4" ry="4"/>
+  <text x="527" y="125" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#333" text-anchor="middle">S_t+1, R_t+1</text>
+  <text x="527" y="142" font-family="Arial, sans-serif" font-size="8" fill="#6c757d" text-anchor="middle">(Next Step)</text>
+
+  <!-- Loop Feedback line (back to S_t) -->
+  <path d="M 527 155 L 527 190 L 80 190 L 80 150" fill="none" stroke="#6c757d" stroke-dasharray="2,2" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Learning Phase (Offline) -->
+  <text x="300" y="235" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#dc3545" text-anchor="middle">Offline Learning Phase (After Episode Ends)</text>
+
+  <!-- Full Return G_t -->
+  <rect x="40" y="270" width="100" height="45" fill="#f8d7da" stroke="#dc3545" stroke-width="1.5" rx="5" ry="5"/>
+  <text x="90" y="290" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#721c24" text-anchor="middle">Full Return G_t</text>
+  <text x="90" y="305" font-family="Arial, sans-serif" font-size="9" fill="#dc3545" text-anchor="middle">(Monte Carlo)</text>
+
+  <!-- Value Network V_w (Baseline) -->
+  <rect x="180" y="270" width="120" height="45" fill="url(#greenGrad)" stroke="#1e7e34" stroke-width="1.5" rx="5" ry="5"/>
+  <text x="240" y="290" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#fff" text-anchor="middle">Value Network</text>
+  <text x="240" y="305" font-family="Arial, sans-serif" font-size="9" fill="#d4edda" text-anchor="middle">V_w(S_t) (Baseline)</text>
+
+  <!-- Advantage (Subtraction Circle) -->
+  <circle cx="350" cy="292" r="16" fill="#fff3cd" stroke="#ffc107" stroke-width="1.5"/>
+  <text x="350" y="296" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#856404" text-anchor="middle">-</text>
+  <text x="350" y="322" font-family="Arial, sans-serif" font-size="9" fill="#856404" font-weight="bold" text-anchor="middle">Advantage</text>
+
+  <!-- Connectors to Advantage -->
+  <path d="M 140 292 L 334 292" fill="none" stroke="#495057" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M 300 292 L 334 292" fill="none" stroke="#495057" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Update Blocks -->
+  <rect x="420" y="260" width="150" height="65" fill="url(#orangeGrad)" stroke="#d35400" stroke-width="1.5" rx="5" ry="5"/>
+  <text x="495" y="280" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#fff" text-anchor="middle">Update Weights</text>
+  <text x="495" y="298" font-family="Arial, sans-serif" font-size="9" fill="#ffeb3b" font-weight="bold" text-anchor="middle">θ ← θ + α γ^t δ ∇logπ</text>
+  <text x="495" y="312" font-family="Arial, sans-serif" font-size="9" fill="#fff" text-anchor="middle">w ← w + β δ ∇V</text>
+
+  <!-- Connectors from Advantage to Update -->
+  <line x1="366" y1="292" x2="420" y2="292" stroke="#495057" stroke-width="1.5" marker-end="url(#arrow)"/>
+</svg>
