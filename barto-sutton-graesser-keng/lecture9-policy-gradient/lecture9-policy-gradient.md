@@ -779,8 +779,8 @@ First, compute the action preferences and probability distribution:
 * $h(S_t, a_1) = \theta_{a_1}^T \mathbf{x}(S_t) = [0.1, -0.2] \cdot [1.0, 2.0]^T = 0.1 - 0.4 = -0.3$
 * $h(S_t, a_2) = \theta_{a_2}^T \mathbf{x}(S_t) = [-0.1, 0.2] \cdot [1.0, 2.0]^T = -0.1 + 0.4 = 0.3$
 * Probabilities:
-  * $\pi_{\theta}(a_1|S_t) = \frac{e^{-0.3}}{e^{-0.3} + e^{0.3}} = \frac{0.7408}{0.7408 + 1.8221} \approx 0.289$
-  * $\pi_{\theta}(a_2|S_t) = 1 - 0.289 = 0.711$
+  * $\pi_{\theta}(a_1 \mid S_t) = \frac{e^{-0.3}}{e^{-0.3} + e^{0.3}} = \frac{0.7408}{0.7408 + 1.8221} \approx 0.289$
+  * $\pi_{\theta}(a_2 \mid S_t) = 1 - 0.289 = 0.711$
 
 Now, compute the log-gradient of the softmax policy for the chosen action $A_t = a_1$:
 * $\nabla_{\theta_{a_1}} \log \pi_{\theta}(a_1 \mid S_t) = (1 - \pi_{\theta}(a_1 \mid S_t))\mathbf{x}(S_t) = (1 - 0.289)\mathbf{x}(S_t) = 0.711 \begin{bmatrix} 1.0 \\ 2.0 \end{bmatrix} = \begin{bmatrix} 0.711 \\ 1.422 \end{bmatrix}$
