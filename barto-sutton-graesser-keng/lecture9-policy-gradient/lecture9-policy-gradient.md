@@ -94,14 +94,14 @@ Taking the logarithm of this product transforms it into a sum (Equation 2.10):
 $$ \log P(\tau; \theta) = \log P(s_0) + \sum_{t=0}^{T-1} \log \pi_{\theta}(a_t|s_t) + \sum_{t=0}^{T-1} \log P(s_{t+1}|s_t, a_t) \tag{Eq. 2.10 (Graesser and Keng)} $$
 
 Now, we take the gradient with respect to $\theta$:
-$$ \nabla_{\theta} \log P(\tau; \theta) = \nabla_{\theta} \log P(s_0) + \sum_{t=0}^{T-1} \nabla_{\theta} \log \pi_{\theta}(a_t|s_t) + \sum_{t=0}^{T-1} \nabla_{\theta} \log P(s_{t+1}|s_t, a_t) $$
+$$ \nabla_{\theta} \log P(\tau; \theta) = \nabla_{\theta} \log P(s_0) + \sum_{t=0}^{T-1} \nabla_{\theta} \log \pi_{\theta}(a_t \mid s_t) + \sum_{t=0}^{T-1} \nabla_{\theta} \log P(s_{t+1} \mid s_t, a_t) $$
 
-Because the initial state distribution $P(s_0)$ and transition dynamics $P(s_{t+1}|s_t, a_t)$ **do not depend on the policy parameters $\theta$**, their gradients are exactly $0$:
+Because the initial state distribution $P(s_0)$ and transition dynamics $P(s_{t+1} \mid s_t, a_t)$ **do not depend on the policy parameters $\theta$**, their gradients are exactly $0$:
 * $\nabla_{\theta} \log P(s_0) = 0$
-* $\nabla_{\theta} \log P(s_{t+1}|s_t, a_t) = 0$
+* $\nabla_{\theta} \log P(s_{t+1} \mid s_t, a_t) = 0$
 
 This simplifies to (Equation 2.11):
-$$ \nabla_{\theta} \log P(\tau; \theta) = \sum_{t=0}^{T-1} \nabla_{\theta} \log \pi_{\theta}(a_t|s_t) \tag{Eq. 2.11 (Graesser and Keng)} $$
+$$ \nabla_{\theta} \log P(\tau; \theta) = \sum_{t=0}^{T-1} \nabla_{\theta} \log \pi_{\theta}(a_t \mid s_t) \tag{Eq. 2.11 (Graesser and Keng)} $$
 
 Thus, **the unknown dynamics of the environment completely drop out of the gradient calculation!**
 
