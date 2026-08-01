@@ -532,7 +532,7 @@ $$ \nabla_{\theta} J(\theta) \propto \sum_{s} \mu(s) \sum_{a} q_{\pi}(s,a) \nabl
 
 > **How does this lead to the Actor-Critic Architecture?**
 > Equation 6.1 requires the true, unknown action-value function $q_{\pi}(s,a)$. In model-free reinforcement learning, we must estimate this term.
-> * **The Actor:** The policy network $\pi_{\theta}(a \mid s)$ which selects actions (we update its parameters in the direction of the policy gradient $\nabla_{\theta} \pi_{\theta}(a|s)$).
+> * **The Actor:** The policy network $\pi_{\theta}(a \mid s)$ which selects actions (we update its parameters in the direction of the policy gradient $\nabla_{\theta} \pi_{\theta}(a \mid s)$).
 > * **The Critic:** Instead of waiting for full Monte Carlo returns, we parameterize a second network (the Critic) with weights $\mathbf{w}$ to approximate the action-value term, i.e., $\hat{q}(s,a; \mathbf{w}) \approx q_{\pi}(s,a)$ or $\hat{v}(s; \mathbf{w}) \approx v_{\pi}(s)$ via Temporal Difference (TD) learning.
 > This division of labor defines the **Actor-Critic architecture**.
 
