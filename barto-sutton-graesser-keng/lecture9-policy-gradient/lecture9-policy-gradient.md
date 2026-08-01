@@ -112,16 +112,16 @@ Thus, **the unknown dynamics of the environment completely drop out of the gradi
 ### The Policy Gradient Theorem Formulation (Equation 2.5)
 
 Substituting our simplified trajectory gradient (Equation 2.11) back into our expectation (Equation 2.9), we obtain the **Policy Gradient Theorem** expressed as a trajectory expectation:
-$$ \nabla_{\theta} J(\theta) = \mathbb{E}_{\tau \sim \pi_{\theta}} \left[ \sum_{t=0}^{T-1} \nabla_{\theta} \log \pi_{\theta}(a_t|s_t) R(\tau) \right] \tag{Eq. 2.5 (Graesser and Keng)} $$
+$$ \nabla_{\theta} J(\theta) = \mathbb{E}_{\tau \sim \pi_{\theta}} \left[ \sum_{t=0}^{T-1} \nabla_{\theta} \log \pi_{\theta}(a_t \mid s_t) R(\tau) \right] \tag{Eq. 2.5 (Graesser and Keng)} $$
 
 > **Why is there no explicit $P(\tau; \theta)$ here?**
 > 1. **It is absorbed into the expectation symbol $\mathbb{E}_{\tau \sim \pi_{\theta}}$:** The subscript $\tau \sim \pi_{\theta}$ tells us that trajectories are generated and sampled according to the distribution $P(\tau; \theta)$.
-> 2. **The $\log P(\tau; \theta)$ term inside the expectation is expanded using Equation 2.10 & 2.11:** We expand $\log P(\tau; \theta)$ using **Equation 2.10**. Its gradient simplifies to **Equation 2.11** ($\sum_{t=0}^{T-1} \nabla_{\theta} \log \pi_{\theta}(a_t|s_t)$) because the environment transition probabilities and the initial state distribution do not depend on the policy parameters $\theta$, so their gradients are $0$.
+> 2. **The $\log P(\tau; \theta)$ term inside the expectation is expanded using Equation 2.10 & 2.11:** We expand $\log P(\tau; \theta)$ using **Equation 2.10**. Its gradient simplifies to **Equation 2.11** ($\sum_{t=0}^{T-1} \nabla_{\theta} \log \pi_{\theta}(a_t \mid s_t)$) because the environment transition probabilities and the initial state distribution do not depend on the policy parameters $\theta$, so their gradients are $0$.
 
 #### Intuition behind the Trajectory Formulation:
-* **Tweaking Action Probabilities:** The policy parameters $\theta$ (e.g., neural network weights) define the policy $\pi_{\theta}(a|s)$. Adjusting $\theta$ shifts the action probabilities.
+* **Tweaking Action Probabilities:** The policy parameters $\theta$ (e.g., neural network weights) define the policy $\pi_{\theta}(a \mid s)$. Adjusting $\theta$ shifts the action probabilities.
 * **Trajectory Probability and Return:** The probability of generating a specific trajectory $\tau$ is $P(\tau; \theta)$, which depends directly on the action probabilities. Changing the policy parameters changes the distribution of trajectories generated, which in turn changes the expected return $J(\theta)$.
-* **Reinforcement Multiplier:** The trajectory return $R(\tau)$ scales the update. If a trajectory leads to a high return, the gradient update takes a large step in the direction of $\nabla_\theta \log \pi_{\theta}(a_t|s_t)$, making those actions more probable in the future.
+* **Reinforcement Multiplier:** The trajectory return $R(\tau)$ scales the update. If a trajectory leads to a high return, the gradient update takes a large step in the direction of $\nabla_\theta \log \pi_{\theta}(a_t \mid s_t)$, making those actions more probable in the future.
 * **"Backtracking" (Hindsight Credit Assignment):** Since we do not have a transition model of the environment, the agent cannot predict the future while acting. Instead, it completes a rollout, looks back at the sequence of actions taken ($a_0, \dots, a_{T-1}$) in hindsight, and "backtracks" in time to adjust the parameter weights to reinforce the entire action sequence based on the final return $R(\tau)$.
 * **The Log-Derivative Trick:** We cannot directly take the gradient of the expected return because the expectation itself depends on $\theta$. Applying the log-derivative trick ($\nabla_\theta P(\tau; \theta) = P(\tau; \theta) \nabla_\theta \log P(\tau; \theta)$) allows us to reformulate the gradient as an expectation. This enables us to compute gradients by sampling actions from the current policy and taking the gradient of their log-probabilities.
 
@@ -218,17 +218,17 @@ $$ \sum_{a} \pi_{\theta}(a|s) b(s) \nabla_{\theta} \log \pi_{\theta}(a|s) $$
 Using the identity $\nabla \log x = \frac{\nabla x}{x}$:
 $$ = \sum_{a} \pi_{\theta}(a|s) b(s) \frac{\nabla_{\theta} \pi_{\theta}(a|s)}{\pi_{\theta}(a|s)} $$
 
-Simplifying (canceling $\pi_{\theta}(a|s)$):
-$$ = \sum_{a} b(s) \nabla_{\theta} \pi_{\theta}(a|s) $$
+Simplifying (canceling $\pi_{\theta}(a \mid s)$):
+$$ = \sum_{a} b(s) \nabla_{\theta} \pi_{\theta}(a \mid s) $$
 
 Since the baseline $b(s)$ has no dependence on the action $a$, we can pull it out of the summation:
-$$ = b(s) \sum_{a} \nabla_{\theta} \pi_{\theta}(a|s) $$
+$$ = b(s) \sum_{a} \nabla_{\theta} \pi_{\theta}(a \mid s) $$
 
 Now we swap the gradient operator and the summation:
-$$ = b(s) \nabla_{\theta} \sum_{a} \pi_{\theta}(a|s) $$
+$$ = b(s) \nabla_{\theta} \sum_{a} \pi_{\theta}(a \mid s) $$
 
-Because $\pi_{\theta}(a|s)$ is a probability distribution over actions, its sum over all possible actions must be exactly $1$:
-$$ \sum_{a} \pi_{\theta}(a|s) = 1 $$
+Because $\pi_{\theta}(a \mid s)$ is a probability distribution over actions, its sum over all possible actions must be exactly $1$:
+$$ \sum_{a} \pi_{\theta}(a \mid s) = 1 $$
 
 Substituting this back:
 $$ = b(s) \nabla_{\theta} (1) $$
@@ -319,7 +319,7 @@ $$
 \qquad G \leftarrow \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k \\
 \qquad \delta \leftarrow G - \hat{v}(S_t, \mathbf{w}) \\
 \qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w}) \\
-\qquad \theta \leftarrow \theta + \alpha \gamma^t \delta \color{darkorange}{\nabla_{\theta} \log \pi_{\theta}(A_t | S_t)} \quad \text{(Abstract Gradient Term)}
+\qquad \theta \leftarrow \theta + \alpha \gamma^t \delta \color{darkorange}{\nabla_{\theta} \log \pi_{\theta}(A_t \mid S_t)} \quad \text{(Abstract Gradient Term)}
 \end{array}
 $$
 
@@ -335,10 +335,10 @@ Let's point out and analyze exactly where and how parameterization is inserted a
 
 ### Phase 2: Weight Update (Learning Loop)
 * **When:** In the learning loop, after the rollout is complete.
-* **Where:** Located in the update step $\theta \leftarrow \theta + \alpha \gamma^t \delta \nabla_{\theta} \log \pi_{\theta}(A_t | S_t)$.
+* **Where:** Located in the update step $\theta \leftarrow \theta + \alpha \gamma^t \delta \nabla_{\theta} \log \pi_{\theta}(A_t \mid S_t)$.
 * **How:** 
   1. The agent retrieves the state $S_t$ and the action $A_t$ that was actually selected during the rollout.
-  2. It computes the analytical derivative of the log-probability of $A_t$ under the current network parameters, $\nabla_{\theta} \log \pi_{\theta}(A_t | S_t)$.
+  2. It computes the analytical derivative of the log-probability of $A_t$ under the current network parameters, $\nabla_{\theta} \log \pi_{\theta}(A_t  \mid  S_t)$.
   3. The optimizer backpropagates this gradient to adjust the weights $\theta$, shifting the distribution to make the action more likely (if advantage $\delta > 0$) or less likely (if advantage $\delta < 0$).
 
 ---
@@ -416,7 +416,7 @@ Depending on the action space of the task, we handle action selection and gradie
 | **Action Space** | **Discrete** (finite set of distinct choices) | **Continuous** (infinite real-valued numbers) |
 | **Network Outputs** | Real-valued preferences (logits) $h(s, a, \theta)$ for each action | Mean $\mu(s, \theta_\mu)$ and log-variance/log-std $\eta(s, \theta_\sigma)$ |
 | **Action Selection** | Softmax probabilities: sample $A_t \sim \text{Categorical}(\mathbf{p})$ | Reparameterization trick: $A_t = \mu(s) + \sigma(s) \odot \epsilon$, $\epsilon \sim \mathcal{N}(0, 1)$ |
-| **Log-Gradient** | $\nabla_\theta h(S_t, A_t) - \sum_b \pi_\theta(b|S_t) \nabla_\theta h(S_t, b)$ | Analytical Gaussian log-likelihood gradients w.r.t. mean and std |
+| **Log-Gradient** | $\nabla_\theta h(S_t, A_t) - \sum_b \pi_\theta(b \mid S_t) \nabla_\theta h(S_t, b)$ | Analytical Gaussian log-likelihood gradients w.r.t. mean and std |
 
 ---
 
