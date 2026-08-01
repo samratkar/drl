@@ -283,7 +283,7 @@ The answer lies in **decoupling decision-making from update guidance**:
 
 1. **Decoupled Architecture (Decision vs. Update):**
    * **Value-Based (DQN):** The value function is the *sole decision maker*. To choose an action, the agent must compute Q-values for all actions and run an argmax selection: $A = \text{argmax}_a Q(s,a)$.
-   * **Policy Gradient with Baseline:** The value function is only a *critic/guide* for updating weights. The actual decision-making is done directly by the policy (Actor) $\pi_{\theta}(a|s)$. The value network $\hat{v}(s, \mathbf{w})$ is **never** used during decision-making.
+   * **Policy Gradient with Baseline:** The value function is only a *critic/guide* for updating weights. The actual decision-making is done directly by the policy (Actor) $\pi_{\theta}(a \mid s)$. The value network $\hat{v}(s, \mathbf{w})$ is **never** used during decision-making.
 
 2. **Key Advantages of this Decoupling:**
    * **Continuous Action Spaces:** A policy network can directly output parameters of a continuous probability distribution (e.g., the mean and variance of a Gaussian for a steering wheel angle). A value-based network cannot do this because computing $\text{argmax}$ over an infinite continuous space at every step is computationally intractable.
@@ -297,7 +297,7 @@ The answer lies in **decoupling decision-making from update guidance**:
 
 ## 5. Policy Parameterizations: Translating Theory into Practice
 
-In the REINFORCE and REINFORCE with Baseline algorithms, we use the abstract mathematical gradient $\nabla_{\theta} \log \pi_{\theta}(A_t|S_t)$. In practice, how does a neural network actually compute this gradient, and how does the agent sample actions? 
+In the REINFORCE and REINFORCE with Baseline algorithms, we use the abstract mathematical gradient $\nabla_{\theta} \log \pi_{\theta}(A_t \mid S_t)$. In practice, how does a neural network actually compute this gradient, and how does the agent sample actions? 
 
 To understand this transition, let's first look at the entire **REINFORCE with Baseline** algorithm:
 
@@ -372,7 +372,7 @@ $$
 \qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w}) \\
 \qquad \color{purple}{\theta \leftarrow \theta + \alpha \gamma^t \delta \nabla_{\theta} \log \pi_{\theta}(A_t | S_t)} \\
 \qquad \quad \color{purple}{\text{where analytical log-gradient is:}} \\
-\qquad \quad \color{purple}{\nabla_{\theta} \log \pi_{\theta}(A_t | S_t) =} \\
+\qquad \quad \color{purple}{\nabla_{\theta} \log \pi_{\theta}(A_t \mid S_t) =} \\
 \qquad \quad \color{purple}{\nabla_{\theta} h(S_t, A_t, \theta) - \sum_b \pi_{\theta}(b|S_t) \nabla_{\theta} h(S_t, b, \theta)}
 \end{array}
 &
@@ -434,7 +434,7 @@ Softmax policies are used when the agent must choose from a discrete, countable 
 The neural network outputs a vector of real numbers $h(s, a, \theta) \in \mathbb{R}$ (called **logits** or **action preferences**) for each possible action $a$. We convert these preferences into a valid probability distribution using the **softmax function**:
 $$ \pi_{\theta}(a|s) \doteq \frac{e^{h(s, a, \theta)}}{\sum_{b \in \mathcal{A}} e^{h(s, b, \theta)}} \tag{Eq. 13.2 (Sutton and Barto)} $$
 
-* **Rollout Insertion:** The agent feeds state $S_t$ into the network, computes $\pi_{\theta}(a|S_t)$ for all actions, and samples action $A_t \sim \pi_{\theta}(\cdot|S_t)$.
+* **Rollout Insertion:** The agent feeds state $S_t$ into the network, computes $\pi_{\theta}(a \mid S_t)$ for all actions, and samples action $A_t \sim \pi_{\theta}(\cdot|S_t)$.
 
 #### 3. Log-Gradient Calculation (Learning Loop)
 When updating, we compute the gradient of the log-probability of the action $A_t$ that was actually taken:
@@ -532,7 +532,7 @@ $$ \nabla_{\theta} J(\theta) \propto \sum_{s} \mu(s) \sum_{a} q_{\pi}(s,a) \nabl
 
 > **How does this lead to the Actor-Critic Architecture?**
 > Equation 6.1 requires the true, unknown action-value function $q_{\pi}(s,a)$. In model-free reinforcement learning, we must estimate this term.
-> * **The Actor:** The policy network $\pi_{\theta}(a|s)$ which selects actions (we update its parameters in the direction of the policy gradient $\nabla_{\theta} \pi_{\theta}(a|s)$).
+> * **The Actor:** The policy network $\pi_{\theta}(a \mid s)$ which selects actions (we update its parameters in the direction of the policy gradient $\nabla_{\theta} \pi_{\theta}(a|s)$).
 > * **The Critic:** Instead of waiting for full Monte Carlo returns, we parameterize a second network (the Critic) with weights $\mathbf{w}$ to approximate the action-value term, i.e., $\hat{q}(s,a; \mathbf{w}) \approx q_{\pi}(s,a)$ or $\hat{v}(s; \mathbf{w}) \approx v_{\pi}(s)$ via Temporal Difference (TD) learning.
 > This division of labor defines the **Actor-Critic architecture**.
 
@@ -540,38 +540,38 @@ $$ \nabla_{\theta} J(\theta) \propto \sum_{s} \mu(s) \sum_{a} q_{\pi}(s,a) \nabl
 
 #### Step-by-Step Derivation & Proportionality (Equations 6.2 - 6.8)
 
-Here is how the gradient of the policy itself ($\nabla_{\theta} \pi_{\theta}(a|s)$) and the proportionality symbol ($\propto$) arise.
+Here is how the gradient of the policy itself ($\nabla_{\theta} \pi_{\theta}(a \mid s)$) and the proportionality symbol ($\propto$) arise.
 
 ##### 1. Differentiating the State Value Function (Product Rule) (Equation 6.2)
 We define the value of a state $s$ under policy $\pi_\theta$ as:
-$$ v_{\pi}(s) = \sum_{a} \pi_{\theta}(a|s) q_{\pi}(s,a) $$
+$$ v_{\pi}(s) = \sum_{a} \pi_{\theta}(a \mid s) q_{\pi}(s,a) $$
 
-> **Note on Environment Transition Dynamics:** While $v_{\pi}(s)$ does not write the environment's state transition probabilities $p(s'|s,a)$ explicitly in this step, they are implicitly contained inside the definition of the state-action value function $q_{\pi}(s,a)$. Expanding $q_{\pi}(s,a)$ completely yields $v_{\pi}(s) = \sum_{a} \pi_{\theta}(a|s) \sum_{s'} p(s'|s,a) \left[ r(s,a,s') + \gamma v_{\pi}(s') \right]$. Using the shorthand $q_{\pi}(s,a)$ keeps the initial differentiation clean.
+> **Note on Environment Transition Dynamics:** While $v_{\pi}(s)$ does not write the environment's state transition probabilities $p(s' \mid s,a)$ explicitly in this step, they are implicitly contained inside the definition of the state-action value function $q_{\pi}(s,a)$. Expanding $q_{\pi}(s,a)$ completely yields $v_{\pi}(s) = \sum_{a} \pi_{\theta}(a \mid s) \sum_{s'} p(s' \mid s,a) \left[ r(s,a,s') + \gamma v_{\pi}(s') \right]$. Using the shorthand $q_{\pi}(s,a)$ keeps the initial differentiation clean.
 
 Taking the gradient with respect to $\theta$ requires the product rule (Equation 6.2):
-$$ \nabla_{\theta} v_{\pi}(s) = \sum_{a} \left[ \nabla_{\theta} \pi_{\theta}(a|s) q_{\pi}(s,a) + \pi_{\theta}(a|s) \nabla_{\theta} q_{\pi}(s,a) \right] \tag{Eq. 6.2 (Graesser and Keng)} $$
-Notice that the first term already contains the policy gradient $\nabla_{\theta} \pi_{\theta}(a|s)$ directly without a log term.
+$$ \nabla_{\theta} v_{\pi}(s) = \sum_{a} \left[ \nabla_{\theta} \pi_{\theta}(a \mid s) q_{\pi}(s,a) + \pi_{\theta}(a \mid s) \nabla_{\theta} q_{\pi}(s,a) \right] \tag{Eq. 6.2 (Graesser and Keng)} $$
+Notice that the first term already contains the policy gradient $\nabla_{\theta} \pi_{\theta}(a \mid s)$ directly without a log term.
 
 ##### 2. Unrolling the Q-value Recurrence (Equation 6.3 and 6.4)
 The state-action value $q_{\pi}(s,a)$ is defined recursively by the Bellman equation:
-$$ q_{\pi}(s,a) = \sum_{s'} p(s'|s,a) \left[ r(s,a,s') + \gamma v_{\pi}(s') \right] $$
+$$ q_{\pi}(s,a) = \sum_{s'} p(s' \mid s,a) \left[ r(s,a,s') + \gamma v_{\pi}(s') \right] $$
 
 Since the environment dynamics $p(s'|s,a)$ and rewards $r(s,a,s')$ are independent of the policy parameters $\theta$, taking the gradient yields (Equation 6.3):
-$$ \nabla_{\theta} q_{\pi}(s,a) = \gamma \sum_{s'} p(s'|s,a) \nabla_{\theta} v_{\pi}(s') \tag{Eq. 6.3 (Graesser and Keng)} $$
+$$ \nabla_{\theta} q_{\pi}(s,a) = \gamma \sum_{s'} p(s' \mid s,a) \nabla_{\theta} v_{\pi}(s') \tag{Eq. 6.3 (Graesser and Keng)} $$
 
 Substituting this back into the derivative of $v_{\pi}(s)$ (Equation 6.4):
-$$ \nabla_{\theta} v_{\pi}(s) = \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a|s) + \gamma \sum_{s'} \left( \sum_a \pi_{\theta}(a|s) p(s'|s,a) \right) \nabla_{\theta} v_{\pi}(s') \tag{Eq. 6.4 (Graesser and Keng)} $$
+$$ \nabla_{\theta} v_{\pi}(s) = \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a \mid s) + \gamma \sum_{s'} \left( \sum_a \pi_{\theta}(a \mid s) p(s' \mid s,a) \right) \nabla_{\theta} v_{\pi}(s') \tag{Eq. 6.4 (Graesser and Keng)} $$
 
-If we denote the one-step state transition probability under policy $\pi_\theta$ as $P(s \to s') = \sum_a \pi_{\theta}(a|s) p(s'|s,a)$, this is a recurrence relation:
-$$ \nabla_{\theta} v_{\pi}(s) = \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a|s) + \gamma \sum_{s'} P(s \to s') \nabla_{\theta} v_{\pi}(s') $$
+If we denote the one-step state transition probability under policy $\pi_\theta$ as $P(s \to s') = \sum_a \pi_{\theta}(a \mid s) p(s' \mid s,a)$, this is a recurrence relation:
+$$ \nabla_{\theta} v_{\pi}(s) = \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a \mid s) + \gamma \sum_{s'} P(s \to s') \nabla_{\theta} v_{\pi}(s') $$
 
 ##### 3. Expanding the Series to Infinity (Equation 6.5)
 Unrolling this recurrence indefinitely over the trajectory yields (Equation 6.5):
-$$ \nabla_{\theta} v_{\pi}(s) = \sum_{x \in \mathcal{S}} \sum_{k=0}^{\infty} \gamma^k P(s \to x \text{ in } k \text{ steps}) \sum_{a} q_{\pi}(x,a) \nabla_{\theta} \pi_{\theta}(a|x) \tag{Eq. 6.5 (Graesser and Keng)} $$
+$$ \nabla_{\theta} v_{\pi}(s) = \sum_{x \in \mathcal{S}} \sum_{k=0}^{\infty} \gamma^k P(s \to x \text{ in } k \text{ steps}) \sum_{a} q_{\pi}(x,a) \nabla_{\theta} \pi_{\theta}(a \mid x) \tag{Eq. 6.5 (Graesser and Keng)} $$
 
 ##### 4. Defining the Discounted State Visitation Measure $\eta(s)$ (Equation 6.6 and 6.7)
 For the start-state objective $J(\theta) \doteq v_{\pi}(s_0)$, the gradient is (Equation 6.7):
-$$ \nabla_{\theta} J(\theta) = \sum_{s} \underbrace{\left( \sum_{k=0}^{\infty} \gamma^k P(s_0 \to s \text{ in } k \text{ steps}) \right)}_{\eta(s) \text{ (Equation 6.6)}} \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a|s) \tag{Eq. 6.7 (Graesser and Keng)} $$
+$$ \nabla_{\theta} J(\theta) = \sum_{s} \underbrace{\left( \sum_{k=0}^{\infty} \gamma^k P(s_0 \to s \text{ in } k \text{ steps}) \right)}_{\eta(s) \text{ (Equation 6.6)}} \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a \mid s) \tag{Eq. 6.7 (Graesser and Keng)} $$
 
 Where $\eta(s)$ is the **unnormalized discounted state visitation measure** (Equation 6.6):
 $$ \eta(s) = \sum_{k=0}^{\infty} \gamma^k P(s_0 \to s \text{ in } k \text{ steps}) \tag{Eq. 6.6 (Graesser and Keng)} $$
@@ -584,10 +584,10 @@ To convert this sum into an expectation, we define the normalized state distribu
 $$ \mu(s) = \frac{\eta(s)}{\sum_{s'} \eta(s')} \implies \eta(s) = \left( \sum_{s'} \eta(s') \right) \mu(s) \tag{Eq. 6.8 (Graesser and Keng)} $$
 
 Substituting this back gives:
-$$ \nabla_{\theta} J(\theta) = \underbrace{\left( \sum_{s'} \eta(s') \right)}_{\text{Constant } C > 0} \sum_{s} \mu(s) \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a|s) $$
+$$ \nabla_{\theta} J(\theta) = \underbrace{\left( \sum_{s'} \eta(s') \right)}_{\text{Constant } C > 0} \sum_{s} \mu(s) \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a \mid s) $$
 
 Because the constant multiplier $C$ only scales the step size in gradient ascent, we can drop it by using the proportionality symbol ($\propto$) to get the final proportional formulation (Equation 6.1):
-$$ \nabla_{\theta} J(\theta) \propto \sum_{s} \mu(s) \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a|s) \tag{Eq. 6.1 (Graesser and Keng)} $$
+$$ \nabla_{\theta} J(\theta) \propto \sum_{s} \mu(s) \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a \mid s) \tag{Eq. 6.1 (Graesser and Keng)} $$
 
 ---
 
@@ -608,10 +608,10 @@ graph TD
 ---
 
 Which can also be written in expectation form as:
-$$ \nabla_{\theta} J(\theta) = \mathbb{E}_{\pi} [ q_{\pi}(S_t, A_t) \nabla_{\theta} \log \pi_{\theta}(A_t|S_t) ] \tag{Eq. 13.5 (Sutton and Barto)} $$
+$$ \nabla_{\theta} J(\theta) = \mathbb{E}_{\pi} [ q_{\pi}(S_t, A_t) \nabla_{\theta} \log \pi_{\theta}(A_t \mid S_t) ] \tag{Eq. 13.5 (Sutton and Barto)} $$
 
 **Intuition:** 
-* $\nabla_{\theta} \log \pi_{\theta}(A_t|S_t)$ points in the parameter space direction that increases the probability of taking action $A_t$ in state $S_t$.
+* $\nabla_{\theta} \log \pi_{\theta}(A_t \mid S_t)$ points in the parameter space direction that increases the probability of taking action $A_t$ in state $S_t$.
 * If an action $A_t$ leads to a high Q-value ($q_{\pi} > 0$), we push the weights $\theta$ in the direction of the gradient to **increase** the probability of taking that action again.
 * If the Q-value is low or negative, we push the probabilities **down**.
 * Scaling the gradient by $q_{\pi}(S_t, A_t)$ ensures that we reinforce good actions heavily and penalize poor actions.
@@ -624,10 +624,10 @@ To truly understand **Actor-Critic methods**, we must trace how they evolve dire
 
 #### 1. The Starting Point: REINFORCE with Baseline
 In REINFORCE with Baseline, we use the policy gradient update:
-$$ \theta_{t+1} = \theta_t + \alpha \gamma^t (G_t - \hat{v}(S_t, \mathbf{w})) \nabla_{\theta} \log \pi_{\theta}(A_t|S_t) $$
+$$ \theta_{t+1} = \theta_t + \alpha \gamma^t (G_t - \hat{v}(S_t, \mathbf{w})) \nabla_{\theta} \log \pi_{\theta}(A_t \mid S_t) $$
 
 Here, we have two function approximators:
-* **The Policy $\pi_{\theta}(a|s)$:** Determines which actions to take.
+* **The Policy $\pi_{\theta}(a \mid s)$:** Determines which actions to take.
 * **The State-Value baseline $\hat{v}(s, \mathbf{w})$:** Provides a baseline to reduce variance.
 
 ##### Architecture Diagram: REINFORCE with Baseline
@@ -642,7 +642,7 @@ The core limitation of REINFORCE is its reliance on the actual return $G_t$. To 
 We want to update the policy weights $\theta$ at *every single time step $t$* without waiting for the episode to end. How can we replace the future return $G_t$ with something we can compute immediately?
 
 Recall the Bellman equation relation for the true state-action value $q_{\pi}(S_t, A_t)$:
-$$ q_{\pi}(S_t, A_t) = \mathbb{E}_{\pi} \left[ R_{t+1} + \gamma v_{\pi}(S_{t+1}) \middle| S_t, A_t \right] $$
+$$ q_{\pi}(S_t, A_t) = \mathbb{E}_{\pi} \left[ R_{t+1} + \gamma v_{\pi}(S_{t+1}) \middle \mid  S_t, A_t \right] $$
 
 Instead of estimating $q_{\pi}(S_t, A_t)$ using the sample return $G_t$ (like in REINFORCE), we can **bootstrap**: we approximate $q_{\pi}(S_t, A_t)$ using our current learned estimate of the state-value function $\hat{v}(S_{t+1}, \mathbf{w})$ at the next step:
 $$ q_{\pi}(S_t, A_t) \approx R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w}) $$
@@ -654,7 +654,7 @@ This is exactly the **Temporal Difference (TD) error**, denoted as $\delta_t$:
 $$ \delta_t = R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w}) - \hat{v}(S_t, \mathbf{w}) $$
 
 By substituting the TD error $\delta_t$ for $(G_t - \hat{v}(S_t, \mathbf{w}))$, we arrive at the online, step-by-step **Actor-Critic update rule**:
-$$ \theta_{t+1} = \theta_t + \alpha \gamma^t \delta_t \nabla_{\theta} \log \pi_{\theta}(A_t|S_t) $$
+$$ \theta_{t+1} = \theta_t + \alpha \gamma^t \delta_t \nabla_{\theta} \log \pi_{\theta}(A_t \mid S_t) $$
 
 #### 4. Why is it called "Actor-Critic"?
 This bootstrapping modification fundamentally changes the role of the state-value function, splitting the system into two interactive components:
@@ -689,7 +689,7 @@ While both methods use a state-value function $V(s)$, they belong to fundamental
 To see exactly how these two architectures differ in practice, here is the episodic pseudo-code for both algorithms presented side-by-side:
 
 $$
-\begin{array}{c|c}
+\begin{array}{c \mid c}
 \textbf{REINFORCE with Baseline (Monte Carlo)} & \textbf{One-Step Actor-Critic (Temporal Difference)} \\
 \hline
 \begin{array}{l}
@@ -704,7 +704,7 @@ $$
 \qquad G \leftarrow \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k \quad \text{(Full Return)} \\
 \qquad \delta \leftarrow G - \hat{v}(S_t, \mathbf{w}) \\
 \qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w}) \\
-\qquad \theta \leftarrow \theta + \alpha \gamma^t \delta \nabla_{\theta} \log \pi_{\theta}(A_t | S_t) \\
+\qquad \theta \leftarrow \theta + \alpha \gamma^t \delta \nabla_{\theta} \log \pi_{\theta}(A_t  \mid  S_t) \\
 \qquad \quad \text{(Log-gradient updated as per Section 3)} \\
 \\
 \end{array}
@@ -718,12 +718,12 @@ $$
 \quad \text{Initialize state } S \text{ (first state of episode)} \\
 \quad I \leftarrow 1 \\
 \quad \textbf{Loop while } S \text{ is not terminal:} \\
-\qquad \text{Compute policy outputs and sample } A \sim \pi_{\theta}(\cdot|S) \\
+\qquad \text{Compute policy outputs and sample } A \sim \pi_{\theta}(\cdot \mid S) \\
 \qquad \quad \text{(see Section 3)} \\
 \qquad \text{Take action } A, \text{ observe } R, S' \\
 \qquad \delta \leftarrow R + \gamma \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w}) \quad \text{(1-Step TD Error)} \\
 \qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S, \mathbf{w}) \\
-\qquad \theta \leftarrow \theta + \alpha I \delta \nabla_{\theta} \log \pi_{\theta}(A|S) \\
+\qquad \theta \leftarrow \theta + \alpha I \delta \nabla_{\theta} \log \pi_{\theta}(A \mid S) \\
 \qquad \quad \text{(Log-gradient updated as per Section 3)} \\
 \qquad I \leftarrow \gamma I \\
 \qquad S \leftarrow S'
