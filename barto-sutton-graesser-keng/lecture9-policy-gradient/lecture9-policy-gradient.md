@@ -642,7 +642,7 @@ The core limitation of REINFORCE is its reliance on the actual return $G_t$. To 
 We want to update the policy weights $\theta$ at *every single time step $t$* without waiting for the episode to end. How can we replace the future return $G_t$ with something we can compute immediately?
 
 Recall the Bellman equation relation for the true state-action value $q_{\pi}(S_t, A_t)$:
-$$ q_{\pi}(S_t, A_t) = \mathbb{E}_{\pi} \left[ R_{t+1} + \gamma v_{\pi}(S_{t+1}) \middle \mid  S_t, A_t \right] $$
+$$ q_{\pi}(S_t, A_t) = \mathbb{E}_{\pi} \left[ R_{t+1} + \gamma v_{\pi}(S_{t+1}) \mid  S_t, A_t \right] $$
 
 Instead of estimating $q_{\pi}(S_t, A_t)$ using the sample return $G_t$ (like in REINFORCE), we can **bootstrap**: we approximate $q_{\pi}(S_t, A_t)$ using our current learned estimate of the state-value function $\hat{v}(S_{t+1}, \mathbf{w})$ at the next step:
 $$ q_{\pi}(S_t, A_t) \approx R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w}) $$
