@@ -434,11 +434,11 @@ Softmax policies are used when the agent must choose from a discrete, countable 
 The neural network outputs a vector of real numbers $h(s, a, \theta) \in \mathbb{R}$ (called **logits** or **action preferences**) for each possible action $a$. We convert these preferences into a valid probability distribution using the **softmax function**:
 $$ \pi_{\theta}(a|s) \doteq \frac{e^{h(s, a, \theta)}}{\sum_{b \in \mathcal{A}} e^{h(s, b, \theta)}} \tag{Eq. 13.2 (Sutton and Barto)} $$
 
-* **Rollout Insertion:** The agent feeds state $S_t$ into the network, computes $\pi_{\theta}(a \mid S_t)$ for all actions, and samples action $A_t \sim \pi_{\theta}(\cdot|S_t)$.
+* **Rollout Insertion:** The agent feeds state $S_t$ into the network, computes $\pi_{\theta}(a \mid S_t)$ for all actions, and samples action $A_t \sim \pi_{\theta}(\cdot \mid S_t)$.
 
 #### 3. Log-Gradient Calculation (Learning Loop)
 When updating, we compute the gradient of the log-probability of the action $A_t$ that was actually taken:
-$$ \nabla_{\theta} \log \pi_{\theta}(A_t|S_t) = \nabla_{\theta} h(S_t, A_t, \theta) - \sum_{b \in \mathcal{A}} \pi_{\theta}(b|S_t) \nabla_{\theta} h(S_t, b, \theta) $$
+$$ \nabla_{\theta} \log \pi_{\theta}(A_t \mid S_t) = \nabla_{\theta} h(S_t, A_t, \theta) - \sum_{b \in \mathcal{A}} \pi_{\theta}(b \mid S_t) \nabla_{\theta} h(S_t, b, \theta) $$
 
 * **Intuition:** The gradient increases the parameter weights for the selected action $A_t$ (first term) and decreases the weights for all actions proportional to their probabilities (second term). If the return is positive, $A_t$ becomes more likely; if negative, it becomes less likely.
 
