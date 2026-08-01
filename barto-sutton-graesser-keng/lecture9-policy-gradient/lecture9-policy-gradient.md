@@ -802,8 +802,8 @@ In continuing tasks (which do not terminate), there are no episode boundaries. D
 
 ### The Average Reward Objective
 We define the performance objective as the **average reward rate** per time step under policy $\pi_\theta$:
-$$ r(\pi) \doteq \lim_{h \to \infty} \frac{1}{h} \sum_{t=1}^{h} \mathbb{E}[R_t | A_{0:t-1} \sim \pi_{\theta}] = \sum_{s} d_{\pi}(s) \sum_{a} \pi_{\theta}(a|s) \sum_{s', r} p(s', r | s, a) r $$
-Where $d_{\pi}(s) \doteq \lim_{t\to\infty} P(S_t = s | S_0, A_{0:t-1} \sim \pi_{\theta})$ is the steady-state distribution of states under policy $\pi_{\theta}$.
+$$ r(\pi) \doteq \lim_{h \to \infty} \frac{1}{h} \sum_{t=1}^{h} \mathbb{E}[R_t | A_{0:t-1} \sim \pi_{\theta}] = \sum_{s} d_{\pi}(s) \sum_{a} \pi_{\theta}(a|s) \sum_{s', r} p(s', r \mid s, a) r $$
+Where $d_{\pi}(s) \doteq \lim_{t\to\infty} P(S_t = s \mid S_0, A_{0:t-1} \sim \pi_{\theta})$ is the steady-state distribution of states under policy $\pi_{\theta}$.
 
 ### Differential Value Functions
 Without episodes, values are defined relative to the average reward. These are **differential value functions**:
