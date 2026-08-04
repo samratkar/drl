@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 320" width="700" height="320">
+  <rect width="700" height="320" fill="#fcfcfc" rx="8" ry="8" stroke="#dee2e6" stroke-width="1"/>
+  
+  <defs>
+    <linearGradient id="gammaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#007bff"/>
+      <stop offset="100%" stop-color="#0056b3"/>
+    </linearGradient>
+    <linearGradient id="lambdaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#28a745"/>
+      <stop offset="100%" stop-color="#1e7e34"/>
+    </linearGradient>
+    <linearGradient id="boxGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f8f9fa"/>
+      <stop offset="100%" stop-color="#e9ecef"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Title -->
+  <text x="350" y="30" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#333" text-anchor="middle">γ (Gamma) vs. λ (Lambda) in Reinforcement Learning</text>
+
+  <!-- Divider line -->
+  <line x1="350" y1="60" x2="350" y2="300" stroke="#dee2e6" stroke-width="1.5" stroke-dasharray="4,4"/>
+
+  <!-- ================= LEFT PANEL: GAMMA ================= -->
+  <g transform="translate(0, 0)">
+    <!-- Icon/Header -->
+    <rect x="25" y="60" width="300" height="40" fill="url(#gammaGrad)" rx="5" ry="5"/>
+    <text x="175" y="85" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#fff" text-anchor="middle">γ (Gamma): The Task Horizon</text>
+    
+    <!-- Subtitle -->
+    <text x="175" y="120" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#0056b3" text-anchor="middle">Defines the Problem Objective</text>
+    
+    <!-- Concept illustration -->
+    <rect x="25" y="135" width="300" height="90" fill="url(#boxGrad)" rx="5" ry="5" stroke="#ced4da" stroke-width="1"/>
+    
+    <!-- Short-sighted -->
+    <circle cx="65" cy="180" r="15" fill="#e9ecef" stroke="#007bff" stroke-width="2"/>
+    <text x="65" y="184" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#007bff" text-anchor="middle">S_t</text>
+    
+    <line x1="80" y1="180" x2="135" y2="180" stroke="#333" stroke-width="1.5" stroke-dasharray="2,2"/>
+    
+    <!-- Immediate Reward -->
+    <circle cx="150" cy="180" r="12" fill="#ffd700" stroke="#d39e00" stroke-width="1.5"/>
+    <text x="150" y="212" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#856404" text-anchor="middle">γ → 0 (Short-sighted)</text>
+    <text x="150" y="162" font-family="Arial, sans-serif" font-size="9.5" font-weight="bold" fill="#333" text-anchor="middle">R_t+1</text>
+    
+    <!-- Long-term Reward -->
+    <line x1="162" y1="180" x2="265" y2="180" stroke="#333" stroke-width="1.5" stroke-dasharray="2,2"/>
+    
+    <path d="M 280 168 L 283 175 L 290 175 L 285 180 L 287 187 L 280 183 L 273 187 L 275 180 L 270 175 L 277 175 z" fill="#ff5722" stroke="#e64a19" stroke-width="1"/>
+    <text x="280" y="212" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#e64a19" text-anchor="middle">γ → 1 (Far-sighted)</text>
+    <text x="280" y="162" font-family="Arial, sans-serif" font-size="9.5" font-weight="bold" fill="#333" text-anchor="middle">R_t+k</text>
+
+    <!-- Explanatory Text -->
+    <text x="175" y="245" font-family="Arial, sans-serif" font-size="10.5" fill="#495057" text-anchor="middle" font-weight="bold">Part of the MDP Definition</text>
+    <text x="175" y="262" font-family="Arial, sans-serif" font-size="9.5" fill="#6c757d" text-anchor="middle">Determines WHAT the optimal policy should be.</text>
+    <text x="175" y="278" font-family="Arial, sans-serif" font-size="9.5" fill="#6c757d" text-anchor="middle">Changing γ changes the actual task target.</text>
+  </g>
+
+  <!-- ================= RIGHT PANEL: LAMBDA ================= -->
+  <g transform="translate(350, 0)">
+    <!-- Icon/Header -->
+    <rect x="25" y="60" width="300" height="40" fill="url(#lambdaGrad)" rx="5" ry="5"/>
+    <text x="175" y="85" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#fff" text-anchor="middle">λ (Lambda): The Estimator Dial</text>
+    
+    <!-- Subtitle -->
+    <text x="175" y="120" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#1e7e34" text-anchor="middle">Controls the Bias-Variance Trade-off</text>
+    
+    <!-- Concept illustration (Slider scale) -->
+    <rect x="25" y="135" width="300" height="90" fill="url(#boxGrad)" rx="5" ry="5" stroke="#ced4da" stroke-width="1"/>
+    
+    <!-- Slider Bar -->
+    <line x1="50" y1="180" x2="250" y2="180" stroke="#adb5bd" stroke-width="6" stroke-linecap="round"/>
+    
+    <!-- Slider Node (Active point) -->
+    <circle cx="150" cy="180" r="10" fill="#28a745" stroke="#1e7e34" stroke-width="2"/>
+    <text x="150" y="162" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#1e7e34" text-anchor="middle">GAE (0 &lt; λ &lt; 1)</text>
+    
+    <!-- Left Extreme (TD) -->
+    <text x="50" y="200" font-family="Arial, sans-serif" font-size="9.5" font-weight="bold" fill="#495057" text-anchor="middle">λ = 0 (1-Step TD)</text>
+    <text x="50" y="213" font-family="Arial, sans-serif" font-size="8.5" fill="#dc3545" text-anchor="middle">High Bias</text>
+    <text x="50" y="225" font-family="Arial, sans-serif" font-size="8.5" fill="#28a745" text-anchor="middle">Low Variance</text>
+    
+    <!-- Right Extreme (MC) -->
+    <text x="250" y="200" font-family="Arial, sans-serif" font-size="9.5" font-weight="bold" fill="#495057" text-anchor="middle">λ = 1 (Monte Carlo)</text>
+    <text x="250" y="213" font-family="Arial, sans-serif" font-size="8.5" fill="#28a745" text-anchor="middle">Zero Bias</text>
+    <text x="250" y="225" font-family="Arial, sans-serif" font-size="8.5" fill="#dc3545" text-anchor="middle">High Variance</text>
+
+    <!-- Explanatory Text -->
+    <text x="175" y="245" font-family="Arial, sans-serif" font-size="10.5" fill="#495057" text-anchor="middle" font-weight="bold">Algorithmic Tuning Parameter</text>
+    <text x="175" y="262" font-family="Arial, sans-serif" font-size="9.5" fill="#6c757d" text-anchor="middle">Determines HOW we estimate values to train the network.</text>
+    <text x="175" y="278" font-family="Arial, sans-serif" font-size="9.5" fill="#6c757d" text-anchor="middle">Changing λ does not alter the target optimal policy.</text>
+  </g>
+</svg>

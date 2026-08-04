@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 440" width="740" height="440">
+  <rect width="740" height="440" fill="#fcfcfc" rx="8" ry="8" stroke="#dee2e6" stroke-width="1"/>
+  
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="5" refY="2.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,5 L5,2.5 z" fill="#495057"/>
+    </marker>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#007bff"/>
+      <stop offset="100%" stop-color="#0056b3"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#28a745"/>
+      <stop offset="100%" stop-color="#1e7e34"/>
+    </linearGradient>
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fd7e14"/>
+      <stop offset="100%" stop-color="#d35400"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Header Title -->
+  <text x="370" y="25" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333" text-anchor="middle">A2C Synchronous Parallel Training Architecture (Steps 1–5)</text>
+
+  <!-- ================= GLOBAL PARAMETERS NETWORK (TOP) ================= -->
+  <rect x="235" y="45" width="270" height="65" fill="url(#blueGrad)" stroke="#004085" stroke-width="1.5" rx="6" ry="6"/>
+  <text x="370" y="65" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#fff" text-anchor="middle">Global Shared Network (Actor-Critic)</text>
+  <text x="370" y="80" font-family="Arial, sans-serif" font-size="10" fill="#d0e1fd" text-anchor="middle">Actor Head: π_θ(a|s)   |   Critic Head: V_w(s)</text>
+  <text x="370" y="95" font-family="Arial, sans-serif" font-size="9.5" font-weight="bold" fill="#ffd700" text-anchor="middle">Updates only occur here globally</text>
+
+  <!-- ================= PARALLEL WORKERS (MIDDLE) ================= -->
+  <!-- Bounding Box enclosing all 3 workers -->
+  <rect x="20" y="130" width="700" height="165" fill="none" stroke="#28a745" stroke-dasharray="3,3" stroke-width="1.5" rx="5" ry="5"/>
+  <text x="35" y="148" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#28a745">Parallel Workers</text>
+  <text x="705" y="148" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#28a745" text-anchor="end">2. Step Environments (locally &amp; synchronously)</text>
+
+  <!-- Worker 1 Box -->
+  <rect x="30" y="165" width="200" height="120" fill="#f8f9fa" stroke="#6c757d" stroke-width="1" rx="5" ry="5"/>
+  <rect x="40" y="175" width="180" height="20" fill="#007bff" rx="3" ry="3"/>
+  <text x="130" y="189" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#fff" text-anchor="middle">Worker 1 (Env 1)</text>
+  <text x="130" y="215" font-family="Arial, sans-serif" font-size="9" fill="#333" text-anchor="middle">State: S_t¹  →  Action: A_t¹</text>
+  <text x="130" y="233" font-family="Arial, sans-serif" font-size="9.5" fill="#28a745" font-weight="bold" text-anchor="middle">Env 1 Step: R_t+1¹, S_t+1¹</text>
+  <rect x="45" y="250" width="170" height="25" fill="#e9ecef" stroke="#adb5bd" stroke-dasharray="2,2" rx="3" ry="3"/>
+  <text x="130" y="266" font-family="Arial, sans-serif" font-size="9" fill="#495057" text-anchor="middle">Local Buffer 1 (Size T)</text>
+
+  <!-- Worker 2 Box -->
+  <rect x="270" y="165" width="200" height="120" fill="#f8f9fa" stroke="#6c757d" stroke-width="1" rx="5" ry="5"/>
+  <rect x="280" y="175" width="180" height="20" fill="#007bff" rx="3" ry="3"/>
+  <text x="370" y="189" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#fff" text-anchor="middle">Worker 2 (Env 2)</text>
+  <text x="370" y="215" font-family="Arial, sans-serif" font-size="9" fill="#333" text-anchor="middle">State: S_t²  →  Action: A_t²</text>
+  <text x="370" y="233" font-family="Arial, sans-serif" font-size="9.5" fill="#28a745" font-weight="bold" text-anchor="middle">Env 2 Step: R_t+1², S_t+1²</text>
+  <rect x="285" y="250" width="170" height="25" fill="#e9ecef" stroke="#adb5bd" stroke-dasharray="2,2" rx="3" ry="3"/>
+  <text x="370" y="266" font-family="Arial, sans-serif" font-size="9" fill="#495057" text-anchor="middle">Local Buffer 2 (Size T)</text>
+
+  <!-- Worker 3 Box -->
+  <rect x="510" y="165" width="200" height="120" fill="#f8f9fa" stroke="#6c757d" stroke-width="1" rx="5" ry="5"/>
+  <rect x="520" y="175" width="180" height="20" fill="#007bff" rx="3" ry="3"/>
+  <text x="610" y="189" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#fff" text-anchor="middle">Worker 3 (Env 3)</text>
+  <text x="610" y="215" font-family="Arial, sans-serif" font-size="9" fill="#333" text-anchor="middle">State: S_t³  →  Action: A_t³</text>
+  <text x="610" y="233" font-family="Arial, sans-serif" font-size="9.5" fill="#28a745" font-weight="bold" text-anchor="middle">Env 3 Step: R_t+1³, S_t+1³</text>
+  <rect x="525" y="250" width="170" height="25" fill="#e9ecef" stroke="#adb5bd" stroke-dasharray="2,2" rx="3" ry="3"/>
+  <text x="610" y="266" font-family="Arial, sans-serif" font-size="9" fill="#495057" text-anchor="middle">Local Buffer 3 (Size T)</text>
+
+  <!-- Arrows from Global Network to Workers (Step 1: Broadcast Actions) -->
+  <path d="M 235 78 L 130 78 L 130 165" fill="none" stroke="#007bff" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M 370 110 L 370 165" fill="none" stroke="#007bff" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M 505 78 L 610 78 L 610 165" fill="none" stroke="#007bff" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="145" y="130" font-family="Arial, sans-serif" font-size="9.5" font-weight="bold" fill="#007bff">1. Broadcast Actions</text>
+
+  <!-- ================= GLOBAL AGGREGATION & BATCH (BOTTOM) ================= -->
+  <rect x="235" y="325" width="270" height="50" fill="url(#orangeGrad)" stroke="#d35400" stroke-width="1.5" rx="5" ry="5"/>
+  <text x="370" y="345" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#fff" text-anchor="middle">Global Batch Aggregation (N × T Transitions)</text>
+  <text x="370" y="362" font-family="Arial, sans-serif" font-size="9.5" fill="#ffd4b2" text-anchor="middle">Calculate GAE advantages &amp; Batch Policy/Value Losses</text>
+
+  <!-- Arrows from Local Buffers to Global Batch (Step 3: Collect Rollouts) -->
+  <path d="M 130 285 L 130 350 L 235 350" fill="none" stroke="#e64a19" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M 370 285 L 370 325" fill="none" stroke="#e64a19" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M 610 285 L 610 350 L 505 350" fill="none" stroke="#e64a19" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="145" y="315" font-family="Arial, sans-serif" font-size="9.5" font-weight="bold" fill="#e64a19">3. Collect T-Step Rollouts</text>
+
+  <!-- Global Batch back to Global Shared Network (Step 4 & 5: Batched Gradient Update) -->
+  <path d="M 235 365 L 10 365 L 10 78 L 235 78" fill="none" stroke="#28a745" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="20" y="295" font-family="Arial, sans-serif" font-size="9.5" font-weight="bold" fill="#1e7e34" transform="rotate(-90 20 295)">4. Backpropagate Batched Losses</text>
+  <text x="110" y="70" font-family="Arial, sans-serif" font-size="9.5" font-weight="bold" fill="#1e7e34">5. Update Global Weights (θ, w)</text>
+</svg>

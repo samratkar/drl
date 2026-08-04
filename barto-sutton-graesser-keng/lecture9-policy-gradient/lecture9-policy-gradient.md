@@ -808,8 +808,27 @@ To improvise on this, modern deep RL architectures extend the basic Actor-Critic
 1. **Multi-Step Lookahead (Variance-Bias Tuning):** Instead of bootstrapping after just 1 step, A2C collects rollouts of length $T$ and computes $n$-step returns or **Generalized Advantage Estimation (GAE)**. This allows us to trade off bias and variance:
    * **$n$-Step Return Target:** 
      $$ V_{\text{target}} = \sum_{k=0}^{n-1} \gamma^k R_{t+k+1} + \gamma^n \hat{v}(S_{t+n}, \mathbf{w}) $$
-   * **GAE Advantage:** Takes a weighted average of multi-step advantages to smoothly balance bias and variance using parameter $\lambda$.
+   * **GAE Advantage:** Rather than choosing a single fixed step size $n$, Generalized Advantage Estimation (GAE) takes an **exponentially weighted average** of all $n$-step advantage estimators using a parameter $\lambda \in [0, 1]$:
+     $$ A_t^{\text{GAE}(\gamma, \lambda)} = \sum_{l=0}^{\infty} (\gamma \lambda)^l \delta_{t+l} = \delta_t + (\gamma \lambda) \delta_{t+1} + (\gamma \lambda)^2 \delta_{t+2} + \dots $$
+     Where $\delta_{t+l}$ is the 1-step Temporal Difference error:
+     $$ \delta_{t+l} = R_{t+l+1} + \gamma \hat{v}(S_{t+l+1}, \mathbf{w}) - \hat{v}(S_{t+l}, \mathbf{w}) $$
+     By tuning the hyperparameter $\lambda$, GAE allows us to interpolate smoothly between:
+     * **$\lambda = 0$ (Maximum Bias / Minimum Variance):** Reduces to the 1-step TD advantage $\delta_t$.
+     * **$\lambda = 1$ (Minimum Bias / Maximum Variance):** Reduces to the full Monte Carlo baseline-subtracted return $G_t - \hat{v}(S_t, \mathbf{w})$.
+   * **$\gamma$ vs. $\lambda$ (Foresight vs. Trust):** Students often get confused about why we need both parameters. The key difference is:
+     * **$\gamma$ (Discount Factor):** Controls the **MDP Problem Objective**. It defines the physical task by dictating how much future rewards are worth. Changing $\gamma$ changes the *optimal policy itself*.
+     * **$\lambda$ (Bootstrapping Factor):** Controls the **Algorithm Estimator**. It adjusts the bias-variance trade-off of the value updates. Changing $\lambda$ does *not* change the optimal policy, only the convergence speed and learning stability.
+
+     ![Gamma vs Lambda Comparison](./assets/images/gamma_vs_lambda.svg)
+
 2. **Synchronous Parallel Execution:** A2C deploys multiple parallel environment workers. A global policy network coordinates actions across these workers, gathers batches of trajectories, and computes updates simultaneously. This breaks the temporal correlation between consecutive steps, which is critical for stabilizing deep neural networks.
+
+   ![A2C Synchronous Parallel Architecture](./assets/images/a2c_synchronous_architecture.svg)
+
+   ##### Operational Code Mapping (Steps 1–5)
+   To connect the abstract system architecture to actual implementation, here is the direct mapping of the five execution steps to their corresponding code blocks in a standard A2C training loop:
+
+   ![A2C Code Mapping](./assets/images/a2c_code_mapping.svg)
 3. **Batched GPU Optimization:** Basic AC updates weights on a single step. A2C aggregates rollouts across $N$ environments for $T$ timesteps, computing gradients in large, batched matrix operations that run efficiently on modern GPUs/CPUs.
 
 ---
@@ -964,7 +983,104 @@ $$
 | **Discount Tracker ($I$)** | Requires a running decay tracker $I$ to scale policy updates by $\gamma^t$: $\theta \leftarrow \theta + \alpha I \delta \nabla \log \pi$. | No discount decay tracker is used; all updates are weighted equally. |
 | **Value Function Meaning** | $\hat{v}(s, \mathbf{w})$ estimates the expected **discounted future return** starting from state $s$. | $\hat{v}(s, \mathbf{w})$ estimates the **differential value** (how much better/worse state $s$ is relative to the average reward rate $\bar{R}$). |
 
+## 9. Numerical Case Study — Intuitive Algorithm Comparison
 
+To understand the core behavioral differences, credit assignment, and bias-variance trade-offs of these algorithms, we trace their updates step-by-step on a simple **3-State Stochastic Markov Decision Process (MDP)**.
+
+### The 3-State Stochastic MDP
+The agent starts at state $S_0$ and has two action choices:
+1. **Action $a_1$ (Go Left to $S_1$):** Transitions to state $S_1$ with $100\%$ probability. Immediate reward $R_1 = 0$.
+   * From $S_1$, there is only one action which leads stochasticially to the terminal state:
+     * **$80\%$ chance:** Transitions to $S_{\text{terminal}}$ with reward $R_2 = +10$ (Goal).
+     * **$20\%$ chance:** Transitions to $S_{\text{terminal}}$ with reward $R_2 = -10$ (Trap).
+     * *Expected Return of selecting $a_1$:* $E[G \mid S_0, a_1] = 0 + \gamma(0.8 \times 10 + 0.2 \times (-10)) = 0.9(6) = +5.4$ (for $\gamma = 0.9$).
+2. **Action $a_2$ (Go Right to $S_{\text{terminal}}$):** Transitions directly to the terminal state with $100\%$ probability. Immediate reward $R_1 = +2$.
+   * *Expected Return of selecting $a_2$:* $E[G \mid S_0, a_2] = +2$.
+
+Thus, **Action $a_1$ is the optimal action** at $S_0$ because its expected return (+5.4) is higher than that of $a_2$ (+2.0).
+
+![Numerical MDP Case Study](./assets/images/numerical_case_study.svg)
+
+---
+
+### The Scenario: A "Bad Luck" Trajectory
+Let's assume the agent selects the optimal action $a_1$, but gets unlucky in the stochastic transition from $S_1$, landing in the trap:
+$$ \tau = (S_0, a_1, R_1=0, S_1, a, R_2=-10, S_{\text{terminal}}) $$
+We assume the discount factor is $\gamma = 0.9$. Here is how each algorithm updates the policy parameters $\theta$ at the initial step $S_0$:
+
+#### 1. REINFORCE (Monte Carlo)
+REINFORCE uses the full, un-bootstrapped return $G_0$ to scale the gradient:
+* **Return Calculation:** 
+  $$ G_0 = R_1 + \gamma R_2 = 0 + 0.9(-10) = -9 $$
+* **Policy Parameter Update:**
+  $$ \theta \leftarrow \theta + \alpha G_0 \nabla_{\theta} \log \pi_{\theta}(a_1|S_0) = \theta - 9 \alpha \nabla_{\theta} \log \pi_{\theta}(a_1|S_0) $$
+* **Behavior Analysis:** Because the trajectory ended in the trap, $G_0 < 0$ is highly negative. REINFORCE **penalizes** the choice of $a_1$ at $S_0$, decreasing its selection probability, despite the fact that $a_1$ is actually the optimal action on average. It is blind to the fact that $a_1$ was a good choice and the trap was just a high-variance fluke.
+
+#### 2. REINFORCE with Baseline
+Suppose the agent maintains a state-value baseline estimated at $V(S_0) = +5$:
+* **Advantage Calculation:**
+  $$ A_0 = G_0 - V(S_0) = -9 - 5 = -14 $$
+* **Policy Parameter Update:**
+  $$ \theta \leftarrow \theta - 14 \alpha \nabla_{\theta} \log \pi_{\theta}(a_1|S_0) $$
+* **Behavior Analysis:** Since the actual return ($-9$) was much worse than what the baseline predicted ($+5$), the advantage is heavily negative. The policy is updated to penalize $a_1$ even more strongly.
+
+#### 3. One-Step Actor-Critic (TD)
+Actor-Critic uses value function estimates to bootstrap, estimating $V(S_0) = +5$ and $V(S_1) = +6$ (correctly reflecting average returns):
+* **Step 1 TD Target & Error:**
+  $$ \text{TD Target} = R_1 + \gamma V(S_1) = 0 + 0.9(+6) = +5.4 $$
+  $$ \delta_0 = \text{TD Target} - V(S_0) = 5.4 - 5 = +0.4 $$
+* **Policy Parameter Update for Step 1:**
+  $$ \theta \leftarrow \theta + \alpha \delta_0 \nabla_{\theta} \log \pi_{\theta}(a_1|S_0) = \theta + 0.4 \alpha \nabla_{\theta} \log \pi_{\theta}(a_1|S_0) $$
+* **Behavior Analysis:** **This is the core advantage of Actor-Critic!** Even though the agent eventually landed in the trap, the update for step 1 uses $\delta_0 = +0.4 > 0$. The agent **increases** the probability of choosing $a_1$ because moving to $S_1$ is recognized as an improvement over $S_0$ on average. The high-variance trap outcome is isolated to the step 2 update ($\delta_1 = -10 - 6 = -16$ at $S_1$), preventing it from corrupting the credit assignment of the first step.
+
+#### 4. Advantage Actor-Critic (GAE)
+Let's see how GAE blends these updates using weighting parameter $\lambda = 0.95$:
+* **TD Errors:** $\delta_0 = +0.4$, $\delta_1 = R_2 + \gamma V(S_{\text{term}}) - V(S_1) = -10 + 0 - 6 = -16$.
+* **GAE Advantage Calculation:**
+  $$ A_0^{\text{GAE}} = \delta_0 + (\gamma \lambda) \delta_1 = +0.4 + (0.9 \times 0.95)(-16) = 0.4 - 13.68 = -13.28 $$
+* **Behavior Analysis:** GAE introduces some variance from future transitions to reduce critic bias. Here, because $\lambda = 0.95$ is close to $1$, the estimator behaves closely to Monte Carlo baseline-subtraction and penalizes $a_1$ (advantage $-13.28$).
+  * If we dialed $\lambda \to 0$ (TD error only), the advantage becomes $+0.4$ (optimal credit assignment, but biased if $V(S_1)$ is wrong).
+  * If we dialed $\lambda \to 1$ (Monte Carlo), the advantage becomes $-14$ (zero bias, but maximum variance).
+
+#### 5. Proximal Policy Optimization (PPO)
+PPO utilizes clipping to prevent destabilizing updates if the advantage estimation is large:
+* **Ratio:** $r_t(\theta) = \frac{\pi_{\theta}(a_1|S_0)}{\pi_{\theta_{\text{old}}}(a_1|S_0)}$
+* **Objective:** $L^{\text{CLIP}}(\theta) = \hat{\mathbb{E}} \left[ \min(r_t(\theta) A_0, \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon) A_0) \right]$
+* **Behavior Analysis:** If a previous update had already caused a massive policy shift (e.g., $r_t(\theta) \to 2.0$) and we receive a large negative advantage ($A_0 = -13.28$), standard policy gradients would make an extremely large backward step. PPO clips the update range to $[1-\epsilon, 1+\epsilon]$, ensuring that even with high-variance advantages, the policy parameters cannot jump catastrophically in a single step.
+
+---
+
+### Summary Table of Updates for $\tau$
+
+| Algorithm | Advantage / Scalar Estimate | Action $a_1$ Probability Update | Bias vs. Variance Trade-off |
+| :--- | :--- | :--- | :--- |
+| **REINFORCE** | $G_0 = -9$ | **Decreases** (Incorrectly penalizes) | Zero Bias / Maximum Variance |
+| **REINFORCE w/ Baseline** | $A_0 = -14$ | **Decreases** (Incorrectly penalizes) | Zero Bias / High Variance |
+| **One-Step Actor-Critic** | $\delta_0 = +0.4$ | **Increases** (Correctly reinforces) | High Bias / Minimum Variance |
+| **A2C (GAE $\lambda=0.95$)** | $A_0^{\text{GAE}} = -13.28$ | **Decreases** (Weighted towards MC) | Blends bias and variance smoothly |
+| **PPO** | Clipped Objective | **Buffered Update** | Robust to high variance updates |
+
+---
+
+## 10. Implementation Code & Jupyter Notebook
+
+For a hands-on coding demonstration, we provide a complete, interactive Jupyter Notebook that implements all five policy gradient algorithms in PyTorch using Gymnasium's `CartPole-v1` environment.
+
+### Accessible Notebook Link
+* **[Policy Gradients Case Study Notebook](./assets/policy_gradients_demonstration.ipynb)**
+
+### Code Structure
+The notebook contains:
+1. **Actor and Critic Networks:** PyTorch neural network modules representing the policy $\pi_\theta(a|s)$ and baseline value function $V_w(s)$.
+2. **Algorithm Implementations:**
+   * **REINFORCE:** Calculates discounted returns and performs episodic policy updates.
+   * **REINFORCE with Baseline:** Uses a baseline critic to reduce policy variance.
+   * **Actor-Critic (One-Step TD):** Updates the actor and critic online at each environment step using bootstrapping.
+   * **A2C (Advantage Actor-Critic):** Standard multi-environment synchronous parallel trajectory collector.
+   * **PPO (Proximal Policy Optimization):** Standard implementation with GAE advantage estimation and clipped surrogate objective.
+3. **Training & Comparison Visualizations:** Evaluates all five algorithms under identical hyperparameter settings and plots their average episode reward convergence curves.
+
+---
 
 ## Practice Exercises
 
