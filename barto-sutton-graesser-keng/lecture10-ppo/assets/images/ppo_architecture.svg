@@ -1,18 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400">
-  <rect width="600" height="400" fill="#f8f9fa"/>
-  <text x="300" y="30" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle">PPO Shared Architecture</text>
+  <rect width="600" height="400" fill="#fcfcfc" rx="8" ry="8" stroke="#dee2e6" stroke-width="1"/>
+  
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="5" refY="2.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,5 L5,2.5 z" fill="#333"/>
+    </marker>
+    <linearGradient id="sharedGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8f9fa"/>
+      <stop offset="100%" stop-color="#e9ecef"/>
+    </linearGradient>
+  </defs>
+
+  <text x="300" y="30" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#333" text-anchor="middle">PPO Shared Architecture</text>
 
   <!-- State -->
   <rect x="50" y="175" width="80" height="50" fill="#bdc3c7" stroke="#7f8c8d" stroke-width="2" rx="8" ry="8"/>
-  <text x="90" y="205" font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle">State</text>
+  <text x="90" y="205" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333" text-anchor="middle">State</text>
 
   <!-- Shared Backbone -->
-  <line x1="130" y1="200" x2="180" y2="200" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
-  <rect x="180" y="125" width="120" height="150" fill="#ecf0f1" stroke="#95a5a6" stroke-width="2" rx="8" ry="8"/>
-  <text x="240" y="170" font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle">Shared</text>
-  <text x="240" y="190" font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle">Network</text>
-  <text x="240" y="215" font-family="Arial" font-size="10" text-anchor="middle">(Parameters θ)</text>
-  <text x="240" y="230" font-family="Arial" font-size="10" text-anchor="middle">CNN / MLP</text>
+  <line x1="130" y1="200" x2="172" y2="200" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="180" y="125" width="120" height="150" fill="url(#sharedGrad)" stroke="#95a5a6" stroke-width="2" rx="8" ry="8"/>
+  <text x="240" y="170" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333" text-anchor="middle">Shared</text>
+  <text x="240" y="190" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333" text-anchor="middle">Network</text>
+  <text x="240" y="215" font-family="Arial, sans-serif" font-size="10" fill="#6c757d" text-anchor="middle">(Parameters theta)</text>
+  <text x="240" y="230" font-family="Arial, sans-serif" font-size="10" fill="#6c757d" text-anchor="middle">CNN / MLP</text>
 
   <!-- Split -->
   <line x1="300" y1="200" x2="350" y2="200" stroke="#333" stroke-width="2"/>
@@ -20,20 +32,20 @@
   <line x1="350" y1="200" x2="350" y2="300" stroke="#333" stroke-width="2"/>
 
   <!-- Actor Head -->
-  <line x1="350" y1="100" x2="400" y2="100" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="350" y1="100" x2="392" y2="100" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
   <rect x="400" y="60" width="120" height="80" fill="#3498db" stroke="#2980b9" stroke-width="2" rx="8" ry="8"/>
-  <text x="460" y="90" font-family="Arial" font-size="14" fill="#fff" font-weight="bold" text-anchor="middle">Actor Head</text>
-  <text x="460" y="110" font-family="Arial" font-size="12" fill="#fff" text-anchor="middle">π(a|s)</text>
-  <text x="460" y="125" font-family="Arial" font-size="10" fill="#fff" text-anchor="middle">Softmax Logits</text>
+  <text x="460" y="90" font-family="Arial, sans-serif" font-size="14" fill="#fff" font-weight="bold" text-anchor="middle">Actor Head</text>
+  <text x="460" y="110" font-family="Arial, sans-serif" font-size="12" fill="#fff" text-anchor="middle">pi(a|s)</text>
+  <text x="460" y="125" font-family="Arial, sans-serif" font-size="10" fill="#fff" text-anchor="middle">Softmax Logits</text>
 
   <!-- Critic Head -->
-  <line x1="350" y1="300" x2="400" y2="300" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="350" y1="300" x2="392" y2="300" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
   <rect x="400" y="260" width="120" height="80" fill="#2ecc71" stroke="#27ae60" stroke-width="2" rx="8" ry="8"/>
-  <text x="460" y="290" font-family="Arial" font-size="14" fill="#fff" font-weight="bold" text-anchor="middle">Critic Head</text>
-  <text x="460" y="310" font-family="Arial" font-size="12" fill="#fff" text-anchor="middle">V(s)</text>
-  <text x="460" y="325" font-family="Arial" font-size="10" fill="#fff" text-anchor="middle">Linear Scalar</text>
+  <text x="460" y="290" font-family="Arial, sans-serif" font-size="14" fill="#fff" font-weight="bold" text-anchor="middle">Critic Head</text>
+  <text x="460" y="310" font-family="Arial, sans-serif" font-size="12" fill="#fff" text-anchor="middle">V(s)</text>
+  <text x="460" y="325" font-family="Arial, sans-serif" font-size="10" fill="#fff" text-anchor="middle">Linear Scalar</text>
 
   <!-- Loss Bracket -->
   <path d="M 540 100 Q 580 100 580 200 T 540 300" fill="none" stroke="#9b59b6" stroke-width="3" stroke-dasharray="5,5"/>
-  <text x="590" y="205" font-family="Arial" font-size="12" fill="#9b59b6" text-anchor="middle">Total Loss</text>
+  <text x="595" y="205" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#9b59b6" text-anchor="middle">Total Loss</text>
 </svg>
