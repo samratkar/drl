@@ -689,7 +689,7 @@ While both methods use a state-value function $V(s)$, they belong to fundamental
 To see exactly how these two architectures differ in practice, here is the episodic pseudo-code for both algorithms presented side-by-side:
 
 $$
-\begin{array}{c \mid c}
+\begin{array}{c|c}
 \textbf{REINFORCE with Baseline (Monte Carlo)} & \textbf{One-Step Actor-Critic (Temporal Difference)} \\
 \hline
 \begin{array}{l}
@@ -796,7 +796,91 @@ Notice that because action $a_1$ yielded a positive TD error (better than expect
 
 ---
 
-## 6. Policy Gradient for Continuing Problems (Sutton & Barto 13.6)
+## 7. Advantage Actor-Critic (A2C) — The Modern Deep RL Extension
+
+### Evolving A2C from Basic Actor-Critic (AC)
+While the foundational **One-Step Actor-Critic** (Section 6) successfully updates weights step-by-step online, it introduces a major bottleneck: **high bias**. 
+
+Because the TD target ($R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w})$) relies heavily on the critic's value network estimate $\hat{v}(S_{t+1})$, any error or noise in the critic's value estimates propagates directly into the actor's update. If the critic is poorly trained early on, the actor learns incorrect behaviors.
+
+To improvise on this, modern deep RL architectures extend the basic Actor-Critic into **Advantage Actor-Critic (A2C)** (popularized by Mnih et al. in 2016). A2C introduces three major improvements over standard AC:
+
+1. **Multi-Step Lookahead (Variance-Bias Tuning):** Instead of bootstrapping after just 1 step, A2C collects rollouts of length $T$ and computes $n$-step returns or **Generalized Advantage Estimation (GAE)**. This allows us to trade off bias and variance:
+   * **$n$-Step Return Target:** 
+     $$ V_{\text{target}} = \sum_{k=0}^{n-1} \gamma^k R_{t+k+1} + \gamma^n \hat{v}(S_{t+n}, \mathbf{w}) $$
+   * **GAE Advantage:** Takes a weighted average of multi-step advantages to smoothly balance bias and variance using parameter $\lambda$.
+2. **Synchronous Parallel Execution:** A2C deploys multiple parallel environment workers. A global policy network coordinates actions across these workers, gathers batches of trajectories, and computes updates simultaneously. This breaks the temporal correlation between consecutive steps, which is critical for stabilizing deep neural networks.
+3. **Batched GPU Optimization:** Basic AC updates weights on a single step. A2C aggregates rollouts across $N$ environments for $T$ timesteps, computing gradients in large, batched matrix operations that run efficiently on modern GPUs/CPUs.
+
+---
+
+### Information Flow Comparison
+
+#### 1. One-Step Actor-Critic (Basic AC)
+Updates occur immediately at every single transition step.
+
+![One-Step Actor-Critic Information Flow](./assets/images/one_step_ac_info_flow.svg)
+
+#### 2. Advantage Actor-Critic (A2C)
+Rollouts are gathered synchronously in parallel, advantages are computed globally, and updates occur in batches.
+
+![A2C Parallel Information Flow](./assets/images/a2c_parallel_info_flow.svg)
+
+---
+
+### Side-by-Side Algorithm Comparison: Basic AC vs. A2C
+
+Here is how the update logic and execution structure differ side-by-side:
+
+$$
+\begin{array}{c|c}
+\textbf{One-Step Actor-Critic (Basic AC)} & \textbf{Advantage Actor-Critic (A2C)} \\
+\hline
+\begin{array}{l}
+\textbf{Input:} \text{ policy } \pi_{\theta}, \text{ value function } \hat{v}(s, \mathbf{w}) \\
+\textbf{Parameters:} \text{ step sizes } \alpha > 0, \beta > 0 \\
+\textbf{Initialize:} \theta, \mathbf{w} \\
+\\
+\textbf{Loop forever (each episode):} \\
+\quad \text{Initialize state } S \\
+\quad I \leftarrow 1 \\
+\quad \textbf{Loop for each step: } \\
+\qquad \text{Sample } A \sim \pi_{\theta}(\cdot|S) \\
+\qquad \text{Take action } A, \text{ observe } R, S' \\
+\qquad \mathbf{\delta \leftarrow R + \gamma \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w})} \\
+\qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S, \mathbf{w}) \\
+\qquad \theta \leftarrow \theta + \alpha I \delta \nabla_{\theta} \log \pi_{\theta}(A|S) \\
+\qquad I \leftarrow \gamma I \\
+\qquad S \leftarrow S' \\
+\\
+\\
+\end{array}
+&
+\begin{array}{l}
+\textbf{Input:} \text{ policy } \pi_{\theta}, \text{ value function } \hat{v}(s, \mathbf{w}) \\
+\textbf{Parameters:} \text{ step sizes } \alpha > 0, \beta > 0, \text{ rollout length } T \\
+\textbf{Initialize:} \theta, \mathbf{w} \\
+\\
+\textbf{Loop forever:} \\
+\quad \text{Run policy synchronously in } N \text{ envs} \\
+\quad \text{for } T \text{ steps to collect: } S_{0:T}, A_{0:T}, R_{1:T} \\
+\\
+\quad \textbf{Compute advantages for } t = 0, \dots, T-1: \\
+\quad \quad \mathbf{V_{\text{target}} \leftarrow \sum_{k=0}^{T-t-1} \gamma^k R_{t+k+1} + \gamma^{T-t} \hat{v}(S_T, \mathbf{w})} \\
+\quad \quad \mathbf{A_t \leftarrow V_{\text{target}} - \hat{v}(S_t, \mathbf{w})} \\
+\\
+\quad \textbf{Perform batched updates:} \\
+\quad \quad \mathbf{w} \leftarrow \mathbf{w} + \beta \sum_{t=0}^{T-1} (V_{\text{target}} - \hat{v}(S_t, \mathbf{w})) \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w}) \\
+\quad \quad \mathbf{\theta} \leftarrow \theta + \alpha \sum_{t=0}^{T-1} \gamma^t A_t \nabla_{\theta} \log \pi_{\theta}(A_t|S_t) \\
+\quad \text{Update global network weights} \\
+\quad \text{Clear batched trajectory cache}
+\end{array}
+\end{array}
+$$
+
+---
+
+## 8. Policy Gradient for Continuing Problems (Sutton & Barto 13.6)
 
 In continuing tasks (which do not terminate), there are no episode boundaries. Discounting is problematic in continuing tasks because the discounted state distribution does not depend on the policy in a way that allows a simple gradient theorem. Thus, we reformulate our objective.
 
