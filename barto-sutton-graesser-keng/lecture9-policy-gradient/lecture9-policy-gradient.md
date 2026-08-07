@@ -1082,6 +1082,27 @@ The notebook contains:
 
 ---
 
+## 11. Lecture Videos
+
+Below are video lectures covering the key concepts in policy gradient methods, REINFORCE, and Actor-Critic architectures.
+
+### Video 1: AI Learning Evolution
+A conceptual overview of how reinforcement learning methods evolve from basic value-based estimation to direct policy search and gradients.
+
+<video src="./assets/AI_Learning_Evolution.mp4" controls width="100%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px;"></video>
+
+### Video 2: Building REINFORCE: From Trajectory Sampling to Neural Policy
+A step-by-step walkthrough of the REINFORCE algorithm, illustrating how to collect trajectories and compute policy gradients.
+
+<video src="./assets/Building_REINFORCE__From_Trajectory_Sampling_to_Neural_Policy_G.mp4" controls width="100%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px;"></video>
+
+### Video 3: REINFORCE to Actor-Critic
+An exploration of the limitations of REINFORCE (namely high variance) and how introducing a baseline and value-based critic leads to the Actor-Critic framework.
+
+<video src="./assets/REINFORCE_to_Actor-Critic.mp4" controls width="100%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px;"></video>
+
+---
+
 ## Practice Exercises
 
 Test your understanding of Policy Gradients with these exercises:

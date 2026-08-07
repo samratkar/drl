@@ -56,9 +56,26 @@ Modern combined methods extend this framework to handle complex, high-dimensiona
 As discussed in [Lecture 10](file:///c:/github/drl/barto-sutton-graesser-keng/lecture10-ppo/lecture10-ppo.md), taking unconstrained policy gradient steps can lead to **performance collapse** if the step size is too large. Advanced PG methods solve this by wrapping updates in safety constraints:
 
 1. **Trust Region Policy Optimization (TRPO)**
-   * **Core Idea:** Restricts how much the policy can change in a single update by imposing a constraint on the Kullback-Leibler (KL) divergence between the old and new policy:
-     $$ \mathbb{E}_{s \sim d_{\pi_{\theta_{old}}}} \left[ D_{KL} \left( \pi_{\theta_{old}}(\cdot\mid s) \,\big\|\, \pi_{\theta}(\cdot\mid s) \right) \right] \le \delta $$
-   * **Optimization:** Uses second-order optimization (natural gradient computation involving the Fisher Information Matrix). While mathematically rigorous and guaranteed to achieve monotonic improvement, TRPO is computationally expensive due to the need to compute and invert the Hessian of the KL divergence.
+   * **The Optimization Problem:** TRPO solves the following constrained optimization problem to find the new policy parameters $\theta$:
+     $$ \max_{\theta} \mathbb{E}_{s \sim d_{\pi_{\theta_{old}}}, a \sim \pi_{\theta_{old}}} \left[ \frac{\pi_{\theta}(a\mid s)}{\pi_{\theta_{old}}(a\mid s)} A_{\theta_{old}}(s, a) \right] $$
+     $$ \text{subject to} \quad \mathbb{E}_{s \sim d_{\pi_{\theta_{old}}}} \left[ D_{KL} \left( \pi_{\theta_{old}}(\cdot\mid s) \,\big\|\, \pi_{\theta}(\cdot\mid s) \right) \right] \le \delta $$
+     *Reference: Schulman et al. (2015), "Trust Region Policy Optimization"*
+     
+   * **Breaking Down the Expression:**
+     * **Surrogate Objective:** The term $\mathbb{E} \left[ \frac{\pi_{\theta}(a\mid s)}{\pi_{\theta_{old}}(a\mid s)} A_{\theta_{old}}(s, a) \right]$ is a local approximation of the policy's expected return. If the advantage $A_{\theta_{old}}(s, a) > 0$, the objective encourages making the action probability ratio $r_t(\theta) = \frac{\pi_{\theta}(a\mid s)}{\pi_{\theta_{old}}(a\mid s)} > 1$ (i.e., making the action more likely).
+     * **The Trust Region Constraint:** The KL divergence $D_{KL}(\pi_{old} \,\parallel\, \pi)$ measures the distance between the action probability distributions. The constraint enforces that the average change in policy behavior across states visited by the old policy does not exceed $\delta$ (typically a small value like $0.01$). 
+     * **Why KL and not Parameter Distance ($\|\theta - \theta_{old}\|_2^2$)?** The mapping from parameter space $\theta$ to policy action space $\pi_{\theta}$ is highly non-linear. A tiny change in a single neural network parameter can drastically alter the action output (leading to catastrophic collapse), while a large change in another parameter might have zero effect. Constraining the KL divergence guarantees safety in *behavioral space*.
+
+   * **Solving the Optimization (Natural Gradient & Conjugate Gradient):**
+     To solve this efficiently, TRPO uses Taylor expansions around the current parameters $\theta_{old}$:
+     1. **Linear Approximation of Objective:** approximated as $g^T (\theta - \theta_{old})$, where $g$ is the standard policy gradient.
+     2. **Quadratic Approximation of KL Constraint:** approximated as $\frac{1}{2} (\theta - \theta_{old})^T H (\theta - \theta_{old}) \le \delta$, where $H$ is the **Fisher Information Matrix (FIM)** (the Hessian of the KL divergence).
+     
+     This yields the search direction $\Delta \theta \propto H^{-1} g$, known as the **Natural Policy Gradient**.
+     
+     Because computing and inverting the $D \times D$ Fisher matrix $H$ (where $D$ is the number of parameters, often $>10^5$) is computationally intractable ($O(D^3)$), TRPO uses the **Conjugate Gradient (CG)** algorithm to iteratively solve the linear system $H x = g$ for $x = H^{-1} g$ without explicitly forming or inverting $H$.
+     
+     Finally, because approximations are used, a **backtracking line search** is performed along the search direction to ensure the constraint is strictly satisfied ($\text{KL} \le \delta$) and the objective actually improves.
 2. **Proximal Policy Optimization (PPO)**
    * **Core Idea:** Achieves similar stability to TRPO but uses first-order optimization (standard stochastic gradient descent) with a clipped surrogate objective that penalizes moving the policy ratio $r_t(\theta) = \frac{\pi_{\theta}(a\mid s)}{\pi_{\theta_{old}}(a\mid s)}$ outside of $[1-\epsilon, 1+\epsilon]$.
 3. **Deep Deterministic Policy Gradient (DDPG)**
@@ -112,6 +129,31 @@ Loop forever:
           r_sim, s'_sim <- Model(s_sim, a_sim)
           Q(s_sim, a_sim) <- Q(s_sim, a_sim) + alpha * [r_sim + gamma * max_a' Q(s'_sim, a') - Q(s_sim, a_sim)]
 ```
+
+### 2.4 Deep Dive into the Dyna-Q Planning Loop
+
+To understand how Dyna-Q bridges the gap between model-free and model-based methods, we must analyze steps 5 and 6 of the algorithm:
+
+#### A. What is happening in the Planning Loop?
+During each real-world time step, the agent interacts with the environment once:
+1. It takes action $a$ in state $s$, gets reward $r$, and transitions to $s'$.
+2. It performs a **direct model-free Q-learning update** (step 4).
+3. It updates its internal **Model** (step 5) by saving this transition: $\text{Model}(s, a) \leftarrow (r, s')$. In a tabular environment, this model is a simple lookup table recording the reward and next state for each state-action pair.
+4. **The Planning Loop (Step 6):** The agent halts real-world interaction and runs $N$ simulated steps in its "mind" (where $N$ is the planning budget). In each of the $N$ iterations:
+   * It randomly selects a state $s_{\text{sim}}$ and action $a_{\text{sim}}$ that it has previously experienced in the real world.
+   * It queries its learned model: $(r_{\text{sim}}, s'_{\text{sim}}) = \text{Model}(s_{\text{sim}}, a_{\text{sim}})$.
+   * It performs a simulated Q-learning update on the value function $Q(s_{\text{sim}}, a_{\text{sim}})$ using the model's output.
+
+#### B. Why is the Planning Loop important?
+In a pure model-free algorithm (like standard Q-learning), when the agent receives a reward (e.g., reaching a goal state), the value update only propagates **one step backward** in the state-action space per episode. 
+* For example, in a gridworld with 10 steps to the goal, the agent must complete the task 10 times to propagate the goal reward back to the starting state.
+* The planning loop acts as a **computational accelerator**. When the agent reaches the goal, it immediately records the transition. During the planning loop, it randomly samples previous states. If it samples the state right before the goal, that state's Q-value increases. In the next iteration, if it samples the state two steps before the goal, that state's Q-value increases, and so on.
+* This allows value updates to flow rapidly through the state space using *simulated experience* instead of requiring the agent to physically walk the gridworld multiple times.
+
+#### C. How Planning Improves Model-Free Performance
+1. **Sample Efficiency:** Physical environment interactions (e.g., a robot driving, a car steering) are slow, expensive, and wear down hardware. Querying a learned model (step 6) is a memory lookup that takes microseconds. By replacing physical trials with simulated planning, the agent extracts more value from each real-world sample.
+2. **Decoupled Learning and Acting:** The agent does not need to wait for real transitions to update its policy. It can utilize idle compute time (e.g., between decisions) to simulate transitions and refine its value estimates.
+3. **Faster Convergence:** With $N=50$ planning steps, the value function converges in significantly fewer real-world episodes compared to a model-free agent ($N=0$), which is blind to transition structure until it physically experiences it.
 
 ---
 
