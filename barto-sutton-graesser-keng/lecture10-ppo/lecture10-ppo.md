@@ -333,7 +333,16 @@ For a hands-on Python demonstration of Proximal Policy Optimization (PPO), you c
 
 This notebook contains the complete PyTorch implementation of PPO (clipped objective, shared network backbone with separate Actor/Critic heads, GAE advantage estimation, value function loss, and entropy bonus) trained on Gymnasium's `CartPole-v1` environment alongside standard policy gradient methods for direct performance comparison.
 
-Below is the complete, self-contained, end-to-end training script. It ties together the Actor/Critic models, the Gymnasium rollout loop, the Generalized Advantage Estimation (GAE) calculation, and the PPO update function:
+Below is the complete, self-contained, end-to-end training pipeline. It ties together the Actor/Critic models, the Gymnasium rollout loop, the Generalized Advantage Estimation (GAE) calculation, and the PPO update function.
+
+---
+
+### Step 1: Neural Network Architectures
+The Actor and Critic are defined as separate feed-forward neural networks in PyTorch. The Actor outputs action probabilities (policy $\pi$), while the Critic predicts state values $V(s)$.
+
+<table>
+<tr>
+<td valign="top" width="55%">
 
 ```python
 import torch
@@ -341,10 +350,6 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 import gymnasium as gym
-
-# =====================================================================
-# 1. NEURAL NETWORK ARCHITECTURES
-# =====================================================================
 
 class Actor(nn.Module):
     """The Policy Network: outputs a probability distribution over actions."""
@@ -377,12 +382,24 @@ class Critic(nn.Module):
         
     def forward(self, state):
         return self.net(state)
+```
 
+</td>
+<td valign="top" width="45%" align="center">
 
-# =====================================================================
-# 2. GAE COMPUTATION HELPER
-# =====================================================================
+**Actor & Critic Network Architectures**
+![PPO Network Architecture](./assets/images/ppo_network_architecture.svg)
 
+</td>
+</tr>
+</table>
+
+---
+
+### Step 2: GAE Computation Helper
+Once the rollout phase completes, we compute Generalized Advantage Estimation (GAE) and target returns. This is done backwards in time, using the rewards and the Critic's state values.
+
+```python
 def compute_gae(rewards, dones, values, next_value, gamma=0.99, lmbda=0.95):
     """Computes Generalized Advantage Estimation (GAE) and value targets."""
     advantages = []
@@ -407,12 +424,14 @@ def compute_gae(rewards, dones, values, next_value, gamma=0.99, lmbda=0.95):
     # Return Target = Advantage + V(s)
     returns = np.array(advantages) + np.array(values)
     return advantages, returns
+```
 
+---
 
-# =====================================================================
-# 3. PPO OPTIMIZATION STEP
-# =====================================================================
+### Step 3: PPO Optimization Step
+During the update phase, PPO converts the list of rollouts into PyTorch tensors. It shuffles the dataset and performs $K$ epochs of mini-batch gradient updates on the networks using the Clipped Surrogate Objective for the Actor and Mean Squared Error for the Critic.
 
+```python
 def ppo_update(actor, critic, actor_optimizer, critic_optimizer, 
                states, actions, old_log_probs, advantages, returns, 
                epochs=4, batch_size=64, eps_clip=0.2):
@@ -472,12 +491,18 @@ def ppo_update(actor, critic, actor_optimizer, critic_optimizer,
             critic_optimizer.zero_grad()
             critic_loss.backward()
             critic_optimizer.step()
+```
 
+---
 
-# =====================================================================
-# 4. MAIN END-TO-END TRAINING LOOP
-# =====================================================================
+### Step 4: Main End-to-End Training Loop
+Ties all of the components together. It initializes the Gymnasium environment, performs the step-by-step rollout phase, calls the GAE calculator, and feeds the outputs to the update phase.
 
+<table>
+<tr>
+<td valign="top" width="55%">
+
+```python
 def train_ppo():
     env = gym.make('CartPole-v1')
     state_dim = env.observation_space.shape[0]
@@ -571,6 +596,16 @@ def train_ppo():
 if __name__ == "__main__":
     train_ppo()
 ```
+
+</td>
+<td valign="top" width="45%" align="center">
+
+**End-to-End PPO Data Flow**
+![PPO Data Flow](./assets/images/ppo_data_flow.svg)
+
+</td>
+</tr>
+</table>
 
 ---
 
