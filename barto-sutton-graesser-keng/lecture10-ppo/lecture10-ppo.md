@@ -344,8 +344,7 @@ The Actor and Critic are defined as separate feed-forward neural networks in PyT
 <tr>
 <td valign="top" width="55%">
 
-```python
-import torch
+<pre><code class="language-python">import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
@@ -381,14 +380,13 @@ class Critic(nn.Module):
         )
         
     def forward(self, state):
-        return self.net(state)
-```
+        return self.net(state)</code></pre>
 
 </td>
 <td valign="top" width="45%" align="center">
 
-**Actor & Critic Network Architectures**
-![PPO Network Architecture](./assets/images/ppo_network_architecture.svg)
+<strong>Actor &amp; Critic Network Architectures</strong><br/><br/>
+<img src="./assets/images/ppo_network_architecture.svg" alt="PPO Network Architecture" width="100%"/>
 
 </td>
 </tr>
@@ -502,8 +500,7 @@ Ties all of the components together. It initializes the Gymnasium environment, p
 <tr>
 <td valign="top" width="55%">
 
-```python
-def train_ppo():
+<pre><code class="language-python">def train_ppo():
     env = gym.make('CartPole-v1')
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
@@ -595,13 +592,13 @@ def train_ppo():
 
 if __name__ == "__main__":
     train_ppo()
-```
+```</pre>
 
 </td>
 <td valign="top" width="45%" align="center">
 
-**End-to-End PPO Data Flow**
-![PPO Data Flow](./assets/images/ppo_data_flow.svg)
+<strong>End-to-End PPO Data Flow</strong><br/><br/>
+<img src="./assets/images/ppo_data_flow.svg" alt="PPO Data Flow" width="100%"/>
 
 </td>
 </tr>
