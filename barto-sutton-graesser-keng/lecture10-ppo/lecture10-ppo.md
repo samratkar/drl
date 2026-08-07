@@ -575,7 +575,8 @@ def ppo_update(actor, critic, actor_optimizer, critic_optimizer,
 
 * **Probability Ratio ($r_t$):**
   `ratios = torch.exp(log_probs - b_old_log_probs)`
-  Since we compute action probabilities in log space for numerical stability, subtracting log probabilities ($\log \pi_\theta - \log \pi_{\theta_{\text{old}}}$) and taking the exponential is mathematically equivalent to computing the raw ratio $r_t(\theta) = \frac{\pi_{\theta}(a_t \mid s_t)}{\pi_{\theta_{\text{old}}}(a_t \mid s_t)}$.
+  * **Mathematical Identity:** Since the logarithm of a division is the subtraction of the logs ($\log(\frac{A}{B}) = \log(A) - \log(B)$), we can represent the ratio $r_t(\theta) = \frac{\pi_{\theta}(a_t \mid s_t)}{\pi_{\theta_{\text{old}}}(a_t \mid s_t)}$ in log space as $\log r_t(\theta) = \log\pi_\theta(a_t \mid s_t) - \log\pi_{\theta_{\text{old}}}(a_t \mid s_t)$. Taking the exponential function `torch.exp` cancels the log and recovers the raw ratio.
+  * **Rationale for Log Space (Numerical Stability):** In deep reinforcement learning, action probabilities can be extremely close to zero (e.g., $10^{-20}$). Directly storing and dividing such tiny floating-point numbers can cause **numerical underflow**, where the computer rounds the probability to exactly $0.0$, leading to fatal division-by-zero or `NaN` errors. Working in log space represents these tiny values as stable negative numbers (e.g., $\log(10^{-20}) \approx -46.05$). Performing subtraction in log space first and then exponentiating keeps the computation numerically stable and prevents division-by-zero crashes.
 
 * **Surrogate Objectives (`surr1` and `surr2`):**
   * **`surr1` (Unclipped Surrogate):** `ratios * b_advantages` computes the standard importance-sampled advantage $r_t(\theta) A_t$.
