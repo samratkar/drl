@@ -12,7 +12,7 @@
 
   <!-- Shaded Trust Region -->
   <rect x="200" y="50" width="200" height="250" fill="#3182ce" fill-opacity="0.06" stroke="#a0aec0" stroke-width="1" stroke-dasharray="4,4"/>
-  <text x="300" y="65" font-family="Arial, sans-serif" font-size="11" fill="#4a5568" font-weight="bold" text-anchor="middle">Trust Region (r_t within [1-eps, 1+eps])</text>
+  <text x="300" y="65" font-family="Arial, sans-serif" font-size="11" fill="#4a5568" font-weight="bold" text-anchor="middle">Trust Region (r_t within [0.8, 1.2])</text>
 
   <!-- Axes -->
   <line x1="100" y1="250" x2="500" y2="250" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
@@ -29,25 +29,30 @@
 
   <!-- 1 - eps -->
   <line x1="200" y1="245" x2="200" y2="255" stroke="#333" stroke-width="2"/>
-  <text x="170" y="270" font-family="Arial, sans-serif" font-size="11" fill="#e74c3c" font-weight="bold">1 - epsilon (0.8)</text>
+  <text x="160" y="270" font-family="Arial, sans-serif" font-size="11" fill="#e74c3c" font-weight="bold">1 - epsilon (0.8)</text>
 
   <!-- 1 + eps -->
   <line x1="400" y1="245" x2="400" y2="255" stroke="#333" stroke-width="2"/>
   <text x="380" y="270" font-family="Arial, sans-serif" font-size="11" fill="#27ae60" font-weight="bold">1 + epsilon (1.2)</text>
 
   <!-- Scenario 1: Advantage > 0 -->
-  <text x="440" y="90" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#2980b9" text-anchor="middle">A &gt; 0 (Good Action)</text>
-  <!-- Unclipped line -->
-  <line x1="100" y1="350" x2="500" y2="150" stroke="#bdc3c7" stroke-width="1.5" stroke-dasharray="5,5"/>
-  <!-- Clipped line -->
-  <path d="M 100 350 L 400 200 L 500 200" fill="none" stroke="#2980b9" stroke-width="3.5"/>
-  <text x="445" y="190" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#2980b9">Clipped</text>
+  <!-- Entire Unclipped Line (Dotted) -->
+  <line x1="100" y1="310" x2="500" y2="190" stroke="#bdc3c7" stroke-width="1.5" stroke-dasharray="5,5"/>
+  <!-- Clipped Line (Solid Blue) -->
+  <path d="M 100 310 L 400 220 L 500 220" fill="none" stroke="#2980b9" stroke-width="3.5"/>
+  <text x="445" y="212" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#2980b9">Clipped</text>
 
   <!-- Scenario 2: Advantage < 0 -->
-  <text x="160" y="325" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#e67e22" text-anchor="middle">A &lt; 0 (Bad Action)</text>
-  <!-- Unclipped line -->
-  <line x1="100" y1="150" x2="500" y2="350" stroke="#bdc3c7" stroke-width="1.5" stroke-dasharray="5,5"/>
-  <!-- Clipped line -->
-  <path d="M 100 150 L 200 200 L 500 350" fill="none" stroke="#e67e22" stroke-width="3.5"/>
-  <text x="145" y="180" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#e67e22">Clipped</text>
+  <!-- Entire Unclipped Line (Dotted) -->
+  <line x1="100" y1="190" x2="500" y2="310" stroke="#bdc3c7" stroke-width="1.5" stroke-dasharray="5,5"/>
+  <!-- Clipped Line (Solid Orange) -->
+  <path d="M 100 220 L 200 220 L 500 310" fill="none" stroke="#e67e22" stroke-width="3.5"/>
+  <text x="135" y="212" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#e67e22">Clipped</text>
+
+  <!-- Legend Box -->
+  <rect x="420" y="45" width="160" height="65" fill="#ffffff" stroke="#dee2e6" stroke-width="1" rx="4" ry="4"/>
+  <circle cx="435" cy="65" r="5" fill="#2980b9"/>
+  <text x="450" y="69" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#2980b9">A &gt; 0 (Good Action)</text>
+  <circle cx="435" cy="90" r="5" fill="#e67e22"/>
+  <text x="450" y="94" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#e67e22">A &lt; 0 (Bad Action)</text>
 </svg>

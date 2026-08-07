@@ -185,7 +185,30 @@ What happens if the policy moves in the **wrong direction**? For example, the ad
 * Unclipped term: $1.5 \times -5 = -7.5$
 * Clipped term: $1.2 \times -5 = -6.0$
 * Minimum: $\min(-7.5, -6.0) = -7.5$ (unclipped!)
+
 Because we take the minimum, the objective reverts to the unclipped term. This yields a strong gradient that pulls the policy back in the correct direction.
+
+#### Why is clipping asymmetric (only on one side of each curve)?
+You might wonder: *Why is the blue curve ($A > 0$) only clipped on the right side ($r_t > 1.2$), and the orange curve ($A < 0$) only clipped on the left side ($r_t < 0.8$)? Why not clip both sides of both curves?*
+
+This asymmetry is a direct consequence of the **pessimistic minimum** operator:
+$$ L^{CLIP}(\theta) = \min( r_t A_t, \text{clip}(r_t, 1-\epsilon, 1+\epsilon) A_t ) $$
+
+1. **For $A_t > 0$ (Good Action) when $r_t < 0.8$:**
+   * The unclipped term is $r_t A_t$ (e.g., $0.6 A_t$).
+   * The clipped term is locked at $(1-\epsilon) A_t = 0.8 A_t$.
+   * Since $A_t > 0$, the unclipped value is smaller ($0.6 A_t < 0.8 A_t$).
+   * The `min` operator selects the unclipped term: $r_t A_t$.
+   * **Result:** No clipping occurs on this side. We want the gradient to remain active so the optimizer can pull the policy back up (since the probability of a good action was accidentally decreased).
+
+2. **For $A_t < 0$ (Bad Action) when $r_t > 1.2$:**
+   * The unclipped term is $r_t A_t$ (e.g., $1.4 \times -5 = -7.0$).
+   * The clipped term is capped at $(1+\epsilon) A_t = 1.2 A_t$ (e.g., $1.2 \times -5 = -6.0$).
+   * Since $A_t < 0$, the unclipped value is more negative, hence smaller ($-7.0 < -6.0$).
+   * The `min` operator selects the unclipped term: $r_t A_t$.
+   * **Result:** No clipping occurs on this side. We want the gradient to remain active so the optimizer can pull the policy back down (since the probability of a bad action was accidentally increased).
+
+In short, **we only clip updates that change the policy in the favorable direction (increasing good actions or decreasing bad actions).** If the policy changes in the unfavorable direction (making a good action less likely, or a bad action more likely), we do not clip; we let the full gradient act to correct the mistake immediately.
 
 ---
 
