@@ -571,6 +571,33 @@ def ppo_update(actor, critic, actor_optimizer, critic_optimizer,
             critic_optimizer.step()
 ```
 
+#### Detailed Code Breakdown of the Optimization Step
+
+* **Probability Ratio ($r_t$):**
+  `ratios = torch.exp(log_probs - b_old_log_probs)`
+  Since we compute action probabilities in log space for numerical stability, subtracting log probabilities ($\log \pi_\theta - \log \pi_{\theta_{\text{old}}}$) and taking the exponential is mathematically equivalent to computing the raw ratio $r_t(\theta) = \frac{\pi_{\theta}(a_t \mid s_t)}{\pi_{\theta_{\text{old}}}(a_t \mid s_t)}$.
+
+* **Surrogate Objectives (`surr1` and `surr2`):**
+  * **`surr1` (Unclipped Surrogate):** `ratios * b_advantages` computes the standard importance-sampled advantage $r_t(\theta) A_t$.
+  * **`surr2` (Clipped Surrogate):** `torch.clamp(ratios, 1.0 - eps_clip, 1.0 + eps_clip) * b_advantages` clamps the ratio $r_t(\theta)$ to stay within the safe trust region $[1-\epsilon, 1+\epsilon]$ (typically $[0.8, 1.2]$) before multiplying by the advantage.
+  * **Pessimistic Minimum:** By taking `torch.min(surr1, surr2)`, we ensure that we only clip updates in the *favorable* direction. If the update makes the policy worse, clipping is ignored so the gradient can actively pull the policy back.
+
+* **Actor Loss Calculation:**
+  `actor_loss = -torch.min(surr1, surr2).mean() - 0.01 * entropy`
+  * **Why the negative sign (`-`)?** Reinforcement learning seeks to **maximize** expected rewards (gradient ascent), but PyTorch minimizes functions by default (gradient descent). Negating the objective turns it into a minimization loss.
+  * **`torch.min(...)`:** Enforces the pessimistic lower bound of PPO clipping.
+  * **Entropy Exploration Bonus:** We subtract the entropy term (`- 0.01 * entropy`) because we want to *maximize* the randomness of the policy to encourage exploration. In a minimization task, subtracting a term forces the optimizer to make that term as large as possible.
+
+* **Critic Loss Calculation:**
+  `critic_loss = 0.5 * nn.MSELoss()(state_values, b_returns)`
+  * Evaluates the Mean Squared Error (MSE) between the Critic's predicted values $V(s)$ and the GAE target returns.
+  * The `0.5` coefficient is a standard scaling factor that balances value function gradients against policy gradients.
+
+* **Optimization Steps:**
+  * **`optimizer.zero_grad()`:** Clears out the accumulated gradients from the previous step so they do not leak into the current calculation.
+  * **`loss.backward()`:** Computes gradients of the loss with respect to all neural network parameters using backpropagation.
+  * **`optimizer.step()`:** Executes an update step (using the Adam optimizer) to modify network weights in the direction of lower loss.
+
 ---
 
 ### Step 4: Main End-to-End Training Loop
