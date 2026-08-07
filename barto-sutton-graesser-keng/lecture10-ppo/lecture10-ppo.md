@@ -27,30 +27,30 @@ To contrast how different policy gradient methods configure their networks, targ
 | **Actor-Critic (1-Step TD)** | Policy $\pi(a \mid s, \theta)$<br>State-Value $\hat{v}(s, \mathbf{w})$ | $R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w})$ <br> *(1-step TD bootstrapped)* | $\hat{v}(S_t, \mathbf{w})$ | $R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w}) - \hat{v}(S_t, \mathbf{w})$ <br> *(TD error $\delta_t$)* | $\theta \leftarrow \theta + \alpha I \delta_t \nabla_{\theta} \ln \pi(A_t \mid S_t, \theta)$ *(where $I = \gamma^t$)*<br>$\mathbf{w} \leftarrow \mathbf{w} + \beta \delta_t \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w})$ |
 | **A2C (n-Step or GAE)** | Policy $\pi(a \mid s, \theta)$<br>State-Value $\hat{v}(s, \mathbf{w})$ | $V_{\text{target}}$ <br> *(n-step or GAE value target)* | $\hat{v}(S_t, \mathbf{w})$ | $A_t^{(n)}$ or $A_t^{\text{GAE}}$ <br> *(n-step return / GAE advantage)* | $\theta \leftarrow \theta + \alpha \gamma^t A_t \nabla_{\theta} \ln \pi(A_t \mid S_t, \theta)$<br>$\mathbf{w} \leftarrow \mathbf{w} + \beta (V_{\text{target}} - \hat{v}(S_t, \mathbf{w})) \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w})$ |
 
-### 1.1 Advantage Estimation & Generalized Advantage Estimation (GAE)
+### 1.1 Advantage Estimation Methods
 
 In policy gradient algorithms, the **Advantage function** $A(s, a) = Q(s, a) - V(s)$ measures how much better taking action $a$ is compared to the expected performance in state $s$. Using the advantage instead of raw returns significantly reduces gradient variance while maintaining policy unbiasedness.
 
 There are four primary ways to estimate the advantage function:
 
-#### A. Monte Carlo Advantage (REINFORCE with Baseline)
+#### Monte Carlo Advantage
 Here, we use the actual discounted returns $G_t$ collected from the rollout:
 $$ A_t^{MC} = G_t - V(S_t) $$
 where $G_t = \sum_{k=0}^{T-t-1} \gamma^k R_{t+k+1}$ is the cumulative discounted reward.
 * **Properties:** Unbiased (since it relies on actual returns), but has extremely high variance because a single trajectory is highly noisy.
 
-#### B. 1-Step Temporal Difference (TD) Advantage (Actor-Critic)
+#### 1-Step Temporal Difference (TD) Advantage
 We bootstrap the future returns using the Critic's state-value estimates:
 $$ A_t^{TD(0)} = R_{t+1} + \gamma V(S_{t+1}) - V(S_t) $$
 Notice that this is exactly the TD error $\delta_t^V$ of the Critic network.
 * **Properties:** Very low variance (since it uses a single step and a smooth value function estimate), but has high bias if the Critic's value network is inaccurate.
 
-#### C. $n$-Step TD Advantage
+#### n-Step TD Advantage
 We extend the step count before bootstrapping to trade off bias and variance:
 $$ A_t^{(n)} = \sum_{k=0}^{n-1} \gamma^k R_{t+k+1} + \gamma^n V(S_{t+n}) - V(S_t) $$
 * **Properties:** By adjusting $n$, we control the balance: smaller $n$ acts like TD(0) (low variance, high bias), while larger $n$ acts like Monte Carlo (high variance, low bias).
 
-#### D. Generalized Advantage Estimation (GAE)
+#### Generalized Advantage Estimation (GAE)
 GAE ($\lambda$) takes an exponentially weighted average of all $n$-step advantages. Let the 1-step TD errors at each time step be:
 $$ \delta_t^V = R_{t+1} + \gamma V(S_{t+1}) - V(S_t) $$
 The GAE advantage at timestep $t$ is defined as:
@@ -62,64 +62,75 @@ where $\lambda \in [0, 1]$ is a hyperparameter that controls the exponential dec
 
 ---
 
-#### Numerical Example: Advantage Calculations
+### 1.2 Comparison of Advantage Estimation Methods
+
+The table below summarizes the trade-offs and formulations of the different advantage methods:
+
+| Method | Bias | Variance | Target Formula | Advantage Formula |
+| :--- | :--- | :--- | :--- | :--- |
+| **Monte Carlo** | Zero (unbiased) | Extremely High | $G_t = \sum_{k=0}^{\infty} \gamma^k R_{t+k+1}$ | $A_t^{MC} = G_t - V(S_t)$ |
+| **1-Step TD** | High (if $V$ is inaccurate) | Extremely Low | $R_{t+1} + \gamma V(S_{t+1})$ | $A_t^{TD(0)} = R_{t+1} + \gamma V(S_{t+1}) - V(S_t)$ |
+| **$n$-Step TD** | Intermediate | Intermediate | $\sum_{k=0}^{n-1} \gamma^k R_{t+k+1} + \gamma^n V(S_{t+n})$ | $A_t^{(n)} = \sum_{k=0}^{n-1} \gamma^k R_{t+k+1} + \gamma^n V(S_{t+n}) - V(S_t)$ |
+| **GAE ($\lambda$)** | Balanced (via $\lambda$) | Balanced (via $\lambda$) | GAE Target ($A_t^{\text{GAE}} + V(S_t)$) | $A_t^{\text{GAE}} = \sum_{l=0}^{\infty} (\gamma \lambda)^l \delta_{t+l}^V$ |
+
+---
+
+### 1.3 Numerical Example: Advantage Calculations
+
+#### Trajectory Setup
 Let's consider a short trajectory of length $T = 3$ (timesteps $t=0, 1, 2$) inside an environment:
 * **Rewards:** $R_1 = 2$, $R_2 = 1$, $R_3 = 5$
 * **Critic Estimates:** $V(S_0) = 4$, $V(S_1) = 6$, $V(S_2) = 5$, $V(S_3) = 0$ (terminal state)
 * **Hyperparameters:** $\gamma = 0.9$, $\lambda = 0.8$
 
-Let's compute the advantage at timestep $t=0$ using each method:
+We will compute the advantage at timestep $t=0$ using each method:
 
-1. **Monte Carlo Return & Advantage:**
-   * Calculate cumulative return $G_0$:
-     $$ G_0 = R_1 + \gamma R_2 + \gamma^2 R_3 = 2 + 0.9(1) + 0.9^2(5) = 2 + 0.9 + 4.05 = 6.95 $$
-   * MC Advantage:
-     $$ A_0^{MC} = G_0 - V(S_0) = 6.95 - 4 = 2.95 $$
+#### Numerical Example: Monte Carlo Advantage
+* Calculate cumulative return $G_0$:
+  $$ G_0 = R_1 + \gamma R_2 + \gamma^2 R_3 = 2 + 0.9(1) + 0.9^2(5) = 2 + 0.9 + 4.05 = 6.95 $$
+* MC Advantage:
+  $$ A_0^{MC} = G_0 - V(S_0) = 6.95 - 4 = 2.95 $$
 
-2. **1-Step TD Advantage:**
-   * Compute TD Error at $t=0$:
-     $$ A_0^{TD(0)} = R_1 + \gamma V(S_1) - V(S_0) = 2 + 0.9(6) - 4 = 2 + 5.4 - 4 = 3.4 $$
+#### Numerical Example: 1-Step TD Advantage
+* Compute TD Error at $t=0$:
+  $$ A_0^{TD(0)} = R_1 + \gamma V(S_1) - V(S_0) = 2 + 0.9(6) - 4 = 2 + 5.4 - 4 = 3.4 $$
 
-3. **2-Step TD Advantage:**
-   * Compute 2-Step estimate:
-     $$ A_0^{(2)} = R_1 + \gamma R_2 + \gamma^2 V(S_2) - V(S_0) = 2 + 0.9(1) + 0.9^2(5) - 4 = 2 + 0.9 + 4.05 - 4 = 2.95 $$
+#### Numerical Example: 2-Step TD Advantage
+* Compute 2-Step estimate:
+  $$ A_0^{(2)} = R_1 + \gamma R_2 + \gamma^2 V(S_2) - V(S_0) = 2 + 0.9(1) + 0.9^2(5) - 4 = 2 + 0.9 + 4.05 - 4 = 2.95 $$
 
-4. **Generalized Advantage Estimation (GAE):**
-   * First, calculate individual 1-step TD errors ($\delta_t^V$) for all timesteps:
-     $$ \delta_0^V = R_1 + \gamma V(S_1) - V(S_0) = 2 + 0.9(6) - 4 = 3.4 $$
-     $$ \delta_1^V = R_2 + \gamma V(S_2) - V(S_1) = 1 + 0.9(5) - 6 = -0.5 $$
-     $$ \delta_2^V = R_3 + \gamma V(S_3) - V(S_2) = 5 + 0.9(0) - 5 = 0 $$
-   * Compute GAE Advantage $A_0^{\text{GAE}}$:
-     $$ A_0^{\text{GAE}} = \delta_0^V + (\gamma\lambda)\delta_1^V + (\gamma\lambda)^2\delta_2^V $$
-     $$ \gamma\lambda = 0.9 \times 0.8 = 0.72 $$
-     $$ A_0^{\text{GAE}} = 3.4 + 0.72(-0.5) + 0.72^2(0) = 3.4 - 0.36 = 3.04 $$
+#### Numerical Example: GAE Advantage
+* First, calculate individual 1-step TD errors ($\delta_t^V$) for all timesteps:
+  $$ \delta_0^V = R_1 + \gamma V(S_1) - V(S_0) = 2 + 0.9(6) - 4 = 3.4 $$
+  $$ \delta_1^V = R_2 + \gamma V(S_2) - V(S_1) = 1 + 0.9(5) - 6 = -0.5 $$
+  $$ \delta_2^V = R_3 + \gamma V(S_3) - V(S_2) = 5 + 0.9(0) - 5 = 0 $$
+* Compute GAE Advantage $A_0^{\text{GAE}}$:
+  $$ A_0^{\text{GAE}} = \delta_0^V + (\gamma\lambda)\delta_1^V + (\gamma\lambda)^2\delta_2^V $$
+  $$ \gamma\lambda = 0.9 \times 0.8 = 0.72 $$
+  $$ A_0^{\text{GAE}} = 3.4 + 0.72(-0.5) + 0.72^2(0) = 3.4 - 0.36 = 3.04 $$
 
 ---
 
-However, standard Policy Gradient methods suffer from two massive problems:
-1. **Destructive Updates:** The learning rate $\alpha$ dictates the "step size". In supervised learning, if you take a step that is too large, the loss might temporarily spike, but you can recover on the next batch. In RL, the data you train on is generated by your policy. If a large step size accidentally destroys a good policy, the agent starts acting randomly. It will then generate *terrible data*, causing the network to learn terrible things. The agent falls off a cliff and never recovers.
-2. **Sample Inefficiency:** 
-     * **The Mathematical Reason:** The policy gradient theorem calculates the expectation over trajectories sampled from the *current* policy $\pi_\theta$:
-       $$ \nabla J(\theta) = \mathbb{E}_{\tau \sim \pi_{\theta}} \left[ \sum_{t=0}^{T-1} A(S_t, A_t) \nabla_{\theta} \log \pi_{\theta}(A_t \mid S_t) \right] $$
-     * **The Waste Cycle:** Suppose your simulator collects a batch of $10,000$ steps of transitions using policy parameters $\theta_{\text{old}}$. You perform **one single gradient step** to update the parameters to $\theta_{\text{new}}$. Now, the active policy has changed ($\pi_{\theta_{\text{new}}} \neq \pi_{\theta_{\text{old}}}$). 
-     * **Why We Discard Data:** If you run a second gradient update on the same $10,000$ transitions, the actions in that data reflect the choice probabilities of $\theta_{\text{old}}$, not the new policy $\theta_{\text{new}}$. The expectation breaks, leading to highly biased, mathematically incorrect gradients. Consequently, in standard policy gradients (like REINFORCE and Actor-Critic), **you must discard the entire batch of data after just one update step** and run the simulator again to collect fresh on-policy transitions.
-     * **Contrast with Supervised Learning:** In supervised image classification, you can reuse the same training set over hundreds of epochs (epochs = reusing data). In standard RL, you can only run **one epoch per batch of transitions**, which is extremely slow if environment simulations are computationally expensive.
-     * **Contrast with Q-Learning (Off-Policy):** Off-policy value-based methods (like DQN) do not suffer from this because they solve the Bellman equation, which is a consistency condition that holds regardless of which policy collected the transitions. This allows DQN to reuse past data millions of times from a **Replay Buffer**.
-      * **The Policy Obsolescence Problem (A2C vs. Classic AC vs. PPO):**
-        Why does this "waste cycle" or "reject cycle" happen, and how does it differ across frameworks?
-        * **Classic Step-by-Step Actor-Critic (Online):** 
-          * **How it works:** Parameters are updated after every single transition $(s_t, a_t, r_{t+1}, s_{t+1})$. The subsequent action $a_{t+1}$ is sampled using the newly updated policy $\theta_{t+1}$.
-          * **The Obsolescence/Waste:** There is no *batch* of transitions to discard since updates are immediate. However, each individual transition is used for exactly **one gradient step** before being thrown away. We cannot store transitions in a replay buffer to run multiple gradient updates on them later because the policy is changing at every step; any subsequent updates on those past transitions would be off-policy.
-        * **Batch-Mode Actor-Critic (e.g., A2C):** 
-          * **How it works:** For neural network efficiency and stability, A2C collects a batch of transitions (e.g., $10,000$ steps across parallel environments) using a frozen policy $\theta_{\text{old}}$. It performs **one single gradient step** to update the parameters to $\theta_{\text{new}}$, and then collects the next batch using $\theta_{\text{new}}$.
-          * **The Obsolescence/Waste:** This is where the **Batch Reject Cycle** is in full effect. Once the policy updates to $\theta_{\text{new}}$ after the first optimizer step, the batch of $10,000$ transitions is immediately rendered obsolete. We cannot run multiple epochs of SGD on the same batch of data because the actions in that batch reflect the choice probabilities of $\theta_{\text{old}}$, not the new policy $\theta_{\text{new}}$. Running another gradient step using the standard policy gradient loss:
-            $$ \theta \leftarrow \theta + \alpha A_t \nabla_{\theta} \ln \pi_{\theta}(A_t \mid S_t) $$
-            assumes on-policy data and would result in highly biased, mathematically incorrect gradients that can cause the policy to diverge.
-        * **How PPO Solves It:** 
-          PPO is essentially batch-mode Actor-Critic (A2C) with a corrected loss function. It resolves the obsolescence problem using two key mechanisms:
-          1. **Importance Sampling Ratio:** It replaces $\ln \pi_{\theta}(a \mid s)$ with the probability ratio $r_t(\theta) = \frac{\pi_{\theta}(a \mid s)}{\pi_{\theta_{\text{old}}}(a \mid s)}$. This ratio mathematically adjusts the gradient step to correct for the fact that the transitions were sampled from the old policy $\theta_{\text{old}}$, turning an off-policy update into a valid on-policy equivalent.
-          2. **Clipping:** Because the importance sampling estimator becomes highly unstable if $\theta$ drifts too far from $\theta_{\text{old}}$, PPO clips $r_t(\theta)$ to a safe range (usually $[1-\epsilon, 1+\epsilon]$).
-          Together, these allow PPO to run **multiple epochs (typically 4 to 10 SGD passes) on the exact same batch of transitions** before discarding it, solving the batch reject cycle and significantly boosting sample efficiency.
+However, standard Policy Gradient methods suffer from two massive problems that are directly linked to the properties of the **Advantage function**:
+
+1. **Destructive Updates (Policy Collapse):** 
+   The policy gradient step is scaled directly by the advantage:
+   $$ \theta \leftarrow \theta + \alpha A_t \nabla_{\theta} \ln \pi_{\theta}(A_t \mid S_t) $$
+   If an action has a large positive advantage (meaning it performed much better than the current baseline), the gradient step will aggressively push the parameters to increase the probability of that action. 
+   * **The Advantage Mismatch:** The advantage function $A(s, a)$ is evaluated under the state visitation distribution $d^{\pi_{\text{old}}}(s)$ of the old policy. If the update step is too large, the policy parameters shift dramatically, completely changing the state visitation distribution of the agent. The advantages computed under the old trajectory distribution no longer represent the true advantages under the new policy. The agent enters a new state space where the policy might perform catastrophically, but because the update was unconstrained, the policy collapses into a low-entropy state from which it cannot recover.
+
+2. **Sample Inefficiency (The Batch Reject Cycle):**
+   The standard policy gradient theorem requires taking an expectation over trajectories generated by the *active* policy $\pi_{\theta}$:
+   $$ \nabla J(\theta) = \mathbb{E}_{\tau \sim \pi_{\theta}} \left[ \sum_{t=0}^{T-1} A^{\pi_{\theta}}(S_t, A_t) \nabla_{\theta} \log \pi_{\theta}(A_t \mid S_t) \right] $$
+   * **The Policy-Dependency of Advantages:** The advantage function $A^{\pi}(s, a) = Q^{\pi}(s, a) - V^{\pi}(s)$ is intrinsically dependent on the policy $\pi$ that collected the transitions. Once we run a single gradient step and update the policy parameters to $\theta_{\text{new}}$, the expected future rewards change. The advantages calculated from the rollout data ($A^{\pi_{\theta_{\text{old}}}}$) are now obsolete and do not match the true advantages under the updated policy ($A^{\pi_{\theta_{\text{new}}}}$).
+   * **The Obsolescence/Waste:** If we try to perform a second gradient step on the same rollout data using the standard loss, we are using the outdated advantages $A^{\pi_{\theta_{\text{old}}}}$ with the new log-probabilities $\log \pi_{\theta_{\text{new}}}$. This violates the on-policy expectation requirement, yielding highly biased and incorrect gradients that lead to divergence. Thus, because the advantage values are policy-dependent, the batch of data is rendered fully obsolete after a single gradient step.
+
+#### How PPO Solves It:
+PPO is essentially batch-mode Actor-Critic (A2C) with a corrected loss function. It resolves the advantage obsolescence and step-size mismatch using two key mechanisms:
+1. **Importance Sampling Ratio:** It replaces $\ln \pi_{\theta}(a \mid s)$ with the probability ratio $r_t(\theta) = \frac{\pi_{\theta}(a \mid s)}{\pi_{\theta_{\text{old}}}(a \mid s)}$. This ratio mathematically adjusts the gradient step to correct for the fact that the advantages were calculated under the old policy $\theta_{\text{old}}$, turning an off-policy update into a valid on-policy equivalent.
+2. **Clipping:** Because the importance sampling estimator becomes highly unstable if the new policy deviates too far from the old policy, PPO clips $r_t(\theta)$ to a safe range (usually $[1-\epsilon, 1+\epsilon]$). This ensures the update step remains small enough that the state visitation distribution does not shift catastrophically, preserving the validity of our advantage estimates.
+
+Together, these allow PPO to run **multiple epochs (typically 4 to 10 SGD passes) on the exact same batch of transitions** before discarding it, solving the batch reject cycle and significantly boosting sample efficiency.
 
 ---
 
@@ -661,7 +672,7 @@ Ties all of the components together. It initializes the Gymnasium environment, p
 
 if __name__ == "__main__":
     train_ppo()
-```</pre>
+</code></pre>
 
 </td>
 <td valign="top" width="45%" align="center">
