@@ -698,6 +698,45 @@ The table below outlines when to use each algorithm, why to select it over alter
 
 ---
 
+## 10. Multimedia Resources & Audio-Visual Materials
+
+This section provides interactive audio podcasts, video walkthroughs, and presentation materials for Monte Carlo Tree Search (MCTS) and advanced combined methods.
+
+### 10.1 Audio Podcast: Deep Dive into MCTS
+Listen to an in-depth audio discussion exploring the mechanics of Monte Carlo Tree Search, UCT selection, and its integration with deep neural networks.
+
+<audio controls style="width: 100%; margin-top: 10px; margin-bottom: 10px;">
+  <source src="./assets/mcts-podcast.m4a" type="audio/mp4">
+  Your browser does not support the audio element.
+</audio>
+
+* **Direct Link / Download:** [MCTS Audio Podcast (`mcts-podcast.m4a`)](./assets/mcts-podcast.m4a)
+
+---
+
+### 10.2 Video Lectures & Visualizations
+
+#### 1. Monte Carlo Tree Search Overview
+A comprehensive video presentation covering the four MCTS phases (Selection, Expansion, Simulation, Backpropagation) and rollout heuristics.
+
+<video src="./assets/Monte_Carlo_Tree_Search.mp4" controls width="100%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 10px; margin-bottom: 10px;"></video>
+
+* **Direct Link / Download:** [Monte Carlo Tree Search Video (`Monte_Carlo_Tree_Search.mp4`)](./assets/Monte_Carlo_Tree_Search.mp4)
+
+#### 2. MCTS Demonstration & Trajectory Rollouts
+A concise video visualization demonstrating tree expansion and action selection in practice.
+
+<video src="./assets/mcts.mp4" controls width="100%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 10px; margin-bottom: 10px;"></video>
+
+* **Direct Link / Download:** [MCTS Short Demonstration Video (`mcts.mp4`)](./assets/mcts.mp4)
+
+---
+
+### 10.3 Presentation Deck
+* **Direct Link / Download:** [Illuminating MCTS Presentation Deck (`Illuminating_MCTS.pptx`)](./assets/Illuminating_MCTS.pptx)
+
+---
+
 ## Practice Exercises
 
 Test your understanding of MCTS, AlphaGo/AlphaZero/MuZero, and Imitation Learning (including IRL and GAIL) with these exercises:
