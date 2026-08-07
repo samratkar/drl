@@ -27,7 +27,7 @@ $$ \delta_t = R_{t+1} + \gamma V(S_{t+1}, \mathbf{w}) - V(S_t, \mathbf{w}) $$
 
 * The **Critic** updates its value parameters $\mathbf{w}$ to minimize this TD error (minimizing mean squared value error).
 * The **Actor** updates its policy parameters $\theta$ in the direction of the gradient scaled by the critic's assessment:
-  $$ \theta_{t+1} = \theta_t + \alpha \delta_t \nabla_{\theta} \ln \pi(A_t|S_t, \theta) $$
+  $$ \theta_{t+1} = \theta_t + \alpha \delta_t \nabla_{\theta} \ln \pi(A_t\mid S_t, \theta) $$
   *Reference: Sutton & Barto (2018), Equation (13.14)*
 
 Modern combined methods extend this framework to handle complex, high-dimensional spaces, parallel environments, and trust regions.
@@ -57,18 +57,18 @@ As discussed in [Lecture 10](file:///c:/github/drl/barto-sutton-graesser-keng/le
 
 1. **Trust Region Policy Optimization (TRPO)**
    * **Core Idea:** Restricts how much the policy can change in a single update by imposing a constraint on the Kullback-Leibler (KL) divergence between the old and new policy:
-     $$ \mathbb{E}_{s \sim d_{\pi_{\theta_{old}}}} \left[ D_{KL} \left( \pi_{\theta_{old}}(\cdot|s) \,\big\|\, \pi_{\theta}(\cdot|s) \right) \right] \le \delta $$
+     $$ \mathbb{E}_{s \sim d_{\pi_{\theta_{old}}}} \left[ D_{KL} \left( \pi_{\theta_{old}}(\cdot\mid s) \,\big\|\, \pi_{\theta}(\cdot\mid s) \right) \right] \le \delta $$
    * **Optimization:** Uses second-order optimization (natural gradient computation involving the Fisher Information Matrix). While mathematically rigorous and guaranteed to achieve monotonic improvement, TRPO is computationally expensive due to the need to compute and invert the Hessian of the KL divergence.
 2. **Proximal Policy Optimization (PPO)**
-   * **Core Idea:** Achieves similar stability to TRPO but uses first-order optimization (standard stochastic gradient descent) with a clipped surrogate objective that penalizes moving the policy ratio $r_t(\theta) = \frac{\pi_{\theta}(a|s)}{\pi_{\theta_{old}}(a|s)}$ outside of $[1-\epsilon, 1+\epsilon]$.
+   * **Core Idea:** Achieves similar stability to TRPO but uses first-order optimization (standard stochastic gradient descent) with a clipped surrogate objective that penalizes moving the policy ratio $r_t(\theta) = \frac{\pi_{\theta}(a\mid s)}{\pi_{\theta_{old}}(a\mid s)}$ outside of $[1-\epsilon, 1+\epsilon]$.
 3. **Deep Deterministic Policy Gradient (DDPG)**
-   * **Core Idea:** An off-policy actor-critic method designed for continuous action spaces. Instead of outputting a distribution, the actor learns a deterministic policy $a = \mu(s|\theta)$. Because the policy is deterministic, exploration is achieved by adding noise (e.g., Ornstein-Uhlenbeck noise) to the chosen action.
+   * **Core Idea:** An off-policy actor-critic method designed for continuous action spaces. Instead of outputting a distribution, the actor learns a deterministic policy $a = \mu(s\mid \theta)$. Because the policy is deterministic, exploration is achieved by adding noise (e.g., Ornstein-Uhlenbeck noise) to the chosen action.
 4. **Soft Actor-Critic (SAC)**
    * **Core Idea:** An off-policy actor-critic method that incorporates **Entropy Regularization**. The objective function is modified to maximize both expected reward and policy entropy:
-     $$ J(\theta) = \sum_{t=0}^{T} \mathbb{E}_{(s_t, a_t) \sim \rho_{\pi}} \left[ R(s_t, a_t) + \alpha \mathcal{H}(\pi(\cdot|s_t)) \right] $$
+     $$ J(\theta) = \sum_{t=0}^{T} \mathbb{E}_{(s_t, a_t) \sim \rho_{\pi}} \left[ R(s_t, a_t) + \alpha \mathcal{H}(\pi(\cdot\mid s_t)) \right] $$
      *Reference: Not in Sutton & Barto (2018) or Graesser & Keng (2019)*
 
-     where $\mathcal{H}(\pi(\cdot|s_t)) = -\sum_a \pi(a|s_t) \ln \pi(a|s_t)$ is the entropy, and $\alpha$ is the temperature parameter. Higher entropy prevents the policy from collapsing into a single deterministic action, promoting broad exploration and robust generalization.
+     where $\mathcal{H}(\pi(\cdot\mid s_t)) = -\sum_a \pi(a\mid s_t) \ln \pi(a\mid s_t)$ is the entropy, and $\alpha$ is the temperature parameter. Higher entropy prevents the policy from collapsing into a single deterministic action, promoting broad exploration and robust generalization.
 
 ---
 
@@ -77,7 +77,7 @@ As discussed in [Lecture 10](file:///c:/github/drl/barto-sutton-graesser-keng/le
 A fundamental dividing line in RL is between **Model-Free** and **Model-Based** algorithms. 
 
 * **Model-Free RL** (DQN, PPO, SAC) learns directly from trials and errors in the environment. The agent has no concept of "what will happen next" until it actually takes the action.
-* **Model-Based RL** maintains or learns a transition function $P(s'|s, a)$ and a reward function $R(s, a)$. The agent uses this model of the world to **plan** actions before executing them.
+* **Model-Based RL** maintains or learns a transition function $P(s'\mid s, a)$ and a reward function $R(s, a)$. The agent uses this model of the world to **plan** actions before executing them.
 
 ### 2.1 Why and When to Use Model-Based RL
 
@@ -89,7 +89,7 @@ A fundamental dividing line in RL is between **Model-Free** and **Model-Based** 
 | **Dependency** | Only requires state-action-reward-state transitions. | Requires an accurate model of the environment dynamics. |
 
 ### 2.2 Challenges of Model-Based RL
-1. **Model Error Compounding (Trajectory Drift):** If the learned transition model $P(s'|s,a)$ has a tiny error (e.g., $1\%$), planning $10$ steps ahead compounds this error exponentially: $(0.99)^{10} \approx 0.90$ ($10\%$ error). By step $50$, the imagined states are completely detached from reality.
+1. **Model Error Compounding (Trajectory Drift):** If the learned transition model $P(s'\mid s,a)$ has a tiny error (e.g., $1\%$), planning $10$ steps ahead compounds this error exponentially: $(0.99)^{10} \approx 0.90$ ($10\%$ error). By step $50$, the imagined states are completely detached from reality.
 2. **High-Dimensional Complexity:** Building a transition model that predicts the next frame in a pixel-based video game is often significantly harder than simply learning to play the game.
 
 ### 2.3 The Dyna-Q Framework: Combining Free and Based RL
@@ -252,15 +252,15 @@ AlphaGo conquered this complexity by combining **Deep Convolutional Neural Netwo
 
 AlphaGo utilizes three distinct networks:
 
-1. **Supervised Learning (SL) Policy Network ($\pi_{SL}(a|s)$)**
+1. **Supervised Learning (SL) Policy Network ($\pi_{SL}(a\mid s)$)**
    * **Training:** Trained on 30 million board positions from human expert games played on the KGS Go Server. It learns to predict human expert moves.
    * **Performance:** Achieved $57\%$ accuracy in predicting human moves.
    * **Role:** Used to initialize prior probabilities for actions in MCTS.
-2. **Fast Rollout Policy ($\pi_{\text{rollout}}(a|s)$)**
+2. **Fast Rollout Policy ($\pi_{\text{rollout}}(a\mid s)$)**
    * **Training:** A simple linear model trained using local patterns and hand-crafted features.
    * **Performance:** Much lower accuracy ($24\%$), but extremely fast: takes only $2$ microseconds to compute a move, compared to $3$ milliseconds for the deep policy network.
    * **Role:** Used to run rapid simulations to the end of the game during the rollout phase of MCTS.
-3. **Reinforcement Learning (RL) Policy Network ($\pi_{RL}(a|s)$)**
+3. **Reinforcement Learning (RL) Policy Network ($\pi_{RL}(a\mid s)$)**
    * **Training:** Initialized with the weights of $\pi_{SL}$, then trained using policy gradient reinforcement learning by playing against previous versions of itself (Self-Play).
    * **Performance:** Won $80\%$ of its games against the SL policy network.
    * **Role:** Used to generate high-quality self-play games to train the Value Network.
@@ -287,7 +287,7 @@ $$ a_t = \text{argmax}_a \left( Q(s, a) + u(s, a) \right) $$
 $$ u(s, a) = c_{puct} P(s, a) \frac{\sqrt{N(s)}}{1 + N(s, a)} $$
 *Reference: Not in Sutton & Barto (2018) or Graesser & Keng (2019)*
 
-* $P(s, a) = \pi_{SL}(a|s)$ is the prior probability of selecting action $a$ in state $s$ predicted by the **Supervised Learning Policy Network**. This ensures the search immediately focuses on human-like moves.
+* $P(s, a) = \pi_{SL}(a\mid s)$ is the prior probability of selecting action $a$ in state $s$ predicted by the **Supervised Learning Policy Network**. This ensures the search immediately focuses on human-like moves.
 * $N(s, a)$ is the visit count. As action $a$ is visited more, $u(s,a)$ decreases, encouraging exploration of other actions with high prior probabilities.
 
 #### B. Expansion & Evaluation
@@ -321,7 +321,7 @@ While AlphaGo was a massive achievement, it relied heavily on human expert data 
 #### Key Architectural Differences from AlphaGo:
 1. **No Supervised Learning (SL) Initialization:** AlphaZero starts with completely random weights for both policy and value predictions. It learns solely through Reinforcement Learning (RL) self-play from step zero.
 2. **Unified Neural Network:** Instead of separate policy and value networks, AlphaZero uses a single unified deep neural network $f_{\theta}(s)$ with dual output heads:
-   * A policy head $\mathbf{p} = \pi(a|s, \theta)$ outputting action probabilities.
+   * A policy head $\mathbf{p} = \pi(a\mid s, 	heta)$ outputting action probabilities.
    * A value head $v = V(s, \theta)$ predicting game outcome $v \in [-1, +1]$.
 3. **No Fast Rollout Policy:** AlphaZero completely discards the simulation (rollout) phase of MCTS. Instead of playing games to the end with a fast policy, it evaluates leaf nodes $s_L$ directly using its value head: $V(s_L) = v_{\theta}(s_L)$. This removes the need for hand-crafted heuristic rollout policies.
 4. **MCTS as Policy Improver:** In AlphaZero, MCTS is not just used at decision time; it acts as the primary policy operator during training. Self-play games are played by running MCTS. The search outputs visit counts for actions, $\boldsymbol{\pi}_t$, which represents a stronger policy than the neural network's raw policy output $\mathbf{p}_t$. The network is trained to make its policy head $\mathbf{p}_t$ match the MCTS search distributions $\boldsymbol{\pi}_t$:
@@ -505,7 +505,7 @@ $$ \min_{\pi_{\theta}} \max_{D_{\phi}} \mathbb{E}_{\pi_{\theta}} [\ln(1 - D_{\ph
 where:
 * $\mathbb{E}_{\pi^*} [\ln D_{\phi}(s, a)]$ is the expected log-likelihood of the discriminator correctly identifying expert transitions.
 * $\mathbb{E}_{\pi_{\theta}} [\ln(1 - D_{\phi}(s, a))]$ is the expected log-likelihood of the discriminator identifying agent transitions.
-* $\mathcal{H}(\pi_{\theta}) = \mathbb{E}[-\ln \pi_{\theta}(a|s)]$ is an entropy regularization term encouraging policy exploration.
+* $\mathcal{H}(\pi_{\theta}) = \mathbb{E}[-\ln \pi_{\theta}(a\mid s)]$ is an entropy regularization term encouraging policy exploration.
 
 #### Using Discriminator Outputs as Surrogate Rewards:
 Once the discriminator is updated, we freeze it and use its output to define a surrogate reward function for the policy:
@@ -528,7 +528,7 @@ $$
 \quad \text{3. Compute surrogate rewards for each step in } \mathcal{D}_{\text{agent}}: \\
 \qquad R(s, a) = -\ln(1 - D_{\phi_{i+1}}(s, a)) \\
 \quad \text{4. Update the policy parameter } \theta_i \text{ to } \theta_{i+1} \text{ using a policy gradient step (e.g., PPO/TRPO)} \\
-\qquad \text{to maximize: } \mathbb{E}_{(s, a) \in \mathcal{D}_{\text{agent}}} [\nabla_{\theta} \ln \pi_{\theta}(a|s) \cdot Q_{R}(s, a)] + \lambda \nabla_{\theta} \mathcal{H}(\pi_{\theta})
+\qquad \text{to maximize: } \mathbb{E}_{(s, a) \in \mathcal{D}_{\text{agent}}} [\nabla_{\theta} \ln \pi_{\theta}(a\mid s) \cdot Q_{R}(s, a)] + \lambda \nabla_{\theta} \mathcal{H}(\pi_{\theta})
 \end{array}
 $$
 *Reference: Not in Sutton & Barto (2018) or Graesser & Keng (2019)*

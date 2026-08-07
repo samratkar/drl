@@ -5,7 +5,7 @@ layout: post
 # Subjective Solutions (Lecture 11: Combined, Advanced PG & Model-Based RL)
 
 1. **Model-Free vs. Model-Based RL:**
-   * **Difference:** Model-free RL learns directly from empirical outcomes of actions taken in the environment (e.g. updating Q-values or policy gradients). Model-based RL attempts to learn or use a model of the transition dynamics $P(s'|s,a)$ and rewards $R(s,a)$ to simulate future trajectories offline.
+   * **Difference:** Model-free RL learns directly from empirical outcomes of actions taken in the environment (e.g. updating Q-values or policy gradients). Model-based RL attempts to learn or use a model of the transition dynamics $P(s'\mid s,a)$ and rewards $R(s,a)$ to simulate future trajectories offline.
    * **Sample Efficiency:** Model-based RL is more sample-efficient because it can perform "imagined" updates inside the simulated model, reducing the number of costly real-world environment interactions.
    * **Risk/Challenge:** The primary risk is **model error compounding (trajectory drift)**. Inaccuracies in the transition dynamics accumulate as predictions are made further into the future, leading to highly inaccurate simulated planning.
 

@@ -5,7 +5,7 @@ layout: post
 # MCQ Solutions (Lecture 11: Combined, Advanced PG & Model-Based RL)
 
 1. **Answer: b**
-   * **Explanation:** TRPO guarantees monotonic policy improvement by enforcing a KL-divergence constraint on policy updates ($\mathbb{E}[D_{KL}(\pi_{old} || \pi)] \le \delta$), ensuring the new policy does not deviate too far from the old policy's distribution.
+   * **Explanation:** TRPO guarantees monotonic policy improvement by enforcing a KL-divergence constraint on policy updates ($\mathbb{E}[D_{KL}(\pi_{old} \parallel \pi)] \le \delta$), ensuring the new policy does not deviate too far from the old policy's distribution.
 
 2. **Answer: b**
    * **Explanation:** Model-based RL methods learn/use a model of environment transitions, allowing them to plan offline with "imagined" data (high sample-efficiency). However, running simulations or tree searches at decision time is computationally expensive.
