@@ -56,25 +56,69 @@ However, standard Policy Gradient methods suffer from two massive problems:
 
 ## 2. The Probability Ratio
 
-To fix sample inefficiency, we want to update the network *multiple times* (multiple epochs) using the same batch of data. To mathematically allow this without violating the on-policy requirement, we define the **Probability Ratio**, $r_t(\theta)$:
+To fix sample inefficiency, we want to update the network *multiple times* (multiple epochs) using the same batch of data. To appreciate how this is done mathematically, let's contrast the traditional policy gradient objective with the new surrogate objective.
 
-$$ r_t(\theta) = \frac{\pi_{\theta}(a_t|s_t)}{\pi_{\theta_{old}}(a_t|s_t)} \tag{Graesser and Keng Page 174 / PPO Paper} $$
+### 1. Traditional Policy Gradient Objective
+In standard policy gradient methods (like REINFORCE and A2C), the objective function maximized via gradient ascent is:
+$$ L^{PG}(\theta) = \hat{\mathbb{E}}_t [ \log \pi_{\theta}(a_t|s_t) A_t ] $$
 
-* $\pi_{\theta_{old}}$ is the probability of the action when the data was originally gathered (the old frozen policy).
-* $\pi_{\theta}$ is the probability of the action under the *current* updated policy.
-* When training starts, $\pi_{\theta} = \pi_{\theta_{old}}$, so the ratio $r_t(\theta) = 1.0$.
-* If the new policy increases the probability of the action, $r_t > 1$. If it decreases it, $r_t < 1$.
+* **The Limitation:** This objective assumes the transitions were sampled directly from the *current* active policy $\pi_\theta$. If we perform a gradient step and change $\theta$, we can no longer run another gradient step on $L^{PG}(\theta)$ using the same data because the expectation is no longer valid.
 
-We can rewrite the Policy Gradient objective using this ratio:
-$$ L^{PG}(\theta) = \mathbb{E} [ r_t(\theta) A_t ] \tag{Graesser and Keng Eq. 7.32 / PPO Paper Eq. 1} $$
+---
 
-If the Advantage $A_t$ is positive (a good action), maximizing this objective will push $r_t$ up (increasing the probability). However, if we run multiple epochs of SGD on this objective, $r_t$ will grow infinitely large, causing a destructive update!
+### 2. The Surrogate Objective (with Probability Ratio)
+To allow multiple gradient steps on the same batch of data, we define the **Probability Ratio**, $r_t(\theta)$:
+$$ r_t(\theta) = \frac{\pi_{\theta}(a_t|s_t)}{\pi_{\theta_{\text{old}}}(a_t|s_t)} \tag{Graesser and Keng Page 174 / PPO Paper} $$
+
+* $\pi_{\theta_{\text{old}}}$ is the probability of the action when the data was originally gathered (the old frozen policy parameters).
+* $\pi_{\theta}$ is the probability of the action under the *current* updated policy parameters.
+* **Initial State:** When training starts, $\pi_{\theta} = \pi_{\theta_{\text{old}}}$, so the ratio $r_t(\theta) = 1.0$.
+* **Ratio Dynamics:** If the updated policy increases the probability of the action, $r_t > 1$. If it decreases it, $r_t < 1$.
+
+We then rewrite the objective using this ratio:
+$$ L^{CPI}(\theta) = \hat{\mathbb{E}}_t [ r_t(\theta) A_t ] \tag{Graesser and Keng Eq. 7.32 / PPO Paper Eq. 1} $$
+
+*(CPI stands for Conservative Policy Iteration)*
+
+---
+
+### Why this works: The Connection between $L^{PG}$ and $L^{CPI}$
+You might ask: *Why are we allowed to swap the log-likelihood for a probability ratio?* 
+
+If we take the derivative of both objectives with respect to $\theta$ and evaluate them at the start of the update (when $\theta = \theta_{\text{old}}$), they yield the **exact same gradient**:
+$$ \nabla_{\theta} L^{CPI}(\theta) \Big|_{\theta=\theta_{\text{old}}} = \hat{\mathbb{E}}_t \left[ \frac{\nabla_{\theta} \pi_{\theta}(a_t|s_t)}{\pi_{\theta_{\text{old}}}(a_t|s_t)} A_t \right] \Big|_{\theta=\theta_{\text{old}}} = \hat{\mathbb{E}}_t \left[ \frac{\nabla_{\theta} \pi_{\theta}(a_t|s_t)}{\pi_{\theta}(a_t|s_t)} A_t \right] = \hat{\mathbb{E}}_t [ \nabla_{\theta} \log \pi_{\theta}(a_t|s_t) A_t ] = \nabla_{\theta} L^{PG}(\theta) $$
+
+* **First step:** For the very first gradient step, maximizing $L^{CPI}$ gives the exact same update as $L^{PG}$.
+* **Subsequent steps:** For any subsequent steps (epochs) on the same batch where $\theta \neq \theta_{\text{old}}$, the ratio $r_t(\theta)$ uses **importance sampling** to automatically correct for the fact that the data was collected under the older policy $\theta_{\text{old}}$.
+
+---
+
+### Deep Dive: Why not just take the log of the ratio?
+A common point of confusion is: *If the traditional policy gradient objective used $\log \pi_{\theta}(a_t|s_t)$, why doesn't $L^{CPI}$ use $\log r_t(\theta)$?*
+
+There are two key reasons why we must use the raw ratio $r_t(\theta)$ instead of its logarithm:
+
+1. **Importance Sampling Definition:**
+   The goal of $L^{CPI}$ is to estimate the performance of the new policy $\pi_\theta$ using data sampled from the old policy $\pi_{\theta_{\text{old}}}$. 
+   Mathematically, changing the base distribution of an expectation via Importance Sampling requires multiplying by the raw ratio of target/proposal probabilities:
+   $$ \mathbb{E}_{x \sim P} [ f(x) ] = \mathbb{E}_{x \sim Q} \left[ \frac{P(x)}{Q(x)} f(x) \right] $$
+   Taking the logarithm $\log \left( \frac{P(x)}{Q(x)} \right)$ is not a mathematically valid importance sampling weight.
+
+2. **Logarithm Destroys the Correction Term:**
+   If we did take the log of the ratio, the objective would become:
+   $$ L_{\text{log\_ratio}}(\theta) = \hat{\mathbb{E}}_t [ \log r_t(\theta) A_t ] = \hat{\mathbb{E}}_t [ (\log \pi_{\theta}(a_t|s_t) - \log \pi_{\theta_{\text{old}}}(a_t|s_t)) A_t ] $$
+   When we take the gradient with respect to the active parameters $\theta$, the $\log \pi_{\theta_{\text{old}}}(a_t|s_t)$ term behaves as a constant and drops out (its derivative is $0$).
+   Therefore, the gradient of the log-ratio objective is:
+   $$ \nabla_{\theta} L_{\text{log\_ratio}}(\theta) = \hat{\mathbb{E}}_t [ \nabla_{\theta} \log \pi_{\theta}(a_t|s_t) A_t ] $$
+   This is exactly the traditional policy gradient update $\nabla_{\theta} L^{PG}(\theta)$. It completely removes the $\pi_{\theta_{\text{old}}}$ denominator, leaving us with **no correction term** for subsequent gradient steps when $\theta \neq \theta_{\text{old}}$. The gradient remains uncorrected, bringing back the exact same sample inefficiency and bias we set out to solve.
+
+**However:** If we maximize $L^{CPI}(\theta)$ without constraint over multiple epochs, the ratio $r_t(\theta)$ will grow infinitely large for positive advantages, leading to extremely large, destructive updates. This brings us to the need for clipping!
 
 ---
 
 ## 3. The PPO Clipped Surrogate Objective
 
-In 2017, John Schulman at OpenAI introduced **Proximal Policy Optimization (PPO)**. The genius of PPO is to use the Probability Ratio, but explicitly **clip** it so the policy cannot change too much in a single update.
+In 2017, John Schulman et al. at OpenAI introduced **Proximal Policy Optimization (PPO)** in the paper, [Proximal Policy Optimization Algorithms](https://arxiv.org/abs/1707.06347). The genius of PPO is to use the Probability Ratio, but explicitly **clip** it so the policy cannot change too much in a single update.
 
 PPO defines a "Trust Region" around the old policy, usually bounded by a hyperparameter $\epsilon = 0.2$. The ratio $r_t$ is not allowed to move outside the range $[1-\epsilon, 1+\epsilon]$.
 
@@ -85,8 +129,50 @@ By taking the **minimum** between the unclipped and clipped versions, PPO create
 ![PPO Clipping Function](./assets/images/ppo_clipping.svg)
 
 ### How the Clipping Works:
-* **Scenario A (Advantage > 0):** The action was unexpectedly good. We want to increase its probability ($r_t$ goes up). But once $r_t$ hits $1+\epsilon$ (e.g., $1.2$), the clipping function activates. The gradient becomes exactly $0$. The network stops updating for this action, preventing it from greedily over-updating and destroying the policy.
-* **Scenario B (Advantage < 0):** The action was bad. We want to decrease its probability ($r_t$ goes down). Once $r_t$ drops to $1-\epsilon$ (e.g., $0.8$), the clipping function activates. The gradient becomes $0$.
+To understand the clipping mechanism in detail, let's analyze how the objective function behaves for both positive and negative advantages (assuming $\epsilon = 0.2$):
+
+#### Scenario A: The Action was Good ($A_t > 0$)
+Since it is a good action, we want to increase its probability. The ratio $r_t(\theta)$ starts rising above $1.0$.
+* **When $r_t(\theta) \le 1.2$:** 
+  * Both the unclipped term ($r_t A_t$) and clipped term ($\text{clip} \cdot A_t$) are equal. 
+  * The minimum of the two is $r_t(\theta) A_t$. 
+  * **Result:** The gradient is active, and the optimizer continues to increase the probability of this action.
+* **When $r_t(\theta) > 1.2$:** 
+  * The unclipped term is $r_t A_t$ (which is $> 1.2 A_t$).
+  * The clipped term limits $r_t$ to $1.2$, yielding $1.2 A_t$.
+  * We take the minimum: $\min(r_t A_t, 1.2 A_t) = 1.2 A_t$.
+  * **Result:** Since the objective is now a flat constant ($1.2 A_t$), its derivative with respect to $\theta$ is **exactly 0**. The optimizer stops getting any gradient for this action, preventing it from greedily over-updating and destroying the policy.
+
+#### Scenario B: The Action was Bad ($A_t < 0$)
+Since it is a bad action, we want to decrease its probability. The ratio $r_t(\theta)$ starts dropping below $1.0$. Note that because $A_t$ is negative, multiplying it by a smaller ratio makes it a *larger* (less negative) number.
+* **When $r_t(\theta) \ge 0.8$:** 
+  * The unclipped term is $r_t A_t$ (e.g., $0.9 \times -5 = -4.5$).
+  * The clipped term is also $r_t A_t$.
+  * The minimum of the two is $r_t(\theta) A_t$.
+  * **Result:** The gradient is active, and the optimizer continues to decrease the probability of this bad action.
+* **When $r_t(\theta) < 0.8$:** 
+  * The unclipped term is $r_t A_t$ (e.g., $0.6 \times -5 = -3.0$).
+  * The clipped term limits $r_t$ to $0.8$, yielding $0.8 A_t$ (e.g., $0.8 \times -5 = -4.0$).
+  * We take the minimum: $\min(-3.0, -4.0) = -4.0$.
+  * **Result:** The objective is capped at $0.8 A_t$. The gradient becomes **exactly 0**, preventing the policy from dropping the action probability too aggressively.
+
+#### The Correction Exception (Why we take the `min`):
+What happens if the policy moves in the **wrong direction**? For example, the advantage is negative ($A_t < 0$), but the optimizer accidentally updates the policy such that the action becomes *more* likely ($r_t$ increases to $1.5$).
+* Unclipped term: $1.5 \times -5 = -7.5$
+* Clipped term: $1.2 \times -5 = -6.0$
+* Minimum: $\min(-7.5, -6.0) = -7.5$ (unclipped!)
+Because we take the minimum, the objective reverts to the unclipped term. This yields a strong gradient that pulls the policy back in the correct direction.
+
+---
+
+### PPO Clipping Summary Reference
+
+| Advantage ($A_t$) | Ratio ($r_t$) | Unclipped ($r_t A_t$) | Clipped ($\text{clip} \cdot A_t$) | Minimum (PPO Objective) | Active Gradient? |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Positive ($> 0$)** | $1.0 \to 1.2$ | $1.1 A_t$ | $1.1 A_t$ | **$1.1 A_t$** | **Yes** (keep increasing probability) |
+| **Positive ($> 0$)** | $> 1.2$ | $1.4 A_t$ | $1.2 A_t$ | **$1.2 A_t$** | **No** (gradient is 0, stops update) |
+| **Negative ($< 0$)** | $1.0 \to 0.8$ | $0.9 A_t$ | $0.9 A_t$ | **$0.9 A_t$** | **Yes** (keep decreasing probability) |
+| **Negative ($< 0$)** | $< 0.8$ | $0.6 A_t$ (e.g. $-3$) | $0.8 A_t$ (e.g. $-4$) | **$0.8 A_t$** | **No** (gradient is 0, stops update) |
 
 ### Visualizing the Solutions in Code
 
