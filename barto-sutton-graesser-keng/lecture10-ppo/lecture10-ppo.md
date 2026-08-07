@@ -333,6 +333,245 @@ For a hands-on Python demonstration of Proximal Policy Optimization (PPO), you c
 
 This notebook contains the complete PyTorch implementation of PPO (clipped objective, shared network backbone with separate Actor/Critic heads, GAE advantage estimation, value function loss, and entropy bonus) trained on Gymnasium's `CartPole-v1` environment alongside standard policy gradient methods for direct performance comparison.
 
+Below is the complete, self-contained, end-to-end training script. It ties together the Actor/Critic models, the Gymnasium rollout loop, the Generalized Advantage Estimation (GAE) calculation, and the PPO update function:
+
+```python
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import numpy as np
+import gymnasium as gym
+
+# =====================================================================
+# 1. NEURAL NETWORK ARCHITECTURES
+# =====================================================================
+
+class Actor(nn.Module):
+    """The Policy Network: outputs a probability distribution over actions."""
+    def __init__(self, state_dim, action_dim):
+        super(Actor, self).__init__()
+        self.net = nn.Sequential(
+            nn.Linear(state_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Linear(64, action_dim),
+            nn.Softmax(dim=-1)
+        )
+        
+    def forward(self, state):
+        return self.net(state)
+
+
+class Critic(nn.Module):
+    """The Value Network: estimates state value V(s)."""
+    def __init__(self, state_dim):
+        super(Critic, self).__init__()
+        self.net = nn.Sequential(
+            nn.Linear(state_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Linear(64, 1)
+        )
+        
+    def forward(self, state):
+        return self.net(state)
+
+
+# =====================================================================
+# 2. GAE COMPUTATION HELPER
+# =====================================================================
+
+def compute_gae(rewards, dones, values, next_value, gamma=0.99, lmbda=0.95):
+    """Computes Generalized Advantage Estimation (GAE) and value targets."""
+    advantages = []
+    gae = 0
+    
+    for i in reversed(range(len(rewards))):
+        next_non_terminal = 1.0 - dones[i]
+        
+        # Determine the V(s') value
+        if i == len(rewards) - 1:
+            next_val = next_value
+        else:
+            next_val = values[i + 1]
+            
+        # TD Error (delta) = reward + γ * V(s_next) - V(s)
+        delta = rewards[i] + gamma * next_val * next_non_terminal - values[i]
+        
+        # GAE = delta + γ * λ * GAE
+        gae = delta + gamma * lmbda * next_non_terminal * gae
+        advantages.insert(0, gae)
+        
+    # Return Target = Advantage + V(s)
+    returns = np.array(advantages) + np.array(values)
+    return advantages, returns
+
+
+# =====================================================================
+# 3. PPO OPTIMIZATION STEP
+# =====================================================================
+
+def ppo_update(actor, critic, actor_optimizer, critic_optimizer, 
+               states, actions, old_log_probs, advantages, returns, 
+               epochs=4, batch_size=64, eps_clip=0.2):
+    """Performs multiple epochs of mini-batch gradient updates on collected data."""
+    # Convert lists to PyTorch Tensors
+    states_t = torch.FloatTensor(np.array(states))
+    actions_t = torch.LongTensor(np.array(actions))
+    old_log_probs_t = torch.FloatTensor(np.array(old_log_probs))
+    advantages_t = torch.FloatTensor(np.array(advantages))
+    returns_t = torch.FloatTensor(np.array(returns))
+
+    # Normalize advantages to stabilize training variance
+    advantages_t = (advantages_t - advantages_t.mean()) / (advantages_t.std() + 1e-8)
+
+    dataset_size = len(states)
+    
+    for epoch in range(epochs):
+        # Generate random indices for mini-batch training
+        permutation = torch.randperm(dataset_size)
+        
+        for start_idx in range(0, dataset_size, batch_size):
+            batch_indices = permutation[start_idx:start_idx + batch_size]
+            
+            b_states = states_t[batch_indices]
+            b_actions = actions_t[batch_indices]
+            b_old_log_probs = old_log_probs_t[batch_indices]
+            b_advantages = advantages_t[batch_indices]
+            b_returns = returns_t[batch_indices]
+
+            # -------------------------------------------------------------
+            # ACTOR UPDATE (Policy Optimization)
+            # -------------------------------------------------------------
+            probs = actor(b_states)
+            dist = torch.distributions.Categorical(probs)
+            log_probs = dist.log_prob(b_actions)
+            entropy = dist.entropy().mean()
+
+            # Calculate Probability Ratio r_t(θ)
+            ratios = torch.exp(log_probs - b_old_log_probs)
+            
+            # PPO Clipped Surrogate Objective
+            surr1 = ratios * b_advantages
+            surr2 = torch.clamp(ratios, 1.0 - eps_clip, 1.0 + eps_clip) * b_advantages
+            actor_loss = -torch.min(surr1, surr2).mean() - 0.01 * entropy
+
+            # -------------------------------------------------------------
+            # CRITIC UPDATE (Value Optimization)
+            # -------------------------------------------------------------
+            state_values = critic(b_states).squeeze(-1)
+            critic_loss = 0.5 * nn.MSELoss()(state_values, b_returns)
+
+            # Backpropagation
+            actor_optimizer.zero_grad()
+            actor_loss.backward()
+            actor_optimizer.step()
+
+            critic_optimizer.zero_grad()
+            critic_loss.backward()
+            critic_optimizer.step()
+
+
+# =====================================================================
+# 4. MAIN END-TO-END TRAINING LOOP
+# =====================================================================
+
+def train_ppo():
+    env = gym.make('CartPole-v1')
+    state_dim = env.observation_space.shape[0]
+    action_dim = env.action_space.n
+
+    # Networks & Optimizers
+    actor = Actor(state_dim, action_dim)
+    critic = Critic(state_dim)
+    actor_optimizer = optim.Adam(actor.parameters(), lr=3e-4)
+    critic_optimizer = optim.Adam(critic.parameters(), lr=1e-3)
+
+    # Hyperparameters
+    max_iterations = 50
+    T = 2048                # Timesteps gathered per iteration
+    gamma = 0.99            # Discount factor
+    lmbda = 0.95            # GAE parameter
+
+    for iteration in range(max_iterations):
+        states, actions, rewards, dones, old_log_probs = [], [], [], [], []
+        
+        state, _ = env.reset()
+        episode_reward = 0
+        episode_rewards_list = []
+
+        # -----------------------------------------------------------------
+        # STEP 1: ROLLOUT PHASE (Interacting with the Gym environment)
+        # -----------------------------------------------------------------
+        for step in range(T):
+            state_t = torch.FloatTensor(state)
+            
+            # Select action
+            with torch.no_grad():
+                action_probs = actor(state_t)
+                dist = torch.distributions.Categorical(action_probs)
+                action = dist.sample().item()
+                log_prob = dist.log_prob(torch.tensor(action)).item()
+
+            # Execute step in Gym
+            next_state, reward, terminated, truncated, _ = env.step(action)
+            done = terminated or truncated
+
+            # Record transition
+            states.append(state)
+            actions.append(action)
+            rewards.append(reward)
+            dones.append(done)
+            old_log_probs.append(log_prob)
+
+            episode_reward += reward
+            state = next_state
+            
+            if done:
+                episode_rewards_list.append(episode_reward)
+                episode_reward = 0
+                state, _ = env.reset()
+
+        # Evaluate values of all collected states using Critic
+        with torch.no_grad():
+            values = critic(torch.FloatTensor(np.array(states))).squeeze(-1).numpy()
+            next_value = critic(torch.FloatTensor(state)).item()
+
+        # -----------------------------------------------------------------
+        # STEP 2: COMPUTE GAE & TARGET RETURNS
+        # -----------------------------------------------------------------
+        advantages, returns = compute_gae(rewards, dones, values, next_value, gamma, lmbda)
+
+        # -----------------------------------------------------------------
+        # STEP 3: OPTIMIZATION PHASE (Calling PPO Update)
+        # -----------------------------------------------------------------
+        ppo_update(
+            actor=actor, 
+            critic=critic, 
+            actor_optimizer=actor_optimizer, 
+            critic_optimizer=critic_optimizer, 
+            states=states, 
+            actions=actions, 
+            old_log_probs=old_log_probs, 
+            advantages=advantages, 
+            returns=returns,
+            epochs=4,
+            batch_size=64,
+            eps_clip=0.2
+        )
+
+        # Print training progress
+        avg_reward = np.mean(episode_rewards_list) if len(episode_rewards_list) > 0 else 0
+        print(f"Iteration {iteration+1:02d} | Avg Episode Reward: {avg_reward:.2f}")
+
+    env.close()
+
+if __name__ == "__main__":
+    train_ppo()
+```
+
 ---
 
 ## Practice Exercises
