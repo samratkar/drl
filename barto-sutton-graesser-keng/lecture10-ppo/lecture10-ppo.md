@@ -33,24 +33,24 @@ In policy gradient algorithms, the **Advantage function** $A(s, a) = Q(s, a) - V
 
 There are four primary ways to estimate the advantage function:
 
-#### Monte Carlo Advantage
+***Monte Carlo Advantage***
 Here, we use the actual discounted returns $G_t$ collected from the rollout:
 $$ A_t^{MC} = G_t - V(S_t) $$
 where $G_t = \sum_{k=0}^{T-t-1} \gamma^k R_{t+k+1}$ is the cumulative discounted reward.
 * **Properties:** Unbiased (since it relies on actual returns), but has extremely high variance because a single trajectory is highly noisy.
 
-#### 1-Step Temporal Difference (TD) Advantage
+***1-Step Temporal Difference (TD) Advantage***
 We bootstrap the future returns using the Critic's state-value estimates:
 $$ A_t^{TD(0)} = R_{t+1} + \gamma V(S_{t+1}) - V(S_t) $$
 Notice that this is exactly the TD error $\delta_t^V$ of the Critic network.
 * **Properties:** Very low variance (since it uses a single step and a smooth value function estimate), but has high bias if the Critic's value network is inaccurate.
 
-#### n-Step TD Advantage
+***n-Step TD Advantage***
 We extend the step count before bootstrapping to trade off bias and variance:
 $$ A_t^{(n)} = \sum_{k=0}^{n-1} \gamma^k R_{t+k+1} + \gamma^n V(S_{t+n}) - V(S_t) $$
 * **Properties:** By adjusting $n$, we control the balance: smaller $n$ acts like TD(0) (low variance, high bias), while larger $n$ acts like Monte Carlo (high variance, low bias).
 
-#### Generalized Advantage Estimation (GAE)
+***Generalized Advantage Estimation (GAE)***
 GAE ($\lambda$) takes an exponentially weighted average of all $n$-step advantages. Let the 1-step TD errors at each time step be:
 $$ \delta_t^V = R_{t+1} + \gamma V(S_{t+1}) - V(S_t) $$
 The GAE advantage at timestep $t$ is defined as:
