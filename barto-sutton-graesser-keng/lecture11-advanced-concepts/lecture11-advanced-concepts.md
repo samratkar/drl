@@ -710,7 +710,7 @@ Listen to an in-depth audio discussion exploring the mechanics of Monte Carlo Tr
   Your browser does not support the audio element.
 </audio>
 
-* **Direct Link / Download:** [MCTS Audio Podcast (`mcts-podcast.m4a`)](./assets/mcts-podcast.m4a)
+* **Direct Link / Download:** [policy gradient methods podcast](./assets/policy-gradient-methods-podcast)
 
 ---
 
