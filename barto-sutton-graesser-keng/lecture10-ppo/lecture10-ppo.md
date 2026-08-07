@@ -409,7 +409,7 @@ For iteration = 1, 2, ...
 ## 5. Practical Implementation & Jupyter Notebook
 
 For a hands-on Python demonstration of Proximal Policy Optimization (PPO), you can inspect and execute the complete interactive case study in:
-* **[Policy Gradients Case Study Notebook](../lecture9-policy-gradient/assets/policy_gradients_demonstration.ipynb)**
+* **[Policy Gradients Case Study Notebook](https://github.com/samratkar/drl/blob/main/barto-sutton-graesser-keng/lecture9-policy-gradient/assets/policy_gradients_demonstration.ipynb)**
 
 This notebook contains the complete PyTorch implementation of PPO (clipped objective, shared network backbone with separate Actor/Critic heads, GAE advantage estimation, value function loss, and entropy bonus) trained on Gymnasium's `CartPole-v1` environment alongside standard policy gradient methods for direct performance comparison.
 
