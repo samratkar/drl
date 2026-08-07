@@ -23,9 +23,12 @@ Up to this point, we have explored purely value-based methods (DQN, Double DQN) 
 ### 1.1 The Actor-Critic Family Recap
 The core Actor-Critic update is driven by the Temporal Difference (TD) error:
 $$ \delta_t = R_{t+1} + \gamma V(S_{t+1}, \mathbf{w}) - V(S_t, \mathbf{w}) $$
+*Reference: Sutton & Barto (2018), Equation (12.6) / Graesser & Keng (2019), Equation (6.17)*
+
 * The **Critic** updates its value parameters $\mathbf{w}$ to minimize this TD error (minimizing mean squared value error).
 * The **Actor** updates its policy parameters $\theta$ in the direction of the gradient scaled by the critic's assessment:
   $$ \theta_{t+1} = \theta_t + \alpha \delta_t \nabla_{\theta} \ln \pi(A_t|S_t, \theta) $$
+  *Reference: Sutton & Barto (2018), Equation (13.14)*
 
 Modern combined methods extend this framework to handle complex, high-dimensional spaces, parallel environments, and trust regions.
 
@@ -63,6 +66,8 @@ As discussed in [Lecture 10](file:///c:/github/drl/barto-sutton-graesser-keng/le
 4. **Soft Actor-Critic (SAC)**
    * **Core Idea:** An off-policy actor-critic method that incorporates **Entropy Regularization**. The objective function is modified to maximize both expected reward and policy entropy:
      $$ J(\theta) = \sum_{t=0}^{T} \mathbb{E}_{(s_t, a_t) \sim \rho_{\pi}} \left[ R(s_t, a_t) + \alpha \mathcal{H}(\pi(\cdot|s_t)) \right] $$
+     *Reference: Not in Sutton & Barto (2018) or Graesser & Keng (2019)*
+
      where $\mathcal{H}(\pi(\cdot|s_t)) = -\sum_a \pi(a|s_t) \ln \pi(a|s_t)$ is the entropy, and $\alpha$ is the temperature parameter. Higher entropy prevents the policy from collapsing into a single deterministic action, promoting broad exploration and robust generalization.
 
 ---
@@ -117,6 +122,8 @@ To plan effectively in a model-based environment, we cannot rely on purely rando
 ### 3.1 Multi-Armed Bandit UCB
 Recall the **Upper Confidence Bound (UCB1)** action selection rule from Multi-Armed Bandits ([Lecture 2](file:///c:/github/drl/barto-sutton-graesser-keng/lecture2-mab/)):
 $$ A_t \doteq \text{argmax}_a \left[ Q_t(a) + c \sqrt{\frac{\ln t}{N_t(a)}} \right] $$
+*Reference: Sutton & Barto (2018), Equation (2.10)*
+
 * $Q_t(a)$ is the exploitation term (estimated value of action $a$).
 * $c \sqrt{\frac{\ln t}{N_t(a)}}$ is the exploration term (uncertainty bonus).
 * $t$ is the total number of steps taken across all actions, and $N_t(a)$ is the number of times action $a$ has been selected.
@@ -125,6 +132,8 @@ $$ A_t \doteq \text{argmax}_a \left[ Q_t(a) + c \sqrt{\frac{\ln t}{N_t(a)}} \rig
 ### 3.2 UCB Applied to Trees (UCT)
 To use UCB in multi-step planning, we extend UCB1 to search trees. This is called the **UCT (Upper Confidence bounds applied to Trees)** formula. When deciding which child node to explore from state node $s$, we select the action $a$ that maximizes:
 $$ \text{UCT}(s, a) = Q(s, a) + c \sqrt{\frac{\ln N(s)}{N(s, a)}} $$
+*Reference: Not explicitly in Sutton & Barto (2018) or Graesser & Keng (2019) (described conceptually in Sutton & Barto (2018), Section 8.11, p. 187)*
+
 * $Q(s, a)$ is the average reward returned from all simulations that went through state $s$ and action $a$.
 * $N(s)$ is the total number of visits to parent node $s$.
 * $N(s, a)$ is the number of times action $a$ has been selected from node $s$.
@@ -276,6 +285,8 @@ During actual game playout, AlphaGo executes MCTS to determine the next move. Th
 Starting at the root, AlphaGo selects moves that maximize a variant of the predictor UCT formula (PUCT):
 $$ a_t = \text{argmax}_a \left( Q(s, a) + u(s, a) \right) $$
 $$ u(s, a) = c_{puct} P(s, a) \frac{\sqrt{N(s)}}{1 + N(s, a)} $$
+*Reference: Not in Sutton & Barto (2018) or Graesser & Keng (2019)*
+
 * $P(s, a) = \pi_{SL}(a|s)$ is the prior probability of selecting action $a$ in state $s$ predicted by the **Supervised Learning Policy Network**. This ensures the search immediately focuses on human-like moves.
 * $N(s, a)$ is the visit count. As action $a$ is visited more, $u(s,a)$ decreases, encouraging exploration of other actions with high prior probabilities.
 
@@ -286,12 +297,14 @@ When a leaf node $s_L$ is reached, it is expanded. Rather than running a random 
 
 These two evaluations are combined using a mixing parameter $\lambda = 0.5$:
 $$ V(s_L) = (1 - \lambda) v_{\theta}(s_L) + \lambda z $$
+*Reference: Sutton & Barto (2018), Equation (16.4) (written as $v(s) = (1 - \eta) v_{\theta}(s) + \eta G$)*
 
 #### C. Backpropagation
 The combined value $V(s_L)$ is propagated back up the search path. For each action edge $(s, a)$ traversed during selection:
 * Visit count is incremented: $N(s, a) \leftarrow N(s, a) + 1$
 * Action value is updated with the average evaluation:
   $$ Q(s, a) = \frac{1}{N(s, a)} \sum_{i=1}^{N(s, a)} V(s_L^{(i)}) $$
+  *Reference: Not in Sutton & Barto (2018) or Graesser & Keng (2019)*
 
 #### D. Action Selection for the Real Move
 Once the search budget (e.g., 1600 rollouts) is exhausted, AlphaGo selects the move that has the **highest visit count** $N(\text{root}, a)$ (not the highest Q-value). Visit counts are far less sensitive to single anomalous rollout values, making them much more robust.
@@ -313,6 +326,8 @@ While AlphaGo was a massive achievement, it relied heavily on human expert data 
 3. **No Fast Rollout Policy:** AlphaZero completely discards the simulation (rollout) phase of MCTS. Instead of playing games to the end with a fast policy, it evaluates leaf nodes $s_L$ directly using its value head: $V(s_L) = v_{\theta}(s_L)$. This removes the need for hand-crafted heuristic rollout policies.
 4. **MCTS as Policy Improver:** In AlphaZero, MCTS is not just used at decision time; it acts as the primary policy operator during training. Self-play games are played by running MCTS. The search outputs visit counts for actions, $\boldsymbol{\pi}_t$, which represents a stronger policy than the neural network's raw policy output $\mathbf{p}_t$. The network is trained to make its policy head $\mathbf{p}_t$ match the MCTS search distributions $\boldsymbol{\pi}_t$:
    $$ \text{Loss} = (z - v)^2 - \boldsymbol{\pi}^T \ln \mathbf{p} + c \|\theta\|^2 $$
+   *Reference: Not in Sutton & Barto (2018) or Graesser & Keng (2019)*
+
    where $z \in \{-1, +1\}$ is the actual winner of the self-play game, and $c \|\theta\|^2$ is L2 weight regularization.
 
 ---
@@ -330,13 +345,18 @@ Instead of trying to reconstruct complete environment observations (like pixels 
 1. **Representation Function ($h_{\theta}$):**
    Encodes a sequence of historical observations $o_1, \dots, o_t$ into an initial internal latent state $s^0$:
    $$ s^0 = h_{\theta}(o_1, \dots, o_t) $$
+   *Reference: Not in Sutton & Barto (2018) or Graesser & Keng (2019)*
+
 2. **Dynamics Function ($g_{\theta}$):**
    Takes the current latent state $s^{k-1}$ and a candidate action $a_k$, and predicts the next latent state $s^k$ and the immediate reward $r^k$:
    $$ s^k, r^k = g_{\theta}(s^{k-1}, a_k) $$
+   *Reference: Not in Sutton & Barto (2018) or Graesser & Keng (2019)*
+
    *(This allows the agent to roll out future steps purely in its mind/latent space, without using the real environment or knowing its rules).*
 3. **Prediction Function ($f_{\theta}$):**
    Takes a latent state $s^k$ and outputs the policy probabilities $\mathbf{p}^k$ and value estimate $v^k$:
    $$ \mathbf{p}^k, v^k = f_{\theta}(s^k) $$
+   *Reference: Not in Sutton & Barto (2018) or Graesser & Keng (2019)*
 
 #### MCTS in MuZero (Planning inside the Latent Model):
 During search, MuZero runs MCTS by traversing the tree entirely inside its latent representation:
@@ -378,6 +398,7 @@ Because this state is outside the training distribution, the agent's policy outp
 1. Collect a static dataset of expert demonstrations: $\mathcal{D} = \{ (s_1, a_1), (s_2, a_2), \dots, (s_N, a_N) \}$ where actions $a_i$ are selected by the expert policy $\pi^*(s_i)$.
 2. Train a policy $\pi_{\theta}$ using supervised learning to minimize a loss function (e.g. MSE for continuous actions, Cross-Entropy for discrete):
    $$ \theta^* = \text{argmin}_{\theta} \sum_{(s, a) \in \mathcal{D}} \mathcal{L}(\pi_{\theta}(s), a) $$
+   *Reference: Not in Sutton & Barto (2018) or Graesser & Keng (2019)*
 
 * **Limitation:** Highly vulnerable to covariate shift. It only works well in short-horizon tasks, or in environments where the error can be immediately corrected, or when the dataset is extremely large and covers almost all possible states.
 
@@ -406,6 +427,7 @@ $$
 \qquad \theta_{i+1} \leftarrow \text{argmin}_{\theta} \mathbb{E}_{(s, a) \in \mathcal{D}} [\mathcal{L}(\pi_{\theta}(s), a)]
 \end{array}
 $$
+*Reference: Not in Sutton & Barto (2018) or Graesser & Keng (2019)*
 
 * **Why DAgger Works:** Because the trajectories are generated by the agent's own policy $\pi_i$, the training dataset $\mathcal{D}$ contains states that the agent visits when it makes mistakes. The expert labels then teach the agent **how to recover** from those mistakes back to the expert path, resolving the compounding error issue.
 * **Limitation:** Requires an interactive expert that can be queried online during training. This is often impractical if the expert is a human who cannot sit and label thousands of states in real-time.
@@ -461,6 +483,7 @@ A fundamental challenge in IRL is that the mapping from demonstrations to reward
 * **Constant Reward:** Adding or multiplying constant offsets doesn't change the preference order of trajectories.
 * To address this ambiguity, modern methods like **Maximum Entropy IRL** (Ziebart et al., 2008) use information theory to select the reward function that makes the expert policy optimal while maximizing the entropy of the resulting trajectory distribution:
   $$ P(\tau) \propto \exp\left( \sum_{t} R(s_t, a_t) \right) $$
+  *Reference: Not in Sutton & Barto (2018) or Graesser & Keng (2019)*
 
 ---
 
@@ -477,6 +500,8 @@ In GAIL:
 #### GAIL Minimax Objective Function:
 The policy $\pi_{\theta}$ and discriminator $D_{\phi}$ are trained to solve the following minimax optimization problem:
 $$ \min_{\pi_{\theta}} \max_{D_{\phi}} \mathbb{E}_{\pi_{\theta}} [\ln(1 - D_{\phi}(s, a))] + \mathbb{E}_{\pi^*} [\ln D_{\phi}(s, a)] - \lambda \mathcal{H}(\pi_{\theta}) $$
+*Reference: Not in Sutton & Barto (2018) or Graesser & Keng (2019)*
+
 where:
 * $\mathbb{E}_{\pi^*} [\ln D_{\phi}(s, a)]$ is the expected log-likelihood of the discriminator correctly identifying expert transitions.
 * $\mathbb{E}_{\pi_{\theta}} [\ln(1 - D_{\phi}(s, a))]$ is the expected log-likelihood of the discriminator identifying agent transitions.
@@ -485,6 +510,8 @@ where:
 #### Using Discriminator Outputs as Surrogate Rewards:
 Once the discriminator is updated, we freeze it and use its output to define a surrogate reward function for the policy:
 $$ R(s, a) = -\ln(1 - D_{\phi}(s, a)) $$
+*Reference: Not in Sutton & Barto (2018) or Graesser & Keng (2019)*
+
 * If the agent takes a transition that looks highly expert-like, the discriminator outputs $D_{\phi}(s,a) \approx 1$. Consequently, $1 - D_{\phi}(s,a) \approx 0$, and the surrogate reward $-\ln(1 - D_{\phi}(s,a))$ becomes a large positive value.
 * If the agent takes a bad transition, $D_{\phi}(s,a) \approx 0$, and the reward is close to $0$.
 * The policy $\pi_{\theta}$ is then updated to maximize this reward using standard policy gradient methods (e.g. TRPO or PPO).
@@ -504,6 +531,7 @@ $$
 \qquad \text{to maximize: } \mathbb{E}_{(s, a) \in \mathcal{D}_{\text{agent}}} [\nabla_{\theta} \ln \pi_{\theta}(a|s) \cdot Q_{R}(s, a)] + \lambda \nabla_{\theta} \mathcal{H}(\pi_{\theta})
 \end{array}
 $$
+*Reference: Not in Sutton & Barto (2018) or Graesser & Keng (2019)*
 
 ---
 
@@ -543,12 +571,14 @@ By conditioning the action generation on the desired return, we treat control as
 During training, DT is fed historical patient or agent trajectories represented as sequences of states, actions, and Returns-to-Go (RTG):
 
 $$\tau = (\hat{R}_1, s_1, a_1, \hat{R}_2, s_2, a_2, \dots, \hat{R}_T, s_T, a_T)$$
+*Reference: Not in Sutton & Barto (2018) or Graesser & Keng (2019)*
 
 * **Return-to-Go (RTG):** Defined as $\hat{R}_t = \sum_{t'=t}^{T} r_{t'}$, representing the remaining accumulated reward we want the agent to receive from step $t$ onward.
 * **Embeddings:** Each element type ($s_t$, $a_t$, and $\hat{R}_t$) has its own dedicated projection layer (e.g., linear layers for continuous values, or MLP/CNN layers for complex states) to map them to a shared embedding dimension $d_{\text{model}}$.
 * **Causal Self-Attention:** The embedded tokens are passed to a causal GPT-style self-attention network. Causal masking ensures that when predicting action $a_t$, the model can only attend to past inputs $(\hat{R}_1, s_1, a_1, \dots, \hat{R}_t, s_t)$.
 * **Objective:** The model is trained offline in a supervised manner to predict the actions taken in the training dataset using cross-entropy loss (for discrete actions) or mean squared error (for continuous actions):
   $$\mathcal{L} = \sum_{t} \mathcal{D}_{\text{loss}}\left( \text{DT}(\hat{R}_1, s_1, a_1, \dots, s_t), a_t \right)$$
+  *Reference: Not in Sutton & Barto (2018) or Graesser & Keng (2019)*
 
 ### 8.3 Comparison: DT vs. Other RL Concepts
 The following table summarizes the conceptual differences between Decision Transformers, traditional DRL, Behavior Cloning, and Inverse RL:
