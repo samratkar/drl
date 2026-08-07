@@ -379,7 +379,47 @@ $$ L^{TOTAL} = L^{CLIP}(\theta) - c_1 L^{VF}(\theta) + c_2 S(\pi_{\theta}) \tag{
 
 1. **$L^{CLIP}$**: The Clipped Surrogate Objective (We want to maximize this).
 2. **$L^{VF}$**: The Value Function Loss (usually MSE between the Critic's prediction $V(s)$ and the true return. We want to minimize this, hence the minus sign).
-3. **$S(\pi_{\theta})$**: The Entropy Bonus. Entropy is a measure of randomness. By adding this bonus, we reward the network for keeping the action probabilities slightly random, which prevents premature convergence and encourages **exploration**.
+3. **$S(\pi_{\theta})$**: The Entropy Bonus.
+
+---
+
+### Deep Dive: The Entropy Exploration Bonus from First Principles
+
+#### 1. What is Entropy?
+In information theory, **Shannon Entropy** ($S$ or $H$) measures the level of uncertainty, randomness, or disorder in a probability distribution. For a discrete policy $\pi(a \mid s)$ outputting action probabilities over a set of actions $\mathcal{A}$, the entropy is defined as:
+$$ H(\pi(\cdot \mid s)) = -\sum_{a \in \mathcal{A}} \pi(a \mid s) \ln \pi(a \mid s) $$
+
+#### 2. Entropy in Extreme Cases (2-Action Example)
+To see how entropy behaves, let's calculate it for a system with two possible actions ($a_1, a_2$):
+
+* **Case A: A Fully Deterministic Policy (Exploitation Only)**
+  Suppose the policy is $100\%$ confident in action $a_1$:
+  $$ \pi(a_1 \mid s) = 1.0, \quad \pi(a_2 \mid s) = 0.0 $$
+  Applying the formula (noting that $0 \ln 0 \to 0$ in the limit):
+  $$ H = -\left( 1.0 \ln(1.0) + 0.0 \ln(0.0) \right) = -(0 + 0) = 0 $$
+  * **Result:** Entropy is **exactly $0$**. There is zero randomness, and the agent will never explore alternative actions.
+
+* **Case B: A Uniformly Random Policy (Exploration Only)**
+  Suppose the policy has no preference and spreads probabilities equally:
+  $$ \pi(a_1 \mid s) = 0.5, \quad \pi(a_2 \mid s) = 0.5 $$
+  Applying the formula:
+  $$ H = -\left( 0.5 \ln(0.5) + 0.5 \ln(0.5) \right) = -\ln(0.5) \approx 0.693 $$
+  * **Result:** Entropy is at its **theoretical maximum** ($\ln 2$). The agent is highly uncertain and will explore both actions with equal probability.
+
+#### 3. The Danger of Premature Convergence
+In reinforcement learning, if an agent finds a sub-optimal action that yields a small positive reward early in training, policy gradient steps will increase the probability of that action. 
+As the probability $\pi(a_{\text{sub-optimal}} \mid s) \to 1.0$, the entropy collapses to $0$. Once the policy becomes deterministic, the agent **stops exploring**. It will never sample other actions, meaning it remains permanently stuck in a sub-optimal local minimum.
+
+#### 4. The Entropy Bonus Solution
+To prevent this collapse, we add the entropy term $S(\pi_\theta)$ directly to the objective function we seek to maximize:
+$$ J(\theta) = \hat{\mathbb{E}}_t [ L^{CLIP}(\theta) ] + c_2 H(\pi_\theta(\cdot \mid s_t)) $$
+Here, $c_2$ is the **entropy coefficient** (typically $0.01$). 
+
+By maximizing this combined objective, the optimizer is forced to balance:
+1. **PPO Loss (Exploitation):** Pushing the policy to take actions with high advantages.
+2. **Entropy Bonus (Exploration):** Pushing the policy to keep its action probabilities spread out and random.
+
+As training progresses, the advantages become clearer and their gradients eventually overpower the entropy gradients, allowing the policy to safely consolidate into a highly performing deterministic policy—but only after thorough exploration has occurred.
 
 ### The PPO Training Loop
 ```python
