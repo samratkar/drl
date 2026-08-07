@@ -128,6 +128,30 @@ By taking the **minimum** between the unclipped and clipped versions, PPO create
 
 ![PPO Clipping Function](./assets/images/ppo_clipping.svg)
 
+### Detailed Explanation of the Clipping Graph
+
+The graph above illustrates how the clipped surrogate objective, $L^{CLIP}(\theta)$, varies as a function of the probability ratio, $r_t(\theta)$, for two distinct scenarios:
+
+1. **Axes and Labels:**
+   * **X-Axis ($r_t(\theta)$):** Represents the probability ratio $\frac{\pi_{\theta}(a_t|s_t)}{\pi_{\theta_{\text{old}}}(a_t|s_t)}$. The origin of the update sits at $1.0$ (where the new policy is identical to the old policy).
+   * **Y-Axis ($L^{CLIP}(\theta)$):** Represents the surrogate objective value that the optimizer seeks to maximize. Higher values are better.
+   * **The Shaded Trust Region:** The shaded area between $r_t \in [1-\epsilon, 1+\epsilon]$ (typically $[0.8, 1.2]$) represents the **Trust Region**. Inside this zone, the policy hasn't changed too much, so the objective is identical to the unclipped surrogate objective (no clipping is active, and the gradient is fully active).
+
+2. **Scenario 1: Advantage is Positive ($A_t > 0$, blue curve):**
+   * This is a "good action" that we want to encourage.
+   * The dotted line shows the unclipped objective $r_t A_t$, which increases linearly as the action probability rises.
+   * The solid blue line shows the PPO objective. Once $r_t$ exceeds $1+\epsilon$ ($1.2$), the objective flatlines at a constant value of $(1+\epsilon)A_t$. 
+   * **Gradient Impact:** Outside the trust region ($r_t > 1.2$), the objective is flat (its slope/gradient is zero). The optimizer has no incentive to make this action even more likely, preventing destructive policy changes.
+
+3. **Scenario 2: Advantage is Negative ($A_t < 0$, orange curve):**
+   * This is a "bad action" that we want to discourage.
+   * The dotted line shows the unclipped objective $r_t A_t$ (which decreases linearly, becoming more negative, as $r_t$ increases).
+   * The solid orange line shows the PPO objective. Notice that for $r_t < 1-\epsilon$ ($0.8$), the objective is flatlined at $(1-\epsilon)A_t$.
+   * **Gradient Impact:** Once the probability ratio drops below $0.8$, the gradient becomes zero, preventing the policy from dropping the action probability too aggressively.
+   * **Correction Behavior ($r_t > 1.0$):** If the ratio increases above $1.0$ (meaning we accidentally made a bad action *more* likely), the curve follows the unclipped line downwards. Because we take the **minimum**, the objective penalizes the policy heavily, forcing a strong gradient that pulls the ratio back toward $1.0$.
+
+---
+
 ### How the Clipping Works:
 To understand the clipping mechanism in detail, let's analyze how the objective function behaves for both positive and negative advantages (assuming $\epsilon = 0.2$):
 
