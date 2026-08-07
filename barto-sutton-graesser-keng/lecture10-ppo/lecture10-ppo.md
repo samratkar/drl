@@ -27,6 +27,75 @@ To contrast how different policy gradient methods configure their networks, targ
 | **Actor-Critic (1-Step TD)** | Policy $\pi(a \mid s, \theta)$<br>State-Value $\hat{v}(s, \mathbf{w})$ | $R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w})$ <br> *(1-step TD bootstrapped)* | $\hat{v}(S_t, \mathbf{w})$ | $R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w}) - \hat{v}(S_t, \mathbf{w})$ <br> *(TD error $\delta_t$)* | $\theta \leftarrow \theta + \alpha I \delta_t \nabla_{\theta} \ln \pi(A_t \mid S_t, \theta)$ *(where $I = \gamma^t$)*<br>$\mathbf{w} \leftarrow \mathbf{w} + \beta \delta_t \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w})$ |
 | **A2C (n-Step or GAE)** | Policy $\pi(a \mid s, \theta)$<br>State-Value $\hat{v}(s, \mathbf{w})$ | $V_{\text{target}}$ <br> *(n-step or GAE value target)* | $\hat{v}(S_t, \mathbf{w})$ | $A_t^{(n)}$ or $A_t^{\text{GAE}}$ <br> *(n-step return / GAE advantage)* | $\theta \leftarrow \theta + \alpha \gamma^t A_t \nabla_{\theta} \ln \pi(A_t \mid S_t, \theta)$<br>$\mathbf{w} \leftarrow \mathbf{w} + \beta (V_{\text{target}} - \hat{v}(S_t, \mathbf{w})) \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w})$ |
 
+### 1.1 Advantage Estimation & Generalized Advantage Estimation (GAE)
+
+In policy gradient algorithms, the **Advantage function** $A(s, a) = Q(s, a) - V(s)$ measures how much better taking action $a$ is compared to the expected performance in state $s$. Using the advantage instead of raw returns significantly reduces gradient variance while maintaining policy unbiasedness.
+
+There are four primary ways to estimate the advantage function:
+
+#### A. Monte Carlo Advantage (REINFORCE with Baseline)
+Here, we use the actual discounted returns $G_t$ collected from the rollout:
+$$ A_t^{MC} = G_t - V(S_t) $$
+where $G_t = \sum_{k=0}^{T-t-1} \gamma^k R_{t+k+1}$ is the cumulative discounted reward.
+* **Properties:** Unbiased (since it relies on actual returns), but has extremely high variance because a single trajectory is highly noisy.
+
+#### B. 1-Step Temporal Difference (TD) Advantage (Actor-Critic)
+We bootstrap the future returns using the Critic's state-value estimates:
+$$ A_t^{TD(0)} = R_{t+1} + \gamma V(S_{t+1}) - V(S_t) $$
+Notice that this is exactly the TD error $\delta_t^V$ of the Critic network.
+* **Properties:** Very low variance (since it uses a single step and a smooth value function estimate), but has high bias if the Critic's value network is inaccurate.
+
+#### C. $n$-Step TD Advantage
+We extend the step count before bootstrapping to trade off bias and variance:
+$$ A_t^{(n)} = \sum_{k=0}^{n-1} \gamma^k R_{t+k+1} + \gamma^n V(S_{t+n}) - V(S_t) $$
+* **Properties:** By adjusting $n$, we control the balance: smaller $n$ acts like TD(0) (low variance, high bias), while larger $n$ acts like Monte Carlo (high variance, low bias).
+
+#### D. Generalized Advantage Estimation (GAE)
+GAE ($\lambda$) takes an exponentially weighted average of all $n$-step advantages. Let the 1-step TD errors at each time step be:
+$$ \delta_t^V = R_{t+1} + \gamma V(S_{t+1}) - V(S_t) $$
+The GAE advantage at timestep $t$ is defined as:
+$$ A_t^{\text{GAE}(\gamma, \lambda)} = \sum_{l=0}^{\infty} (\gamma \lambda)^l \delta_{t+l}^V = \delta_t^V + \gamma \lambda \delta_{t+1}^V + (\gamma \lambda)^2 \delta_{t+2}^V + \dots $$
+where $\lambda \in [0, 1]$ is a hyperparameter that controls the exponential decay weight:
+* **If $\lambda = 0$:** The summation collapses to $A_t^{\text{GAE}} = \delta_t^V$ (exactly the **1-Step TD Advantage**).
+* **If $\lambda = 1$:** The terms expand and simplify to $A_t^{\text{GAE}} = \sum_{l=0}^{\infty} \gamma^l R_{t+l+1} - V(S_t)$ (exactly the **Monte Carlo Advantage**).
+* **If $0 < \lambda < 1$:** GAE acts as a slider, providing a robust intermediate advantage estimate that optimizes the bias-variance tradeoff.
+
+---
+
+#### Numerical Example: Advantage Calculations
+Let's consider a short trajectory of length $T = 3$ (timesteps $t=0, 1, 2$) inside an environment:
+* **Rewards:** $R_1 = 2$, $R_2 = 1$, $R_3 = 5$
+* **Critic Estimates:** $V(S_0) = 4$, $V(S_1) = 6$, $V(S_2) = 5$, $V(S_3) = 0$ (terminal state)
+* **Hyperparameters:** $\gamma = 0.9$, $\lambda = 0.8$
+
+Let's compute the advantage at timestep $t=0$ using each method:
+
+1. **Monte Carlo Return & Advantage:**
+   * Calculate cumulative return $G_0$:
+     $$ G_0 = R_1 + \gamma R_2 + \gamma^2 R_3 = 2 + 0.9(1) + 0.9^2(5) = 2 + 0.9 + 4.05 = 6.95 $$
+   * MC Advantage:
+     $$ A_0^{MC} = G_0 - V(S_0) = 6.95 - 4 = 2.95 $$
+
+2. **1-Step TD Advantage:**
+   * Compute TD Error at $t=0$:
+     $$ A_0^{TD(0)} = R_1 + \gamma V(S_1) - V(S_0) = 2 + 0.9(6) - 4 = 2 + 5.4 - 4 = 3.4 $$
+
+3. **2-Step TD Advantage:**
+   * Compute 2-Step estimate:
+     $$ A_0^{(2)} = R_1 + \gamma R_2 + \gamma^2 V(S_2) - V(S_0) = 2 + 0.9(1) + 0.9^2(5) - 4 = 2 + 0.9 + 4.05 - 4 = 2.95 $$
+
+4. **Generalized Advantage Estimation (GAE):**
+   * First, calculate individual 1-step TD errors ($\delta_t^V$) for all timesteps:
+     $$ \delta_0^V = R_1 + \gamma V(S_1) - V(S_0) = 2 + 0.9(6) - 4 = 3.4 $$
+     $$ \delta_1^V = R_2 + \gamma V(S_2) - V(S_1) = 1 + 0.9(5) - 6 = -0.5 $$
+     $$ \delta_2^V = R_3 + \gamma V(S_3) - V(S_2) = 5 + 0.9(0) - 5 = 0 $$
+   * Compute GAE Advantage $A_0^{\text{GAE}}$:
+     $$ A_0^{\text{GAE}} = \delta_0^V + (\gamma\lambda)\delta_1^V + (\gamma\lambda)^2\delta_2^V $$
+     $$ \gamma\lambda = 0.9 \times 0.8 = 0.72 $$
+     $$ A_0^{\text{GAE}} = 3.4 + 0.72(-0.5) + 0.72^2(0) = 3.4 - 0.36 = 3.04 $$
+
+---
+
 However, standard Policy Gradient methods suffer from two massive problems:
 1. **Destructive Updates:** The learning rate $\alpha$ dictates the "step size". In supervised learning, if you take a step that is too large, the loss might temporarily spike, but you can recover on the next batch. In RL, the data you train on is generated by your policy. If a large step size accidentally destroys a good policy, the agent starts acting randomly. It will then generate *terrible data*, causing the network to learn terrible things. The agent falls off a cliff and never recovers.
 2. **Sample Inefficiency:** 
@@ -603,6 +672,21 @@ if __name__ == "__main__":
 </td>
 </tr>
 </table>
+
+---
+
+## 6. Summary Comparison of Policy Gradient Methods
+
+To help you synthesize these concepts, the table below compares all the policy gradient methods we have covered, highlighting their data collection pipelines, advantage sources, objective functions, update frequencies, and safety mechanisms:
+
+| Dimension | REINFORCE | REINFORCE w/ Baseline | Actor-Critic (1-Step TD) | A2C (Advantage AC) | PPO (Proximal Policy Opt) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Data Collection** | Episode-based (Batch of trajectories) | Episode-based (Batch of trajectories) | Online step-by-step (immediate) | Batch-mode (Rollout buffer size $T$) | Batch-mode (Rollout buffer size $T$) |
+| **Advantage Source** | None (uses raw returns $G_t$) | Monte Carlo returns:<br/>$A_t^{MC} = G_t - V(s_t)$ | 1-Step TD error:<br/>$\delta_t = r_{t+1} + \gamma V(s_{t+1}) - V(s_t)$ | $n$-Step TD or GAE | Typically GAE ($\lambda$) |
+| **Policy Objective** | $L^{PG}(\theta) = \hat{\mathbb{E}} [\log \pi_{\theta}(A_t \mid S_t) G_t]$ | $L^{PG}(\theta) = \hat{\mathbb{E}} [\log \pi_{\theta}(A_t \mid S_t) A_t^{MC}]$ | $L^{PG}(\theta) = \hat{\mathbb{E}} [\log \pi_{\theta}(A_t \mid S_t) \delta_t]$ | $L^{PG}(\theta) = \hat{\mathbb{E}} [\log \pi_{\theta}(A_t \mid S_t) A_t^{\text{GAE}}]$ | Clipped Surrogate:<br/>$\hat{\mathbb{E}} [\min(r_t A_t, \text{clip}(r_t) A_t)]$ |
+| **Updates per Batch** | 1 Gradient step (1 epoch) | 1 Gradient step (1 epoch) | 1 Gradient step per transition | 1 Gradient step (1 epoch) | Multiple epochs (4–10 SGD passes) |
+| **Sample Efficiency** | Very Low | Low | Low (but continuous updates) | Low (batch reject cycle) | High (reuses data safely via clipping) |
+| **Safety Mechanism** | None (requires tiny learning rate $\alpha$) | None (requires tiny learning rate $\alpha$) | None (requires tiny learning rate $\alpha$) | None (requires small step sizes) | Clipped Probability Ratio:<br/>$r_t(\theta) \in [1-\epsilon, 1+\epsilon]$ |
 
 ---
 
