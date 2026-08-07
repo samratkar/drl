@@ -36,6 +36,21 @@ However, standard Policy Gradient methods suffer from two massive problems:
      * **Why We Discard Data:** If you run a second gradient update on the same $10,000$ transitions, the actions in that data reflect the choice probabilities of $\theta_{\text{old}}$, not the new policy $\theta_{\text{new}}$. The expectation breaks, leading to highly biased, mathematically incorrect gradients. Consequently, in standard policy gradients (like REINFORCE and Actor-Critic), **you must discard the entire batch of data after just one update step** and run the simulator again to collect fresh on-policy transitions.
      * **Contrast with Supervised Learning:** In supervised image classification, you can reuse the same training set over hundreds of epochs (epochs = reusing data). In standard RL, you can only run **one epoch per batch of transitions**, which is extremely slow if environment simulations are computationally expensive.
      * **Contrast with Q-Learning (Off-Policy):** Off-policy value-based methods (like DQN) do not suffer from this because they solve the Bellman equation, which is a consistency condition that holds regardless of which policy collected the transitions. This allows DQN to reuse past data millions of times from a **Replay Buffer**.
+      * **The Policy Obsolescence Problem (A2C vs. Classic AC vs. PPO):**
+        Why does this "waste cycle" or "reject cycle" happen, and how does it differ across frameworks?
+        * **Classic Step-by-Step Actor-Critic (Online):** 
+          * **How it works:** Parameters are updated after every single transition $(s_t, a_t, r_{t+1}, s_{t+1})$. The subsequent action $a_{t+1}$ is sampled using the newly updated policy $\theta_{t+1}$.
+          * **The Obsolescence/Waste:** There is no *batch* of transitions to discard since updates are immediate. However, each individual transition is used for exactly **one gradient step** before being thrown away. We cannot store transitions in a replay buffer to run multiple gradient updates on them later because the policy is changing at every step; any subsequent updates on those past transitions would be off-policy.
+        * **Batch-Mode Actor-Critic (e.g., A2C):** 
+          * **How it works:** For neural network efficiency and stability, A2C collects a batch of transitions (e.g., $10,000$ steps across parallel environments) using a frozen policy $\theta_{\text{old}}$. It performs **one single gradient step** to update the parameters to $\theta_{\text{new}}$, and then collects the next batch using $\theta_{\text{new}}$.
+          * **The Obsolescence/Waste:** This is where the **Batch Reject Cycle** is in full effect. Once the policy updates to $\theta_{\text{new}}$ after the first optimizer step, the batch of $10,000$ transitions is immediately rendered obsolete. We cannot run multiple epochs of SGD on the same batch of data because the actions in that batch reflect the choice probabilities of $\theta_{\text{old}}$, not $\theta_{\text{new}}$. Running another gradient step using the standard policy gradient loss:
+            $$ \theta \leftarrow \theta + \alpha A_t \nabla_{\theta} \ln \pi_{\theta}(A_t|S_t) $$
+            assumes on-policy data and would result in highly biased, mathematically incorrect gradients that can cause the policy to diverge.
+        * **How PPO Solves It:** 
+          PPO is essentially batch-mode Actor-Critic (A2C) with a corrected loss function. It resolves the obsolescence problem using two key mechanisms:
+          1. **Importance Sampling Ratio:** It replaces $\ln \pi_{\theta}(a|s)$ with the probability ratio $r_t(\theta) = \frac{\pi_{\theta}(a|s)}{\pi_{\theta_{\text{old}}}(a|s)}$. This ratio mathematically adjusts the gradient step to correct for the fact that the transitions were sampled from the old policy $\theta_{\text{old}}$, turning an off-policy update into a valid on-policy equivalent.
+          2. **Clipping:** Because the importance sampling estimator becomes highly unstable if $\theta$ drifts too far from $\theta_{\text{old}}$, PPO clips $r_t(\theta)$ to a safe range (usually $[1-\epsilon, 1+\epsilon]$).
+          Together, these allow PPO to run **multiple epochs (typically 4 to 10 SGD passes) on the exact same batch of transitions** before discarding it, solving the batch reject cycle and significantly boosting sample efficiency.
 
 ---
 
