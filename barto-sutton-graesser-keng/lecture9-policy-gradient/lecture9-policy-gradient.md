@@ -343,6 +343,21 @@ Let's point out and analyze exactly where and how parameterization is inserted a
 
 ---
 
+### Remark: How the Policy is Determined Before Rollouts Start
+
+Students often ask: *How is the policy $\pi_{\theta}(a \mid s)$ determined before any rollout begins?*
+
+1. **Before the Very First Rollout (Iteration 0 — Initial Setup):**
+   * The policy parameters $\theta_0$ are set via **random neural network weight initialization** (e.g., Orthogonal or Xavier initialization).
+   * **Discrete Space (Softmax):** Preference weights are initialized near zero ($h(s, a, \theta) \approx 0$). Passing zero preferences into the Softmax function produces equal probabilities across all actions: $\pi_{\theta_0}(a \mid s) = \frac{1}{|\mathcal{A}|}$. This gives an **initial uniform random policy** for maximal exploration.
+   * **Continuous Space (Gaussian):** Mean head weights are initialized near zero ($\mu(s) \approx 0$) and standard deviation is set to a baseline scalar ($\sigma = 1.0$). Actions are sampled from $\mathcal{N}(0, 1.0)$.
+
+2. **Before Every Subsequent Rollout (Iteration $k > 0$):**
+   * The policy network uses the **latest updated weight vector $\theta_k$** produced by the previous batch gradient update: $\theta_k = \theta_{k-1} + \alpha \nabla_\theta J$.
+   * Master weights $\theta_k$ are broadcast to all parallel workers before Phase 1 (Rollout) begins.
+
+---
+
 ### Side-by-Side Algorithm Comparison: Softmax vs. Gaussian Implementation
 
 To see exactly how these parameterizations are implemented in practice, here is the REINFORCE with Baseline algorithm for both Softmax and Gaussian policies side-by-side:
