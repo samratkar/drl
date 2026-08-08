@@ -962,7 +962,7 @@ $$
 \quad \color{blue}{\textbf{Phase 1: Spatial Parallel Rollouts}} \\
 \quad \textbf{For each worker } i \in \{1, \dots, N\} \text{ in parallel:} \\
 \qquad \text{Run policy in env } i \text{ for } T \text{ steps to collect:} \\
-\qquad \mathcal{D}^{(i)} = \{ S_{0:T}^{(i)}, A_{0:T-1}^{(i)}, R_{1:T}^{(i)} \} \\
+\qquad \mathcal{D}^{(i)} = \{ S_{0:T}^{(i)}, A_{0:T-1}^{(i)}, R_{1:T}^{(i)} \} \quad \text{(Trajectory Data Buffer for Worker } i \text{)} \\
 \\
 \quad \color{darkgreen}{\textbf{Phase 2: Per-Worker Advantage Calculation}} \\
 \quad \textbf{For each worker } i \in \{1, \dots, N\} \text{ and step } t < T: \\
