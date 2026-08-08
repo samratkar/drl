@@ -1063,6 +1063,11 @@ If we attempt to solve Breakdown A by introducing discounting ($\gamma < 1$), a 
 1. **Initial State Irrelevance:** Discounting $v_{\pi}(S_0) = \mathbb{E}[\sum_{t=0}^{\infty} \gamma^t R_{t+1}]$ heavily weighs rewards received near the start state $S_0$. However, in a continuing process running for thousands of steps, the initial state $S_0$ becomes completely irrelevant. The agent spends $99.99\%$ of its operational lifetime in the **stationary (steady-state) distribution** $d_{\pi}(s)$.
 2. **Mathematical Contradiction in Policy Gradient Theorem:** In continuing tasks with function approximation, discounting with $\gamma < 1$ causes the discounted state distribution $\eta(s) = \sum_{t=0}^{\infty} \gamma^t P(S_t = s \mid S_0)$ to **not** match the true stationary distribution $d_{\pi}(s)$. As demonstrated by Thomas (2014) and Sutton & Barto (Page 334), applying policy gradients with $\gamma < 1$ in continuing tasks yields **biased gradients** that do not optimize true long-term performance.
 
+> **Intuitive Analogy: Why Discounting Breaks in Continuing Tasks**
+> * **Think of a Data Center Air Conditioner (AC):** You turn on an AC unit at 9:00 AM in a hot room ($35^\circ\text{C} = S_0$). For the first 10 minutes, the AC cools the room down to $22^\circ\text{C}$ (**transient phase**). For the next 10 years of non-stop operation, the AC maintains the room at $22^\circ\text{C}$ (**steady-state phase $d_\pi(s)$**).
+> * **What happens if you use Discounting ($\gamma < 1$)?** Discounting scales future rewards by $\gamma^t$. At $t = 1,000,000$, $\gamma^{1,000,000} \approx 0$. If you optimize a discounted objective from $S_0$, the algorithm spends $99\%$ of its effort tuning how the AC behaves in the first 10 minutes at $35^\circ\text{C}$, and **completely ignores how it performs for the next 10 years at $22^\circ\text{C}$**!
+> * **The Stationary Distribution $d_\pi(s)$:** $d_\pi(s)$ is the long-term equilibrium probability of being in state $s$ as $t \to \infty$. In a continuing task, the agent spends $99.99\%$ of its life in this equilibrium, so optimizing steady-state performance $r(\pi) = \sum_s d_\pi(s) r(s)$ is the only sensible objective.
+
 ---
 
 ### 3. How It Is Solved: The Average Reward Objective $r(\pi)$
