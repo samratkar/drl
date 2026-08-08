@@ -927,7 +927,7 @@ Rollouts are gathered synchronously in parallel, advantages are computed globall
 
 ### Side-by-Side Algorithm Comparison: Basic AC vs. A2C
 
-Here is how the update logic and execution structure differ side-by-side:
+Here is how the update logic and execution structure differ side-by-side, explicitly highlighting how **A2C spatially parallelizes environment execution across $N$ workers**:
 
 $$
 \begin{array}{c|c}
@@ -936,13 +936,13 @@ $$
 \begin{array}{l}
 \textbf{Input:} \text{ policy } \pi_{\theta}, \text{ value function } \hat{v}(s, \mathbf{w}) \\
 \textbf{Parameters:} \text{ step sizes } \alpha > 0, \beta > 0 \\
-\textbf{Initialize:} \theta, \mathbf{w} \\
+\textbf{Initialize:} \theta \in \mathbb{R}^{d'}, \mathbf{w} \in \mathbb{R}^d \\
 \\
-\textbf{Loop forever (each episode):} \\
+\textbf{Loop forever (for each episode):} \\
 \quad \text{Initialize state } S \\
 \quad I \leftarrow 1 \\
 \quad \textbf{Loop for each step: } \\
-\qquad \text{Sample } A \sim \pi_{\theta}(\cdot|S) \\
+\qquad \text{Sample action } A \sim \pi_{\theta}(\cdot|S) \\
 \qquad \text{Take action } A, \text{ observe } R, S' \\
 \qquad \mathbf{\delta \leftarrow R + \gamma \hat{v}(S', \mathbf{w}) - \hat{v}(S, \mathbf{w})} \\
 \qquad \mathbf{w} \leftarrow \mathbf{w} + \beta \delta \nabla_{\mathbf{w}} \hat{v}(S, \mathbf{w}) \\
@@ -955,25 +955,68 @@ $$
 &
 \begin{array}{l}
 \textbf{Input:} \text{ policy } \pi_{\theta}, \text{ value function } \hat{v}(s, \mathbf{w}) \\
-\textbf{Parameters:} \text{ step sizes } \alpha > 0, \beta > 0, \text{ rollout length } T \\
-\textbf{Initialize:} \theta, \mathbf{w} \\
+\textbf{Parameters:} \alpha, \beta > 0, \text{ rollouts } T, \text{ workers } N \\
+\textbf{Initialize:} \theta \in \mathbb{R}^{d'}, \mathbf{w} \in \mathbb{R}^d \\
 \\
-\textbf{Loop forever:} \\
-\quad \text{Run policy synchronously in } N \text{ envs} \\
-\quad \text{for } T \text{ steps to collect: } S_{0:T}, A_{0:T}, R_{1:T} \\
+\textbf{Loop forever (Master Optimization Loop):} \\
+\quad \color{blue}{\textbf{Phase 1: Spatial Parallel Rollouts}} \\
+\quad \textbf{For each worker } i \in \{1, \dots, N\} \text{ in parallel:} \\
+\qquad \text{Run policy in env } i \text{ for } T \text{ steps to collect:} \\
+\qquad \mathcal{D}^{(i)} = \{ S_{0:T}^{(i)}, A_{0:T-1}^{(i)}, R_{1:T}^{(i)} \} \\
 \\
-\quad \textbf{Compute advantages for } t = 0, \dots, T-1: \\
-\quad \quad \mathbf{V_{\text{target}} \leftarrow \sum_{k=0}^{T-t-1} \gamma^k R_{t+k+1} + \gamma^{T-t} \hat{v}(S_T, \mathbf{w})} \\
-\quad \quad \mathbf{A_t \leftarrow V_{\text{target}} - \hat{v}(S_t, \mathbf{w})} \\
+\quad \color{darkgreen}{\textbf{Phase 2: Per-Worker Advantage Calculation}} \\
+\quad \textbf{For each worker } i \in \{1, \dots, N\} \text{ and step } t < T: \\
+\qquad \text{Compute Critic value } \hat{v}(S_t^{(i)}, \mathbf{w}) \\
+\qquad V_{\text{target}, t}^{(i)} \leftarrow \sum_{k=0}^{T-t-1} \gamma^k R_{t+k+1}^{(i)} + \gamma^{T-t} \hat{v}(S_T^{(i)}, \mathbf{w}) \\
+\qquad A_t^{(i)} \leftarrow V_{\text{target}, t}^{(i)} - \hat{v}(S_t^{(i)}, \mathbf{w}) \\
+\qquad \quad \text{(or GAE: } \hat{A}_t^{\text{GAE},(i)} = \sum_{l=0}^{T-t-1} (\gamma \lambda)^l \delta_{t+l}^{(i)} \text{)} \\
 \\
-\quad \textbf{Perform batched updates:} \\
-\quad \quad \mathbf{w} \leftarrow \mathbf{w} + \beta \sum_{t=0}^{T-1} (V_{\text{target}} - \hat{v}(S_t, \mathbf{w})) \nabla_{\mathbf{w}} \hat{v}(S_t, \mathbf{w}) \\
-\quad \quad \mathbf{\theta} \leftarrow \theta + \alpha \sum_{t=0}^{T-1} \gamma^t A_t \nabla_{\theta} \log \pi_{\theta}(A_t|S_t) \\
-\quad \text{Update global network weights} \\
-\quad \text{Clear batched trajectory cache}
+\quad \color{red}{\textbf{Phase 3: Synchronous Master Gradient Update}} \\
+\quad \text{Batch all } N \times T \text{ transitions across all workers:} \\
+\quad \mathbf{w} \leftarrow \mathbf{w} + \beta \frac{1}{N T} \sum_{i=1}^{N} \sum_{t=0}^{T-1} (V_{\text{target}, t}^{(i)} - \hat{v}(S_t^{(i)}, \mathbf{w})) \nabla_{\mathbf{w}} \hat{v}(S_t^{(i)}, \mathbf{w}) \\
+\quad \theta \leftarrow \theta + \alpha \frac{1}{N T} \sum_{i=1}^{N} \sum_{t=0}^{T-1} \gamma^t A_t^{(i)} \nabla_{\theta} \log \pi_{\theta}(A_t^{(i)} | S_t^{(i)}) \\
 \end{array}
 \end{array}
 $$
+
+---
+
+### Step-by-Step Breakdown: How Spatial Parallelization Works in A2C
+
+To see how value estimates $\hat{v}(s, \mathbf{w})$ and advantages $A_t^{(i)}$ are computed across distributed workers in practice, let's trace a single iteration step-by-step:
+
+#### Step 1: Parallel Environment Rollouts (Phase 1)
+Suppose we configure $N = 4$ parallel workers and a rollout length of $T = 5$ steps. The master process dispatches the current policy parameters $\theta$ to all 4 workers.
+* **Worker 1** interacts with Environment 1 for 5 steps, collecting trajectory $\mathcal{D}^{(1)} = (S_{0:5}^{(1)}, A_{0:4}^{(1)}, R_{1:5}^{(1)})$.
+* **Worker 2** interacts with Environment 2 for 5 steps, collecting trajectory $\mathcal{D}^{(2)} = (S_{0:5}^{(2)}, A_{0:4}^{(2)}, R_{1:5}^{(2)})$.
+* **Worker 3** interacts with Environment 3 for 5 steps, collecting trajectory $\mathcal{D}^{(3)} = (S_{0:5}^{(3)}, A_{0:4}^{(3)}, R_{1:5}^{(3)})$.
+* **Worker 4** interacts with Environment 4 for 5 steps, collecting trajectory $\mathcal{D}^{(4)} = (S_{0:5}^{(4)}, A_{0:4}^{(4)}, R_{1:5}^{(4)})$.
+
+All 4 workers run **simultaneously in parallel**, stepping through their own distinct environment trajectories.
+
+#### Step 2: Per-Worker Value Evaluation & Advantage Determination (Phase 2)
+Once rollouts are gathered, value predictions $\hat{v}(S_t^{(i)}, \mathbf{w})$ and target returns $V_{\text{target}, t}^{(i)}$ are computed **independently per worker**:
+
+For **Worker 1** at timestep $t = 0$:
+$$ V_{\text{target}, 0}^{(1)} = R_1^{(1)} + \gamma R_2^{(1)} + \gamma^2 R_3^{(1)} + \gamma^3 R_4^{(1)} + \gamma^4 R_5^{(1)} + \gamma^5 \hat{v}(S_5^{(1)}, \mathbf{w}) $$
+$$ A_0^{(1)} = V_{\text{target}, 0}^{(1)} - \hat{v}(S_0^{(1)}, \mathbf{w}) $$
+
+For **Worker 2** at timestep $t = 0$:
+$$ V_{\text{target}, 0}^{(2)} = R_1^{(2)} + \gamma R_2^{(2)} + \gamma^2 R_3^{(2)} + \gamma^3 R_4^{(2)} + \gamma^4 R_5^{(2)} + \gamma^5 \hat{v}(S_5^{(2)}, \mathbf{w}) $$
+$$ A_0^{(2)} = V_{\text{target}, 0}^{(2)} - \hat{v}(S_0^{(2)}, \mathbf{w}) $$
+
+> **Key Rule of Spatial Parallelization:** Notice that Worker 1's advantage $A_0^{(1)}$ is computed **strictly using Worker 1's rewards and state values**. Worker 2's advantage $A_0^{(2)}$ is computed **strictly using Worker 2's rewards and state values**. Environmental trajectories from different workers are never mixed together during the return calculation.
+
+#### Step 3: Synchronous Gradient Aggregation across Workers (Phase 3)
+After each worker $i$ completes its advantage calculations for all timesteps $t \in \{0, \dots, 4\}$, all $N \times T = 4 \times 5 = 20$ advantage values $A_t^{(i)}$ and state log-gradients are combined into a single matrix batch. 
+
+The master process computes the global batch gradient by averaging across all workers $i \in \{1, \dots, N\}$ and steps $t \in \{0, \dots, T-1\}$:
+
+$$ \nabla_{\theta} J_{\text{total}} = \frac{1}{N \cdot T} \sum_{i=1}^{N} \sum_{t=0}^{T-1} \gamma^t A_t^{(i)} \nabla_{\theta} \log \pi_{\theta}(A_t^{(i)} \mid S_t^{(i)}) $$
+
+This pooled update is backpropagated to update the global policy $\theta$ and critic $\mathbf{w}$ weights in a single GPU matrix pass.
+
+
 
 ---
 
