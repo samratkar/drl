@@ -1061,7 +1061,19 @@ Without terminal states, if we set $\gamma = 1$, the cumulative return $G_t = \s
 #### Breakdown B: Discounting ($\gamma < 1$) Distorts the Steady-State Objective
 If we attempt to solve Breakdown A by introducing discounting ($\gamma < 1$), a subtle but severe theoretical contradiction arises:
 1. **Initial State Irrelevance:** Discounting $v_{\pi}(S_0) = \mathbb{E}[\sum_{t=0}^{\infty} \gamma^t R_{t+1}]$ heavily weighs rewards received near the start state $S_0$. However, in a continuing process running for thousands of steps, the initial state $S_0$ becomes completely irrelevant. The agent spends $99.99\%$ of its operational lifetime in the **stationary (steady-state) distribution** $d_{\pi}(s)$.
-2. **Mathematical Contradiction in Policy Gradient Theorem:** In continuing tasks with function approximation, discounting with $\gamma < 1$ causes the discounted state distribution $\eta(s) = \sum_{t=0}^{\infty} \gamma^t P(S_t = s \mid S_0)$ to **not** match the true stationary distribution $d_{\pi}(s)$. As demonstrated by Thomas (2014) and Sutton & Barto (Page 334), applying policy gradients with $\gamma < 1$ in continuing tasks yields **biased gradients** that do not optimize true long-term performance.
+2. **Mathematical Contradiction in Policy Gradient Theorem:** In continuing tasks with function approximation, discounting with $\gamma < 1$ causes the discounted state distribution $\eta_\gamma(s) = \sum_{t=0}^{\infty} \gamma^t P(S_t = s \mid S_0)$ to **not** match the true stationary distribution $d_{\pi}(s)$. As demonstrated by Thomas (2014) and Sutton & Barto (Page 334), applying policy gradients with $\gamma < 1$ in continuing tasks yields **biased gradients** that do not optimize true long-term performance.
+
+##### Deep Dive: What is a "State Distribution" and Why Does Mismatch Cause Bias?
+
+* **Is the State Distribution just the $(S, A, R)$ rollout tuples?**
+  No, but they are closely related. The rollout trajectory $\{(S_0, A_0, R_1), (S_1, A_1, R_2), \dots\}$ is a sequence of empirical samples. The **State Distribution $d_\pi(s)$** is the underlying mathematical probability function that outputs how frequently state $s$ is visited in the long run. If you collect a very long rollout, the histogram of visited states converges to $d_\pi(s)$.
+
+* **The Mismatch Between $\eta_\gamma(s)$ and $d_\pi(s)$:**
+  * **Stationary Distribution $d_\pi(s)$ (Un-discounted):** Measures the true proportion of time spent in state $s$ during long-term operation: $d_\pi(s) = \lim_{t \to \infty} P(S_t = s \mid S_0)$. Every timestep $t=0, 1, 2, \dots$ has equal weight $1.0$.
+  * **Discounted State Distribution $\eta_\gamma(s)$:** Measures state visits weighted exponentially less the further in time they occur: $\eta_\gamma(s) = \sum_{t=0}^{\infty} \gamma^t P(S_t = s \mid S_0)$. Because $\gamma^t \to 0$, states near $S_0$ get massive weight ($\gamma^0=1, \gamma^1=0.99$), while long-term steady-state steps get zero weight ($\gamma^{10000} \approx 0$).
+
+* **Why Function Approximation (Neural Networks) Fails Under Mismatch:**
+  A neural network has limited capacity $\theta$ and must prioritize which states to fit accurately. If you optimize using a discounted gradient, the neural network focuses its capacity **only on states near $S_0$**. But when deployed, the agent spends $99.99\%$ of its time in steady-state states drawn from $d_\pi(s)$. Sampling rollouts from $d_\pi(s)$ while applying a formula derived for $\eta_\gamma(s)$ creates an expectation mismatch—producing gradient vectors that point in the wrong direction.
 
 > **Intuitive Analogy: Why Discounting Breaks in Continuing Tasks**
 > * **Think of a Data Center Air Conditioner (AC):** You turn on an AC unit at 9:00 AM in a hot room ($35^\circ\text{C} = S_0$). For the first 10 minutes, the AC cools the room down to $22^\circ\text{C}$ (**transient phase**). For the next 10 years of non-stop operation, the AC maintains the room at $22^\circ\text{C}$ (**steady-state phase $d_\pi(s)$**).
