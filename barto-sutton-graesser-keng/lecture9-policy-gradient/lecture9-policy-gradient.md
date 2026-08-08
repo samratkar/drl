@@ -801,35 +801,113 @@ Notice that because action $a_1$ yielded a positive TD error (better than expect
 ### Evolving A2C from Basic Actor-Critic (AC)
 While the foundational **One-Step Actor-Critic** (Section 6) successfully updates weights step-by-step online, it introduces a major bottleneck: **high bias**. 
 
-Because the TD target ($R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w})$) relies heavily on the critic's value network estimate $\hat{v}(S_{t+1})$, any error or noise in the critic's value estimates propagates directly into the actor's update. If the critic is poorly trained early on, the actor learns incorrect behaviors.
+Because the TD target ($R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w})$) relies heavily on the critic's value network estimate $\hat{v}(S_{t+1})$, any error or noise in the critic's value estimates propagates directly into ### Core Improvements of A2C over Basic AC
 
-To improvise on this, modern deep RL architectures extend the basic Actor-Critic into **Advantage Actor-Critic (A2C)** (popularized by Mnih et al. in 2016). A2C introduces three major improvements over standard AC:
+Modern deep RL architectures extend basic Actor-Critic into **Advantage Actor-Critic (A2C)** (popularized by Mnih et al. in 2016) by introducing three major architectural improvements:
 
-1. **Multi-Step Lookahead (Variance-Bias Tuning):** Instead of bootstrapping after just 1 step, A2C collects rollouts of length $T$ and computes $n$-step returns or **Generalized Advantage Estimation (GAE)**. This allows us to trade off bias and variance:
-   * **$n$-Step Return Target:** 
-     $$ V_{\text{target}} = \sum_{k=0}^{n-1} \gamma^k R_{t+k+1} + \gamma^n \hat{v}(S_{t+n}, \mathbf{w}) $$
-   * **GAE Advantage:** Rather than choosing a single fixed step size $n$, Generalized Advantage Estimation (GAE) takes an **exponentially weighted average** of all $n$-step advantage estimators using a parameter $\lambda \in [0, 1]$:
-     $$ A_t^{\text{GAE}(\gamma, \lambda)} = \sum_{l=0}^{\infty} (\gamma \lambda)^l \delta_{t+l} = \delta_t + (\gamma \lambda) \delta_{t+1} + (\gamma \lambda)^2 \delta_{t+2} + \dots $$
-     Where $\delta_{t+l}$ is the 1-step Temporal Difference error:
-     $$ \delta_{t+l} = R_{t+l+1} + \gamma \hat{v}(S_{t+l+1}, \mathbf{w}) - \hat{v}(S_{t+l}, \mathbf{w}) $$
-     By tuning the hyperparameter $\lambda$, GAE allows us to interpolate smoothly between:
-     * **$\lambda = 0$ (Maximum Bias / Minimum Variance):** Reduces to the 1-step TD advantage $\delta_t$.
-     * **$\lambda = 1$ (Minimum Bias / Maximum Variance):** Reduces to the full Monte Carlo baseline-subtracted return $G_t - \hat{v}(S_t, \mathbf{w})$.
-   * **$\gamma$ vs. $\lambda$ (Foresight vs. Trust):** Students often get confused about why we need both parameters. The key difference is:
-     * **$\gamma$ (Discount Factor):** Controls the **MDP Problem Objective**. It defines the physical task by dictating how much future rewards are worth. Changing $\gamma$ changes the *optimal policy itself*.
-     * **$\lambda$ (Bootstrapping Factor):** Controls the **Algorithm Estimator**. It adjusts the bias-variance trade-off of the value updates. Changing $\lambda$ does *not* change the optimal policy, only the convergence speed and learning stability.
+#### 1. Multi-Step Lookahead (Variance-Bias Tuning)
+Instead of bootstrapping after just 1 step, A2C collects rollouts of length $T$ and computes $n$-step returns or **Generalized Advantage Estimation (GAE)**. This allows us to trade off bias and variance:
+* **$n$-Step Return Target:** 
+  $$ V_{\text{target}} = \sum_{k=0}^{n-1} \gamma^k R_{t+k+1} + \gamma^n \hat{v}(S_{t+n}, \mathbf{w}) $$
+* **GAE Advantage:** Rather than choosing a single fixed step size $n$, Generalized Advantage Estimation (GAE) takes an **exponentially weighted average** of all $n$-step advantage estimators using a parameter $\lambda \in [0, 1]$:
+  $$ A_t^{\text{GAE}(\gamma, \lambda)} = \sum_{l=0}^{\infty} (\gamma \lambda)^l \delta_{t+l} = \delta_t + (\gamma \lambda) \delta_{t+1} + (\gamma \lambda)^2 \delta_{t+2} + \dots $$
+  Where $\delta_{t+l}$ is the 1-step Temporal Difference error:
+  $$ \delta_{t+l} = R_{t+l+1} + \gamma \hat{v}(S_{t+l+1}, \mathbf{w}) - \hat{v}(S_{t+l}, \mathbf{w}) $$
+  By tuning the hyperparameter $\lambda$, GAE allows us to interpolate smoothly between:
+  * **$\lambda = 0$ (Maximum Bias / Minimum Variance):** Reduces to the 1-step TD advantage $\delta_t$.
+  * **$\lambda = 1$ (Minimum Bias / Maximum Variance):** Reduces to the full Monte Carlo baseline-subtracted return $G_t - \hat{v}(S_t, \mathbf{w})$.
+* **$\gamma$ vs. $\lambda$ (Foresight vs. Trust):**
+  * **$\gamma$ (Discount Factor):** Controls the **MDP Problem Objective**. It defines the physical task by dictating how much future rewards are worth. Changing $\gamma$ changes the *optimal policy itself*.
+  * **$\lambda$ (Bootstrapping Factor):** Controls the **Algorithm Estimator**. It adjusts the bias-variance trade-off of the value updates. Changing $\lambda$ does *not* change the optimal policy, only the convergence speed and learning stability.
 
-     ![Gamma vs Lambda Comparison](./assets/images/gamma_vs_lambda.svg)
+  ![Gamma vs Lambda Comparison](./assets/images/gamma_vs_lambda.svg)
 
-2. **Synchronous Parallel Execution:** A2C deploys multiple parallel environment workers. A global policy network coordinates actions across these workers, gathers batches of trajectories, and computes updates simultaneously. This breaks the temporal correlation between consecutive steps, which is critical for stabilizing deep neural networks.
+#### 2. Synchronous Parallel Execution
+A2C deploys $N$ parallel environment workers running simultaneously. A global policy network coordinates actions across these workers, gathers batches of trajectories, and computes updates synchronously. This breaks the temporal correlation between consecutive steps, which is critical for stabilizing deep neural networks.
 
-   ![A2C Synchronous Parallel Architecture](./assets/images/a2c_synchronous_architecture.svg)
+![A2C Synchronous Parallel Architecture](./assets/images/a2c_synchronous_architecture.svg)
 
-   ##### Operational Code Mapping (Steps 1–5)
-   To connect the abstract system architecture to actual implementation, here is the direct mapping of the five execution steps to their corresponding code blocks in a standard A2C training loop:
+##### Operational Code Mapping (Steps 1–5)
+To connect the abstract system architecture to actual implementation, here is the direct mapping of the five execution steps to their corresponding code blocks in a standard A2C training loop:
 
-   ![A2C Code Mapping](./assets/images/a2c_code_mapping.svg)
-3. **Batched GPU Optimization:** Basic AC updates weights on a single step. A2C aggregates rollouts across $N$ environments for $T$ timesteps, computing gradients in large, batched matrix operations that run efficiently on modern GPUs/CPUs.
+![A2C Code Mapping](./assets/images/a2c_code_mapping.svg)
+
+#### 3. Batched GPU Optimization
+Basic AC updates weights on a single step. A2C aggregates rollouts across $N$ environments for $T$ timesteps, computing gradients in large, batched matrix operations ($N \times T$ samples) that run efficiently on modern GPUs/CPUs.
+
+---
+
+### Deep Dive: How $\lambda$ Reduces Critic Bias in A2C
+
+A fundamental challenge in Actor-Critic algorithms like A2C is controlling **Critic Bias**. To understand how $\lambda$ in GAE mitigates this bias, we must trace how value estimates propagate into the policy gradient.
+
+#### 1. The Origin of Critic Bias
+In 1-step Actor-Critic ($\lambda = 0$), the advantage target is computed as:
+$$ \hat{A}_t^{(1)} = R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w}) - \hat{v}(S_t, \mathbf{w}) $$
+
+Here, $\hat{v}(s, \mathbf{w})$ is an approximation of the true state-value function $v_\pi(s)$ learned by a neural network. 
+* Early in training, or in high-dimensional continuous state spaces, $\hat{v}(S_{t+1}, \mathbf{w})$ contains estimation errors and function approximation noise ($\epsilon(S_{t+1}) = \hat{v}(S_{t+1}, \mathbf{w}) - v_\pi(S_{t+1})$).
+* Because the advantage target bootstraps directly on $\hat{v}(S_{t+1}, \mathbf{w})$ after just 1 environment step, **100% of the future expectation relies on the critic's imperfect prediction**.
+* Any error in $\hat{v}(S_{t+1}, \mathbf{w})$ corrupts the advantage estimate $\hat{A}_t^{(1)}$, causing the Actor to update its policy weights $\theta$ in an incorrect direction. This systematic estimation error is **Critic Bias**.
+
+#### 2. Multi-Step Rollouts Replace Network Predictions with Ground-Truth Rewards
+To reduce reliance on the critic's approximation, we can look $k$ steps into the future before bootstrapping:
+* **1-step return:** $G_t^{(1)} = R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w})$ *(High Critic Bias, Low Variance)*
+* **2-step return:** $G_t^{(2)} = R_{t+1} + \gamma R_{t+2} + \gamma^2 \hat{v}(S_{t+2}, \mathbf{w})$
+* **$k$-step return:** $G_t^{(k)} = \sum_{l=0}^{k-1} \gamma^l R_{t+l+1} + \gamma^k \hat{v}(S_{t+k}, \mathbf{w})$
+* **$\infty$-step (Monte Carlo) return:** $G_t^{(\infty)} = \sum_{l=0}^{\infty} \gamma^l R_{t+l+1}$ *(Zero Critic Bias, High Variance)*
+
+Notice that as $k$ increases:
+1. We replace synthetic neural network predictions with **actual empirical rewards** ($R_{t+1}, R_{t+2}, \dots$) directly observed from environment transitions.
+2. The critic's prediction $\hat{v}(S_{t+k}, \mathbf{w})$ is pushed further into the future and discounted by $\gamma^k$, heavily dampening its influence on the return estimate.
+
+#### 3. Mathematical Mechanism: GAE ($\lambda$) Exponential Weighting
+Generalized Advantage Estimation (GAE) constructs an exponentially weighted average of all $k$-step advantage estimators:
+$$ A_t^{\text{GAE}(\gamma, \lambda)} = (1 - \lambda) \sum_{k=1}^{\infty} \lambda^{k-1} A_t^{(k)} = \sum_{l=0}^{\infty} (\gamma \lambda)^l \delta_{t+l} $$
+
+where $\delta_{t+l} = R_{t+l+1} + \gamma \hat{v}(S_{t+l+1}, \mathbf{w}) - \hat{v}(S_{t+l}, \mathbf{w})$.
+
+To see how $\lambda$ directly controls Critic Bias, consider the two boundary conditions:
+
+* **When $\lambda = 0$ (Pure TD(0)):**
+  $$ A_t^{\text{GAE}(\gamma, 0)} = \delta_t = R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w}) - \hat{v}(S_t, \mathbf{w}) $$
+  The return target bootstraps on $\hat{v}(S_{t+1}, \mathbf{w})$ after only a single environment step. This yields **maximum reliance on the critic**, resulting in **Maximal Critic Bias** and **Minimal Sample Variance**.
+
+* **When $\lambda = 1$ (Pure Monte Carlo Return):**
+  Unrolling the sum of TD errors $\sum_{l=0}^{\infty} \gamma^l \delta_{t+l}$ yields a telescoping series:
+  $$ \sum_{l=0}^{\infty} \gamma^l \left( R_{t+l+1} + \gamma \hat{v}(S_{t+l+1}, \mathbf{w}) - \hat{v}(S_{t+l}, \mathbf{w}) \right) = \left( \sum_{l=0}^{\infty} \gamma^l R_{t+l+1} \right) - \hat{v}(S_t, \mathbf{w}) = G_t - \hat{v}(S_t, \mathbf{w}) $$
+  At $\lambda = 1$, the return target uses real observed rewards for the **entire trajectory** ($G_t$). The critic $\hat{v}(S_t, \mathbf{w})$ is used *only* as a baseline subtracted to center the return around zero—it is **never used to estimate future trajectory outcomes**. Thus, at $\lambda = 1$, **Critic Bias is completely eliminated** (reduced to zero), at the expense of **Maximal Variance** (due to compounding stochastic transitions across long trajectories).
+
+#### 4. Summary: The $\lambda$ Bias-Variance Continuum
+
+By tuning $\lambda \in (0, 1)$, A2C smoothly controls the trade-off between Critic Bias and Sample Variance:
+
+| Parameter Value | Primary Target Source | Critic Influence on Return | Critic Bias | Sample Variance |
+| :--- | :--- | :--- | :--- | :--- |
+| **$\lambda = 0$** | 1-step TD Target ($R_{t+1} + \gamma \hat{v}_{t+1}$) | **100% Bootstrapped** at $t+1$ | **Maximal** | **Minimal** |
+| **$\lambda = 0.95$ (Typical A2C/PPO)** | Exponential mixture of $k$-step rollouts | **Damped**: Empirical rewards dominate near steps; critic handles long tail | **Low & Controlled** | **Moderate & Stable** |
+| **$\lambda = 1.0$** | Full Trajectory Monte Carlo Return ($G_t$) | **0% Bootstrapped**: Baseline subtraction only | **Zero** | **Maximal** |
+
+---
+
+### Clarification: Parallel Workers ($N$) vs. GAE Temporal Terms ($\lambda$)
+
+A common point of confusion is whether the $N$ parallel workers in A2C correspond to the terms in the GAE $\lambda$ summation. **They are completely independent concepts operating on different dimensions**:
+
+* **Parallel Workers ($N$) — Spatial Dimension:** 
+  $N$ refers to running $N$ distinct copies of the environment (e.g., 16 separate games) simultaneously. Each worker generates its own independent trajectory. The purpose of $N$ is to **decorrelate training data** and collect a large batch of samples ($N \times T$) for GPU parallel processing.
+
+* **GAE Temporal Terms ($\lambda$) — Temporal Dimension:** 
+  $\lambda$ operates **within a single worker's trajectory over time** ($t, t+1, t+2, \dots, t+T$). It determines how many future timesteps along that single environment stream are blended together into the advantage target $\hat{A}_t$.
+
+#### Comparison Table: Spatial ($N$) vs. Temporal ($\lambda$)
+
+| Aspect | Parallel Workers ($N$) | GAE Parameter ($\lambda$) |
+| :--- | :--- | :--- |
+| **Dimension** | **Spatial** (Multiple parallel environment instances) | **Temporal** (Sequential timesteps along one trajectory) |
+| **Role** | Decorrelates data & increases throughput | Controls Bias-Variance trade-off of return targets |
+| **Dependency** | Independent of $\lambda$ (chosen based on CPU cores/memory) | Independent of $N$ (chosen based on task horizon/noise) |
+| **Combination Rule** | Gradients are **averaged across workers**: <br> $\nabla_\theta J = \frac{1}{N} \sum_{i=1}^N \nabla_\theta J^{(i)}$ | TD errors are **exponentially summed over time**: <br> $\hat{A}_t = \sum_{l=0}^{T-t-1} (\gamma \lambda)^l \delta_{t+l}$ |
 
 ---
 
