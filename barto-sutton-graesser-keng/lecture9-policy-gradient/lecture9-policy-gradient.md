@@ -1031,6 +1031,8 @@ $$ \nabla_{\theta} J_{\text{total}} = \frac{1}{N \cdot T} \sum_{i=1}^{N} \sum_{t
 
 This pooled update is backpropagated to update the global policy $\theta$ and critic $\mathbf{w}$ weights in a single GPU matrix pass.
 
+> **Key Rule of Weight Updating:** Workers do **NOT** maintain or update their own independent neural network weights. There is only **one central set of master weights ($\theta$ and $\mathbf{w}$)**. The $N$ workers are purely data-collection engines. They collect state transitions, evaluate local advantages, and pass gradients to the master. The master process computes the average gradient across all $N$ workers and performs a **single global weight update**. The new master weights are then synchronized back to all workers for the next rollout.
+
 
 
 ---
