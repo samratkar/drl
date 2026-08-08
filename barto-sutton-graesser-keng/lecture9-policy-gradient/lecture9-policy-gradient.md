@@ -1048,8 +1048,8 @@ Where $d_{\pi}(s) \doteq \lim_{t\to\infty} P(S_t = s \mid S_0, A_{0:t-1} \sim \p
 
 ### Differential Value Functions
 Without episodes, values are defined relative to the average reward. These are **differential value functions**:
-$$ v_{\pi}(s) \doteq \mathbb{E} \left[ \sum_{k=t+1}^{\infty} (R_k - r(\pi)) \middle \mid S_t = s \right] $$
-$$ q_{\pi}(s,a) \doteq \mathbb{E} \left[ \sum_{k=t+1}^{\infty} (R_k - r(\pi)) \middle \mid S_t = s, A_t = a \right] $$
+$$ v_{\pi}(s) \doteq \mathbb{E} \left[ \sum_{k=t+1}^{\infty} (R_k - r(\pi)) \mid S_t = s \right] $$
+$$ q_{\pi}(s,a) \doteq \mathbb{E} \left[ \sum_{k=t+1}^{\infty} (R_k - r(\pi)) \mid S_t = s, A_t = a \right] $$
 
 The Policy Gradient Theorem for continuing tasks holds:
 $$ \nabla_{\theta} J(\theta) = \sum_{s} d_{\pi}(s) \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a \mid s) $$
