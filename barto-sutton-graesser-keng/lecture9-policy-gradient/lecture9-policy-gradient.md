@@ -1039,23 +1039,73 @@ This pooled update is backpropagated to update the global policy $\theta$ and cr
 
 ## 8. Policy Gradient for Continuing Problems (Sutton & Barto 13.6)
 
-In continuing tasks (which do not terminate), there are no episode boundaries. Discounting is problematic in continuing tasks because the discounted state distribution does not depend on the policy in a way that allows a simple gradient theorem. Thus, we reformulate our objective.
+In continuing tasks (such as industrial control, stock trading, or power grid management), the environment runs indefinitely without episode boundaries or terminal states ($T \to \infty$). 
 
-### The Average Reward Objective
-We define the performance objective as the **average reward rate** per time step under policy $\pi_\theta$:
-$$ r(\pi) \doteq \lim_{h \to \infty} \frac{1}{h} \sum_{t=1}^{h} \mathbb{E}[R_t \mid A_{0:t-1} \sim \pi_{\theta}] = \sum_{s} d_{\pi}(s) \sum_{a} \pi_{\theta}(a \mid s) \sum_{s', r} p(s', r \mid s, a) r $$
-Where $d_{\pi}(s) \doteq \lim_{t\to\infty} P(S_t = s \mid S_0, A_{0:t-1} \sim \pi_{\theta})$ is the steady-state distribution of states under policy $\pi_{\theta}$.
+### 1. The Objective Function for Episodic Tasks
+In **Episodic Tasks**, an episode always terminates at some finite time step $T$. The performance objective $J(\theta)$ is defined as the **expected discounted return from the initial start state $S_0$**:
 
-### Differential Value Functions
-Without episodes, values are defined relative to the average reward. These are **differential value functions**:
-$$ v_{\pi}(s) \doteq \mathbb{E} \left[ \sum_{k=t+1}^{\infty} (R_k - r(\pi)) \mid S_t = s \right] $$
-$$ q_{\pi}(s,a) \doteq \mathbb{E} \left[ \sum_{k=t+1}^{\infty} (R_k - r(\pi)) \mid S_t = s, A_t = a \right] $$
+$$ J_{\text{episodic}}(\theta) \doteq v_{\pi_{\theta}}(S_0) = \mathbb{E}_{\pi_{\theta}} \left[ \sum_{k=0}^{T-1} \gamma^k R_{k+1} \mid S_0 \right] $$
 
-The Policy Gradient Theorem for continuing tasks holds:
-$$ \nabla_{\theta} J(\theta) = \sum_{s} d_{\pi}(s) \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a \mid s) $$
-where $J(\theta) \doteq r(\pi_{\theta})$.
+Under this formulation, the Policy Gradient Theorem yields the episodic update rule:
+$$ \nabla_{\theta} J_{\text{episodic}}(\theta) = \sum_{s} \eta(s) \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a \mid s) = \mathbb{E}_{\pi_{\theta}} \left[ \sum_{t=0}^{\infty} \gamma^t q_{\pi}(S_t, A_t) \nabla_{\theta} \log \pi_{\theta}(A_t \mid S_t) \right] $$
 
 ---
+
+### 2. Why Does the Episodic Objective Fail in Continuing Tasks?
+
+If we attempt to apply the episodic objective $J_{\text{episodic}}(\theta)$ directly to a continuing task ($T \to \infty$), we encounter two fundamental mathematical breakdowns:
+
+#### Breakdown A: Sum of Rewards Blows Up to Infinity ($\gamma = 1$)
+Without terminal states, if we set $\gamma = 1$, the cumulative return $G_t = \sum_{k=0}^{\infty} R_{t+k+1}$ becomes infinite for almost all policies. Comparing two infinite values ($J(\theta_1) = \infty$ vs. $J(\theta_2) = \infty$) is mathematically ill-defined, making gradient descent impossible.
+
+#### Breakdown B: Discounting ($\gamma < 1$) Distorts the Steady-State Objective
+If we attempt to solve Breakdown A by introducing discounting ($\gamma < 1$), a subtle but severe theoretical contradiction arises:
+1. **Initial State Irrelevance:** Discounting $v_{\pi}(S_0) = \mathbb{E}[\sum_{t=0}^{\infty} \gamma^t R_{t+1}]$ heavily weighs rewards received near the start state $S_0$. However, in a continuing process running for thousands of steps, the initial state $S_0$ becomes completely irrelevant. The agent spends $99.99\%$ of its operational lifetime in the **stationary (steady-state) distribution** $d_{\pi}(s)$.
+2. **Mathematical Contradiction in Policy Gradient Theorem:** In continuing tasks with function approximation, discounting with $\gamma < 1$ causes the discounted state distribution $\eta(s) = \sum_{t=0}^{\infty} \gamma^t P(S_t = s \mid S_0)$ to **not** match the true stationary distribution $d_{\pi}(s)$. As demonstrated by Thomas (2014) and Sutton & Barto (Page 334), applying policy gradients with $\gamma < 1$ in continuing tasks yields **biased gradients** that do not optimize true long-term performance.
+
+---
+
+### 3. How It Is Solved: The Average Reward Objective $r(\pi)$
+
+To resolve both breakdowns, Sutton & Barto reformulate the performance objective for continuing tasks as the **Average Reward Rate per Time Step** ($r(\pi)$):
+
+$$ J_{\text{continuing}}(\theta) \doteq r(\pi_{\theta}) \doteq \lim_{h \to \infty} \frac{1}{h} \sum_{t=1}^{h} \mathbb{E}[R_t \mid S_0, A_{0:t-1} \sim \pi_{\theta}] $$
+
+By ergodic theory, as $h \to \infty$, the initial state $S_0$ washes out, and the expectation converges to a weighted average over the **stationary state distribution $d_{\pi}(s)$**:
+
+$$ J_{\text{continuing}}(\theta) = r(\pi_{\theta}) = \sum_{s} d_{\pi}(s) \sum_{a} \pi_{\theta}(a \mid s) \sum_{s', r} p(s', r \mid s, a) r $$
+
+Where $d_{\pi}(s) \doteq \lim_{t\to\infty} P(S_t = s \mid S_0, A_{0:t-1} \sim \pi_{\theta})$ is the steady-state distribution of states under policy $\pi_{\theta}$.
+
+---
+
+### 4. Differential Value Functions
+
+Because rewards are accumulated infinitely, total returns are infinite. Instead, we measure **Differential Returns**—how much better (or worse) a state or action performs relative to the average reward rate $r(\pi)$:
+
+* **Differential State-Value Function:**
+  $$ v_{\pi}(s) \doteq \mathbb{E}_{\pi} \left[ \sum_{k=t+1}^{\infty} (R_k - r(\pi)) \mid S_t = s \right] $$
+
+* **Differential Action-Value Function:**
+  $$ q_{\pi}(s,a) \doteq \mathbb{E}_{\pi} \left[ \sum_{k=t+1}^{\infty} (R_k - r(\pi)) \mid S_t = s, A_t = a \right] $$
+
+* **1-Step Differential TD Error ($\delta_t$):**
+  $$ \delta_t \doteq R_{t+1} - \bar{R}_t + \hat{v}(S_{t+1}, \mathbf{w}) - \hat{v}(S_t, \mathbf{w}) $$
+  *(where $\bar{R}_t$ is a running estimate of the average reward rate $r(\pi)$, updated via $\bar{R} \leftarrow \bar{R} + \eta \delta_t$)*.
+
+---
+
+### 5. Policy Gradient Theorem for Continuing Problems
+
+With the average reward formulation, the Policy Gradient Theorem simplifies into a clean, **un-discounted** form:
+
+$$ \nabla_{\theta} J_{\text{continuing}}(\theta) = \nabla_{\theta} r(\pi_{\theta}) = \sum_{s} d_{\pi}(s) \sum_{a} q_{\pi}(s,a) \nabla_{\theta} \pi_{\theta}(a \mid s) = \mathbb{E}_{\pi} \left[ q_{\pi}(S_t, A_t) \nabla_{\theta} \log \pi_{\theta}(A_t \mid S_t) \right] $$
+
+> **Notice:** There is **no $\gamma^t$ discount factor** scaling the policy gradient! All time steps along the infinite trajectory contribute equally to the gradient update based on their differential advantage.
+
+---
+
+
 
 ### Side-by-Side Algorithm Comparison: Episodic TD Actor-Critic vs. Continuing Differential Actor-Critic
 
