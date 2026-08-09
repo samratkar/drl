@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 480" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <!-- Background -->
+  <rect width="900" height="480" rx="12" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+
+  <!-- Main Title -->
+  <text x="450" y="32" text-anchor="middle" font-size="18" font-weight="700" fill="#0F172A">The Deadly Triad in Deep Reinforcement Learning</text>
+  <text x="450" y="52" text-anchor="middle" font-size="12" fill="#64748B">Theoretical Analysis of Instability, Divergence Mechanisms, and Algorithmic Mitigations</text>
+
+  <!-- Left: The 3 Pillars Triangle -->
+  <g transform="translate(45, 80)">
+    <rect width="380" height="370" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <text x="190" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#1E293B">The 3 Interacting Components</text>
+
+    <!-- Triangle Path -->
+    <polygon points="190,65 60,250 320,250" fill="#FFF1F2" stroke="#F43F5E" stroke-width="2.5" stroke-dasharray="4,4"/>
+
+    <!-- Center Hazard Alert -->
+    <circle cx="190" cy="180" r="36" fill="#FEF2F2" stroke="#EF4444" stroke-width="2"/>
+    <text x="190" y="174" text-anchor="middle" font-size="16" font-weight="800" fill="#991B1B">⚠️</text>
+    <text x="190" y="193" text-anchor="middle" font-size="11" font-weight="800" fill="#B91C1C">DEADLY TRIAD</text>
+    <text x="190" y="206" text-anchor="middle" font-size="9" fill="#991B1B">DIVERGENCE</text>
+
+    <!-- Pillar 1: Top Node (Function Approximation) -->
+    <g transform="translate(190, 65)">
+      <rect x="-85" y="-22" width="170" height="44" rx="6" fill="#EFF6FF" stroke="#3B82F6" stroke-width="2"/>
+      <text x="0" y="-3" text-anchor="middle" font-size="11" font-weight="700" fill="#1E40AF">1. Function Approx.</text>
+      <text x="0" y="13" text-anchor="middle" font-size="9" fill="#2563EB">Linear v̂(s,w) / Deep NNs</text>
+    </g>
+
+    <!-- Pillar 2: Bottom-Left Node (Bootstrapping) -->
+    <g transform="translate(60, 250)">
+      <rect x="-55" y="-22" width="130" height="44" rx="6" fill="#ECFDF5" stroke="#10B981" stroke-width="2"/>
+      <text x="0" y="-3" text-anchor="middle" font-size="11" font-weight="700" fill="#065F46">2. Bootstrapping</text>
+      <text x="0" y="13" text-anchor="middle" font-size="9" fill="#059669">TD Targets R + γv̂'</text>
+    </g>
+
+    <!-- Pillar 3: Bottom-Right Node (Off-Policy Learning) -->
+    <g transform="translate(320, 250)">
+      <rect x="-55" y="-22" width="130" height="44" rx="6" fill="#F5F3FF" stroke="#8B5CF6" stroke-width="2"/>
+      <text x="0" y="-3" text-anchor="middle" font-size="11" font-weight="700" fill="#5B21B6">3. Off-Policy</text>
+      <text x="0" y="13" text-anchor="middle" font-size="9" fill="#7C3AED">Updates under b ≠ π</text>
+    </g>
+
+    <!-- Recurrence Formula Box at bottom -->
+    <rect x="25" y="295" width="330" height="60" rx="6" fill="#FEF2F2" stroke="#F87171" stroke-width="1.5"/>
+    <text x="190" y="315" text-anchor="middle" font-size="11" font-weight="700" fill="#991B1B">Divergence Condition (Baird's Recurrence):</text>
+    <text x="190" y="338" text-anchor="middle" font-size="12" font-weight="800" fill="#B91C1C">wₜ₊₁ = wₜ (1 + 1.60 α) ⟹ lim_{t→∞} |wₜ| = ∞</text>
+  </g>
+
+  <!-- Right: "Any Two Are Safe" & Mitigations Grid -->
+  <g transform="translate(455, 80)">
+    <rect width="400" height="370" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <text x="200" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#1E293B">Stability Matrix: "Any Two Are Safe"</text>
+
+    <!-- Table 4 Combination Cards -->
+    <!-- Card 1: Tabular + Bootstrapping + Off-Policy -->
+    <rect x="20" y="45" width="170" height="70" rx="6" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.5"/>
+    <text x="105" y="64" text-anchor="middle" font-size="10" font-weight="700" fill="#14532D">Tabular Q-Learning</text>
+    <text x="105" y="78" text-anchor="middle" font-size="9" fill="#15803D">Tabular + Boot + Off-Policy</text>
+    <text x="105" y="98" text-anchor="middle" font-size="10" font-weight="800" fill="#166534">✓ STABLE (Contraction)</text>
+
+    <!-- Card 2: Func Approx + Off-Policy + Monte Carlo -->
+    <rect x="210" y="45" width="170" height="70" rx="6" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.5"/>
+    <text x="295" y="64" text-anchor="middle" font-size="10" font-weight="700" fill="#14532D">Off-Policy Monte Carlo</text>
+    <text x="295" y="78" text-anchor="middle" font-size="9" fill="#15803D">FA + Off-Policy + NO Boot</text>
+    <text x="295" y="98" text-anchor="middle" font-size="10" font-weight="800" fill="#166534">✓ STABLE (Supervised SGD)</text>
+
+    <!-- Card 3: Func Approx + Bootstrapping + On-Policy -->
+    <rect x="20" y="125" width="170" height="70" rx="6" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.5"/>
+    <text x="105" y="144" text-anchor="middle" font-size="10" font-weight="700" fill="#14532D">Linear Semi-Gradient TD(0)</text>
+    <text x="105" y="158" text-anchor="middle" font-size="9" fill="#15803D">FA + Boot + On-Policy</text>
+    <text x="105" y="178" text-anchor="middle" font-size="10" font-weight="800" fill="#166534">✓ STABLE (TD Fixed Point)</text>
+
+    <!-- Card 4: ALL THREE COMBINED -->
+    <rect x="210" y="125" width="170" height="70" rx="6" fill="#FEF2F2" stroke="#EF4444" stroke-width="2"/>
+    <text x="295" y="144" text-anchor="middle" font-size="10" font-weight="700" fill="#991B1B">Standard Deep Q-Learning</text>
+    <text x="295" y="158" text-anchor="middle" font-size="9" fill="#B91C1C">FA + Boot + Off-Policy</text>
+    <text x="295" y="178" text-anchor="middle" font-size="10" font-weight="800" fill="#991B1B">⚠️ DIVERGENT (Triad)</text>
+
+    <!-- Divider Line -->
+    <line x1="20" y1="208" x2="380" y2="208" stroke="#E2E8F0" stroke-width="1.5"/>
+
+    <!-- Mitigations Summary Box -->
+    <text x="200" y="228" text-anchor="middle" font-size="12" font-weight="700" fill="#0F172A">DQN &amp; Advanced Algorithmic Mitigations</text>
+
+    <rect x="20" y="240" width="360" height="115" rx="6" fill="#F8FAFC" stroke="#64748B" stroke-width="1.5"/>
+    <text x="35" y="260" font-size="10" font-weight="700" fill="#1E293B">1. Experience Replay (D):</text>
+    <text x="180" y="260" font-size="10" fill="#475569">Randomizes transitions → restores i.i.d. SGD</text>
+
+    <text x="35" y="282" font-size="10" font-weight="700" fill="#1E293B">2. Target Network (w⁻):</text>
+    <text x="180" y="282" font-size="10" fill="#475569">Freezes target landscape for C steps → stops chasing</text>
+
+    <text x="35" y="304" font-size="10" font-weight="700" fill="#1E293B">3. Gradient TD (GTD2/TDC):</text>
+    <text x="180" y="304" font-size="10" fill="#475569">True gradient descent on MSBE via dual weights</text>
+
+    <text x="35" y="326" font-size="10" font-weight="700" fill="#1E293B">4. Emphatic TD (ETD):</text>
+    <text x="180" y="326" font-size="10" fill="#475569">Re-weights updates to restore contraction mapping</text>
+  </g>
+</svg>
