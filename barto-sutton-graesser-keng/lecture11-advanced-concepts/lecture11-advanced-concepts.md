@@ -87,6 +87,69 @@ As discussed in [Lecture 10](file:///c:/github/drl/barto-sutton-graesser-keng/le
 
      where $\mathcal{H}(\pi(\cdot\mid s_t)) = -\sum_a \pi(a\mid s_t) \ln \pi(a\mid s_t)$ is the entropy, and $\alpha$ is the temperature parameter. Higher entropy prevents the policy from collapsing into a single deterministic action, promoting broad exploration and robust generalization.
 
+### 1.3 Continuous Action Parameterization & Action Residual Mechanics
+
+In continuous action reinforcement learning (such as robotic joint control, autonomous steering, or continuous torque manipulation), an agent's policy cannot output discrete probability vectors. Instead, the policy network parameterizes a continuous probability distribution—most commonly a **1D Gaussian Distribution** $\pi_\theta(a \mid s) \sim \mathcal{N}(\mu_\theta(s), \sigma^2)$.
+
+![Gaussian Policy & Action Residual Mechanics](images/gaussian_policy_residual.svg)
+
+#### 1. The Gaussian Policy Parameterization
+* **Mean Head $\mu_\theta(s)$:** A neural network (or linear feature vector $\mu_\theta(s) = \mathbf{w}^T \mathbf{x}(s)$) predicts the expected "intended" continuous action.
+* **Exploration & Sampling:** During training, the agent samples an exploratory action $a_t$ from the normal distribution:
+  $$ a_t \sim \mathcal{N}(\mu_\theta(s), \sigma^2) \implies a_t = \mu_\theta(s) + \sigma \cdot \epsilon, \quad \epsilon \sim \mathcal{N}(0, 1) $$
+* **Inference / Deployment:** At test time, the agent acts deterministically by executing the mean action $\hat{a} = \mu_\theta(s)$.
+
+#### 2. Derivation of Log-Likelihood & Score Function
+The 1D Gaussian probability density function (PDF) is:
+$$ \pi_\theta(a \mid s) = \frac{1}{\sigma \sqrt{2\pi}} \exp\left( -\frac{(a - \mu_\theta(s))^2}{2\sigma^2} \right) $$
+
+Taking the natural logarithm yields the **Log-Likelihood Function**:
+$$ \ln \pi_\theta(a \mid s) = -\frac{(a - \mu_\theta(s))^2}{2\sigma^2} - \ln(\sigma \sqrt{2\pi}) $$
+
+To update policy parameters $\theta$ via policy gradient ascent, we compute the gradient with respect to $\theta$ (the **Score Function**):
+$$ \nabla_\theta \ln \pi_\theta(a_t \mid s) = \nabla_\theta \left[ -\frac{(a_t - \mu_\theta(s))^2}{2\sigma^2} - \ln(\sigma \sqrt{2\pi}) \right] = \frac{a_t - \mu_\theta(s)}{\sigma^2} \nabla_\theta \mu_\theta(s) $$
+
+For a linear mean $\mu_\theta(s) = \theta^T \mathbf{x}(s)$, where $\nabla_\theta \mu_\theta(s) = \mathbf{x}(s)$:
+$$ \nabla_\theta \ln \pi_\theta(a_t \mid s) = \frac{a_t - \mu_\theta(s)}{\sigma^2} \mathbf{x}(s) $$
+
+#### 3. What is the Action Residual?
+The term $(a_t - \mu_\theta(s))$ is mathematically defined as the **Action Residual**:
+
+$$ \text{Action Residual} \doteq a_t - \mu_\theta(s) = (\text{Executed Exploratory Action}) - (\text{Policy Predicted Mean Action}) $$
+
+* **Statistical Interpretation:** Just as a residual in linear regression measures $\text{Observed} - \text{Predicted}$, the action residual measures how far the exploratory action sample $a_t$ deviated from the policy's central intention $\mu_\theta(s)$.
+* **Scaling Role:** The term $\frac{1}{\sigma^2}$ scales the residual inversely proportional to variance. High variance ($\sigma^2$) decreases update sensitivity, while tight variance ($\sigma^2$) amplifies precision updates.
+
+#### 4. How Policy Gradients Use the Action Residual to Predict & Adjust Actions
+The Actor-Critic parameter update step combines the Advantage estimate $\hat{A}_t$ with the Action Residual:
+
+$$ \theta_{t+1} = \theta_t + \alpha \cdot \hat{A}_t \cdot \left[ \frac{a_t - \mu_\theta(s)}{\sigma^2} \mathbf{x}(s) \right] $$
+
+The table below outlines how the policy adjusts its mean action $\mu_\theta(s)$ based on the sign of the Action Residual and Advantage:
+
+| Action Residual ($a_t - \mu_\theta(s)$) | Advantage ($\hat{A}_t$) | Parameter Update ($\Delta \theta$) | Action Prediction & Policy Adjustment |
+| :---: | :---: | :---: | :--- |
+| **Positive** ($a_t > \mu$) | **Positive** ($\hat{A}_t > 0$) | **Positive** ($\Delta \theta > 0$) | Action $a_t$ was **larger** than mean and produced a **good return**. Shift $\mu_\theta(s)$ **higher** towards $a_t$. |
+| **Positive** ($a_t > \mu$) | **Negative** ($\hat{A}_t < 0$) | **Negative** ($\Delta \theta < 0$) | Action $a_t$ was **larger** than mean but produced a **poor return**. Shift $\mu_\theta(s)$ **lower** away from $a_t$. |
+| **Negative** ($a_t < \mu$) | **Positive** ($\hat{A}_t > 0$) | **Negative** ($\Delta \theta < 0$) | Action $a_t$ was **smaller** than mean and produced a **good return**. Shift $\mu_\theta(s)$ **lower** towards $a_t$. |
+| **Negative** ($a_t < \mu$) | **Negative** ($\hat{A}_t < 0$) | **Positive** ($\Delta \theta > 0$) | Action $a_t$ was **smaller** than mean but produced a **poor return**. Shift $\mu_\theta(s)$ **higher** away from $a_t$. |
+
+#### 5. Concrete Hand-Calculated Numerical Example
+* **State Feature:** $x(s) = 2.0$
+* **Current Policy Parameter:** $\theta_0 = 1.0000 \implies \mu_{\theta_0}(s) = 1.0 \times 2.0 = 2.0000$
+* **Fixed Variance:** $\sigma^2 = 0.25$
+* **Executed Action:** $a_t = 2.5000$
+* **Advantage Estimate:** $\hat{A}_t = +1.0000$
+* **Learning Rate:** $\alpha = 0.10$
+
+1. **Calculate Action Residual:**  
+   $a_t - \mu_{\theta_0}(s) = 2.5000 - 2.0000 = \mathbf{+0.5000}$
+2. **Compute Score Function:**  
+   $\nabla_\theta \ln \pi_{\theta_0}(a_t \mid s) = \frac{+0.5000}{0.25} \times 2.0 = 2.0 \times 2.0 = \mathbf{4.0000}$
+3. **Compute Parameter Shift & New Policy Mean:**  
+   $\theta_1 = \theta_0 + \alpha \hat{A}_t \nabla_\theta \ln \pi_{\theta_0}(a_t \mid s) = 1.0000 + 0.10(+1.0000)(4.0000) = \mathbf{1.4000}$  
+   New Mean Action: $\mu_{\theta_1}(s) = 1.4000 \times 2.0 = \mathbf{2.8000}$ (successfully shifted towards the beneficial action $2.5$).
+
 ---
 
 ## 2. Model-Based Reinforcement Learning

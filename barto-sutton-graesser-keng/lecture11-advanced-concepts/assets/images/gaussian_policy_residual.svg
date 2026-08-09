@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 420" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <!-- Background -->
+  <rect width="850" height="420" rx="12" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+
+  <!-- Main Title -->
+  <text x="425" y="30" text-anchor="middle" font-size="16" font-weight="700" fill="#0F172A">Continuous Action Gaussian Policy &amp; Action Residual Mechanics</text>
+  <text x="425" y="48" text-anchor="middle" font-size="12" fill="#64748B">Action Sampling: aₜ ~ N(μ_θ(s), σ²) | Action Residual: (aₜ - μ_θ(s)) | Score: ∇_θ ln π = (aₜ - μ)/σ² · x(s)</text>
+
+  <!-- Left: 1D Gaussian Distribution Graph -->
+  <g transform="translate(40, 75)">
+    <rect width="380" height="315" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <text x="190" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="#1E293B">Gaussian Action Distribution π_θ(a|s)</text>
+
+    <!-- X and Y Axes -->
+    <line x1="30" y1="230" x2="350" y2="230" stroke="#64748B" stroke-width="1.5"/>
+    <line x1="40" y1="240" x2="40" y2="50" stroke="#64748B" stroke-width="1.5"/>
+    <text x="190" y="252" text-anchor="middle" font-size="11" fill="#475569">Continuous Action Space (a)</text>
+    <text x="25" y="140" text-anchor="middle" font-size="10" fill="#475569" transform="rotate(-90 25 140)">Density π(a|s)</text>
+
+    <!-- Gaussian Curve -->
+    <path d="M 40 228 Q 120 225 150 150 T 190 70 T 230 150 T 310 225 L 350 228" fill="none" stroke="#2563EB" stroke-width="2.5"/>
+    <!-- Area under curve shading -->
+    <path d="M 40 228 Q 120 225 150 150 T 190 70 T 230 150 T 310 225 L 350 228 Z" fill="#3B82F6" opacity="0.12"/>
+
+    <!-- Mean Line μ = 2.0 (X = 190) -->
+    <line x1="190" y1="70" x2="190" y2="230" stroke="#2563EB" stroke-width="2" stroke-dasharray="4,4"/>
+    <circle cx="190" cy="230" r="4" fill="#2563EB"/>
+    <text x="190" y="244" text-anchor="middle" font-size="11" font-weight="800" fill="#1E40AF">μ_θ(s) = 2.0</text>
+
+    <!-- Executed Action Line a_t = 2.5 (X = 250) -->
+    <line x1="250" y1="110" x2="250" y2="230" stroke="#EF4444" stroke-width="2"/>
+    <circle cx="250" cy="230" r="5" fill="#EF4444"/>
+    <text x="250" y="244" text-anchor="middle" font-size="11" font-weight="800" fill="#B91C1C">aₜ = 2.5</text>
+
+    <!-- Action Residual Arrow Bracket -->
+    <path d="M 190 170 L 250 170" stroke="#059669" stroke-width="2.5" marker-end="url(#arrow-green)"/>
+    <rect x="195" y="148" width="50" height="18" rx="3" fill="#ECFDF5" stroke="#059669" stroke-width="1"/>
+    <text x="220" y="161" text-anchor="middle" font-size="10" font-weight="800" fill="#047857">+0.50</text>
+    <text x="220" y="190" text-anchor="middle" font-size="10" font-weight="700" fill="#065F46">Action Residual</text>
+    <text x="220" y="202" text-anchor="middle" font-size="9" fill="#047857">(aₜ - μ_θ(s))</text>
+
+    <!-- Gradient Shift Arrow at Top -->
+    <path d="M 190 55 L 240 55" stroke="#D97706" stroke-width="3" marker-end="url(#arrow-amber)"/>
+    <text x="215" y="45" text-anchor="middle" font-size="10" font-weight="800" fill="#B45309">Δμ = +0.40 (Shift Mean Higher)</text>
+  </g>
+
+  <!-- Right: Mathematical Equations & Intuition Card -->
+  <g transform="translate(440, 75)">
+    <rect width="370" height="315" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <text x="185" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="#0F172A">Step-by-Step Policy Gradient Mathematics</text>
+
+    <!-- Equation 1 Box: PDF & Log-Likelihood -->
+    <rect x="15" y="42" width="340" height="55" rx="5" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1"/>
+    <text x="25" y="58" font-size="10" font-weight="700" fill="#1E40AF">1. 1D Gaussian Log-Likelihood:</text>
+    <text x="25" y="80" font-size="11" font-weight="700" font-family="Courier New, monospace" fill="#1D4ED8">ln π_θ(a|s) = -½ (a - μ)²/σ² - ln(σ√(2π))</text>
+
+    <!-- Equation 2 Box: Score Function -->
+    <rect x="15" y="105" width="340" height="60" rx="5" fill="#ECFDF5" stroke="#6EE7B7" stroke-width="1"/>
+    <text x="25" y="122" font-size="10" font-weight="700" fill="#065F46">2. Score Function (Log-Gradient):</text>
+    <text x="25" y="142" font-size="11" font-weight="800" font-family="Courier New, monospace" fill="#047857">∇_θ ln π = [(aₜ - μ_θ(s)) / σ²] · x(s)</text>
+    <text x="25" y="157" font-size="9" fill="#059669">                 ▲ Action Residual</text>
+
+    <!-- Equation 3 Box: Policy Parameter Update -->
+    <rect x="15" y="173" width="340" height="60" rx="5" fill="#FEF3C7" stroke="#FDE68A" stroke-width="1"/>
+    <text x="25" y="190" font-size="10" font-weight="700" fill="#78350F">3. Parameter Update Step:</text>
+    <text x="25" y="210" font-size="11" font-weight="800" font-family="Courier New, monospace" fill="#B45309">θₜ₊₁ = θₜ + α · Âₜ · [(aₜ - μ_θ(s)) / σ²] · x(s)</text>
+    <text x="25" y="225" font-size="9" fill="#92400E">            ▲ Advantage  ▲ Action Residual</text>
+
+    <!-- Rule Summary -->
+    <rect x="15" y="241" width="340" height="62" rx="5" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="25" y="258" font-size="10" font-weight="700" fill="#334155">Summary Rule:</text>
+    <text x="25" y="274" font-size="9.5" fill="#475569">• Residual (aₜ - μ) &gt; 0 &amp; Âₜ &gt; 0 ⟹ Shift μ towards aₜ</text>
+    <text x="25" y="290" font-size="9.5" fill="#475569">• Residual (aₜ - μ) &gt; 0 &amp; Âₜ &lt; 0 ⟹ Shift μ away from aₜ</text>
+  </g>
+
+  <!-- Markers -->
+  <defs>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#059669"/>
+    </marker>
+    <marker id="arrow-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#D97706"/>
+    </marker>
+  </defs>
+</svg>
