@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <!-- Background -->
+  <rect width="800" height="360" rx="12" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+
+  <!-- Title -->
+  <text x="400" y="32" text-anchor="middle" font-size="16" font-weight="700" fill="#1E293B">Natural Policy Gradients &amp; Sigmoid Policy Score Derivation</text>
+  <text x="400" y="52" text-anchor="middle" font-size="12" fill="#64748B">Riemannian Distribution Geometry F(θ) | Sigmoid Policy π_θ(a₁) = σ(θ)</text>
+
+  <!-- Left: Riemannian Manifold Diagram -->
+  <g transform="translate(40, 75)">
+    <rect width="340" height="250" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <text x="170" y="25" text-anchor="middle" font-size="13" font-weight="700" fill="#1E293B">Policy Parameter Geometry</text>
+
+    <!-- Curved Riemannian Manifold Plane -->
+    <path d="M 40 180 Q 170 120 300 170 Q 250 230 50 210 Z" fill="#F5F3FF" stroke="#8B5CF6" stroke-width="1.5"/>
+    <text x="170" y="200" text-anchor="middle" font-size="10" font-weight="700" fill="#5B21B6">Distribution Manifold M_π</text>
+
+    <!-- Euclidean Gradient (Red Arrow - Wrong Space) -->
+    <line x1="140" y1="150" x2="220" y2="100" stroke="#EF4444" stroke-width="2" marker-end="url(#arrow-red)"/>
+    <text x="210" y="95" text-anchor="start" font-size="10" font-weight="700" fill="#B91C1C">Standard ∇_θ J (Euclidean)</text>
+
+    <!-- Natural Gradient (Purple Arrow - Riemannian Steepest Ascent) -->
+    <line x1="140" y1="150" x2="180" y2="105" stroke="#7C3AED" stroke-width="2.5" marker-end="url(#arrow-purple)"/>
+    <text x="135" y="95" text-anchor="end" font-size="10" font-weight="800" fill="#5B21B6">Natural ∇̃_θ J = F⁻¹ ∇_θ J</text>
+
+    <circle cx="140" cy="150" r="4" fill="#7C3AED"/>
+    <text x="130" y="162" font-size="10" font-weight="700" fill="#4C1D95">θₜ</text>
+
+    <!-- Fisher Info Box -->
+    <rect x="25" y="215" width="290" height="24" rx="4" fill="#EDE9FE" stroke="#8B5CF6" stroke-width="1"/>
+    <text x="170" y="231" text-anchor="middle" font-size="10" font-weight="700" fill="#5B21B6">Fisher F(θ) = E[ ∇ ln π (∇ ln π)ᵀ ] = KL Metric</text>
+  </g>
+
+  <!-- Right: Sigmoid Derivation Box -->
+  <g transform="translate(420, 75)">
+    <rect width="340" height="250" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <text x="170" y="25" text-anchor="middle" font-size="13" font-weight="700" fill="#1E293B">Sigmoid Policy Score Function</text>
+
+    <rect x="25" y="45" width="290" height="180" rx="6" fill="#F8FAFC" stroke="#64748B" stroke-width="1.5"/>
+    <text x="35" y="66" font-size="11" font-weight="700" fill="#0F172A">Sigmoid Policy Derivation Steps:</text>
+
+    <text x="35" y="88" font-size="10" fill="#334155">1. Policy: π_θ(a₁) = σ(θ) = 1 / (1 + e⁻ᵗʰᵉᵗᵃ)</text>
+    <text x="35" y="106" font-size="10" fill="#334155">2. Derivative: σ'(θ) = σ(θ) (1 - σ(θ))</text>
+
+    <text x="35" y="128" font-size="10" font-weight="700" fill="#1E40AF">Score Function for Action a₁:</text>
+    <text x="35" y="145" font-size="10" font-weight="800" font-family="Courier New, monospace" fill="#1D4ED8">∇_θ ln π_θ(a₁) = 1 - π_θ(a₁)</text>
+
+    <text x="35" y="170" font-size="10" font-weight="700" fill="#065F46">Score Function for Action a₂:</text>
+    <text x="35" y="187" font-size="10" font-weight="800" font-family="Courier New, monospace" fill="#047857">∇_θ ln π_θ(a₂) = -π_θ(a₁)</text>
+
+    <text x="35" y="212" font-size="9.5" fill="#475569">• Invariant to coordinate reparameterization</text>
+  </g>
+
+  <defs>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#EF4444"/>
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#7C3AED"/>
+    </marker>
+  </defs>
+</svg>

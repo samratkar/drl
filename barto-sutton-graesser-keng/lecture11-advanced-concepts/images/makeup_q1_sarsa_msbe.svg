@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <!-- Background -->
+  <rect width="800" height="360" rx="12" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+
+  <!-- Title -->
+  <text x="400" y="32" text-anchor="middle" font-size="16" font-weight="700" fill="#1E293B">Makeup Question 1: Linear Semi-Gradient SARSA &amp; MSBE Double-Sample Obstacle</text>
+  <text x="400" y="52" text-anchor="middle" font-size="12" fill="#64748B">SARSA Tuple: (Sₜ, Aₜ, Rₜ₊₁, Sₜ₊₁, Aₜ₊₁) with w₀ = [1.0, 0.0, -0.5]ᵀ, γ=0.95, α=0.20</text>
+
+  <!-- Left: SARSA Tuple Diagram -->
+  <g transform="translate(40, 75)">
+    <rect width="340" height="250" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <text x="170" y="25" text-anchor="middle" font-size="13" font-weight="700" fill="#1E293B">On-Policy SARSA Transition</text>
+
+    <!-- (S_t, A_t) -->
+    <rect x="30" y="50" width="120" height="55" rx="6" fill="#EFF6FF" stroke="#3B82F6" stroke-width="1.5"/>
+    <text x="90" y="72" text-anchor="middle" font-size="11" font-weight="700" fill="#1E40AF">(Sₜ, Aₜ)</text>
+    <text x="90" y="90" text-anchor="middle" font-size="10" fill="#2563EB">x = [1.0, 0.5, 0.0]ᵀ</text>
+
+    <!-- Arrow with Reward R_{t+1} = +3.0 -->
+    <path d="M 150 77 L 190 77" stroke="#059669" stroke-width="2.5" marker-end="url(#arrow-green)"/>
+    <text x="170" y="70" text-anchor="middle" font-size="10" font-weight="800" fill="#047857">R = +3.0</text>
+
+    <!-- (S_{t+1}, A_{t+1}) -->
+    <rect x="190" y="50" width="120" height="55" rx="6" fill="#ECFDF5" stroke="#10B981" stroke-width="1.5"/>
+    <text x="250" y="72" text-anchor="middle" font-size="11" font-weight="700" fill="#065F46">(Sₜ₊₁, Aₜ₊₁)</text>
+    <text x="250" y="90" text-anchor="middle" font-size="10" fill="#059669">x' = [0.0, 1.0, 1.0]ᵀ</text>
+
+    <!-- Action-Value calculation -->
+    <rect x="30" y="125" width="280" height="105" rx="6" fill="#F1F5F9" stroke="#94A3B8" stroke-width="1.5"/>
+    <text x="170" y="145" text-anchor="middle" font-size="10" font-weight="600" fill="#334155">q̂(Sₜ, Aₜ, w₀) = 1.0(1.0) + 0.0(0.5) - 0.5(0.0) = 1.0000</text>
+    <text x="170" y="165" text-anchor="middle" font-size="10" font-weight="600" fill="#334155">q̂(Sₜ₊₁, Aₜ₊₁, w₀) = 1.0(0.0) + 0.0(1.0) - 0.5(1.0) = -0.5000</text>
+    <text x="170" y="187" text-anchor="middle" font-size="11" font-weight="800" fill="#2563EB">TD Error δₜ = 3.0 + 0.95(-0.5) - 1.0 = +1.5250</text>
+    <text x="170" y="212" text-anchor="middle" font-size="11" font-weight="800" fill="#059669">w₁ = [ 1.3050, 0.1525, -0.5000 ]ᵀ</text>
+  </g>
+
+  <!-- Right: MSBE Double Sample Obstacle -->
+  <g transform="translate(420, 75)">
+    <rect width="340" height="250" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <text x="170" y="25" text-anchor="middle" font-size="13" font-weight="700" fill="#1E293B">MSBE Double-Sample Obstacle</text>
+
+    <rect x="25" y="45" width="290" height="70" rx="6" fill="#FEF2F2" stroke="#EF4444" stroke-width="1.5"/>
+    <text x="170" y="68" text-anchor="middle" font-size="11" font-weight="700" fill="#991B1B">Gradient of MSBE Objective:</text>
+    <text x="170" y="90" text-anchor="middle" font-size="11" font-weight="800" fill="#B91C1C">∇_w MSBE(w) = -2 E[ δₜ ] · E[ γ ∇v̂' - ∇v̂ ]</text>
+
+    <!-- Split Branches diagram showing 2 independent samples -->
+    <path d="M 170 120 L 110 160" stroke="#DC2626" stroke-width="2" stroke-dasharray="3,3"/>
+    <path d="M 170 120 L 230 160" stroke="#DC2626" stroke-width="2" stroke-dasharray="3,3"/>
+
+    <circle cx="110" cy="175" r="22" fill="#FEE2E2" stroke="#EF4444" stroke-width="1.5"/>
+    <text x="110" y="179" text-anchor="middle" font-size="10" font-weight="700" fill="#991B1B">Sample 1</text>
+
+    <circle cx="230" cy="175" r="22" fill="#FEE2E2" stroke="#EF4444" stroke-width="1.5"/>
+    <text x="230" y="179" text-anchor="middle" font-size="10" font-weight="700" fill="#991B1B">Sample 2</text>
+
+    <rect x="25" y="210" width="290" height="30" rx="4" fill="#FEF2F2" stroke="#F87171" stroke-width="1"/>
+    <text x="170" y="229" text-anchor="middle" font-size="10" font-weight="700" fill="#B91C1C">Requires 2 independent samples per state (Resolved by GTD2/TDC)</text>
+  </g>
+
+  <defs>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#059669"/>
+    </marker>
+  </defs>
+</svg>

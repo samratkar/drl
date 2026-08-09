@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <!-- Background -->
+  <rect width="800" height="360" rx="12" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+
+  <!-- Title -->
+  <text x="400" y="32" text-anchor="middle" font-size="16" font-weight="700" fill="#1E293B">Gaussian Radial Basis Functions (RBFs) &amp; Deep Q-Network Stabilization</text>
+  <text x="400" y="52" text-anchor="middle" font-size="12" fill="#64748B">RBF Activation: φᵢ(s) = exp(-(s - cᵢ)² / (2σ²)) | DQN Replay Buffer D &amp; Frozen Target Network w⁻</text>
+
+  <!-- Left: RBF Curves Graph -->
+  <g transform="translate(40, 75)">
+    <rect width="340" height="250" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <text x="170" y="25" text-anchor="middle" font-size="13" font-weight="700" fill="#1E293B">Gaussian RBF Feature Spaces</text>
+
+    <!-- Axes -->
+    <line x1="30" y1="190" x2="310" y2="190" stroke="#94A3B8" stroke-width="1.5"/>
+    <text x="170" y="210" text-anchor="middle" font-size="11" fill="#475569">Continuous State Space (s)</text>
+
+    <!-- RBF 1 (Center c1 = -1.5) -->
+    <path d="M 30 188 Q 80 185 110 120 T 130 50 T 150 120 T 200 185 L 310 188" fill="none" stroke="#2563EB" stroke-width="2"/>
+    <text x="130" y="42" text-anchor="middle" font-size="10" font-weight="700" fill="#1D4ED8">φ₁(s) [c₁=-1.5]</text>
+
+    <!-- RBF 2 (Center c2 = +1.5) -->
+    <path d="M 30 188 Q 140 185 190 120 T 210 50 T 230 120 T 280 185 L 310 188" fill="none" stroke="#16A34A" stroke-width="2"/>
+    <text x="210" y="42" text-anchor="middle" font-size="10" font-weight="700" fill="#15803D">φ₂(s) [c₂=+1.5]</text>
+
+    <!-- Bandwidth explanation -->
+    <rect x="25" y="218" width="290" height="24" rx="4" fill="#F1F5F9" stroke="#94A3B8" stroke-width="1"/>
+    <text x="170" y="234" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Bandwidth σ: Small → Tabular Limit | Large → Flat Constant</text>
+  </g>
+
+  <!-- Right: DQN Stabilization Box -->
+  <g transform="translate(420, 75)">
+    <rect width="340" height="250" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <text x="170" y="25" text-anchor="middle" font-size="13" font-weight="700" fill="#1E293B">DQN Stabilization Innovations</text>
+
+    <!-- Replay Buffer Box -->
+    <rect x="20" y="45" width="300" height="85" rx="6" fill="#EFF6FF" stroke="#3B82F6" stroke-width="1.5"/>
+    <text x="35" y="66" font-size="11" font-weight="700" fill="#1E40AF">1. Experience Replay Buffer (D)</text>
+    <text x="35" y="85" font-size="10" fill="#1D4ED8">• Stores transition tuples (S, A, R, S') in memory</text>
+    <text x="35" y="103" font-size="10" fill="#1D4ED8">• Uniform mini-batch sampling decorrelates SGD data</text>
+    <text x="35" y="120" font-size="10" font-weight="700" fill="#1E3A8A">✓ Restores i.i.d. assumption for neural network learning</text>
+
+    <!-- Target Net Box -->
+    <rect x="20" y="145" width="300" height="85" rx="6" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.5"/>
+    <text x="35" y="166" font-size="11" font-weight="700" fill="#14532D">2. Target Network (w⁻)</text>
+    <text x="35" y="185" font-size="10" fill="#15803D">• Freezes target network parameters w⁻ for C steps</text>
+    <text x="35" y="203" font-size="10" fill="#15803D">• Target Y = R + γ max_a' q̂(S', a', w⁻) remains fixed</text>
+    <text x="35" y="220" font-size="10" font-weight="700" fill="#14532D">✓ Eliminates non-stationary target chasing divergence</text>
+  </g>
+</svg>

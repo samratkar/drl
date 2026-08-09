@@ -880,7 +880,106 @@ $$P(a=0 \mid s_1, \hat{R}_1) = 1 - 0.9616 = 0.0384$$
 
 ---
 
-## 9. The Deadly Triad: Instability, Counterexamples, and Mitigation
+## 9. Real-World Applications & Algorithm Selection Guide
+
+Choosing the right reinforcement learning algorithm depends on specific environment constraints: whether an environment model $P(s'\mid s,a)$ is known, whether the action space is discrete or continuous, sample efficiency requirements, safety/cost of real-world trial-and-error, and availability of expert demonstrations.
+
+### 9.1 Comprehensive Algorithm Selection Matrix
+
+The table below outlines when to use each algorithm, why to select it over alternatives, its primary real-world application domains, and key limitations:
+
+| Algorithm / Family | Environment Model Requirement | Action & State Space | When to Use (Ideal Scenarios) | Why Choose This Model? (Key Advantage) | Primary Real-World Applications | Key Limitations |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Dynamic Programming (DP)** (Policy / Value Iteration) | **Known & Full** $P(s'\mid s,a)$ | Small Discrete | Complete transition dynamics & reward functions are known upfront; small state spaces. | Exact mathematical convergence guarantees with zero sample variance. | Traffic light signal optimization in grid networks, small inventory management, manufacturing scheduling. | Suffers from the "Curse of Dimensionality"; fails in large or continuous state spaces or model-free settings. |
+| **Monte Carlo (MC)** | **Model-Free** | Discrete or Low-Dim Continuous | Episodic tasks with clear termination where full episode trajectories can be simulated without a model. | Simple to implement, unbiased return estimates, requires no bootstrapping or initial value estimates. | Blackjack/Poker strategy evaluation, episodic board games, customer churn intervention policies. | High variance; only works on episodic tasks; slow convergence due to delayed parameter updates. |
+| **SARSA** (On-Policy TD) | **Model-Free** | Discrete / Function Approximated | Environments where safety during exploration is paramount and the agent must evaluate the current (imperfect) policy. | On-policy updating avoids aggressive risky moves during learning by accounting for exploration noise ($\epsilon$). | Robot navigation avoiding physical hazards during training, safe automated HVAC control, power grid balancing. | Slower convergence than off-policy methods; conservative optimal policy. |
+| **Q-Learning / DQN / DDQN** | **Model-Free** | Discrete Action, High-Dim State (Pixels) | Complex perception environments (e.g., screen pixels) with discrete controls where off-policy data reuse is key. | Highly sample-efficient via Replay Buffers; learns the optimal action-value function directly. | Video games (Atari), discrete resource allocation, automated stock trading (buy/sell/hold), web ad targeting. | Fails on continuous action spaces; susceptible to Q-value overestimation (mitigated by DDQN); unstable with non-stationary data. |
+| **REINFORCE** | **Model-Free** | Continuous or Discrete | Simple policy-based control tasks where direct action distributions are preferred over value functions. | Directly optimizes policy parameters $\theta$; handles continuous action distributions naturally. | Basic robotics joint torque control, simple automated parameter tuning, small recommendation systems. | High variance in gradient estimates; low sample efficiency; prone to local optima collapse. |
+| **REINFORCE with Baseline** | **Model-Free** | Continuous or Discrete | Tasks where standard REINFORCE is too noisy/unstable but value-function bootstrapping is undesirable. | Subtracting a state-value baseline $V(s)$ dramatically reduces gradient variance without introducing bias. | Basic continuous robotic control, early automated dialogue policy learning, simple drone stabilization. | Still requires full episode trajectory rollouts before updating; sample inefficient. |
+| **Actor-Critic (TD-based)** | **Model-Free** | Continuous or Discrete | Online/real-time learning tasks requiring low variance and step-by-step updates without waiting for episode completion. | Combines policy gradients (Actor) with TD bootstrapping (Critic) for low variance and online updates. | Real-time industrial process control, network packet routing, continuous robotic arm manipulation. | Critic bias can destabilize actor updates if value function approximator is inaccurate. |
+| **A2C / A3C** (Advantage Actor-Critic) | **Model-Free** | Continuous or Discrete | High-throughput training leveraging parallel environment sampling on multi-core CPUs/GPUs. | Synchronous/asynchronous parallel workers decorrelate environment samples and stabilize policy gradients. | Autonomous driving simulators, complex multi-agent simulations, game AI (StarCraft micro, Mujoco locomotion). | High computational infrastructure requirement; sensitive to learning rate tuning. |
+| **PPO / TRPO** | **Model-Free** | Continuous or Discrete | Complex real-world continuous control or fine-tuning tasks where training stability and safety are critical. | Trust region constraints (TRPO) or clipped surrogate objectives (PPO) prevent catastrophic policy collapse. | **RLHF in LLMs** (ChatGPT, Claude), bipedal robotics, autonomous flight control, complex locomotion. | TRPO is computationally heavy (matrix inversions); PPO requires careful hyperparameter tuning (clip threshold $\epsilon$). |
+| **DDPG / SAC** | **Model-Free** | High-Dim Continuous Actions | Continuous robotic control requiring maximum sample efficiency through off-policy replay. | DDPG uses deterministic policy gradients; SAC incorporates entropy maximization for robust exploration. | Dexterous robotic hand manipulation, autonomous vehicle steering/braking, continuous industrial assembly line control. | DDPG can be hyper-sensitive to hyperparameters; SAC requires tuning the entropy temperature $\alpha$. |
+| **MCTS** (Monte Carlo Tree Search) | **Known Simulator** | High Branching Discrete | Perfect-information decision trees with massive branching factors where exhaustive minimax search fails. | Heuristic-free tree expansion focusing only on high-UCT branches via Monte Carlo rollouts. | Chess, Go (AlphaGo), Shogi, tactical route planning, chemical synthesis pathway discovery. | High computational cost at decision time; requires a fast, accurate environment simulator. |
+| **AlphaZero / MuZero** | **Known Rules (AlphaZero) / Learned Latent Dynamics (MuZero)** | High-Dim Discrete / Continuous | Superhuman game playing or complex planning tasks where environment dynamics are unknown or hard to code. | Plans entirely in latent space (MuZero) without rule definitions; unifies search with deep learning representation. | Superhuman board games, Atari without rules, video compression optimization (YouTube/VP9), TPU floorplanning. | Extremely compute-intensive to train (thousands of GPU/TPU hours); complex black-box architecture. |
+| **Imitation Learning (BC / DAgger / GAIL)** | **Model-Free** (Requires Expert Demos) | Continuous or Discrete | Tasks where defining an explicit mathematical reward function $R(s,a)$ is difficult or dangerous. | Bypasses reward engineering by learning directly from expert trajectories or adversarial discriminators. | Autonomous vehicle driving (end-to-end steering), surgical robotics teleoperation, LLM Supervised Fine-Tuning (SFT). | BC suffers from covariate shift; DAgger requires interactive human experts; GAIL has adversarial GAN training instability. |
+| **Decision Transformers (DT)** | **Offline Data** (No Simulator Needed) | Continuous or Discrete | Offline RL scenarios where environment exploration is forbidden, but large static trajectory datasets exist. | Casts RL as sequence modeling; avoids Bellman bootstrapping instabilities on out-of-distribution offline data. | Clinical treatment recommendation from electronic health records, offline industrial log optimization, trajectory generation. | Cannot discover novel strategies beyond training dataset distribution; inferencing transformers can be slow. |
+
+---
+
+### 9.2 Real-World Application Case Studies
+
+#### 1. Autonomous Driving & Robotics
+* **Primary Methods:** SAC, PPO, DAgger, GAIL.
+* **Why:** Autonomous vehicles cannot use random exploration in the real world due to safety risks. They combine **Behavior Cloning / DAgger** on human driving datasets for initial steering control, followed by **PPO/SAC** in high-fidelity simulators (CARLA) with clipped updates to ensure smooth, stable maneuvers.
+
+#### 2. Large Language Model Alignment (RLHF / RLAIF)
+* **Primary Methods:** PPO, DPO (Direct Preference Optimization), Decision Transformers.
+* **Why:** Human preferences cannot be captured by a simple closed-form reward function. First, **Behavior Cloning (SFT)** initializes the language model on expert responses. Then, a Reward Model is trained on human pairwise rankings. Finally, **PPO** optimizes the LLM to maximize predicted human approval while using a KL penalty to prevent the model from drifting too far from its original language capabilities.
+
+#### 3. Game AI & Strategic Decision Making
+* **Primary Methods:** MCTS, AlphaZero, MuZero, A2C/PPO.
+* **Why:** Games like Go or Chess feature immense search spaces where evaluation heuristics fail. **AlphaZero** uses MCTS guided by neural network policy/value heads to achieve superhuman play without human bias, while **MuZero** extends this to pixel-based Atari games by learning environment dynamics implicitly in a latent vector space.
+
+---
+
+### 10. Multimedia Resources & Audio-Visual Materials
+
+#### 10.1 Audio Podcast: Deep Dive into MCTS
+Listen to an in-depth audio discussion exploring the mechanics of Monte Carlo Tree Search, UCT selection, and its integration with deep neural networks.
+
+<audio controls style="width: 100%; margin-top: 10px; margin-bottom: 10px;">
+  <source src="./assets/policy-gradient-methods-podcast.m4a" type="audio/mp4">
+  Your browser does not support the audio element.
+</audio>
+
+* **Direct Link / Download:** [policy gradient methods podcast](./assets/policy-gradient-methods-podcast.m4a)
+
+---
+
+### 10.2 Video Lectures & Visualizations
+
+#### 1. Monte Carlo Tree Search Overview MCTS
+A comprehensive video presentation covering the four MCTS phases (Selection, Expansion, Simulation, Backpropagation) and rollout heuristics.
+
+<video src="./assets/Monte_Carlo_Tree_Search.mp4" controls width="100%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 10px; margin-bottom: 10px;"></video>
+
+* **Direct Link / Download:** [Monte Carlo Tree Search Video (`Monte_Carlo_Tree_Search.mp4`)](./assets/Monte_Carlo_Tree_Search.mp4)
+
+---
+
+### 10.3 Presentation Deck
+* **Direct Link / Download:** [Illuminating MCTS Presentation Deck (`Illuminating_MCTS.pptx`)](./assets/Illuminating_MCTS.pptx)
+
+---
+
+## 11. Practice Exercises
+
+Test your understanding of MCTS, AlphaGo/AlphaZero/MuZero, and Imitation Learning (including IRL and GAIL) with these exercises:
+
+- [Multiple Choice Questions (MCQs)](./assets/questions/mcqs.md)
+- [Subjective Questions](./assets/questions/subjective.md)
+- [Numerical Questions](./assets/questions/numericals.md)
+- [Programming Questions](./assets/questions/programming.md)
+
+*Solutions can be found in the [assets/questions/solutions/](./assets/questions/solutions/) folder.*
+
+---
+
+## 12. Revision of Important Concepts
+
+*Reference: Comprehensive Theoretical & Practical Revision Guide for Value Approximation, Off-Policy Stability, and Policy Optimization.*
+
+This dedicated revision module synthesizes key theoretical foundations, stability guarantees, error objective functions, and practical numerical mechanics across advanced reinforcement learning. It establishes a complete, intuitive flow of concepts:
+1. **System Stability & The Deadly Triad:** Why function approximation, bootstrapping, and off-policy learning interact to cause divergence, and how MSBE / Gradient TD resolve it.
+2. **Linear Action-Value Approximation & SARSA Dynamics:** How linear approximators update weight vectors step-by-step during on-policy execution.
+3. **Non-Linear Basis Representations & Deep Q-Learning Stability:** How non-linear features (RBFs) and DQN innovations (Replay Buffers, Target Networks) maintain stability.
+4. **Natural Policy Gradients & Sigmoid Policy Score Mechanics:** How policies are parameterized in distribution space and optimized along Riemannian metrics.
+5. **Compatible Function Approximation & Multi-Step Advantage Estimation:** How Actor-Critic architectures achieve zero critic bias and balance multi-step return trade-offs.
+
+---
+
+### 12.1 System Stability & The Deadly Triad Framework
 
 *Reference: Sutton, R. S., & Barto, A. G. (2018). Reinforcement Learning: An Introduction. Chapter 11: "Off-policy Methods with Approximation", Section 11.3 (pp. 264-265).*
 
@@ -888,9 +987,7 @@ A foundational challenge in reinforcement learning theory is **The Deadly Triad*
 
 ![The Deadly Triad Framework](images/deadly_triad_framework.svg)
 
----
-
-### 9.1 The Three Interacting Components
+#### 1. The Three Interacting Components
 
 The Deadly Triad consists of the simultaneous combination of:
 
@@ -898,9 +995,7 @@ The Deadly Triad consists of the simultaneous combination of:
 2. **Bootstrapping:** Updating value targets using current estimated value predictions (such as Temporal Difference targets $R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w}_t)$ in TD(0), SARSA, and Q-learning), rather than waiting for complete actual trajectory returns ($G_t$ in Monte Carlo).
 3. **Off-Policy Learning:** Training a target policy $\pi$ using transition samples generated by a different behavior policy $b$ (e.g., Q-learning, $\epsilon$-greedy exploration, offline experience replay datasets), resulting in a mismatch between the update distribution and the target policy distribution.
 
----
-
-### 9.2 The "Any Two Are Safe" Theorem & Combination Matrix
+#### 2. The "Any Two Are Safe" Theorem & Combination Matrix
 
 A fundamental result in RL theory (*Sutton & Barto, 2018, p. 264*) states that combining **any two** of these three components is mathematically stable. Instability occurs **only when all three components are active at the same time**.
 
@@ -913,9 +1008,7 @@ The table below provides a detailed breakdown of all four possible combinations,
 | **Case 3: Func Approx + Bootstrapping + On-Policy** | Func Approx., Bootstrapping | Off-Policy (On-Policy Sampling) | Linear Semi-Gradient TD(0), On-Policy SARSA | **STABLE** (Converges to TD Fixed Point $\mathbf{w}_\infty$) | Under on-policy state distribution $\mu(s)$, matrix $\mathbf{A} = \mathbb{E}_\mu [\mathbf{x}_t (\mathbf{x}_t - \gamma \mathbf{x}_{t+1})^T]$ is guaranteed positive definite ($\mathbf{y}^T \mathbf{A} \mathbf{y} > 0$), ensuring semi-gradient TD is a contraction mapping under weighted $L_2$ norm $\|\cdot\|_\mu$. |
 | **Case 4: ALL THREE COMBINED (Deadly Triad)** | Func Approx., Bootstrapping, Off-Policy | NONE | Standard Deep Q-Learning (without replay/target nets) | **UNSTABLE / DIVERGENT** ($\|\mathbf{w}_t\| \to \infty$) | The semi-gradient projection operator is NOT a contraction under off-policy state distribution $d_b(s)$. Update matrix $\mathbf{A}_b = \mathbb{E}_{d_b} [\rho_t \mathbf{x}_t (\mathbf{x}_t - \gamma \mathbf{x}_{t+1})^T]$ is not positive definite, amplifying weights exponentially. |
 
----
-
-### 9.3 Step-by-Step Mathematical Explanation of Instability
+#### 3. Step-by-Step Mathematical Explanation of Instability
 
 To understand why the Deadly Triad causes divergence, consider linear function approximation $\hat{v}(s, \mathbf{w}) = \mathbf{w}^T \mathbf{x}(s)$.
 
@@ -942,13 +1035,11 @@ To understand why the Deadly Triad causes divergence, consider linear function a
    $$ \mathbf{w}_t \sim (1 + \alpha |\lambda_i|)^t \mathbf{w}_0 \implies \lim_{t \to \infty} \|\mathbf{w}_t\| = \infty $$
    The weight vector diverges exponentially to infinity!
 
----
-
-### 9.4 Canonical Theoretical Counterexamples
+#### 4. Canonical Theoretical Counterexamples
 
 Sutton & Barto and early RL researchers devised classic counterexamples demonstrating that Deadly Triad divergence occurs even in simple systems:
 
-#### 1. The Simple $w \to 2w$ 2-State Counterexample (*Sutton & Barto, p. 260*)
+##### A. The Simple $w \to 2w$ 2-State Counterexample (*Sutton & Barto, p. 260*)
 Consider a 2-state MDP $\mathcal{S} = \{s_1, s_2\}$ with scalar weight $w \in \mathbb{R}$:
 * Feature mapping: $\mathbf{x}(s_1) = 1$, $\mathbf{x}(s_2) = 2 \implies \hat{v}(s_1, w) = w, \; \hat{v}(s_2, w) = 2w$.
 * Transition: $s_1 \xrightarrow{R=0} s_2$ occurring off-policy with importance sampling ratio $\rho = 2.0$, discount factor $\gamma = 0.90$.
@@ -958,16 +1049,14 @@ $$ w_{t+1} = w_t + \alpha \rho \left[ R + \gamma \hat{v}(s_2, w_t) - \hat{v}(s_1
 $$ w_{t+1} = w_t + \alpha (2.0) \left[ 0 + 0.90(2 w_t) - w_t \right] (1) = w_t + 2\alpha (1.80 w_t - w_t) = w_t (1 + 1.60 \alpha) $$
 Since $(1 + 1.60 \alpha) > 1$ for any learning rate $\alpha > 0$, the recurrence yields $w_t = w_0 (1 + 1.60 \alpha)^t$, exploding to infinity.
 
-#### 2. Baird's 7-State Counterexample (*Sutton & Barto, pp. 261-262*)
+##### B. Baird's 7-State Counterexample (*Sutton & Barto, pp. 261-262*)
 A 7-state MDP where all rewards are zero ($R=0$), meaning true values $v_\pi(s) = 0$ are exactly representable by linear features. Despite exact representability, semi-gradient TD(0) under off-policy behavior policy diverges exponentially. Even DP semi-gradient expected updates diverge, proving that randomness/noise is not the cause—the cause is non-contraction under off-policy sampling.
 
-#### 3. Tsitsiklis & Van Roy Counterexample (*1997*)
+##### C. Tsitsiklis & Van Roy Counterexample (*1997*)
 Showed that even using full least-squares projection (Least Squares TD / LSTD) at each step diverges under off-policy sampling:
 $$ w_k = \left( \frac{6 - 4\epsilon}{5} \gamma \right)^k w_0 \to \infty \quad \text{for } \gamma > 0.5 $$
 
----
-
-### 9.5 The Mean Squared Bellman Error (MSBE) & Gradient TD Algorithms
+#### 5. The Mean Squared Bellman Error (MSBE) & Gradient TD Algorithms
 
 *Reference: Sutton, R. S., & Barto, A. G. (2018). Reinforcement Learning: An Introduction. Chapter 11, Section 11.4: "The Mean Squared Bellman Error" (pp. 268-275).*
 
@@ -975,12 +1064,12 @@ When linear semi-gradient TD(0) fails under off-policy distributions (the Deadly
 
 ![MSBE and Gradient TD Architecture](images/msbe_gradient_td.svg)
 
-#### 1. Mathematical Definition of MSBE
+##### Mathematical Definition of MSBE
 Let $B_\pi \hat{v}_{\mathbf{w}} = R^\pi + \gamma P^\pi \hat{v}_{\mathbf{w}}$ be the Bellman expectation operator. The **Mean Squared Bellman Error** ($MSBE(\mathbf{w})$) measures the squared norm of the Bellman error vector across states, weighted by distribution $\mu(s)$:
 
 $$ MSBE(\mathbf{w}) \doteq \| B_\pi \hat{v}_{\mathbf{w}} - \hat{v}_{\mathbf{w}} \|_\mu^2 = \sum_{s \in \mathcal{S}} \mu(s) \left( \mathbb{E}_\pi \left[ R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w}) \mid S_t = s \right] - \hat{v}(s, \mathbf{w}) \right)^2 $$
 
-#### 2. Comparative Analysis of Error Objectives in Function Approximation
+##### Comparative Analysis of Error Objectives in Function Approximation
 Understanding how MSBE differs from other value function approximation error metrics is fundamental to RL theory:
 
 | Error Objective | Name | Mathematical Definition | Computation / Estimation Property | Key Advantages & Disadvantages |
@@ -990,7 +1079,7 @@ Understanding how MSBE differs from other value function approximation error met
 | **$MSPBE(\mathbf{w})$** | **Mean Squared Projected Bellman Error** | $\| \Pi B_\pi \hat{v}_{\mathbf{w}} - \hat{v}_{\mathbf{w}} \|_\mu^2$ | Projects Bellman target onto representable feature subspace $V_{\mathcal{F}}$. | Minimized at the TD Fixed Point $\mathbf{w}_\infty = \mathbf{A}^{-1}\mathbf{b}$; solvable with single-sample Gradient TD (GTD2 / TDC). |
 | **$PBE(\mathbf{w})$** | **Projected Bellman Error** | $\Pi B_\pi \hat{v}_{\mathbf{w}} - \hat{v}_{\mathbf{w}}$ | Vector residual of projected Bellman target. | Equal to $\mathbf{0}$ at convergence ($\mathbf{w} = \mathbf{w}_\infty$). |
 
-#### 3. Deriving the Gradient of MSBE & The Double-Sample Obstacle
+##### Deriving the Gradient of MSBE & The Double-Sample Obstacle
 Differentiating $MSBE(\mathbf{w})$ with respect to parameter vector $\mathbf{w}$:
 
 $$ \nabla_{\mathbf{w}} MSBE(\mathbf{w}) = -2 \sum_{s \in \mathcal{S}} \mu(s) \left( \mathbb{E}_\pi [R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w}) \mid S_t = s] - \hat{v}(s, \mathbf{w}) \right) \nabla_{\mathbf{w}} \left( \mathbb{E}_\pi [R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w})] - \hat{v}(s, \mathbf{w}) \right) $$
@@ -1002,24 +1091,22 @@ $$ \nabla_{\mathbf{w}} MSBE(\mathbf{w}) = -2 \, \mathbb{E}_{d_b} \left[ \delta_t
 * **The Double-Sample Obstacle:** Notice that $\nabla_{\mathbf{w}} MSBE(\mathbf{w})$ is the **product of two expectations**: $\mathbb{E}[\delta_t \mathbf{x}_t] \times \mathbb{E}[\gamma \mathbf{x}_{t+1} - \mathbf{x}_t]^T$.  
   To form an unbiased sample estimate of a product of expectations $\mathbb{E}[X] \cdot \mathbb{E}[Y]$, we need two independent random samples of the transition $S_t \to S_{t+1}^{(1)}$ and $S_t \to S_{t+1}^{(2)}$ from the *exact same state $S_t$*. In single-trajectory model-free RL, we only observe one transition $S_t \to S_{t+1}$, making a naive stochastic gradient update biased!
 
-#### 4. Resolution via Gradient TD Dual-Weight Architecture (GTD2 & TDC)
+##### Resolution via Gradient TD Dual-Weight Architecture (GTD2 & TDC)
 Gradient TD algorithms (Sutton et al., 2009) resolve the double-sample obstacle by introducing a **secondary auxiliary weight vector** $\mathbf{v} \in \mathbb{R}^d$ that acts as a memory filter to track $\mathbf{v} \approx \mathbb{E}[\delta_t \mathbf{x}_t]$.
 
-##### GTD2 (Gradient TD 2)
+###### GTD2 (Gradient TD 2)
 GTD2 performs true stochastic gradient descent on MSPBE, updating dual weight vectors $(\mathbf{w}, \mathbf{v})$ at every step:
 $$ \mathbf{w}_{t+1} = \mathbf{w}_t + \alpha \rho_t (\mathbf{x}_t - \gamma \mathbf{x}_{t+1}) (\mathbf{x}_t^T \mathbf{v}_t) $$
 $$ \mathbf{v}_{t+1} = \mathbf{v}_t + \beta \rho_t (\delta_t - \mathbf{x}_t^T \mathbf{v}_t) \mathbf{x}_t $$
 
-##### TDC (TD with Correction / GTD0)
+###### TDC (TD with Correction / GTD0)
 TDC splits the MSBE gradient into a standard semi-gradient TD update plus an explicit correction term:
 $$ \mathbf{w}_{t+1} = \mathbf{w}_t + \alpha \rho_t \delta_t \mathbf{x}_t - \alpha \gamma \rho_t \mathbf{x}_{t+1} (\mathbf{x}_t^T \mathbf{v}_t) $$
 $$ \mathbf{v}_{t+1} = \mathbf{v}_t + \beta \rho_t (\delta_t - \mathbf{x}_t^T \mathbf{v}_t) \mathbf{x}_t $$
 
 * **Guaranteed Convergence:** Both GTD2 and TDC are mathematically proven to converge to the TD fixed point $\mathbf{w}_\infty$ under any off-policy behavior distribution, completely eliminating the Deadly Triad divergence risk!
 
----
-
-### 9.6 Algorithmic Mitigations in Modern Deep RL
+#### 6. Algorithmic Mitigations in Modern Deep RL
 
 How do modern algorithms prevent Deadly Triad divergence in deep neural networks?
 
@@ -1033,117 +1120,272 @@ How do modern algorithms prevent Deadly Triad divergence in deep neural networks
    Instead of semi-gradients, GTD algorithms perform **true gradient descent** on the Mean Squared Bellman Error ($MSBE(\mathbf{w}) = \|B_\pi \hat{v}_{\mathbf{w}} - \hat{v}_{\mathbf{w}}\|_\mu^2$). They introduce a secondary weight vector $\mathbf{v} \in \mathbb{R}^d$ to track $\mathbf{v} \approx \mathbb{E}[\delta_t \mathbf{x}_t]$, resolving the double-sample obstacle and guaranteeing convergence under any off-policy distribution.
 
 4. **Emphatic TD (ETD):**  
-   Re-weights semi-gradient TD updates using an emphasis weight $F_t = \rho_t F_{t-1} + i(S_t)$. This re-weighting warps the off-policy update distribution back into a matrix $\mathbf{A}_{ETD}$ that is guaranteed positive definite, restoring contraction mapping guarantees.
+   Re-weights semi-gradient TD updates using an emphasis weight $F_t = \rho_t F_{t-1} + i(S_t)$. This re-weighting warps the off-policy update distribution back into a matrix $\mathbf{A}_{ETD}$ that is guaranteed positive definite, restoring contraction guarantees.
 
 5. **Averagers:**  
    Non-parametric function approximators (e.g., $k$-nearest neighbors, locally weighted regression) where predictions are convex combinations of stored targets ($\hat{v}(s) = \sum_i w_i Y_i$ with $\sum w_i = 1$). Averagers inherently satisfy the non-expansion property $\|B \hat{v}\|_\infty \le \|\hat{v}\|_\infty$, guaranteeing absolute stability even with bootstrapping and off-policy data.
 
----
+#### 7. Real-World Industry Case Studies
 
-### 9.7 Real-World Industry Case Studies
-
-#### 1. Healthcare: Offline Clinical Treatment Policy Evaluation
+##### A. Healthcare: Offline Clinical Treatment Policy Evaluation
 * **Scenario:** Recommending medication dosages from historical Intensive Care Unit (ICU) patient records (e.g., MIMIC-III database).
 * **Deadly Triad Risk:** Retrospective clinical data is strictly **off-policy** (collected by human doctors). Value function neural networks (**function approximation**) combined with TD bootstrapping (**bootstrapping**) can cause Q-values for untested drug dosages to explode, falsely predicting high survival rates for dangerous drug combinations.
 * **Mitigation:** Healthcare systems use **Decision Transformers** (no bootstrapping) or **Off-Policy Importance Sampling with Target Networks**, enforcing safe policy constraints to ensure clinical safety.
 
-#### 2. Autonomous Driving Fleet Data Reuse
+##### B. Autonomous Driving Fleet Data Reuse
 * **Scenario:** Training a central autonomous steering network using off-policy driving logs collected by thousands of human drivers.
 * **Deadly Triad Risk:** Off-policy human trajectories combined with continuous Q-function approximators (SAC/DDPG) cause severe value overestimation on rare driving edge cases (e.g. near-collision trajectories).
 * **Mitigation:** Companies use **Experience Replay Buffers** combined with **Double Q-learning (Clipping target Q-values $\min(Q_1, Q_2)$)** and **Conservative Q-Learning (CQL)** to penalize out-of-distribution actions.
 
-#### 3. Algorithmic High-Frequency Financial Trading
+##### C. Algorithmic High-Frequency Financial Trading
 * **Scenario:** Training an automated trading agent on historical limit order book datasets to execute stock trades.
 * **Deadly Triad Risk:** High-frequency market logs represent off-policy data. Standard Q-learning with deep NNs often predicts infinite arbitrage returns due to value divergence on rare market volatility spikes.
 * **Mitigation:** Financial RL pipelines employ **Gradient TD (GTD2 / TDC)** algorithms and **Emphatic TD**, guaranteeing convergence of value estimates regardless of historical market regime shifts.
 
 ---
 
-## 10. Real-World Applications & Algorithm Selection Guide
+### 12.2 Linear Action-Value Approximation & Semi-Gradient SARSA Dynamics
 
-Choosing the right reinforcement learning algorithm depends on specific environment constraints: whether an environment model $P(s'\mid s,a)$ is known, whether the action space is discrete or continuous, sample efficiency requirements, safety/cost of real-world trial-and-error, and availability of expert demonstrations.
+Having established system stability guarantees under function approximation, we now examine the exact step-by-step weight updates of linear action-value approximators during on-policy execution.
 
-### 10.1 Comprehensive Algorithm Selection Matrix
+![Linear Semi-Gradient SARSA Dynamics](images/sarsa_msbe_concept.svg)
 
-The table below outlines when to use each algorithm, why to select it over alternatives, its primary real-world application domains, and key limitations:
+#### 1. Comprehensive Theory & Mathematical Foundation
+In continuous state-action spaces where state-action pairs $(s,a)$ cannot be represented as discrete lookup tables, we parameterize the action-value function linearly using a $d$-dimensional parameter vector $\mathbf{w} = [w_1, w_2, \dots, w_d]^T \in \mathbb{R}^d$ and feature mapping $\mathbf{x}(s,a) = [x_1(s,a), x_2(s,a), \dots, x_d(s,a)]^T \in \mathbb{R}^d$:
 
-| Algorithm / Family | Environment Model Requirement | Action & State Space | When to Use (Ideal Scenarios) | Why Choose This Model? (Key Advantage) | Primary Real-World Applications | Key Limitations |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Dynamic Programming (DP)** (Policy / Value Iteration) | **Known & Full** $P(s'\mid s,a)$ | Small Discrete | Complete transition dynamics & reward functions are known upfront; small state spaces. | Exact mathematical convergence guarantees with zero sample variance. | Traffic light signal optimization in grid networks, small inventory management, manufacturing scheduling. | Suffers from the "Curse of Dimensionality"; fails in large or continuous state spaces or model-free settings. |
-| **Monte Carlo (MC)** | **Model-Free** | Discrete or Low-Dim Continuous | Episodic tasks with clear termination where full episode trajectories can be simulated without a model. | Simple to implement, unbiased return estimates, requires no bootstrapping or initial value estimates. | Blackjack/Poker strategy evaluation, episodic board games, customer churn intervention policies. | High variance; only works on episodic tasks; slow convergence due to delayed parameter updates. |
-| **SARSA** (On-Policy TD) | **Model-Free** | Discrete / Function Approximated | Environments where safety during exploration is paramount and the agent must evaluate the current (imperfect) policy. | On-policy updating avoids aggressive risky moves during learning by accounting for exploration noise ($\epsilon$). | Robot navigation avoiding physical hazards during training, safe automated HVAC control, power grid balancing. | Slower convergence than off-policy methods; conservative optimal policy. |
-| **Q-Learning / DQN / DDQN** | **Model-Free** | Discrete Action, High-Dim State (Pixels) | Complex perception environments (e.g., screen pixels) with discrete controls where off-policy data reuse is key. | Highly sample-efficient via Replay Buffers; learns the optimal action-value function directly. | Video games (Atari), discrete resource allocation, automated stock trading (buy/sell/hold), web ad targeting. | Fails on continuous action spaces; susceptible to Q-value overestimation (mitigated by DDQN); unstable with non-stationary data. |
-| **REINFORCE** | **Model-Free** | Continuous or Discrete | Simple policy-based control tasks where direct action distributions are preferred over value functions. | Directly optimizes policy parameters $\theta$; handles continuous action distributions naturally. | Basic robotics joint torque control, simple automated parameter tuning, small recommendation systems. | High variance in gradient estimates; low sample efficiency; prone to local optima collapse. |
-| **REINFORCE with Baseline** | **Model-Free** | Continuous or Discrete | Tasks where standard REINFORCE is too noisy/unstable but value-function bootstrapping is undesirable. | Subtracting a state-value baseline $V(s)$ dramatically reduces gradient variance without introducing bias. | Basic continuous robotic control, early automated dialogue policy learning, simple drone stabilization. | Still requires full episode trajectory rollouts before updating; sample inefficient. |
-| **Actor-Critic (TD-based)** | **Model-Free** | Continuous or Discrete | Online/real-time learning tasks requiring low variance and step-by-step updates without waiting for episode completion. | Combines policy gradients (Actor) with TD bootstrapping (Critic) for low variance and online updates. | Real-time industrial process control, network packet routing, continuous robotic arm manipulation. | Critic bias can destabilize actor updates if value function approximator is inaccurate. |
-| **A2C / A3C** (Advantage Actor-Critic) | **Model-Free** | Continuous or Discrete | High-throughput training leveraging parallel environment sampling on multi-core CPUs/GPUs. | Synchronous/asynchronous parallel workers decorrelate environment samples and stabilize policy gradients. | Autonomous driving simulators, complex multi-agent simulations, game AI (StarCraft micro, Mujoco locomotion). | High computational infrastructure requirement; sensitive to learning rate tuning. |
-| **PPO / TRPO** | **Model-Free** | Continuous or Discrete | Complex real-world continuous control or fine-tuning tasks where training stability and safety are critical. | Trust region constraints (TRPO) or clipped surrogate objectives (PPO) prevent catastrophic policy collapse. | **RLHF in LLMs** (ChatGPT, Claude), bipedal robotics, autonomous flight control, complex locomotion. | TRPO is computationally heavy (matrix inversions); PPO requires careful hyperparameter tuning (clip threshold $\epsilon$). |
-| **DDPG / SAC** | **Model-Free** | High-Dim Continuous Actions | Continuous robotic control requiring maximum sample efficiency through off-policy replay. | DDPG uses deterministic policy gradients; SAC incorporates entropy maximization for robust exploration. | Dexterous robotic hand manipulation, autonomous vehicle steering/braking, continuous industrial assembly line control. | DDPG can be hyper-sensitive to hyperparameters; SAC requires tuning the entropy temperature $\alpha$. |
-| **MCTS** (Monte Carlo Tree Search) | **Known Simulator** | High Branching Discrete | Perfect-information decision trees with massive branching factors where exhaustive minimax search fails. | Heuristic-free tree expansion focusing only on high-UCT branches via Monte Carlo rollouts. | Chess, Go (AlphaGo), Shogi, tactical route planning, chemical synthesis pathway discovery. | High computational cost at decision time; requires a fast, accurate environment simulator. |
-| **AlphaZero / MuZero** | **Known Rules (AlphaZero) / Learned Latent Dynamics (MuZero)** | High-Dim Discrete / Continuous | Superhuman game playing or complex planning tasks where environment dynamics are unknown or hard to code. | Plans entirely in latent space (MuZero) without rule definitions; unifies search with deep learning representation. | Superhuman board games, Atari without rules, video compression optimization (YouTube/VP9), TPU floorplanning. | Extremely compute-intensive to train (thousands of GPU/TPU hours); complex black-box architecture. |
-| **Imitation Learning (BC / DAgger / GAIL)** | **Model-Free** (Requires Expert Demos) | Continuous or Discrete | Tasks where defining an explicit mathematical reward function $R(s,a)$ is difficult or dangerous. | Bypasses reward engineering by learning directly from expert trajectories or adversarial discriminators. | Autonomous vehicle driving (end-to-end steering), surgical robotics teleoperation, LLM Supervised Fine-Tuning (SFT). | BC suffers from covariate shift; DAgger requires interactive human experts; GAIL has adversarial GAN training instability. |
-| **Decision Transformers (DT)** | **Offline Data** (No Simulator Needed) | Continuous or Discrete | Offline RL scenarios where environment exploration is forbidden, but large static trajectory datasets exist. | Casts RL as sequence modeling; avoids Bellman bootstrapping instabilities on out-of-distribution offline data. | Clinical treatment recommendation from electronic health records, offline industrial log optimization, trajectory generation. | Cannot discover novel strategies beyond training dataset distribution; inferencing transformers can be slow. |
+$$ \hat{q}(s, a, \mathbf{w}) \doteq \mathbf{w}^T \mathbf{x}(s, a) = \sum_{i=1}^d w_i x_i(s, a) = w_1 x_1(s,a) + w_2 x_2(s,a) + \dots + w_d x_d(s,a) $$
 
----
+##### Derivation of the Gradient $\nabla_{\mathbf{w}} \hat{q}(s,a,\mathbf{w}) = \mathbf{x}(s,a)$
+Taking the gradient vector of $\hat{q}(s,a,\mathbf{w})$ with respect to parameter vector $\mathbf{w}$ requires computing the partial derivative with respect to each component $w_j$:
 
-### 10.2 Real-World Application Case Studies
+$$ \frac{\partial \hat{q}(s,a,\mathbf{w})}{\partial w_j} = \frac{\partial}{\partial w_j} \left( \sum_{i=1}^d w_i x_i(s,a) \right) = \frac{\partial}{\partial w_j} \left( w_1 x_1(s,a) + \dots + w_j x_j(s,a) + \dots + w_d x_d(s,a) \right) $$
 
-#### 1. Autonomous Driving & Robotics
-* **Primary Methods:** SAC, PPO, DAgger, GAIL.
-* **Why:** Autonomous vehicles cannot use random exploration in the real world due to safety risks. They combine **Behavior Cloning / DAgger** on human driving datasets for initial steering control, followed by **PPO/SAC** in high-fidelity simulators (CARLA) with clipped updates to ensure smooth, stable maneuvers.
+Since feature vector components $x_i(s,a)$ are fixed numbers for state-action pair $(s,a)$ and do not depend on $\mathbf{w}$, the derivative of all terms $i \ne j$ is zero:
 
-#### 2. Large Language Model Alignment (RLHF / RLAIF)
-* **Primary Methods:** PPO, DPO (Direct Preference Optimization), Decision Transformers.
-* **Why:** Human preferences cannot be captured by a simple closed-form reward function. First, **Behavior Cloning (SFT)** initializes the language model on expert responses. Then, a Reward Model is trained on human pairwise rankings. Finally, **PPO** optimizes the LLM to maximize predicted human approval while using a KL penalty to prevent the model from drifting too far from its original language capabilities.
+$$ \frac{\partial \hat{q}(s,a,\mathbf{w})}{\partial w_j} = x_j(s,a) $$
 
-#### 3. Game AI & Strategic Decision Making
-* **Primary Methods:** MCTS, AlphaZero, MuZero, A2C/PPO.
-* **Why:** Games like Go or Chess feature immense search spaces where evaluation heuristics fail. **AlphaZero** uses MCTS guided by neural network policy/value heads to achieve superhuman play without human bias, while **MuZero** extends this to pixel-based Atari games by learning environment dynamics implicitly in a latent vector space.
+Stacking all $d$ partial derivatives into a column vector yields the gradient:
 
----
+$$ \nabla_{\mathbf{w}} \hat{q}(s, a, \mathbf{w}) \doteq \begin{bmatrix} \frac{\partial \hat{q}}{\partial w_1} \\ \frac{\partial \hat{q}}{\partial w_2} \\ \vdots \\ \frac{\partial \hat{q}}{\partial w_d} \end{bmatrix} = \begin{bmatrix} x_1(s,a) \\ x_2(s,a) \\ \vdots \\ x_d(s,a) \end{bmatrix} = \mathbf{x}(s,a) $$
 
-## 11. Multimedia Resources & Audio-Visual Materials
+Evaluating at current state-action pair $(S_t, A_t)$:
+$$ \nabla_{\mathbf{w}} \hat{q}(S_t, A_t, \mathbf{w}_t) = \mathbf{x}(S_t, A_t) $$
 
-This section provides interactive audio podcasts, video walkthroughs, and presentation materials for Monte Carlo Tree Search (MCTS) and advanced combined methods.
+##### Semi-Gradient Update Step
+When an agent interacts with an environment on-policy, executing transition tuple $(S_t, A_t, R_{t+1}, S_{t+1}, A_{t+1})$, the Temporal Difference (TD) target $U_t$ is constructed using the bootstrapped estimate of the next state-action pair:
 
-### 11.1 Audio Podcast: Deep Dive into MCTS
-Listen to an in-depth audio discussion exploring the mechanics of Monte Carlo Tree Search, UCT selection, and its integration with deep neural networks.
+$$ U_t^{SARSA} \doteq R_{t+1} + \gamma \hat{q}(S_{t+1}, A_{t+1}, \mathbf{w}_t) $$
 
-<audio controls style="width: 100%; margin-top: 10px; margin-bottom: 10px;">
-  <source src="./assets/policy-gradient-methods-podcast.m4a" type="audio/mp4">
-  Your browser does not support the audio element.
-</audio>
+The semi-gradient SARSA weight update modifies $\mathbf{w}_t$ in the direction of the gradient of the predicted value:
 
-* **Direct Link / Download:** [policy gradient methods podcast](./assets/policy-gradient-methods-podcast.m4a)
+$$ \mathbf{w}_{t+1} = \mathbf{w}_t + \alpha \left[ U_t^{SARSA} - \hat{q}(S_t, A_t, \mathbf{w}_t) \right] \nabla_{\mathbf{w}} \hat{q}(S_t, A_t, \mathbf{w}_t) = \mathbf{w}_t + \alpha \delta_t \mathbf{x}(S_t, A_t) $$
 
----
+where $\delta_t = U_t^{SARSA} - \hat{q}(S_t, A_t, \mathbf{w}_t)$ is the scalar TD error.
 
-### 11.2 Video Lectures & Visualizations
+#### 2. Pedagogical Numerical Problem & Step-by-Step Solution
 
-#### 1. Monte Carlo Tree Search Overview MCTS
-A comprehensive video presentation covering the four MCTS phases (Selection, Expansion, Simulation, Backpropagation) and rollout heuristics.
+**Problem Scenario:**  
+Consider a robotic continuous control task where the action-value function is linearly parameterized by a 3-dimensional weight vector $\mathbf{w}_0 = [0.8000, -0.1000, 0.4000]^T$. The agent uses discount factor $\gamma = 0.90$ and step size $\alpha = 0.15$.
 
-<video src="./assets/Monte_Carlo_Tree_Search.mp4" controls width="100%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 10px; margin-bottom: 10px;"></video>
+During execution, the agent collects an on-policy SARSA transition $(S_t, A_t, R_{t+1}, S_{t+1}, A_{t+1})$ with the following observed values:
+* Current state-action feature vector: $\mathbf{x}(S_t, A_t) = [0.5000, 1.0000, 0.0000]^T$
+* Immediate scalar reward: $R_{t+1} = +2.5000$
+* Next state-action feature vector: $\mathbf{x}(S_{t+1}, A_{t+1}) = [0.0000, 0.5000, 1.0000]^T$
 
-* **Direct Link / Download:** [Monte Carlo Tree Search Video (`Monte_Carlo_Tree_Search.mp4`)](./assets/Monte_Carlo_Tree_Search.mp4)
+**Detailed Step-by-Step Solution:**
+
+1. **Calculate Action-Value Predictions:**
+   - $\hat{q}(S_t, A_t, \mathbf{w}_0) = \mathbf{w}_0^T \mathbf{x}(S_t, A_t) = (0.8000)(0.5000) + (-0.1000)(1.0000) + (0.4000)(0.0000) = 0.4000 - 0.1000 = \mathbf{0.3000}$
+   - $\hat{q}(S_{t+1}, A_{t+1}, \mathbf{w}_0) = \mathbf{w}_0^T \mathbf{x}(S_{t+1}, A_{t+1}) = (0.8000)(0.0000) + (-0.1000)(0.5000) + (0.4000)(1.0000) = -0.0500 + 0.4000 = \mathbf{0.3500}$
+
+2. **Compute SARSA Target $U_t$ and Semi-Gradient TD Error $\delta_t$:**
+   - $U_t^{SARSA} = R_{t+1} + \gamma \hat{q}(S_{t+1}, A_{t+1}, \mathbf{w}_0) = 2.5000 + 0.90(0.3500) = 2.5000 + 0.3150 = \mathbf{2.8150}$
+   - $\delta_t = U_t^{SARSA} - \hat{q}(S_t, A_t, \mathbf{w}_0) = 2.8150 - 0.3000 = \mathbf{+2.5150}$
+
+3. **Compute Updated Parameter Vector $\mathbf{w}_1$:**
+   - Gradient: $\nabla_{\mathbf{w}} \hat{q}(S_t, A_t, \mathbf{w}_0) = \mathbf{x}(S_t, A_t) = [0.5000, 1.0000, 0.0000]^T$
+   - $\mathbf{w}_1 = \mathbf{w}_0 + \alpha \delta_t \mathbf{x}(S_t, A_t) = \begin{bmatrix} 0.8000 \\ -0.1000 \\ 0.4000 \end{bmatrix} + 0.15(+2.5150) \begin{bmatrix} 0.5000 \\ 1.0000 \\ 0.0000 \end{bmatrix}$
+   - $\mathbf{w}_1 = \begin{bmatrix} 0.8000 \\ -0.1000 \\ 0.4000 \end{bmatrix} + \begin{bmatrix} 0.188625 \\ 0.377250 \\ 0.000000 \end{bmatrix} = \mathbf{\begin{bmatrix} 0.9886 \\ 0.2773 \\ 0.4000 \end{bmatrix}}$
 
 ---
 
-### 11.3 Presentation Deck
-* **Direct Link / Download:** [Illuminating MCTS Presentation Deck (`Illuminating_MCTS.pptx`)](./assets/Illuminating_MCTS.pptx)
+### 12.3 Non-Linear Basis Representations & Deep Q-Learning Stability
 
+Moving from linear approximators to non-linear state representations, continuous environments utilize Gaussian Radial Basis Functions (RBFs) and Deep Neural Networks.
+
+![Gaussian RBF Features & DQN Stability](images/rbf_dqn_concept.svg)
+
+#### 1. Comprehensive Theory & Mathematical Foundation
+
+##### Gaussian Radial Basis Functions (RBFs)
+For continuous state spaces $s \in \mathbb{R}$, non-linear feature maps $\mathbf{x}(s) = [\phi_1(s), \phi_2(s), \dots, \phi_k(s)]^T$ can be constructed using Gaussian kernels:
+
+$$ \phi_i(s) \doteq \exp\left( -\frac{(s - c_i)^2}{2\sigma^2} \right) $$
+
+where $c_i$ is the center of the $i$-th basis function and $\sigma$ is the shared bandwidth parameter.
+* **Bandwidth Mechanics:**
+  - *Narrow Bandwidth ($\sigma \to 0$):* Activations become highly localized delta-like peaks. Features do not overlap, causing the approximator to behave like a discrete lookup table (zero generalization, maximum state discrimination).
+  - *Wide Bandwidth ($\sigma \to \infty$):* Activations flatten into broad constants ($\phi_i(s) \approx 1$). Overlapping features cause updates at state $s$ to affect distant states equally (maximum generalization, zero state discrimination).
+
+##### Deep Q-Network (DQN) Stabilization Architecture
+Deep neural networks violate linear convergence guarantees when combined with Temporal Difference bootstrapping. DQN resolves divergence using two core innovations:
+1. **Experience Replay Buffer ($\mathcal{D}$):** Storing past transition tuples $(S_t, A_t, R_{t+1}, S_{t+1})$ in a large circular memory buffer and sampling uniform mini-batches breaks temporal correlations between consecutive steps, satisfying the independent and identically distributed (i.i.d.) assumption of stochastic gradient descent.
+2. **Target Network ($\mathbf{w}^-$):** Periodically freezing target network parameters $\mathbf{w}^-$ for $C$ environment steps isolates the target $Y_t^{DQN} = R_{t+1} + \gamma \max_{a'} \hat{q}(S_{t+1}, a', \mathbf{w}^-)$ from current weight updates $\mathbf{w}$, converting non-stationary target chasing into a stable stationary regression problem.
+
+#### 2. Pedagogical Numerical Problem & Step-by-Step Solution
+
+**Problem Scenario:**  
+Consider a 1D continuous state space $s \in [-3.0, +3.0]$. State features are extracted using a 2D Gaussian RBF feature vector $\mathbf{x}(s) = [\phi_1(s), \phi_2(s)]^T$ centered at $c_1 = -1.5000$ and $c_2 = +1.5000$ with fixed bandwidth $\sigma = 1.5000$.
+
+Calculate the exact numerical feature vector representations $\mathbf{x}(s)$ for three evaluation states:
+1. $s_A = -1.5000$
+2. $s_B = 0.0000$
+3. $s_C = +1.5000$
+
+**Detailed Step-by-Step Solution:**
+
+General formula: $\phi_i(s) = \exp\left(-\frac{(s - c_i)^2}{2(1.5)^2}\right) = \exp\left(-\frac{(s - c_i)^2}{4.5}\right)$
+
+1. **State $s_A = -1.5000$:**
+   - $\phi_1(-1.5) = \exp\left(-\frac{(-1.5 - (-1.5))^2}{4.5}\right) = \exp(0) = 1.0000$
+   - $\phi_2(-1.5) = \exp\left(-\frac{(-1.5 - 1.5)^2}{4.5}\right) = \exp\left(-\frac{9.0}{4.5}\right) = \exp(-2.0) = 0.1353$
+   - $\mathbf{x}(s_A) = \mathbf{\begin{bmatrix} 1.0000 \\ 0.1353 \end{bmatrix}}$
+
+2. **State $s_B = 0.0000$:**
+   - $\phi_1(0.0) = \exp\left(-\frac{(0.0 - (-1.5))^2}{4.5}\right) = \exp\left(-\frac{2.25}{4.5}\right) = \exp(-0.5) = 0.6065$
+   - $\phi_2(0.0) = \exp\left(-\frac{(0.0 - 1.5)^2}{4.5}\right) = \exp\left(-\frac{2.25}{4.5}\right) = \exp(-0.5) = 0.6065$
+   - $\mathbf{x}(s_B) = \mathbf{\begin{bmatrix} 0.6065 \\ 0.6065 \end{bmatrix}}$
+
+3. **State $s_C = +1.5000$:**
+   - $\phi_1(+1.5) = \exp\left(-\frac{(1.5 - (-1.5))^2}{4.5}\right) = \exp(-2.0) = 0.1353$
+   - $\phi_2(+1.5) = \exp\left(-\frac{(1.5 - 1.5)^2}{4.5}\right) = \exp(0) = 1.0000$
+   - $\mathbf{x}(s_C) = \mathbf{\begin{bmatrix} 0.1353 \\ 1.0000 \end{bmatrix}}$
 
 ---
 
-## Practice Exercises
+### 12.4 Natural Policy Gradients & Sigmoid Policy Score Mechanics
 
-Test your understanding of MCTS, AlphaGo/AlphaZero/MuZero, and Imitation Learning (including IRL and GAIL) with these exercises:
+Having analyzed value-based approximation, we turn to direct policy optimization, parameterizing policy distributions and taking steepest ascent steps along Riemannian metrics.
 
-- [Multiple Choice Questions (MCQs)](./assets/questions/mcqs.md)
-- [Subjective Questions](./assets/questions/subjective.md)
-- [Numerical Questions](./assets/questions/numericals.md)
-- [Programming Questions](./assets/questions/programming.md)
+![Natural Policy Gradients & Sigmoid Score](images/natural_pg_concept.svg)
 
-*Solutions can be found in the [assets/questions/solutions/](./assets/questions/solutions/) folder.*
+#### 1. Comprehensive Theory & Mathematical Foundation
 
+##### Fisher Information Matrix & Riemannian Policy Geometry
+Standard policy gradient updates $\theta_{t+1} = \theta_t + \alpha \nabla_\theta J(\theta)$ perform steepest ascent in Euclidean parameter space $\mathbb{R}^d$. However, equal steps in parameter space $\|d\theta\|_2$ can cause drastically unequal shifts in the resulting policy probability distribution $\pi_\theta$.
+
+The **Fisher Information Matrix (FIM)** $F(\theta) \in \mathbb{R}^{d \times d}$ acts as the Riemannian metric tensor measuring local KL divergence distance between policy distributions:
+
+$$ F(\theta) \doteq \mathbb{E}_{s \sim d^\pi, a \sim \pi_\theta} \left[ \nabla_\theta \ln \pi_\theta(a \mid s) \left( \nabla_\theta \ln \pi_\theta(a \mid s) \right)^T \right] $$
+
+$$ D_{KL}(\pi_\theta \parallel \pi_{\theta + d\theta}) \approx \frac{1}{2} d\theta^T F(\theta) d\theta $$
+
+The **Natural Policy Gradient** $\tilde{\nabla}_\theta J(\theta)$ solves for steepest ascent under a fixed KL divergence constraint, yielding:
+
+$$ \tilde{\nabla}_\theta J(\theta) \doteq F(\theta)^{-1} \nabla_\theta J(\theta) \implies \theta_{t+1} = \theta_t + \alpha F(\theta_t)^{-1} \nabla_\theta J(\theta_t) $$
+
+Natural policy gradients are **invariant to non-linear coordinate reparameterizations** of $\theta$, ensuring smooth policy updates regardless of parameter scaling.
+
+##### Sigmoid Policy Score Function Derivation
+For a discrete binary action space $\mathcal{A} = \{a_1, a_2\}$, a policy can be parameterized by scalar $\theta \in \mathbb{R}$ via the sigmoid activation function:
+
+$$ \pi_\theta(a_1) = \sigma(\theta) = \frac{1}{1 + e^{-\theta}}, \quad \pi_\theta(a_2) = 1 - \pi_\theta(a_1) = \frac{e^{-\theta}}{1 + e^{-\theta}} $$
+
+The derivative of the sigmoid function is $\sigma'(\theta) = \sigma(\theta)(1 - \sigma(\theta)) = \pi_\theta(a_1)(1 - \pi_\theta(a_1))$.
+
+* **Score Function for $a_1$:**  
+  $$ \nabla_\theta \ln \pi_\theta(a_1) = \frac{1}{\pi_\theta(a_1)} \nabla_\theta \pi_\theta(a_1) = \frac{\pi_\theta(a_1)(1 - \pi_\theta(a_1))}{\pi_\theta(a_1)} = \mathbf{1 - \pi_\theta(a_1)} $$
+
+* **Score Function for $a_2$:**  
+  $$ \nabla_\theta \ln \pi_\theta(a_2) = \frac{1}{1 - \pi_\theta(a_1)} \left( -\nabla_\theta \pi_\theta(a_1) \right) = \frac{-\pi_\theta(a_1)(1 - \pi_\theta(a_1))}{1 - \pi_\theta(a_1)} = \mathbf{-\pi_\theta(a_1)} $$
+
+#### 2. Pedagogical Numerical Problem & Step-by-Step Solution
+
+**Problem Scenario:**  
+Consider an agent optimizing a sigmoid policy over action space $\mathcal{A} = \{a_1, a_2\}$ with initial parameter $\theta_0 = +0.4055$.  
+Note that $\sigma(0.4055) \approx 0.6000 \implies \pi_{\theta_0}(a_1) = 0.6000$ and $\pi_{\theta_0}(a_2) = 0.4000$.
+
+The agent observes empirical trajectory returns $G(a_1) = +5.0000$ and $G(a_2) = +2.0000$. The learning rate is $\alpha = 0.10$.
+
+Calculate:
+1. Numerical score function values $\nabla_\theta \ln \pi_{\theta_0}(a_1)$ and $\nabla_\theta \ln \pi_{\theta_0}(a_2)$.
+2. Expected policy gradient $\nabla_\theta J(\theta_0)$.
+3. Updated policy parameter $\theta_1$.
+
+**Detailed Step-by-Step Solution:**
+
+1. **Evaluate Score Functions at $\theta_0$:**
+   - $\nabla_\theta \ln \pi_{\theta_0}(a_1) = 1 - \pi_{\theta_0}(a_1) = 1 - 0.6000 = \mathbf{+0.4000}$
+   - $\nabla_\theta \ln \pi_{\theta_0}(a_2) = -\pi_{\theta_0}(a_1) = \mathbf{-0.6000}$
+
+2. **Compute Expected Policy Gradient $\nabla_\theta J(\theta_0)$:**
+   - $\nabla_\theta J(\theta_0) = \sum_{a \in \mathcal{A}} \pi_{\theta_0}(a) \nabla_\theta \ln \pi_{\theta_0}(a) G(a)$
+   - $\nabla_\theta J(\theta_0) = \pi(a_1) \left[ \nabla_\theta \ln \pi(a_1) G(a_1) \right] + \pi(a_2) \left[ \nabla_\theta \ln \pi(a_2) G(a_2) \right]$
+   - $\nabla_\theta J(\theta_0) = 0.6000 [(+0.4000)(+5.0000)] + 0.4000 [(-0.6000)(+2.0000)]$
+   - $\nabla_\theta J(\theta_0) = 0.6000 [+2.0000] + 0.4000 [-1.2000] = 1.2000 - 0.4800 = \mathbf{+0.7200}$
+
+3. **Compute Updated Parameter $\theta_1$:**
+   - $\theta_1 = \theta_0 + \alpha \nabla_\theta J(\theta_0) = 0.4055 + 0.10(+0.7200) = 0.4055 + 0.0720 = \mathbf{+0.4775}$
+
+---
+
+### 12.5 Compatible Function Approximation & Multi-Step Advantage Estimation
+
+Finally, we unify value function approximation and policy optimization within Actor-Critic architectures, establishing conditions for zero critic bias and evaluating multi-step advantage return targets.
+
+![Compatible Critic & Multi-Step Advantage](images/compatible_critic_a2c.svg)
+
+#### 1. Comprehensive Theory & Mathematical Foundation
+
+##### The Compatible Function Approximation Theorem
+In Actor-Critic architectures, replacing the true return $Q^{\pi_\theta}(s,a)$ with a parameterized critic approximator $Q_{\mathbf{w}}(s,a)$ generally introduces gradient bias. The **Compatible Function Approximation Theorem** (*Sutton et al., 1999*) proves that $Q_{\mathbf{w}}(s,a)$ can replace $Q^{\pi_\theta}(s,a)$ with **zero bias in the policy gradient** if and only if two mathematical conditions hold:
+
+1. **Compatibility Condition:** The critic gradient with respect to weight vector $\mathbf{w}$ equals the actor score function:
+   $$ \nabla_{\mathbf{w}} Q_{\mathbf{w}}(s,a) = \nabla_\theta \ln \pi_\theta(a \mid s) $$
+2. **Mean Squared Error Minimization:** Critic parameters $\mathbf{w}$ minimize the weighted mean squared error:
+   $$ \mathbf{w}^* = \arg\min_{\mathbf{w}} \mathbb{E}_{s \sim d^\pi, a \sim \pi_\theta} \left[ \left( Q^{\pi_\theta}(s,a) - Q_{\mathbf{w}}(s,a) \right)^2 \right] $$
+
+* **Structural Implication:** Integrating condition (1) reveals that a compatible critic must be linearly parameterized in the actor's score features: $Q_{\mathbf{w}}(s,a) = \mathbf{w}^T \nabla_\theta \ln \pi_\theta(a \mid s)$.
+
+##### Multi-Step Advantage Actor-Critic ($k$-Step A2C)
+Advantage Actor-Critic estimates the advantage function $\hat{A}_t^{(k)} = G_{t:t+k} - \hat{v}(S_t, \mathbf{w})$ using $k$-step bootstrapped return targets:
+
+$$ G_{t:t+k} \doteq \sum_{i=0}^{k-1} \gamma^i R_{t+i+1} + \gamma^k \hat{v}(S_{t+k}, \mathbf{w}) $$
+
+* **Bias-Variance Trade-off Analysis:**
+  - *1-Step Horizon ($k=1$):* Target $G_{t:t+1} = R_{t+1} + \gamma \hat{v}(S_{t+1})$ heavily relies on value function $\hat{v}$. High critic bias (if $\hat{v}$ is inaccurate), but low sampling variance.
+  - *Multi-Step Horizon ($k > 1$):* Target accumulates $k$ actual environment rewards before bootstrapping off $\hat{v}(S_{t+k})$. Relies less on critic $\hat{v}$ (**reducing critic bias**), but accumulating stochastic rewards **increases variance**.
+
+#### 2. Pedagogical Numerical Problem & Step-by-Step Solution
+
+**Problem Scenario:**  
+A multi-step Advantage Actor-Critic agent uses discount factor $\gamma = 0.90$.  
+The agent evaluates a trajectory segment with the following state-value estimates:  
+$\hat{v}(S_0) = 2.0000, \; \hat{v}(S_1) = 3.0000, \; \hat{v}(S_2) = 4.0000, \; \hat{v}(S_3) = 8.0000$.
+
+The observed rewards are: $R_1 = +1.0000, \; R_2 = +2.0000, \; R_3 = +4.0000$.
+
+Calculate:
+1. 1-step advantage estimate $\hat{A}_0^{(1)}$.
+2. 2-step advantage estimate $\hat{A}_0^{(2)}$.
+3. 3-step advantage estimate $\hat{A}_0^{(3)}$.
+
+**Detailed Step-by-Step Solution:**
+
+1. **Compute 1-Step Advantage Estimate ($\hat{A}_0^{(1)}$):**
+   - $G_{0:1} = R_1 + \gamma \hat{v}(S_1) = 1.0000 + 0.90(3.0000) = 3.7000$
+   - $\hat{A}_0^{(1)} = G_{0:1} - \hat{v}(S_0) = 3.7000 - 2.0000 = \mathbf{+1.7000}$
+
+2. **Compute 2-Step Advantage Estimate ($\hat{A}_0^{(2)}$):**
+   - $G_{0:2} = R_1 + \gamma R_2 + \gamma^2 \hat{v}(S_2) = 1.0000 + 0.90(2.0000) + (0.90)^2 (4.0000)$
+   - $G_{0:2} = 1.0000 + 1.8000 + 0.81(4.0000) = 1.0000 + 1.8000 + 3.2400 = \mathbf{6.0400}$
+   - $\hat{A}_0^{(2)} = G_{0:2} - \hat{v}(S_0) = 6.0400 - 2.0000 = \mathbf{+4.0400}$
+
+3. **Compute 3-Step Advantage Estimate ($\hat{A}_0^{(3)}$):**
+   - $G_{0:3} = R_1 + \gamma R_2 + \gamma^2 R_3 + \gamma^3 \hat{v}(S_3)$
+   - $G_{0:3} = 1.0000 + 1.8000 + 3.2400 + 5.8320 = 11.8720$
+   - $\hat{A}_0^{(3)} = G_{0:3} - \hat{v}(S_0) = 11.8720 - 2.0000 = \mathbf{+9.8720}$
+
+4. **Bias-Variance Trade-off Analysis:**
+   - *Increasing Step Horizon ($k=1 \to 3$):* Relies more on actual environment rewards ($R_1, R_2, R_3$) and less on approximate critic $\hat{v}$, **reducing critic bias**. However, accumulating multi-step stochastic rewards **increases variance**.
 
