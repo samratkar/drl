@@ -30,4 +30,15 @@ layout: post
    * Calculate the surrogate reward $R(s,a)$ when the discriminator is confident the transition is agent-like: $D_{\phi}(s,a) = 0.10$.
    *(Note: $\ln 0.1 \approx -2.302$, $\ln 0.9 \approx -0.105$)*
 
+5. **Behavior Cloning Gradient Update & Covariate Shift Analysis:**
+   Consider a 1D continuous lane-centering task with state $x \in \mathbb{R}$ (lateral displacement) and discrete steering actions $a \in \{0, 1\}$ ($0$: Steer Left, $1$: Steer Right).
+   The agent policy is parameterized as $P_\theta(a=1 \mid x) = \sigma(w \cdot x) = \frac{1}{1 + e^{-w \cdot x}}$.
+   The expert target action for state $x > 0$ is $a^* = 0$ (steer left).
+   Given an expert demonstration sample $(x = 0.4, a^* = 0)$ and initial weight $w_0 = -0.5$:
+   * Compute the policy probability $P(a=0 \mid 0.4)$ and the Cross-Entropy loss $\mathcal{L}_{CE} = -\ln P(a=0 \mid 0.4)$.
+   * Calculate the loss gradient $\frac{\partial \mathcal{L}}{\partial w} = (P(a=1 \mid x) - \mathbb{I}(a^*=1)) \cdot x$.
+   * Perform one step of gradient descent with learning rate $\alpha = 2.0$ to find updated weight $w_1$.
+   * If an unobserved disturbance pushes the vehicle to an out-of-distribution state $x = +4.0$, compute the loss gradient magnitude at $x = +4.0$ compared to $x = +0.4$ for initial weight $w = 0$, and explain how DAgger leverages this signal to eliminate compounding error.
+
+
 

@@ -413,6 +413,11 @@ During search, MuZero runs MCTS by traversing the tree entirely inside its laten
 
 In many real-world tasks, designing a reward function $R(s,a)$ is extremely difficult (e.g., how do you mathematically define a reward for "driving naturally" or "writing a polite email"?). **Imitation Learning (IL)** bypasses reward engineering by training the agent to mimic demonstrations provided by an expert (usually a human or a heavy planner).
 
+> [!NOTE]
+> **Interactive Implementation Notebook:**  
+> For an end-to-end PyTorch and Gymnasium (`CartPole-v1`) implementation comparing Behavior Cloning (BC) and DAgger (Dataset Aggregation), check out the interactive Jupyter notebook:  
+> 🔗 [Imitation Learning Demonstration Notebook (`imitation_learning_demonstration.ipynb`)](./assets/imitation_learning_demonstration.ipynb)
+
 ### 7.1 Supervised Learning vs. Imitation Learning
 A common point of confusion is: *Isn't imitation learning just standard supervised learning where states are inputs and expert actions are labels?*
 
@@ -585,6 +590,91 @@ Imitation learning is widely used when environment interactions are costly or sa
 2. **Robotic Manipulation:** Training robotic arms to perform complex tasks (e.g., folding laundry, peg-in-hole insertion, or surgical tasks) by demonstrating the movements via teleoperation or virtual reality.
 3. **Large Language Models (RLHF Alignment):** Pre-training models via Supervised Fine-Tuning (SFT) is a direct application of Behavior Cloning (predicting the next token chosen by human writers). During RLHF (Reinforcement Learning from Human Feedback), a reward model is trained using human preferences (similar to IRL), which then guides the PPO policy alignment.
 4. **Game Playing:** Using human gameplay recordings to bootstrap complex agents (like AlphaGo or OpenAI Five in Dota 2) before initiating reinforcement learning self-play.
+
+---
+
+### 7.7 Step-by-Step Numerical Example: Behavior Cloning vs. DAgger
+
+To build concrete intuition for how Behavior Cloning fails due to **Covariate Shift** and how **DAgger** resolves it, let's walk through a hand-calculated numerical example.
+
+#### 1. Environment Setup (1D Continuous Driving)
+Consider a 1D Lane-Centering Task:
+* **State ($s$):** Vehicle lateral displacement $x \in [-10.0, +10.0]$ from lane center ($x = 0$).
+* **Action ($a$):** Discrete steering direction $a \in \{0, 1\}$:
+  - $a = 0 \implies$ Steer Left ($\Delta x = -1.0$)
+  - $a = 1 \implies$ Steer Right ($\Delta x = +1.0$)
+* **Target Expert Policy ($\pi^*$):** Always steers toward center $x = 0$:
+  $$\pi^*(x) = \begin{cases} 0 \quad (\text{Steer Left}) & \text{if } x > 0 \\ 1 \quad (\text{Steer Right}) & \text{if } x \le 0 \end{cases}$$
+
+#### 2. Policy Model Architecture
+We use a 1-parameter logistic policy:
+$$P_\theta(a=1 \mid x) = \sigma(w \cdot x) = \frac{1}{1 + e^{-w \cdot x}}$$
+$$P_\theta(a=0 \mid x) = 1 - \sigma(w \cdot x) = \sigma(-w \cdot x)$$
+where $\sigma(\cdot)$ is the sigmoid function. An optimal policy requires $w < 0$ so that positive displacement $x > 0$ yields action $a=0$ (steer left).
+
+---
+
+#### 3. Step 1: Initial Expert Demonstrations ($\mathcal{D}_{\text{init}}$)
+The expert starts near center ($x_0 = 0.2$) and drives for 3 steps:
+1. $t=0$: State $x_0 = +0.2 \implies$ Expert Action $a_0^* = 0$ (Steer Left). Next state $x_1 = 0.2 - 1.0 = -0.8$.
+2. $t=1$: State $x_1 = -0.8 \implies$ Expert Action $a_1^* = 1$ (Steer Right). Next state $x_2 = -0.8 + 1.0 = +0.2$.
+3. $t=2$: State $x_2 = +0.2 \implies$ Expert Action $a_2^* = 0$ (Steer Left). Next state $x_3 = +0.2 - 1.0 = -0.8$.
+
+The collected offline dataset is:
+$$\mathcal{D}_{\text{init}} = \{ (0.2, 0), \; (-0.8, 1), \; (0.2, 0) \}$$
+> **Key Insight:** All training states lie in the narrow interval $x \in [-0.8, +0.2]$. States like $x = +3.0$ are **completely unobserved**.
+
+---
+
+#### 4. Step 2: Behavior Cloning (BC) Training Step
+Assume initial weight $w_0 = 0.0$. We perform 1 step of gradient descent on sample $(s_0 = 0.2, a_0^* = 0)$:
+
+* **Model Output at $x = 0.2$:**
+  $$P(a=1 \mid 0.2) = \sigma(0.0 \cdot 0.2) = 0.5 \implies P(a=0 \mid 0.2) = 0.5$$
+* **Cross-Entropy Loss:**
+  $$\mathcal{L}_{CE} = -\ln P(a=0 \mid 0.2) = -\ln(0.5) \approx 0.6931$$
+* **Loss Gradient $\nabla_w \mathcal{L}$:**
+  $$\frac{\partial \mathcal{L}}{\partial w} = (P(a=1 \mid x) - \mathbb{I}(a^*=1)) \cdot x = (0.5 - 0) \cdot 0.2 = +0.10$$
+* **Gradient Update ($\alpha = 5.0$):**
+  $$w_1 = w_0 - \alpha \cdot \frac{\partial \mathcal{L}}{\partial w} = 0.0 - 5.0 \cdot (0.10) = -0.50$$
+
+After training to convergence on $\mathcal{D}_{\text{init}}$, the learned weight is $w_{\text{BC}} = -1.50$.
+* For $x = +0.2$: $P(a=0 \mid 0.2) = 1 - \sigma(-0.3) = 0.575 > 0.5 \implies$ Action $a=0$ (Correct!).
+* For $x = -0.8$: $P(a=1 \mid -0.8) = \sigma(+1.2) = 0.768 > 0.5 \implies$ Action $a=1$ (Correct!).
+
+---
+
+#### 5. Step 3: Numerical Demonstration of Covariate Shift & Failure
+Now we run the trained BC policy ($w_{\text{BC}} = -1.50$) in deployment. A sudden wind gust pushes the vehicle to $x_0 = +3.0$.
+
+1. **At $x_0 = +3.0$ (Outside $\mathcal{D}_{\text{init}}$):**
+   - Model prediction: $P(a=0 \mid 3.0) = \sigma(1.5 \cdot 3.0) = \sigma(4.5) = 0.989 \implies$ Steer Left ($a=0$).
+   - Next state: $x_1 = 3.0 - 1.0 = +2.0$.
+2. **At $x_1 = +2.0$:**
+   - Suppose due to minor sensor noise or stochastic execution, the model outputs $a_1 = 1$ (Steer Right).
+   - Next state: $x_2 = 2.0 + 1.0 = +3.0$.
+3. **Compounding Error:**
+   - At $x_2 = +3.0$, the agent continues making mistakes, driving states to $x_3 = 4.0 \to x_4 = 5.0 \to x_5 = 6.0$.
+   - Because $x \ge 2.0$ was never seen during offline training, the BC agent lacks recovery data, causing **exponentially compounding state drift**.
+
+---
+
+#### 6. Step 4: Step-by-Step DAgger Update Fix
+DAgger fixes covariate shift through interactive iteration:
+
+1. **Agent Rollout:** The agent runs its policy $\pi_1$ and visits off-trajectory state $s_{\text{visited}} = +3.0$.
+2. **Expert Query:** We query the expert for what action it would take at $s = +3.0$:
+   $$\pi^*(3.0) = 0 \quad (\text{Steer Left})$$
+3. **Dataset Aggregation:** We append the new recovery pair $(3.0, 0)$ to the dataset:
+   $$\mathcal{D}_{\text{DAgger}} = \mathcal{D}_{\text{init}} \cup \{ (3.0, 0) \}$$
+4. **Retraining on Aggregated Dataset:**
+   - Training on $s = +3.0$ yields a huge gradient signal: $\frac{\partial \mathcal{L}}{\partial w} = (P(a=1 \mid 3.0) - 0) \cdot 3.0$.
+   - The policy weight updates to a stronger recovery gain (e.g. $w_{\text{DAgger}} = -3.20$).
+5. **Recovery Result:**
+   $$P(a=0 \mid 3.0) = \sigma(3.2 \cdot 3.0) = \sigma(9.6) = 0.99993$$
+   The agent now decisively steers left whenever it drifts into $x = +3.0$, completely eliminating compounding error!
+
+---
 
 ## 8. Decision Transformers (DT)
 

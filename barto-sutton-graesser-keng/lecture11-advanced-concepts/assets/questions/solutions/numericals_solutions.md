@@ -38,4 +38,19 @@ layout: post
      $$ R(s,a) = -\ln(1 - 0.10) = -\ln(0.90) \approx -(-0.105) = 0.105 $$
      *Interpretation:* The agent receives a much higher reward ($2.302$) when it successfully fools the discriminator, and a very low reward ($0.105$) when the discriminator easily detects it as the generator.
 
-
+5. **Behavior Cloning Gradient Update & Covariate Shift Analysis:**
+   Given $x = 0.4, a^* = 0, w_0 = -0.5, \alpha = 2.0$:
+   * **Policy Probabilities & Cross-Entropy Loss:**
+     $$ w_0 \cdot x = (-0.5)(0.4) = -0.20 $$
+     $$ P(a=1 \mid 0.4) = \sigma(-0.20) = \frac{1}{1 + e^{0.20}} \approx 0.4502 $$
+     $$ P(a=0 \mid 0.4) = 1 - 0.4502 = 0.5498 $$
+     $$ \mathcal{L}_{CE} = -\ln(0.5498) \approx 0.5982 $$
+   * **Loss Gradient $\frac{\partial \mathcal{L}}{\partial w}$:**
+     $$ \frac{\partial \mathcal{L}}{\partial w} = (P(a=1 \mid 0.4) - 0) \cdot 0.4 = (0.4502)(0.4) = +0.1801 $$
+   * **Gradient Update ($w_1$):**
+     $$ w_1 = w_0 - \alpha \cdot \frac{\partial \mathcal{L}}{\partial w} = -0.5 - 2.0(0.1801) = -0.5 - 0.3602 = -0.8602 $$
+   * **Gradient Magnitude at $x = +4.0$ vs. $x = +0.4$ (at $w = 0$):**
+     * At $x = 0.4$: $\frac{\partial \mathcal{L}}{\partial w} = (0.5 - 0)(0.4) = +0.20$.
+     * At $x = 4.0$: $\frac{\partial \mathcal{L}}{\partial w} = (0.5 - 0)(4.0) = +2.00$.
+     * *Ratio:* The gradient magnitude at $x = +4.0$ is $\frac{2.00}{0.20} = 10\times$ larger.
+     * *DAgger Mechanism:* Behavior Cloning fails because offline training data contains only near-center states ($x \approx 0.4$), so $x = +4.0$ is never trained on. When test-time perturbations push the agent to $x = +4.0$, BC makes errors that compound. DAgger explicitly rollouts the agent policy to visit $x = +4.0$, queries the expert for optimal action $a^*=0$, and injects this $10\times$ stronger gradient update into the dataset, rapidly learning robust recovery parameters ($w \ll 0$).
