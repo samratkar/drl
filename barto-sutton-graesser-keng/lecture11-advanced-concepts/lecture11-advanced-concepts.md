@@ -967,7 +967,59 @@ $$ w_k = \left( \frac{6 - 4\epsilon}{5} \gamma \right)^k w_0 \to \infty \quad \t
 
 ---
 
-### 9.5 Algorithmic Mitigations in Modern Deep RL
+### 9.5 The Mean Squared Bellman Error (MSBE) & Gradient TD Algorithms
+
+*Reference: Sutton, R. S., & Barto, A. G. (2018). Reinforcement Learning: An Introduction. Chapter 11, Section 11.4: "The Mean Squared Bellman Error" (pp. 268-275).*
+
+When linear semi-gradient TD(0) fails under off-policy distributions (the Deadly Triad), standard semi-gradient updates no longer follow the gradient of any loss function. To achieve true stochastic gradient descent and guarantee convergence under off-policy sampling, we must formulate an explicit error objective function: **The Mean Squared Bellman Error (MSBE)**.
+
+![MSBE and Gradient TD Architecture](images/msbe_gradient_td.svg)
+
+#### 1. Mathematical Definition of MSBE
+Let $B_\pi \hat{v}_{\mathbf{w}} = R^\pi + \gamma P^\pi \hat{v}_{\mathbf{w}}$ be the Bellman expectation operator. The **Mean Squared Bellman Error** ($MSBE(\mathbf{w})$) measures the squared norm of the Bellman error vector across states, weighted by distribution $\mu(s)$:
+
+$$ MSBE(\mathbf{w}) \doteq \| B_\pi \hat{v}_{\mathbf{w}} - \hat{v}_{\mathbf{w}} \|_\mu^2 = \sum_{s \in \mathcal{S}} \mu(s) \left( \mathbb{E}_\pi \left[ R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w}) \mid S_t = s \right] - \hat{v}(s, \mathbf{w}) \right)^2 $$
+
+#### 2. Comparative Analysis of Error Objectives in Function Approximation
+Understanding how MSBE differs from other value function approximation error metrics is fundamental to RL theory:
+
+| Error Objective | Name | Mathematical Definition | Computation / Estimation Property | Key Advantages & Disadvantages |
+| :--- | :--- | :--- | :--- | :--- |
+| **$\overline{VE}(\mathbf{w})$** | **Mean Squared Value Error** | $\sum_s \mu(s) [v_\pi(s) - \hat{v}(s, \mathbf{w})]^2$ | Requires true target values $v_\pi(s)$. | Direct distance to optimal $v_\pi(s)$; impossible to compute directly in model-free RL without Monte Carlo samples. |
+| **$MSBE(\mathbf{w})$** | **Mean Squared Bellman Error** | $\| B_\pi \hat{v}_{\mathbf{w}} - \hat{v}_{\mathbf{w}} \|_\mu^2$ | Measures violation of the Bellman Equation. | Uses model-free Bellman targets $B_\pi \hat{v}$; requires two independent next-state samples per update (**Double-Sample Obstacle**). |
+| **$MSPBE(\mathbf{w})$** | **Mean Squared Projected Bellman Error** | $\| \Pi B_\pi \hat{v}_{\mathbf{w}} - \hat{v}_{\mathbf{w}} \|_\mu^2$ | Projects Bellman target onto representable feature subspace $V_{\mathcal{F}}$. | Minimized at the TD Fixed Point $\mathbf{w}_\infty = \mathbf{A}^{-1}\mathbf{b}$; solvable with single-sample Gradient TD (GTD2 / TDC). |
+| **$PBE(\mathbf{w})$** | **Projected Bellman Error** | $\Pi B_\pi \hat{v}_{\mathbf{w}} - \hat{v}_{\mathbf{w}}$ | Vector residual of projected Bellman target. | Equal to $\mathbf{0}$ at convergence ($\mathbf{w} = \mathbf{w}_\infty$). |
+
+#### 3. Deriving the Gradient of MSBE & The Double-Sample Obstacle
+Differentiating $MSBE(\mathbf{w})$ with respect to parameter vector $\mathbf{w}$:
+
+$$ \nabla_{\mathbf{w}} MSBE(\mathbf{w}) = -2 \sum_{s \in \mathcal{S}} \mu(s) \left( \mathbb{E}_\pi [R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w}) \mid S_t = s] - \hat{v}(s, \mathbf{w}) \right) \nabla_{\mathbf{w}} \left( \mathbb{E}_\pi [R_{t+1} + \gamma \hat{v}(S_{t+1}, \mathbf{w})] - \hat{v}(s, \mathbf{w}) \right) $$
+
+Simplifying into expectation notation (where $\delta_t = R_{t+1} + \gamma \mathbf{w}^T \mathbf{x}_{t+1} - \mathbf{w}^T \mathbf{x}_t$ is the TD error):
+
+$$ \nabla_{\mathbf{w}} MSBE(\mathbf{w}) = -2 \, \mathbb{E}_{d_b} \left[ \delta_t \mathbf{x}_t \right] \cdot \mathbb{E}_{d_b} \left[ \gamma \mathbf{x}_{t+1} - \mathbf{x}_t \right]^T $$
+
+* **The Double-Sample Obstacle:** Notice that $\nabla_{\mathbf{w}} MSBE(\mathbf{w})$ is the **product of two expectations**: $\mathbb{E}[\delta_t \mathbf{x}_t] \times \mathbb{E}[\gamma \mathbf{x}_{t+1} - \mathbf{x}_t]^T$.  
+  To form an unbiased sample estimate of a product of expectations $\mathbb{E}[X] \cdot \mathbb{E}[Y]$, we need two independent random samples of the transition $S_t \to S_{t+1}^{(1)}$ and $S_t \to S_{t+1}^{(2)}$ from the *exact same state $S_t$*. In single-trajectory model-free RL, we only observe one transition $S_t \to S_{t+1}$, making a naive stochastic gradient update biased!
+
+#### 4. Resolution via Gradient TD Dual-Weight Architecture (GTD2 & TDC)
+Gradient TD algorithms (Sutton et al., 2009) resolve the double-sample obstacle by introducing a **secondary auxiliary weight vector** $\mathbf{v} \in \mathbb{R}^d$ that acts as a memory filter to track $\mathbf{v} \approx \mathbb{E}[\delta_t \mathbf{x}_t]$.
+
+##### GTD2 (Gradient TD 2)
+GTD2 performs true stochastic gradient descent on MSPBE, updating dual weight vectors $(\mathbf{w}, \mathbf{v})$ at every step:
+$$ \mathbf{w}_{t+1} = \mathbf{w}_t + \alpha \rho_t (\mathbf{x}_t - \gamma \mathbf{x}_{t+1}) (\mathbf{x}_t^T \mathbf{v}_t) $$
+$$ \mathbf{v}_{t+1} = \mathbf{v}_t + \beta \rho_t (\delta_t - \mathbf{x}_t^T \mathbf{v}_t) \mathbf{x}_t $$
+
+##### TDC (TD with Correction / GTD0)
+TDC splits the MSBE gradient into a standard semi-gradient TD update plus an explicit correction term:
+$$ \mathbf{w}_{t+1} = \mathbf{w}_t + \alpha \rho_t \delta_t \mathbf{x}_t - \alpha \gamma \rho_t \mathbf{x}_{t+1} (\mathbf{x}_t^T \mathbf{v}_t) $$
+$$ \mathbf{v}_{t+1} = \mathbf{v}_t + \beta \rho_t (\delta_t - \mathbf{x}_t^T \mathbf{v}_t) \mathbf{x}_t $$
+
+* **Guaranteed Convergence:** Both GTD2 and TDC are mathematically proven to converge to the TD fixed point $\mathbf{w}_\infty$ under any off-policy behavior distribution, completely eliminating the Deadly Triad divergence risk!
+
+---
+
+### 9.6 Algorithmic Mitigations in Modern Deep RL
 
 How do modern algorithms prevent Deadly Triad divergence in deep neural networks?
 
@@ -988,7 +1040,7 @@ How do modern algorithms prevent Deadly Triad divergence in deep neural networks
 
 ---
 
-### 9.6 Real-World Industry Case Studies
+### 9.7 Real-World Industry Case Studies
 
 #### 1. Healthcare: Offline Clinical Treatment Policy Evaluation
 * **Scenario:** Recommending medication dosages from historical Intensive Care Unit (ICU) patient records (e.g., MIMIC-III database).

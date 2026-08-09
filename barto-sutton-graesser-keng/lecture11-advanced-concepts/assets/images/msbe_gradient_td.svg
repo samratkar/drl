@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 430" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <!-- Background -->
+  <rect width="850" height="430" rx="12" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+
+  <!-- Main Title -->
+  <text x="425" y="30" text-anchor="middle" font-size="16" font-weight="700" fill="#0F172A">Mean Squared Bellman Error (MSBE) &amp; Gradient TD Architecture</text>
+  <text x="425" y="48" text-anchor="middle" font-size="12" fill="#64748B">MSBE(w) = ||B_π v̂_w - v̂_w||_μ² | Resolving the Double-Sample Obstacle via Dual Weights (w, v)</text>
+
+  <!-- Left: MSBE Bellman Projection Geometry -->
+  <g transform="translate(40, 75)">
+    <rect width="370" height="325" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <text x="185" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="#1E293B">MSBE vs MSPBE Vector Projection</text>
+
+    <!-- Subspace Representation Plane (Linear Feature Space V_F) -->
+    <ellipse cx="185" cy="200" rx="140" ry="60" fill="#EFF6FF" stroke="#3B82F6" stroke-width="1.5" stroke-dasharray="3,3"/>
+    <text x="185" y="245" text-anchor="middle" font-size="10" font-weight="700" fill="#1E40AF">Representable Subspace V_F = {v̂_w | w ∈ ℝᵈ}</text>
+
+    <!-- True Value v_π outside subspace -->
+    <circle cx="185" cy="65" r="6" fill="#10B981"/>
+    <text x="185" y="52" text-anchor="middle" font-size="11" font-weight="800" fill="#047857">True Value v_π</text>
+
+    <!-- Current Estimate v̂_w in subspace -->
+    <circle cx="120" cy="190" r="6" fill="#3B82F6"/>
+    <text x="95" y="185" text-anchor="end" font-size="11" font-weight="800" fill="#1D4ED8">v̂_w</text>
+
+    <!-- Bellman Target B_π v̂_w (outside subspace) -->
+    <circle cx="260" cy="110" r="6" fill="#EF4444"/>
+    <text x="270" y="105" text-anchor="start" font-size="11" font-weight="800" fill="#B91C1C">Bellman Target B_π v̂_w</text>
+
+    <!-- Line connecting v̂_w and B_π v̂_w (MSBE Distance) -->
+    <line x1="120" y1="190" x2="260" y2="110" stroke="#EF4444" stroke-width="2.5" stroke-dasharray="4,4"/>
+    <text x="210" y="140" text-anchor="middle" font-size="11" font-weight="800" fill="#991B1B">MSBE Vector</text>
+
+    <!-- Projected Bellman Target Π B_π v̂_w (in subspace) -->
+    <circle cx="240" cy="195" r="5" fill="#8B5CF6"/>
+    <text x="240" y="215" text-anchor="middle" font-size="10" font-weight="800" fill="#5B21B6">Π B_π v̂_w (TD Fixed Point)</text>
+
+    <!-- Line from B_π v̂_w to projection (Orthogonal Drop) -->
+    <line x1="260" y1="110" x2="240" y2="195" stroke="#8B5CF6" stroke-width="1.5" stroke-dasharray="2,2"/>
+    <text x="265" y="160" font-size="9" fill="#6D28D9">Projection Π</text>
+
+    <!-- MSBE Formula at bottom -->
+    <rect x="20" y="265" width="330" height="45" rx="5" fill="#FEF2F2" stroke="#F87171" stroke-width="1"/>
+    <text x="185" y="283" text-anchor="middle" font-size="10" font-weight="700" fill="#991B1B">MSBE Objective Function:</text>
+    <text x="185" y="299" text-anchor="middle" font-size="11" font-weight="800" font-family="Courier New, monospace" fill="#B91C1C">MSBE(w) = ∑_s μ(s) [ (B_π v̂_w)(s) - v̂(s,w) ]²</text>
+  </g>
+
+  <!-- Right: Dual-Weight Gradient TD Architecture (GTD2 / TDC) -->
+  <g transform="translate(435, 75)">
+    <rect width="375" height="325" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <text x="187" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="#0F172A">Gradient TD Dual-Weight Architecture</text>
+
+    <!-- Double Sample Obstacle Warning -->
+    <rect x="15" y="42" width="345" height="52" rx="5" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1"/>
+    <text x="25" y="58" font-size="10" font-weight="700" fill="#991B1B">⚠️ The Double-Sample Obstacle:</text>
+    <text x="25" y="74" font-size="9.5" fill="#B91C1C">∇ MSBE requires E[δₜ] · E[γx' - x], needing 2 independent</text>
+    <text x="25" y="87" font-size="9.5" fill="#B91C1C">sample next-states S'₁ and S'₂ from the exact same state Sₜ.</text>
+
+    <!-- Primary Weight Vector Box (w) -->
+    <rect x="15" y="105" width="165" height="85" rx="6" fill="#EFF6FF" stroke="#3B82F6" stroke-width="1.5"/>
+    <text x="97" y="125" text-anchor="middle" font-size="11" font-weight="800" fill="#1E40AF">Primary Weights w</text>
+    <text x="97" y="142" text-anchor="middle" font-size="9.5" fill="#2563EB">Estimates Value Function</text>
+    <text x="97" y="158" text-anchor="middle" font-size="9" font-weight="700" font-family="Courier New, monospace" fill="#1D4ED8">v̂(s, w) = wᵀ x(s)</text>
+    <text x="97" y="178" text-anchor="middle" font-size="9" font-weight="700" fill="#1E3A8A">TDC / GTD2 Updates</text>
+
+    <!-- Secondary Auxiliary Weight Vector Box (v) -->
+    <rect x="195" y="105" width="165" height="85" rx="6" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.5"/>
+    <text x="277" y="125" text-anchor="middle" font-size="11" font-weight="800" fill="#14532D">Auxiliary Weights v</text>
+    <text x="277" y="142" text-anchor="middle" font-size="9.5" fill="#15803D">Tracks Expectation</text>
+    <text x="277" y="158" text-anchor="middle" font-size="9" font-weight="700" font-family="Courier New, monospace" fill="#166534">v ≈ E[ δₜ x(Sₜ) ]</text>
+    <text x="277" y="178" text-anchor="middle" font-size="9" font-weight="700" fill="#14532D">Bypasses 2nd Sample</text>
+
+    <!-- Coupled Arrows between w and v -->
+    <path d="M 180 147 L 195 147" stroke="#6366F1" stroke-width="2" marker-end="url(#arrow-indigo)"/>
+
+    <!-- TDC Equations Box -->
+    <rect x="15" y="202" width="345" height="108" rx="6" fill="#F8FAFC" stroke="#64748B" stroke-width="1.5"/>
+    <text x="187" y="220" text-anchor="middle" font-size="11" font-weight="700" fill="#0F172A">TDC (TD with Correction) Update Rules:</text>
+    <text x="25" y="242" font-size="10" font-weight="800" font-family="Courier New, monospace" fill="#1D4ED8">wₜ₊₁ = wₜ + α δₜ xₜ - α γ xₜ₊₁ (xₜᵀ vₜ)</text>
+    <text x="25" y="262" font-size="10" font-weight="800" font-family="Courier New, monospace" fill="#166534">vₜ₊₁ = vₜ + β (δₜ - xₜᵀ vₜ) xₜ</text>
+    <text x="25" y="285" font-size="9.5" font-weight="700" fill="#047857">✓ True Gradient Descent on Bellman Error without Double Sampling!</text>
+    <text x="25" y="299" font-size="9.5" font-weight="700" fill="#047857">✓ Guaranteed Off-Policy Convergence even with Deadly Triad!</text>
+  </g>
+
+  <!-- Markers -->
+  <defs>
+    <marker id="arrow-indigo" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6366F1"/>
+    </marker>
+  </defs>
+</svg>
