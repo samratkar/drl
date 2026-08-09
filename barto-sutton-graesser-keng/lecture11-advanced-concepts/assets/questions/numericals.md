@@ -40,5 +40,16 @@ layout: post
    * Perform one step of gradient descent with learning rate $\alpha = 2.0$ to find updated weight $w_1$.
    * If an unobserved disturbance pushes the vehicle to an out-of-distribution state $x = +4.0$, compute the loss gradient magnitude at $x = +4.0$ compared to $x = +0.4$ for initial weight $w = 0$, and explain how DAgger leverages this signal to eliminate compounding error.
 
+6. **Decision Transformer Return-Conditioned Action Prediction:**
+   A Decision Transformer processes sequence tokens $(\hat{R}_1, s_1)$ at step $t=1$ in a 1D environment:
+   * Target Return-to-Go prompt: $\hat{R}_1 = 8.0$.
+   * State: $s_1 = 3.0$.
+   * Discrete action space: $a \in \{0, 1\}$.
+   * Linear projection weights: $\mathbf{W}_R = [0.5, 0.0]^T$, $\mathbf{W}_s = [0.0, 1.0]^T$.
+   * Query, Key, Value projections: $\mathbf{W}_Q = \mathbf{W}_K = \mathbf{W}_V = \mathbf{I}_2$.
+   * Action head weight matrix: $\mathbf{W}_{\text{act}} = \begin{bmatrix} 1.0 & -1.0 \\ -1.0 & 1.0 \end{bmatrix}$.
 
-
+   * Compute input token embeddings $\mathbf{e}_{R_1}$ and $\mathbf{e}_{s_1}$.
+   * Compute raw attention scores $S_{2,1}$ and $S_{2,2}$ for state token $s_1$ with scale factor $\sqrt{d_k} = \sqrt{2} \approx 1.414$.
+   * Calculate causal softmax attention weights $A_{2,1}$ and $A_{2,2}$.
+   * Calculate contextual state representation $\mathbf{Z}_2$, action logits $\mathbf{z}$, and action probability $P(a=1 \mid s_1, \hat{R}_1)$.

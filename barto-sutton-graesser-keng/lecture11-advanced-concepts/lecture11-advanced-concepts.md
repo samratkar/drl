@@ -674,11 +674,22 @@ DAgger fixes covariate shift through interactive iteration:
    $$P(a=0 \mid 3.0) = \sigma(3.2 \cdot 3.0) = \sigma(9.6) = 0.99993$$
    The agent now decisively steers left whenever it drifts into $x = +3.0$, completely eliminating compounding error!
 
+> [!TIP]
+> **Hands-On Code Implementation:**  
+> To test Behavior Cloning, Covariate Shift, and DAgger on Gymnasium `CartPole-v1` with PyTorch, open the interactive notebook:  
+> 🔗 [Imitation Learning Demonstration Notebook (`imitation_learning_demonstration.ipynb`)](./assets/imitation_learning_demonstration.ipynb)
+
 ---
+
 
 ## 8. Decision Transformers (DT)
 
 The **Decision Transformer (DT)** (Chen et al., 2021) represents a paradigm shift in Offline Reinforcement Learning by discarding traditional DRL control loop architectures. Instead of using value estimation or policy gradients to maximize rewards, it reformulates RL as a **conditional sequence modeling problem** using a causal GPT-style Transformer.
+
+> [!NOTE]
+> **Interactive Implementation Notebook:**  
+> For an end-to-end PyTorch and Gymnasium (`CartPole-v1`) implementation demonstrating Return-Conditioned sequence modeling ("Upside-Down RL") with a Decision Transformer, check out the interactive Jupyter notebook:  
+> 🔗 [Decision Transformer Demonstration Notebook (`decision_transformer_demonstration.ipynb`)](./assets/decision_transformer_demonstration.ipynb)
 
 ### 8.1 First Principles of "Upside-Down RL"
 To understand Decision Transformers, we must contrast their information flow with traditional reinforcement learning:
@@ -742,6 +753,70 @@ The following table summarizes the conceptual differences between Decision Trans
               │ Return  │
               └─────────┘
 ```
+
+---
+
+### 8.4 Step-by-Step Numerical Example: Decision Transformer Tokenization, Causal Attention, and Action Prediction
+
+To gain detailed mathematical intuition for how a Decision Transformer processes trajectory tokens and uses **Return-to-Go (RTG)** conditioning to make action decisions, let's walk through a hand-calculated numerical example.
+
+#### 1. Setup & Modality Embeddings
+Consider a single timestep $t=1$ in a 1D continuous environment:
+* **Target Return-to-Go Prompt:** $\hat{R}_1 = 10.0$
+* **Observed State:** $s_1 = +2.0$
+* **Action Space:** Discrete actions $a \in \{0, 1\}$ ($0$: Steer Left, $1$: Steer Right).
+* **Model Dimension:** $d_{\text{model}} = 2$.
+
+The modality linear projection matrices are:
+$$\mathbf{W}_R = \begin{bmatrix} 0.5 \\ 0.0 \end{bmatrix}, \quad \mathbf{W}_s = \begin{bmatrix} 0.0 \\ 1.0 \end{bmatrix}$$
+
+Computing the embedded tokens:
+$$\mathbf{e}_{R_1} = \mathbf{W}_R \cdot \hat{R}_1 = \begin{bmatrix} 0.5 \cdot 10.0 \\ 0.0 \cdot 10.0 \end{bmatrix} = \begin{bmatrix} 5.0 \\ 0.0 \end{bmatrix}$$
+$$\mathbf{e}_{s_1} = \mathbf{W}_s \cdot s_1 = \begin{bmatrix} 0.0 \cdot 2.0 \\ 1.0 \cdot 2.0 \end{bmatrix} = \begin{bmatrix} 0.0 \\ 2.0 \end{bmatrix}$$
+
+The interleaved input sequence tokens are:
+$$\mathbf{X} = [\mathbf{e}_{R_1}, \mathbf{e}_{s_1}] = \begin{bmatrix} 5.0 & 0.0 \\ 0.0 & 2.0 \end{bmatrix}^T$$
+
+---
+
+#### 2. Causal Self-Attention Computation
+Let Query, Key, and Value projections be identity matrices $\mathbf{W}_Q = \mathbf{W}_K = \mathbf{W}_V = \mathbf{I}_2$:
+* **Queries:** $\mathbf{Q}_1 = \begin{bmatrix} 5.0 \\ 0.0 \end{bmatrix}, \quad \mathbf{Q}_2 = \begin{bmatrix} 0.0 \\ 2.0 \end{bmatrix}$
+* **Keys:** $\mathbf{K}_1 = \begin{bmatrix} 5.0 \\ 0.0 \end{bmatrix}, \quad \mathbf{K}_2 = \begin{bmatrix} 0.0 \\ 2.0 \end{bmatrix}$
+* **Values:** $\mathbf{V}_1 = \begin{bmatrix} 5.0 \\ 0.0 \end{bmatrix}, \quad \mathbf{V}_2 = \begin{bmatrix} 0.0 \\ 2.0 \end{bmatrix}$
+
+Scaling factor $\sqrt{d_k} = \sqrt{2} \approx 1.414$. Compute raw attention scores $\mathbf{S} = \frac{\mathbf{Q} \mathbf{K}^T}{\sqrt{d_k}}$:
+* $S_{1,1} = \frac{\mathbf{Q}_1^T \mathbf{K}_1}{\sqrt{2}} = \frac{5.0 \cdot 5.0 + 0}{1.414} = \frac{25.0}{1.414} \approx 17.68$
+* $S_{2,1} = \frac{\mathbf{Q}_2^T \mathbf{K}_1}{\sqrt{2}} = \frac{0 \cdot 5.0 + 2.0 \cdot 0}{1.414} = 0.0$
+* $S_{2,2} = \frac{\mathbf{Q}_2^T \mathbf{K}_2}{\sqrt{2}} = \frac{0 + 2.0 \cdot 2.0}{1.414} = \frac{4.0}{1.414} \approx 2.83$
+
+**Applying the Causal Mask:** Token 2 (state $s_1$) can attend to Token 1 ($\hat{R}_1$) and Token 2 ($s_1$).
+Softmax weights over keys for Token 2:
+$$A_{2,1} = \frac{e^{S_{2,1}}}{e^{S_{2,1}} + e^{S_{2,2}}} = \frac{e^{0}}{e^{0} + e^{2.83}} = \frac{1.0}{1.0 + 16.945} = \frac{1.0}{17.945} \approx 0.0557$$
+$$A_{2,2} = \frac{e^{S_{2,2}}}{e^{S_{2,1}} + e^{S_{2,2}}} = \frac{16.945}{17.945} \approx 0.9443$$
+
+---
+
+#### 3. Attention Output & Action Logits Calculation
+The contextualized representation for state token $s_1$ (Token 2) is:
+$$\mathbf{Z}_2 = A_{2,1} \mathbf{V}_1 + A_{2,2} \mathbf{V}_2 = 0.0557 \begin{bmatrix} 5.0 \\ 0.0 \end{bmatrix} + 0.9443 \begin{bmatrix} 0.0 \\ 2.0 \end{bmatrix} = \begin{bmatrix} 0.2785 \\ 1.8886 \end{bmatrix}$$
+
+Passing $\mathbf{Z}_2$ through the linear action prediction head $\mathbf{W}_{\text{act}} = \begin{bmatrix} 1.0 & -1.0 \\ -1.0 & 1.0 \end{bmatrix}$:
+$$\mathbf{z} = \mathbf{W}_{\text{act}} \mathbf{Z}_2 = \begin{bmatrix} 1.0(0.2785) - 1.0(1.8886) \\ -1.0(0.2785) + 1.0(1.8886) \end{bmatrix} = \begin{bmatrix} -1.6101 \\ +1.6101 \end{bmatrix}$$
+
+Action probabilities via Softmax:
+$$P(a=1 \mid s_1, \hat{R}_1) = \frac{e^{1.6101}}{e^{-1.6101} + e^{1.6101}} = \sigma(1.6101 - (-1.6101)) = \sigma(3.2202) \approx 0.9616$$
+$$P(a=0 \mid s_1, \hat{R}_1) = 1 - 0.9616 = 0.0384$$
+
+> **Key Takeaway:** The model outputs action $a=1$ with high confidence ($96.16\%$) because the target return prompt $\hat{R}_1 = 10.0$ strongly conditions the causal self-attention layer to generate high-reward actions!
+
+> [!TIP]
+> **Hands-On Code Implementation:**  
+> To test Return-Conditioned sequence modeling ("Upside-Down RL") with a PyTorch Decision Transformer on Gymnasium `CartPole-v1`, check out the interactive notebook:  
+> 🔗 [Decision Transformer Demonstration Notebook (`decision_transformer_demonstration.ipynb`)](./assets/decision_transformer_demonstration.ipynb)
+
+---
+
 
 ---
 

@@ -54,3 +54,21 @@ layout: post
      * At $x = 4.0$: $\frac{\partial \mathcal{L}}{\partial w} = (0.5 - 0)(4.0) = +2.00$.
      * *Ratio:* The gradient magnitude at $x = +4.0$ is $\frac{2.00}{0.20} = 10\times$ larger.
      * *DAgger Mechanism:* Behavior Cloning fails because offline training data contains only near-center states ($x \approx 0.4$), so $x = +4.0$ is never trained on. When test-time perturbations push the agent to $x = +4.0$, BC makes errors that compound. DAgger explicitly rollouts the agent policy to visit $x = +4.0$, queries the expert for optimal action $a^*=0$, and injects this $10\times$ stronger gradient update into the dataset, rapidly learning robust recovery parameters ($w \ll 0$).
+
+6. **Decision Transformer Return-Conditioned Action Prediction:**
+   Given $\hat{R}_1 = 8.0, s_1 = 3.0$:
+   * **Input Token Embeddings:**
+     $$ \mathbf{e}_{R_1} = \mathbf{W}_R \cdot 8.0 = \begin{bmatrix} 0.5(8.0) \\ 0.0(8.0) \end{bmatrix} = \begin{bmatrix} 4.0 \\ 0.0 \end{bmatrix} $$
+     $$ \mathbf{e}_{s_1} = \mathbf{W}_s \cdot 3.0 = \begin{bmatrix} 0.0(3.0) \\ 1.0(3.0) \end{bmatrix} = \begin{bmatrix} 0.0 \\ 3.0 \end{bmatrix} $$
+   * **Raw Attention Scores for Token 2 ($s_1$):**
+     $$ \mathbf{Q}_2 = \begin{bmatrix} 0.0 \\ 3.0 \end{bmatrix}, \quad \mathbf{K}_1 = \begin{bmatrix} 4.0 \\ 0.0 \end{bmatrix}, \quad \mathbf{K}_2 = \begin{bmatrix} 0.0 \\ 3.0 \end{bmatrix} $$
+     $$ S_{2,1} = \frac{\mathbf{Q}_2^T \mathbf{K}_1}{\sqrt{2}} = \frac{0.0(4.0) + 3.0(0.0)}{1.414} = 0.0 $$
+     $$ S_{2,2} = \frac{\mathbf{Q}_2^T \mathbf{K}_2}{\sqrt{2}} = \frac{0.0(0.0) + 3.0(3.0)}{1.414} = \frac{9.0}{1.414} \approx 6.365 $$
+   * **Causal Softmax Attention Weights:**
+     $$ A_{2,1} = \frac{e^0}{e^0 + e^{6.365}} = \frac{1.0}{1.0 + 581.15} = \frac{1.0}{582.15} \approx 0.0017 $$
+     $$ A_{2,2} = \frac{581.15}{582.15} \approx 0.9983 $$
+   * **Contextual Representation $\mathbf{Z}_2$, Action Logits $\mathbf{z}$, and Probability:**
+     $$ \mathbf{Z}_2 = 0.0017 \begin{bmatrix} 4.0 \\ 0.0 \end{bmatrix} + 0.9983 \begin{bmatrix} 0.0 \\ 3.0 \end{bmatrix} = \begin{bmatrix} 0.0068 \\ 2.9949 \end{bmatrix} $$
+     $$ \mathbf{z} = \mathbf{W}_{\text{act}} \mathbf{Z}_2 = \begin{bmatrix} 1.0(0.0068) - 1.0(2.9949) \\ -1.0(0.0068) + 1.0(2.9949) \end{bmatrix} = \begin{bmatrix} -2.9881 \\ +2.9881 \end{bmatrix} $$
+     $$ P(a=1 \mid s_1, \hat{R}_1) = \sigma(2.9881 - (-2.9881)) = \sigma(5.9762) \approx 0.9975 $$
+     *Interpretation:* The target return prompt $\hat{R}_1 = 8.0$ conditions the causal self-attention layer to predict action $a=1$ with $99.75\%$ probability.

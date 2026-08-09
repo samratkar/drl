@@ -64,3 +64,20 @@ layout: post
            # TODO: Implement the above steps
            pass
    ```
+
+3. **Decision Transformer Returns-to-Go (RTG) Sequence Preprocessing:**
+   Implement the function `compute_returns_to_go` which takes a list of episode step rewards $[r_0, r_1, \dots, r_{T-1}]$ and computes the array of Returns-to-Go $\hat{R}_t = \sum_{t'=t}^{T-1} r_{t'}$.
+
+   ```python
+   import numpy as np
+
+   def compute_returns_to_go(rewards):
+       """
+       Args:
+           rewards: List or 1D array of episode step rewards [r_0, r_1, ..., r_{T-1}].
+       Returns:
+           rtg: 1D numpy array of Returns-to-Go [R_0, R_1, ..., R_{T-1}].
+       """
+       # TODO: Compute Returns-to-Go in O(T) time using reverse accumulation
+       pass
+   ```

@@ -79,3 +79,17 @@ def train_dagger_epoch(env, agent_policy, expert_policy, D):
         state = next_state
 ```
 
+3. **Decision Transformer Returns-to-Go (RTG) Sequence Preprocessing:**
+
+```python
+import numpy as np
+
+def compute_returns_to_go(rewards):
+    T = len(rewards)
+    rtg = np.zeros(T, dtype=np.float32)
+    cum_r = 0.0
+    for t in reversed(range(T)):
+        cum_r += rewards[t]
+        rtg[t] = cum_r
+    return rtg
+```
