@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 360" width="850" height="360">
+  <rect width="850" height="360" fill="#f8f9fa" rx="12" ry="12"/>
+  
+  <text x="425" y="32" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#212529" text-anchor="middle">Continuing Tasks: Transient Startup vs. Steady-State Distribution</text>
+  
+  <!-- Left Side: Episodic Discounting Breakdown -->
+  <g transform="translate(30, 60)">
+    <rect width="370" height="270" fill="#ffffff" stroke="#dc3545" stroke-width="1.5" rx="8" ry="8"/>
+    <rect x="0" y="0" width="370" height="35" fill="#f8d7da" stroke="#dc3545" stroke-width="1.5" rx="8" ry="8"/>
+    <text x="185" y="23" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#721c24" text-anchor="middle">The Flaw of Discounting (γ &lt; 1)</text>
+    
+    <!-- Timeline Graph -->
+    <path d="M 30 180 L 340 180" stroke="#333" stroke-width="1.5"/>
+    <path d="M 30 180 L 30 70" stroke="#333" stroke-width="1.5"/>
+    <text x="340" y="195" font-family="Arial, sans-serif" font-size="10" fill="#333">Time (t)</text>
+    <text x="30" y="60" font-family="Arial, sans-serif" font-size="10" fill="#333">Weight</text>
+    
+    <!-- Exponential decay curve -->
+    <path d="M 30 80 Q 90 160, 320 178" stroke="#dc3545" stroke-width="2.5" fill="none"/>
+    
+    <text x="60" y="95" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#dc3545">γ^0 = 1.0 (S₀)</text>
+    <text x="220" y="155" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#dc3545">γ^{10000} ≈ 0 (Ignored!)</text>
+    
+    <rect x="20" y="210" width="330" height="45" fill="#fff3cd" stroke="#ffeeba" stroke-width="1" rx="4" ry="4"/>
+    <text x="185" y="228" font-family="Arial, sans-serif" font-size="10" fill="#856404" text-anchor="middle">Focuses 99% of neural capacity on S₀ startup phase,</text>
+    <text x="185" y="243" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#856404" text-anchor="middle">completely ignoring long-term steady-state performance!</text>
+  </g>
+  
+  <!-- Right Side: Average Reward Objective -->
+  <g transform="translate(450, 60)">
+    <rect width="370" height="270" fill="#ffffff" stroke="#28a745" stroke-width="1.5" rx="8" ry="8"/>
+    <rect x="0" y="0" width="370" height="35" fill="#e8f5e9" stroke="#28a745" stroke-width="1.5" rx="8" ry="8"/>
+    <text x="185" y="23" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1b5e20" text-anchor="middle">Average Reward Solution r(π)</text>
+    
+    <!-- Timeline Graph -->
+    <path d="M 30 180 L 340 180" stroke="#333" stroke-width="1.5"/>
+    <path d="M 30 180 L 30 70" stroke="#333" stroke-width="1.5"/>
+    <text x="340" y="195" font-family="Arial, sans-serif" font-size="10" fill="#333">Time (t)</text>
+    
+    <!-- Flat Equal Weight line -->
+    <path d="M 30 100 L 320 100" stroke="#28a745" stroke-width="2.5" fill="none"/>
+    <text x="180" y="90" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#28a745" text-anchor="middle">Equal Weight d_π(s) for all timesteps t</text>
+    
+    <text x="185" y="135" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#0056b3" text-anchor="middle">J_{cont}(θ) = r(π_θ) = sum_s d_π(s) r(s)</text>
+    
+    <rect x="20" y="210" width="330" height="45" fill="#e8f5e9" stroke="#c3e6cb" stroke-width="1" rx="4" ry="4"/>
+    <text x="185" y="228" font-family="Arial, sans-serif" font-size="10" fill="#155724" text-anchor="middle">Differential TD Error: δ_t = R_{t+1} - r̄ + V(S') - V(S)</text>
+    <text x="185" y="243" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#155724" text-anchor="middle">No γ discount factor in policy gradient updates!</text>
+  </g>
+</svg>

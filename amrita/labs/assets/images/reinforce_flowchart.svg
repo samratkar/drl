@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 380" width="850" height="380">
+  <rect width="850" height="380" fill="#f8f9fa" rx="12" ry="12"/>
+  
+  <text x="425" y="32" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#212529" text-anchor="middle">REINFORCE (Monte Carlo Policy Gradient) Execution Flow</text>
+  
+  <!-- Phase 1: Rollout -->
+  <g transform="translate(30, 60)">
+    <rect width="370" height="290" fill="#ffffff" stroke="#007bff" stroke-width="1.5" rx="8" ry="8"/>
+    <rect x="0" y="0" width="370" height="35" fill="#e7f1ff" stroke="#007bff" stroke-width="1.5" rx="8" ry="8"/>
+    <text x="185" y="23" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#0056b3" text-anchor="middle">Phase 1: Action Selection &amp; Rollout Loop</text>
+    
+    <circle cx="40" cy="75" r="16" fill="#007bff" />
+    <text x="40" y="80" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">1</text>
+    <text x="70" y="70" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#212529">Agent in State S_t</text>
+    <text x="70" y="86" font-family="Arial, sans-serif" font-size="10" fill="#6c757d">Input state features into π_θ(a|s)</text>
+    
+    <path d="M 40 95 L 40 125" stroke="#007bff" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+    
+    <circle cx="40" cy="145" r="16" fill="#007bff" />
+    <text x="40" y="150" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">2</text>
+    <text x="70" y="140" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#212529">Sample Action A_t ~ π_θ(·|S_t)</text>
+    <text x="70" y="156" font-family="Arial, sans-serif" font-size="10" fill="#6c757d">Softmax (Discrete) or Gaussian (Continuous)</text>
+    
+    <path d="M 40 165 L 40 195" stroke="#007bff" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+    
+    <circle cx="40" cy="215" r="16" fill="#007bff" />
+    <text x="40" y="220" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">3</text>
+    <text x="70" y="210" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#212529">Execute &amp; Record Transition</text>
+    <text x="70" y="226" font-family="Arial, sans-serif" font-size="10" fill="#6c757d">Receive R_{t+1}, S_{t+1}; repeat until S_T</text>
+    
+    <rect x="25" y="248" width="320" height="30" fill="#f1f3f5" stroke="#ced4da" stroke-width="1" rx="4" ry="4"/>
+    <text x="185" y="267" font-family="Arial, sans-serif" font-size="10" fill="#495057" text-anchor="middle">Trajectory: τ = (S₀, A₀, R₁, S₁, A₁, ..., S_T)</text>
+  </g>
+  
+  <!-- Transition Arrow -->
+  <g transform="translate(405, 185)">
+    <path d="M 0 0 L 35 0" stroke="#28a745" stroke-width="3" fill="none" marker-end="url(#arrow-green)"/>
+    <text x="18" y="-12" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#28a745" text-anchor="middle">Episode Ends</text>
+  </g>
+  
+  <!-- Phase 2: Learning -->
+  <g transform="translate(450, 60)">
+    <rect width="370" height="290" fill="#ffffff" stroke="#28a745" stroke-width="1.5" rx="8" ry="8"/>
+    <rect x="0" y="0" width="370" height="35" fill="#e8f5e9" stroke="#28a745" stroke-width="1.5" rx="8" ry="8"/>
+    <text x="185" y="23" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1b5e20" text-anchor="middle">Phase 2: Weight Update &amp; Credit Assignment</text>
+    
+    <circle cx="40" cy="75" r="16" fill="#28a745" />
+    <text x="40" y="80" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">4</text>
+    <text x="70" y="70" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#212529">Compute Discounted Return G_t</text>
+    <text x="70" y="86" font-family="Arial, sans-serif" font-size="10" fill="#6c757d">G_t = R_{t+1} + γ R_{t+2} + ... + γ^{T-t-1} R_T</text>
+    
+    <path d="M 40 95 L 40 125" stroke="#28a745" stroke-width="1.5" fill="none" marker-end="url(#arrow-green)"/>
+    
+    <circle cx="40" cy="145" r="16" fill="#28a745" />
+    <text x="40" y="150" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">5</text>
+    <text x="70" y="140" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#212529">Evaluate Analytical Log-Gradient</text>
+    <text x="70" y="156" font-family="Arial, sans-serif" font-size="10" fill="#6c757d">∇_θ ln π_θ(A_t | S_t) at each timestep t</text>
+    
+    <path d="M 40 165 L 40 195" stroke="#28a745" stroke-width="1.5" fill="none" marker-end="url(#arrow-green)"/>
+    
+    <circle cx="40" cy="215" r="16" fill="#28a745" />
+    <text x="40" y="220" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">6</text>
+    <text x="70" y="210" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#212529">Gradient Ascent Parameter Update</text>
+    <text x="70" y="226" font-family="Arial, sans-serif" font-size="10" fill="#6c757d">θ ← θ + α · γ^t · G_t · ∇_θ ln π_θ(A_t | S_t)</text>
+    
+    <rect x="25" y="248" width="320" height="30" fill="#fff3cd" stroke="#ffeeba" stroke-width="1" rx="4" ry="4"/>
+    <text x="185" y="267" font-family="Arial, sans-serif" font-size="10" fill="#856404" text-anchor="middle">★ Monte Carlo updates happen AFTER full episode termination ★</text>
+  </g>
+  
+  <defs>
+    <marker id="arrow-blue" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L6,3 z" fill="#007bff"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L6,3 z" fill="#28a745"/>
+    </marker>
+  </defs>
+</svg>

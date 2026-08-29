@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 520" width="850" height="520">
+  <rect width="850" height="520" fill="#f8f9fa" rx="12" ry="12"/>
+  
+  <text x="425" y="30" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#212529" text-anchor="middle">Value-Based vs. Policy-Based Decision Architecture</text>
+  
+  <!-- Left Side: Value-Based Decision Making -->
+  <g transform="translate(30, 60)">
+    <!-- Boundary Box -->
+    <rect width="360" height="430" fill="#ffffff" stroke="#dee2e6" stroke-width="1.5" rx="8" ry="8"/>
+    <text x="180" y="25" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#0056b3" text-anchor="middle">Value-Based (DQN/SARSA)</text>
+    <text x="180" y="45" font-family="Arial, sans-serif" font-size="11" fill="#6c757d" text-anchor="middle">Value is directly tied to Decision-Making</text>
+    
+    <!-- State Input -->
+    <rect x="140" y="70" width="80" height="40" fill="#e1f5fe" stroke="#0288d1" stroke-width="1.5" rx="6" ry="6"/>
+    <text x="180" y="94" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#01579b" text-anchor="middle">State (S)</text>
+    
+    <path d="M 180 110 L 180 140" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrow-black)"/>
+    
+    <!-- Q-Network -->
+    <rect x="110" y="140" width="140" height="60" fill="#e8f5e9" stroke="#388e3c" stroke-width="1.5" rx="6" ry="6"/>
+    <text x="180" y="165" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1b5e20" text-anchor="middle">Q-Network</text>
+    <text x="180" y="185" font-family="Arial, sans-serif" font-size="11" fill="#388e3c" text-anchor="middle">Parameterizes Q(s, a)</text>
+    
+    <path d="M 180 200 L 180 230" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrow-black)"/>
+    
+    <!-- Q values list -->
+    <rect x="120" y="230" width="120" height="50" fill="#fff9c4" stroke="#fbc02d" stroke-width="1" rx="4" ry="4"/>
+    <text x="180" y="248" font-family="Arial, sans-serif" font-size="11" fill="#574c00" text-anchor="middle">Q(s, a₁) = 2.4</text>
+    <text x="180" y="268" font-family="Arial, sans-serif" font-size="11" fill="#574c00" text-anchor="middle">Q(s, a₂) = -1.2</text>
+    
+    <path d="M 180 280 L 180 310" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrow-black)"/>
+    
+    <!-- Argmax Selection -->
+    <rect x="100" y="310" width="160" height="40" fill="#ffe0b2" stroke="#f57c00" stroke-width="1.5" rx="6" ry="6"/>
+    <text x="180" y="334" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#e65100" text-anchor="middle">Argmax: max_a Q(s,a)</text>
+    
+    <path d="M 180 350 L 180 375" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrow-black)"/>
+    
+    <text x="180" y="395" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#212529" text-anchor="middle">Action (A)</text>
+  </g>
+  
+  <!-- Right Side: Policy-Based Decision Making -->
+  <g transform="translate(430, 60)">
+    <!-- Boundary Box -->
+    <rect width="390" height="430" fill="#ffffff" stroke="#dee2e6" stroke-width="1.5" rx="8" ry="8"/>
+    <text x="195" y="25" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#28a745" text-anchor="middle">Policy-Based with Baseline (PG / Critic)</text>
+    <text x="195" y="45" font-family="Arial, sans-serif" font-size="11" fill="#6c757d" text-anchor="middle">Decoupled Decision-Making and Guidance Paths</text>
+    
+    <!-- State Input -->
+    <rect x="155" y="70" width="80" height="40" fill="#e1f5fe" stroke="#0288d1" stroke-width="1.5" rx="6" ry="6"/>
+    <text x="195" y="94" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#01579b" text-anchor="middle">State (S)</text>
+    
+    <!-- Branching lines -->
+    <path d="M 155 90 L 80 90 L 80 140" stroke="#007bff" stroke-width="1.5" stroke-dasharray="2,2" fill="none" marker-end="url(#arrow-blue)"/>
+    <path d="M 235 90 L 310 90 L 310 140" stroke="#dc3545" stroke-width="1.5" stroke-dasharray="2,2" fill="none" marker-end="url(#arrow-red)"/>
+    
+    <!-- Text Labels for Paths -->
+    <text x="75" y="125" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#007bff" text-anchor="end">Decision Path (Actor)</text>
+    <text x="315" y="125" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#dc3545" text-anchor="start">Update Path (Critic)</text>
+    
+    <!-- LEFT COLUMN: Policy Network -->
+    <rect x="20" y="140" width="120" height="60" fill="#e8f5e9" stroke="#388e3c" stroke-width="1.5" rx="6" ry="6"/>
+    <text x="80" y="165" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#1b5e20" text-anchor="middle">Policy Network</text>
+    <text x="80" y="185" font-family="Arial, sans-serif" font-size="10" fill="#388e3c" text-anchor="middle">Actor: π_θ(a|s)</text>
+    
+    <path d="M 80 200 L 80 230" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrow-black)"/>
+    
+    <!-- Probability Distribution -->
+    <rect x="20" y="230" width="120" height="50" fill="#e8f5e9" stroke="#81c784" stroke-width="1" rx="4" ry="4"/>
+    <text x="80" y="248" font-family="Arial, sans-serif" font-size="10" fill="#1b5e20" text-anchor="middle">π(a₁|s) = 85%</text>
+    <text x="80" y="268" font-family="Arial, sans-serif" font-size="10" fill="#1b5e20" text-anchor="middle">π(a₂|s) = 15%</text>
+    
+    <path d="M 80 280 L 80 310" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrow-black)"/>
+    
+    <!-- Sampling Box -->
+    <rect x="30" y="310" width="100" height="40" fill="#e3f2fd" stroke="#2196f3" stroke-width="1.5" rx="6" ry="6"/>
+    <text x="80" y="334" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#0d47a1" text-anchor="middle">Sample Action</text>
+    
+    <path d="M 80 350 L 80 375" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrow-black)"/>
+    
+    <text x="80" y="395" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#212529" text-anchor="middle">Action (A)</text>
+    
+    <!-- RIGHT COLUMN: Value Baseline -->
+    <rect x="250" y="140" width="120" height="60" fill="#fce4ec" stroke="#c2185b" stroke-width="1.5" rx="6" ry="6"/>
+    <text x="310" y="165" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#880e4f" text-anchor="middle">Value Network</text>
+    <text x="310" y="185" font-family="Arial, sans-serif" font-size="10" fill="#c2185b" text-anchor="middle">Critic: v̂(s, w)</text>
+    
+    <path d="M 310 200 L 310 230" stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrow-black)"/>
+    
+    <!-- State Value Output -->
+    <rect x="250" y="230" width="120" height="35" fill="#fce4ec" stroke="#f06292" stroke-width="1" rx="4" ry="4"/>
+    <text x="310" y="252" font-family="Arial, sans-serif" font-size="11" fill="#880e4f" text-anchor="middle">Value Baseline V(s)</text>
+    
+    <!-- Dashed connection showing update feedback -->
+    <path d="M 250 248 L 195 248 L 195 330 L 140 330" stroke="#dc3545" stroke-width="1.5" stroke-dasharray="3,3" fill="none" marker-end="url(#arrow-red)"/>
+    <rect x="155" y="278" width="80" height="35" fill="#f8d7da" stroke="#f5c6cb" stroke-width="1" rx="4" ry="4"/>
+    <text x="195" y="293" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#721c24" text-anchor="middle">Advantage</text>
+    <text x="195" y="306" font-family="Arial, sans-serif" font-size="9" fill="#721c24" text-anchor="middle">G - V(s)</text>
+    
+    <!-- Production Note -->
+    <rect x="20" y="395" width="350" height="22" fill="#e2e3e5" stroke="#dbdbdb" stroke-width="0.5" rx="3" ry="3"/>
+    <text x="195" y="409" font-family="Arial, sans-serif" font-size="10" fill="#495057" text-anchor="middle">★ In production, the Critic (Value) Path is completely discarded! ★</text>
+  </g>
+  
+  <!-- Marker Definitions -->
+  <defs>
+    <marker id="arrow-black" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L6,3 z" fill="#333"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L6,3 z" fill="#007bff"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L6,3 z" fill="#dc3545"/>
+    </marker>
+  </defs>
+</svg>

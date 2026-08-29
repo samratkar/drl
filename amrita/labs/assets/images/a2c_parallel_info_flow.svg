@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 300" width="740" height="300">
+  <rect width="740" height="300" fill="#fcfcfc" rx="8" ry="8" stroke="#dee2e6" stroke-width="1"/>
+  
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="5" refY="2.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,5 L5,2.5 z" fill="#495057"/>
+    </marker>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#007bff"/>
+      <stop offset="100%" stop-color="#0056b3"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#28a745"/>
+      <stop offset="100%" stop-color="#1e7e34"/>
+    </linearGradient>
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fd7e14"/>
+      <stop offset="100%" stop-color="#d35400"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Title -->
+  <text x="370" y="25" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333" text-anchor="middle">Synchronous Parallel Batched Information Flow (A2C)</text>
+
+  <!-- Left: Parallel Environment Workers Box -->
+  <rect x="20" y="55" width="170" height="210" fill="none" stroke="#28a745" stroke-dasharray="3,3" stroke-width="1.5" rx="5" ry="5"/>
+  <text x="105" y="72" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#28a745" text-anchor="middle">Parallel Workers</text>
+
+  <!-- Worker 1 -->
+  <rect x="35" y="85" width="140" height="40" fill="#e9ecef" stroke="#6c757d" stroke-width="1" rx="4" ry="4"/>
+  <text x="105" y="102" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#333" text-anchor="middle">Worker 1: Env 1</text>
+  <text x="105" y="115" font-family="Arial, sans-serif" font-size="8" fill="#6c757d" text-anchor="middle">Collects transition s_t, a_t, r_t</text>
+
+  <!-- Worker 2 -->
+  <rect x="35" y="140" width="140" height="40" fill="#e9ecef" stroke="#6c757d" stroke-width="1" rx="4" ry="4"/>
+  <text x="105" y="157" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#333" text-anchor="middle">Worker 2: Env 2</text>
+  <text x="105" y="170" font-family="Arial, sans-serif" font-size="8" fill="#6c757d" text-anchor="middle">Collects transition s_t, a_t, r_t</text>
+
+  <!-- Worker 3 -->
+  <rect x="35" y="195" width="140" height="40" fill="#e9ecef" stroke="#6c757d" stroke-width="1" rx="4" ry="4"/>
+  <text x="105" y="212" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#333" text-anchor="middle">Worker 3: Env 3</text>
+  <text x="105" y="225" font-family="Arial, sans-serif" font-size="8" fill="#6c757d" text-anchor="middle">Collects transition s_t, a_t, r_t</text>
+
+  <!-- Global Network -->
+  <rect x="235" y="55" width="170" height="50" fill="url(#blueGrad)" stroke="#004085" stroke-width="1.5" rx="5" ry="5"/>
+  <text x="320" y="75" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#fff" text-anchor="middle">Global Policy / Value Network</text>
+  <text x="320" y="90" font-family="Arial, sans-serif" font-size="9" fill="#d0e1fd" text-anchor="middle">Shared Weights (θ, w)</text>
+
+  <!-- Global Network -> Workers (Sample Actions) -->
+  <path d="M 235 80 L 210 80 L 210 160 L 190 160" fill="none" stroke="#0056b3" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="195" y="115" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#0056b3" text-anchor="middle" transform="rotate(-90 195 115)">Sample Actions</text>
+
+  <!-- Batched Trajectories -->
+  <rect x="235" y="135" width="170" height="50" fill="#f8f9fa" stroke="#495057" stroke-width="1.5" rx="5" ry="5"/>
+  <text x="320" y="157" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#333" text-anchor="middle">Batched Trajectories</text>
+  <text x="320" y="171" font-family="Arial, sans-serif" font-size="9" fill="#6c757d" text-anchor="middle">T-step Rollouts (N Workers)</text>
+
+  <!-- Workers -> Batched Trajectories -->
+  <path d="M 190 180 L 210 180 L 210 160 L 235 160" fill="none" stroke="#495057" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Advantage Calculator -->
+  <rect x="235" y="215" width="170" height="50" fill="url(#greenGrad)" stroke="#1e7e34" stroke-width="1.5" rx="5" ry="5"/>
+  <text x="320" y="235" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#fff" text-anchor="middle">Advantage Calculator</text>
+  <text x="320" y="250" font-family="Arial, sans-serif" font-size="9" fill="#d4edda" text-anchor="middle">n-Step Return or GAE (A_t)</text>
+
+  <!-- Batched Trajectories -> Advantage Calculator -->
+  <path d="M 320 185 L 320 215" fill="none" stroke="#495057" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Advantage Calculator -> Batched Backward Pass -->
+  <path d="M 405 240 L 535 240 L 535 190" fill="none" stroke="#495057" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Batched Backward Pass -->
+  <rect x="450" y="135" width="170" height="50" fill="url(#orangeGrad)" stroke="#d35400" stroke-width="1.5" rx="5" ry="5"/>
+  <text x="535" y="157" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#fff" text-anchor="middle">Batched Backward Pass</text>
+  <text x="535" y="171" font-family="Arial, sans-serif" font-size="9" fill="#ffd4b2" text-anchor="middle">GPU MatMul Updates</text>
+
+  <!-- Batched Trajectories -> Batched Backward Pass -->
+  <path d="M 405 160 L 450 160" fill="none" stroke="#495057" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Backward Pass -> Global Network (Update Weights) -->
+  <path d="M 535 135 L 535 80 L 405 80" fill="none" stroke="#d35400" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="470" y="73" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#d35400" text-anchor="middle">Update θ, w</text>
+</svg>

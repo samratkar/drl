@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450">
+  <rect width="800" height="450" fill="#f8f9fa" rx="10" ry="10"/>
+  
+  <text x="400" y="30" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#333" text-anchor="middle">How Environment Dynamics Drop out of the Policy Gradient</text>
+  
+  <!-- Step 1: Trajectory Probability -->
+  <g transform="translate(40, 60)">
+    <rect width="720" height="70" fill="#e2e3e5" stroke="#6c757d" stroke-width="1.5" rx="6" ry="6"/>
+    <text x="20" y="25" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#495057">1. Trajectory Probability under Policy π_θ</text>
+    <text x="360" y="50" font-family="Cambria Math, Times New Roman, serif" font-size="16" fill="#212529" text-anchor="middle">
+      P(τ; θ) = ρ(s₀) · ∏ [ π_θ(a_t | s_t) · p(s_{t+1} | s_t, a_t) ]
+    </text>
+  </g>
+
+  <!-- Step 2: Log Probability -->
+  <g transform="translate(40, 150)">
+    <rect width="720" height="70" fill="#fff3cd" stroke="#ffc107" stroke-width="1.5" rx="6" ry="6"/>
+    <text x="20" y="25" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#856404">2. Taking the Natural Logarithm (Product becomes Sum)</text>
+    <text x="360" y="50" font-family="Cambria Math, Times New Roman, serif" font-size="16" fill="#212529" text-anchor="middle">
+      ln P(τ; θ) = ln ρ(s₀) + ∑ ln π_θ(a_t | s_t) + ∑ ln p(s_{t+1} | s_t, a_t)
+    </text>
+  </g>
+
+  <!-- Step 3: Gradient Breakdown -->
+  <g transform="translate(40, 240)">
+    <rect width="720" height="170" fill="#ffffff" stroke="#dee2e6" stroke-width="1.5" rx="6" ry="6"/>
+    <text x="20" y="25" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#495057">3. Taking the Gradient w.r.t. Policy Parameters θ</text>
+    
+    <!-- Formula with underbraces / explanation boxes -->
+    <g transform="translate(20, 40)">
+      <!-- Gradient operator -->
+      <text x="10" y="45" font-family="Cambria Math, Times New Roman, serif" font-size="18" font-weight="bold" fill="#212529">∇_θ ln P(τ; θ) = </text>
+      
+      <!-- Box 1: Initial State -->
+      <g transform="translate(145, 10)">
+        <rect width="130" height="50" fill="#f8d7da" stroke="#f5c6cb" stroke-width="1" rx="4" ry="4"/>
+        <text x="65" y="25" font-family="Cambria Math, Times New Roman, serif" font-size="14" fill="#721c24" text-anchor="middle">∇_θ ln ρ(s₀)</text>
+        <path d="M 65 35 L 65 60" stroke="#721c24" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+        <text x="65" y="75" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#dc3545" text-anchor="middle">0</text>
+        <text x="65" y="90" font-family="Arial, sans-serif" font-size="10" fill="#6c757d" text-anchor="middle">No θ dependence</text>
+      </g>
+      
+      <text x="290" y="45" font-family="Cambria Math, Times New Roman, serif" font-size="20" fill="#212529">+</text>
+      
+      <!-- Box 2: Policy parameters -->
+      <g transform="translate(315, 10)">
+        <rect width="210" height="50" fill="#d4edda" stroke="#c3e6cb" stroke-width="1" rx="4" ry="4"/>
+        <text x="105" y="25" font-family="Cambria Math, Times New Roman, serif" font-size="14" fill="#155724" text-anchor="middle">∑ ∇_θ ln π_θ(a_t | s_t)</text>
+        <path d="M 105 35 L 105 60" stroke="#155724" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+        <text x="105" y="75" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#28a745" text-anchor="middle">Kept</text>
+        <text x="105" y="90" font-family="Arial, sans-serif" font-size="10" fill="#6c757d" text-anchor="middle">Directly depends on θ</text>
+      </g>
+      
+      <text x="540" y="45" font-family="Cambria Math, Times New Roman, serif" font-size="20" fill="#212529">+</text>
+      
+      <!-- Box 3: Environment Dynamics -->
+      <g transform="translate(565, 10)">
+        <rect width="130" height="50" fill="#f8d7da" stroke="#f5c6cb" stroke-width="1" rx="4" ry="4"/>
+        <text x="65" y="25" font-family="Cambria Math, Times New Roman, serif" font-size="14" fill="#721c24" text-anchor="middle">∇_θ ln p(s_{t+1}|s_t,a_t)</text>
+        <path d="M 65 35 L 65 60" stroke="#721c24" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+        <text x="65" y="75" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#dc3545" text-anchor="middle">0</text>
+        <text x="65" y="90" font-family="Arial, sans-serif" font-size="10" fill="#6c757d" text-anchor="middle">No θ dependence</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Marker Definitions -->
+  <defs>
+    <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#dc3545"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#28a745"/>
+    </marker>
+  </defs>
+</svg>

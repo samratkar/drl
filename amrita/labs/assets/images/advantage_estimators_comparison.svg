@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 420" width="850" height="420">
+  <rect width="850" height="420" fill="#f8f9fa" rx="12" ry="12"/>
+  
+  <text x="425" y="32" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#212529" text-anchor="middle">Advantage Estimation Methods &amp; Bias-Variance Trade-Off</text>
+  
+  <!-- 4 Columns for Estimators -->
+  
+  <!-- 1. Monte Carlo -->
+  <g transform="translate(25, 60)">
+    <rect width="185" height="330" fill="#ffffff" stroke="#dc3545" stroke-width="1.5" rx="8" ry="8"/>
+    <rect x="0" y="0" width="185" height="35" fill="#f8d7da" stroke="#dc3545" stroke-width="1.5" rx="8" ry="8"/>
+    <text x="92" y="23" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#721c24" text-anchor="middle">Monte Carlo (MC)</text>
+    
+    <text x="12" y="60" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#495057">Formula:</text>
+    <rect x="10" y="70" width="165" height="45" fill="#f1f3f5" rx="4" ry="4"/>
+    <text x="92" y="90" font-family="Arial, sans-serif" font-size="10" fill="#212529" text-anchor="middle">A_t = G_t - V(S_t)</text>
+    <text x="92" y="105" font-family="Arial, sans-serif" font-size="9" fill="#6c757d" text-anchor="middle">G_t = sum γ^k R_{t+k+1}</text>
+    
+    <text x="12" y="135" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#495057">Properties:</text>
+    <text x="15" y="155" font-family="Arial, sans-serif" font-size="10" fill="#28a745">✓ Zero Critic Bias</text>
+    <text x="15" y="175" font-family="Arial, sans-serif" font-size="10" fill="#dc3545">✗ High Sample Variance</text>
+    <text x="15" y="195" font-family="Arial, sans-serif" font-size="10" fill="#6c757d">• Full Rollout Needed</text>
+    
+    <!-- Visual Bar -->
+    <rect x="15" y="230" width="155" height="20" fill="#e9ecef" rx="3" ry="3"/>
+    <rect x="15" y="230" width="155" height="20" fill="#dc3545" rx="3" ry="3"/>
+    <text x="92" y="244" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#ffffff" text-anchor="middle">Variance: 100% (Max)</text>
+    
+    <rect x="15" y="260" width="155" height="20" fill="#e9ecef" rx="3" ry="3"/>
+    <rect x="15" y="260" width="15" height="20" fill="#28a745" rx="3" ry="3"/>
+    <text x="92" y="274" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#495057" text-anchor="middle">Bias: 0% (None)</text>
+    
+    <text x="92" y="310" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#0056b3" text-anchor="middle">REINFORCE w/ Baseline</text>
+  </g>
+  
+  <!-- 2. 1-Step TD -->
+  <g transform="translate(230, 60)">
+    <rect width="185" height="330" fill="#ffffff" stroke="#fd7e14" stroke-width="1.5" rx="8" ry="8"/>
+    <rect x="0" y="0" width="185" height="35" fill="#ffe8cc" stroke="#fd7e14" stroke-width="1.5" rx="8" ry="8"/>
+    <text x="92" y="23" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#d9480f" text-anchor="middle">1-Step TD (TD(0))</text>
+    
+    <text x="12" y="60" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#495057">Formula:</text>
+    <rect x="10" y="70" width="165" height="45" fill="#f1f3f5" rx="4" ry="4"/>
+    <text x="92" y="90" font-family="Arial, sans-serif" font-size="10" fill="#212529" text-anchor="middle">δ_t = R_{t+1} + γV(S_{t+1})</text>
+    <text x="92" y="105" font-family="Arial, sans-serif" font-size="10" fill="#212529" text-anchor="middle">- V(S_t)</text>
+    
+    <text x="12" y="135" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#495057">Properties:</text>
+    <text x="15" y="155" font-family="Arial, sans-serif" font-size="10" fill="#dc3545">✗ High Critic Bias</text>
+    <text x="15" y="175" font-family="Arial, sans-serif" font-size="10" fill="#28a745">✓ Minimum Variance</text>
+    <text x="15" y="195" font-family="Arial, sans-serif" font-size="10" fill="#6c757d">• Step-by-Step Online</text>
+    
+    <!-- Visual Bar -->
+    <rect x="15" y="230" width="155" height="20" fill="#e9ecef" rx="3" ry="3"/>
+    <rect x="15" y="230" width="25" height="20" fill="#28a745" rx="3" ry="3"/>
+    <text x="92" y="244" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#495057" text-anchor="middle">Variance: 10% (Min)</text>
+    
+    <rect x="15" y="260" width="155" height="20" fill="#e9ecef" rx="3" ry="3"/>
+    <rect x="15" y="260" width="140" height="20" fill="#fd7e14" rx="3" ry="3"/>
+    <text x="92" y="274" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#ffffff" text-anchor="middle">Bias: 90% (High)</text>
+    
+    <text x="92" y="310" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#0056b3" text-anchor="middle">One-Step Actor-Critic</text>
+  </g>
+  
+  <!-- 3. n-Step TD -->
+  <g transform="translate(435, 60)">
+    <rect width="185" height="330" fill="#ffffff" stroke="#20c997" stroke-width="1.5" rx="8" ry="8"/>
+    <rect x="0" y="0" width="185" height="35" fill="#e6fcf5" stroke="#20c997" stroke-width="1.5" rx="8" ry="8"/>
+    <text x="92" y="23" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#099268" text-anchor="middle">n-Step TD</text>
+    
+    <text x="12" y="60" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#495057">Formula:</text>
+    <rect x="10" y="70" width="165" height="45" fill="#f1f3f5" rx="4" ry="4"/>
+    <text x="92" y="88" font-family="Arial, sans-serif" font-size="9" fill="#212529" text-anchor="middle">A_t = sum_{k=0}^{n-1} γ^k R_{t+k+1}</text>
+    <text x="92" y="103" font-family="Arial, sans-serif" font-size="9" fill="#212529" text-anchor="middle">+ γ^n V(S_{t+n}) - V(S_t)</text>
+    
+    <text x="12" y="135" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#495057">Properties:</text>
+    <text x="15" y="155" font-family="Arial, sans-serif" font-size="10" fill="#20c997">✓ Intermediate Bias</text>
+    <text x="15" y="175" font-family="Arial, sans-serif" font-size="10" fill="#20c997">✓ Intermediate Variance</text>
+    <text x="15" y="195" font-family="Arial, sans-serif" font-size="10" fill="#6c757d">• Fixed Step Window n</text>
+    
+    <!-- Visual Bar -->
+    <rect x="15" y="230" width="155" height="20" fill="#e9ecef" rx="3" ry="3"/>
+    <rect x="15" y="230" width="80" height="20" fill="#20c997" rx="3" ry="3"/>
+    <text x="92" y="244" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#ffffff" text-anchor="middle">Variance: 50%</text>
+    
+    <rect x="15" y="260" width="155" height="20" fill="#e9ecef" rx="3" ry="3"/>
+    <rect x="15" y="260" width="70" height="20" fill="#20c997" rx="3" ry="3"/>
+    <text x="92" y="274" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#ffffff" text-anchor="middle">Bias: 45%</text>
+    
+    <text x="92" y="310" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#0056b3" text-anchor="middle">Multi-Step A2C</text>
+  </g>
+  
+  <!-- 4. GAE -->
+  <g transform="translate(640, 60)">
+    <rect width="185" height="330" fill="#ffffff" stroke="#007bff" stroke-width="2" rx="8" ry="8"/>
+    <rect x="0" y="0" width="185" height="35" fill="#e7f1ff" stroke="#007bff" stroke-width="2" rx="8" ry="8"/>
+    <text x="92" y="23" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#0056b3" text-anchor="middle">GAE (γ, λ) [Gold Standard]</text>
+    
+    <text x="12" y="60" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#495057">Formula:</text>
+    <rect x="10" y="70" width="165" height="45" fill="#e7f1ff" rx="4" ry="4"/>
+    <text x="92" y="88" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#0056b3" text-anchor="middle">A_t^{GAE} = sum (γλ)^l δ_{t+l}</text>
+    <text x="92" y="103" font-family="Arial, sans-serif" font-size="9" fill="#0056b3" text-anchor="middle">= δ_t + γλ δ_{t+1} + ...</text>
+    
+    <text x="12" y="135" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#495057">Properties:</text>
+    <text x="15" y="155" font-family="Arial, sans-serif" font-size="10" fill="#007bff">★ Smooth λ slider [0, 1]</text>
+    <text x="15" y="175" font-family="Arial, sans-serif" font-size="10" fill="#007bff">★ Optimal Bias/Variance</text>
+    <text x="15" y="195" font-family="Arial, sans-serif" font-size="10" fill="#6c757d">• Default λ = 0.95</text>
+    
+    <!-- Visual Bar -->
+    <rect x="15" y="230" width="155" height="20" fill="#e9ecef" rx="3" ry="3"/>
+    <rect x="15" y="230" width="60" height="20" fill="#007bff" rx="3" ry="3"/>
+    <text x="92" y="244" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#ffffff" text-anchor="middle">Variance: Controlled</text>
+    
+    <rect x="15" y="260" width="155" height="20" fill="#e9ecef" rx="3" ry="3"/>
+    <rect x="15" y="260" width="50" height="20" fill="#007bff" rx="3" ry="3"/>
+    <text x="92" y="274" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#ffffff" text-anchor="middle">Bias: Controlled</text>
+    
+    <text x="92" y="310" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#0056b3" text-anchor="middle">PPO / Modern A2C</text>
+  </g>
+</svg>

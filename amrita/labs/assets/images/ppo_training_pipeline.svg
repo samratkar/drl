@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 480" width="850" height="480">
+  <rect width="850" height="480" fill="#f8f9fa" rx="12" ry="12"/>
+  
+  <text x="425" y="32" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#212529" text-anchor="middle">Complete Proximal Policy Optimization (PPO) Execution Pipeline</text>
+  
+  <!-- Step 1: Parallel Rollouts -->
+  <g transform="translate(30, 60)">
+    <rect width="790" height="75" fill="#ffffff" stroke="#007bff" stroke-width="1.5" rx="8" ry="8"/>
+    <rect x="0" y="0" width="790" height="26" fill="#e7f1ff" stroke="#007bff" stroke-width="1.5" rx="8" ry="8"/>
+    <text x="395" y="18" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#0056b3" text-anchor="middle">Step 1: Parallel Rollout Phase (Gather Transitions with Frozen π_old)</text>
+    
+    <text x="20" y="48" font-family="Arial, sans-serif" font-size="11" fill="#212529">Collect batch of trajectories across N parallel environments for T timesteps: D = { (S_t, A_t, R_{t+1}, log π_old(A_t|S_t), Done_t) }</text>
+    <text x="20" y="65" font-family="Arial, sans-serif" font-size="10" fill="#6c757d">• Total Transitions = N × T  • Old policy probabilities are stored and frozen for ratio calculation.</text>
+  </g>
+  
+  <path d="M 425 135 L 425 155" stroke="#333" stroke-width="2" fill="none" marker-end="url(#arrow-black)"/>
+  
+  <!-- Step 2: Backwards GAE Pass -->
+  <g transform="translate(30, 160)">
+    <rect width="790" height="75" fill="#ffffff" stroke="#28a745" stroke-width="1.5" rx="8" ry="8"/>
+    <rect x="0" y="0" width="790" height="26" fill="#e8f5e9" stroke="#28a745" stroke-width="1.5" rx="8" ry="8"/>
+    <text x="395" y="18" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1b5e20" text-anchor="middle">Step 2: Backwards GAE Pass &amp; Advantage Normalization</text>
+    
+    <text x="20" y="48" font-family="Arial, sans-serif" font-size="11" fill="#212529">Compute 1-step TD errors δ_t = R_{t+1} + γ V(S_{t+1})(1-done) - V(S_t), then GAE: A_t^{GAE} = δ_t + γλ (1-done) A_{t+1}^{GAE}</text>
+    <text x="20" y="65" font-family="Arial, sans-serif" font-size="10" fill="#6c757d">• Target Returns: V_target = A_t^{GAE} + V(S_t)  • Standardize Advantages: A_norm = (A - μ_A) / (σ_A + 1e-8)</text>
+  </g>
+  
+  <path d="M 425 235 L 425 255" stroke="#333" stroke-width="2" fill="none" marker-end="url(#arrow-black)"/>
+  
+  <!-- Step 3: Multi-Epoch SGD -->
+  <g transform="translate(30, 260)">
+    <rect width="790" height="110" fill="#ffffff" stroke="#fd7e14" stroke-width="1.5" rx="8" ry="8"/>
+    <rect x="0" y="0" width="790" height="26" fill="#ffe8cc" stroke="#fd7e14" stroke-width="1.5" rx="8" ry="8"/>
+    <text x="395" y="18" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#d9480f" text-anchor="middle">Step 3: Multi-Epoch Mini-Batch Optimization Loop (K Epochs, e.g. K = 4 to 10)</text>
+    
+    <text x="20" y="48" font-family="Arial, sans-serif" font-size="11" fill="#212529">1. Shuffle all N × T samples into randomized mini-batches (e.g. batch size 64).</text>
+    <text x="20" y="66" font-family="Arial, sans-serif" font-size="11" fill="#212529">2. Compute probability ratios: r_t(θ) = exp( log π_θ(a|s) - log π_old(a|s) ).</text>
+    <text x="20" y="84" font-family="Arial, sans-serif" font-size="11" fill="#212529">3. Evaluate Joint Loss: L_{total} = - min( r_t A, clip(r_t, 1-ε, 1+ε) A ) + c₁ · MSE(V(s), V_target) - c₂ · H(π_θ).</text>
+    <text x="20" y="102" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#d9480f">4. Backpropagate total loss and update shared parameters θ via Adam optimizer.</text>
+  </g>
+  
+  <path d="M 425 370 L 425 390" stroke="#333" stroke-width="2" fill="none" marker-end="url(#arrow-black)"/>
+  
+  <!-- Step 4: Policy Synchronization -->
+  <g transform="translate(30, 395)">
+    <rect width="790" height="60" fill="#ffffff" stroke="#6f42c1" stroke-width="1.5" rx="8" ry="8"/>
+    <rect x="0" y="0" width="790" height="26" fill="#f3ebff" stroke="#6f42c1" stroke-width="1.5" rx="8" ry="8"/>
+    <text x="395" y="18" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#593196" text-anchor="middle">Step 4: Policy Synchronization (π_old ← π_θ) &amp; Repeat</text>
+    
+    <text x="395" y="47" font-family="Arial, sans-serif" font-size="11" fill="#212529" text-anchor="middle">Update frozen baseline policy π_old with new optimized weights θ, and start next iteration!</text>
+  </g>
+  
+  <defs>
+    <marker id="arrow-black" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L6,3 z" fill="#333"/>
+    </marker>
+  </defs>
+</svg>

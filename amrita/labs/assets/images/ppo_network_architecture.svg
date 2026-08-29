@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 500" width="100%" height="500">
+  <rect width="450" height="500" fill="#f8fafc" rx="8" ry="8" stroke="#dee2e6" stroke-width="1"/>
+  
+  <defs>
+    <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L5,3 z" fill="#4a5568"/>
+    </marker>
+  </defs>
+
+  <!-- ================= ACTOR COLUMN ================= -->
+  <rect x="15" y="15" width="200" height="470" fill="#ebf8ff" rx="6" ry="6" stroke="#bee3f8" stroke-width="1.5"/>
+  <text x="115" y="40" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="bold" fill="#2b6cb0" text-anchor="middle">Actor Network (Policy)</text>
+  
+  <!-- Actor Input -->
+  <rect x="25" y="65" width="180" height="40" fill="#ffffff" rx="4" ry="4" stroke="#a0aec0" stroke-width="1.5"/>
+  <text x="115" y="89" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#4a5568" font-weight="bold" text-anchor="middle">State Input (state_dim)</text>
+  
+  <!-- Arrow 1 -->
+  <line x1="115" y1="105" x2="115" y2="139" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Actor Hidden 1 -->
+  <rect x="25" y="145" width="180" height="40" fill="#ffffff" rx="4" ry="4" stroke="#3182ce" stroke-width="1.5"/>
+  <text x="115" y="169" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#2b6cb0" text-anchor="middle">Linear (64) + ReLU</text>
+
+  <!-- Arrow 2 -->
+  <line x1="115" y1="185" x2="115" y2="219" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Actor Hidden 2 -->
+  <rect x="25" y="225" width="180" height="40" fill="#ffffff" rx="4" ry="4" stroke="#3182ce" stroke-width="1.5"/>
+  <text x="115" y="249" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#2b6cb0" text-anchor="middle">Linear (64) + ReLU</text>
+
+  <!-- Arrow 3 -->
+  <line x1="115" y1="265" x2="115" y2="299" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Actor Output -->
+  <rect x="25" y="305" width="180" height="40" fill="#ffffff" rx="4" ry="4" stroke="#3182ce" stroke-width="1.5"/>
+  <text x="115" y="329" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#2b6cb0" text-anchor="middle">Linear (action_dim)</text>
+
+  <!-- Arrow 4 -->
+  <line x1="115" y1="345" x2="115" y2="379" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Actor Softmax/Output -->
+  <rect x="25" y="385" width="180" height="45" fill="#3182ce" rx="4" ry="4" stroke="#2b6cb0" stroke-width="1.5"/>
+  <text x="115" y="403" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">Softmax Output</text>
+  <text x="115" y="419" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#ebf8ff" text-anchor="middle">Action Probabilities π(a|s)</text>
+
+
+  <!-- ================= CRITIC COLUMN ================= -->
+  <rect x="235" y="15" width="200" height="470" fill="#fffaf0" rx="6" ry="6" stroke="#fde8bb" stroke-width="1.5"/>
+  <text x="335" y="40" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="bold" fill="#dd6b20" text-anchor="middle">Critic Network (Value)</text>
+  
+  <!-- Critic Input -->
+  <rect x="245" y="65" width="180" height="40" fill="#ffffff" rx="4" ry="4" stroke="#a0aec0" stroke-width="1.5"/>
+  <text x="335" y="89" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#4a5568" font-weight="bold" text-anchor="middle">State Input (state_dim)</text>
+  
+  <!-- Arrow 1 -->
+  <line x1="335" y1="105" x2="335" y2="139" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Critic Hidden 1 -->
+  <rect x="245" y="145" width="180" height="40" fill="#ffffff" rx="4" ry="4" stroke="#dd6b20" stroke-width="1.5"/>
+  <text x="335" y="169" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#dd6b20" text-anchor="middle">Linear (64) + ReLU</text>
+
+  <!-- Arrow 2 -->
+  <line x1="335" y1="185" x2="335" y2="219" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Critic Hidden 2 -->
+  <rect x="245" y="225" width="180" height="40" fill="#ffffff" rx="4" ry="4" stroke="#dd6b20" stroke-width="1.5"/>
+  <text x="335" y="249" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#dd6b20" text-anchor="middle">Linear (64) + ReLU</text>
+
+  <!-- Arrow 3 -->
+  <line x1="335" y1="265" x2="335" y2="299" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Critic Output -->
+  <rect x="245" y="305" width="180" height="40" fill="#ffffff" rx="4" ry="4" stroke="#dd6b20" stroke-width="1.5"/>
+  <text x="335" y="329" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#dd6b20" text-anchor="middle">Linear (1)</text>
+
+  <!-- Arrow 4 -->
+  <line x1="335" y1="345" x2="335" y2="379" stroke="#718096" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Critic State Value Output -->
+  <rect x="245" y="385" width="180" height="45" fill="#dd6b20" rx="4" ry="4" stroke="#c05621" stroke-width="1.5"/>
+  <text x="335" y="403" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">Value Output</text>
+  <text x="335" y="419" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#fffaf0" text-anchor="middle">State Value V(s)</text>
+</svg>

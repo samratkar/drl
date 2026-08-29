@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 380" width="740" height="380">
+  <rect width="740" height="380" fill="#fcfcfc" rx="8" ry="8" stroke="#dee2e6" stroke-width="1"/>
+  
+  <defs>
+    <marker id="arrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L6,3 z" fill="#6c757d"/>
+    </marker>
+    <!-- Code Editor Shadow -->
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#111" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Title -->
+  <text x="370" y="25" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333" text-anchor="middle">Mapping A2C Architecture Steps (1–5) to Code Implementation</text>
+
+  <!-- ================= LEFT: STEP BOXES ================= -->
+  <!-- Step 1 Box -->
+  <rect x="20" y="55" width="180" height="40" fill="#e7f1ff" stroke="#0d6efd" stroke-width="1.5" rx="4" ry="4"/>
+  <text x="30" y="72" font-family="Arial, sans-serif" font-size="10.5" font-weight="bold" fill="#0d6efd">Step 1: Broadcast Actions</text>
+  <text x="30" y="86" font-family="Arial, sans-serif" font-size="8.5" fill="#6c757d">Sample from global policy</text>
+
+  <!-- Step 2 Box -->
+  <rect x="20" y="110" width="180" height="40" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5" rx="4" ry="4"/>
+  <text x="30" y="127" font-family="Arial, sans-serif" font-size="10.5" font-weight="bold" fill="#2e7d32">Step 2: Step Environments</text>
+  <text x="30" y="141" font-family="Arial, sans-serif" font-size="8.5" fill="#6c757d">Transition N envs in parallel</text>
+
+  <!-- Step 3 Box -->
+  <rect x="20" y="165" width="180" height="40" fill="#fff3cd" stroke="#ffc107" stroke-width="1.5" rx="4" ry="4"/>
+  <text x="30" y="182" font-family="Arial, sans-serif" font-size="10.5" font-weight="bold" fill="#856404">Step 3: Collect T-Step Rollouts</text>
+  <text x="30" y="196" font-family="Arial, sans-serif" font-size="8.5" fill="#6c757d">Store transitions in local buffers</text>
+
+  <!-- Step 4 Box -->
+  <rect x="20" y="245" width="180" height="40" fill="#f8d7da" stroke="#dc3545" stroke-width="1.5" rx="4" ry="4"/>
+  <text x="30" y="262" font-family="Arial, sans-serif" font-size="10.5" font-weight="bold" fill="#b71c1c">Step 4: Compute Loss / GAE</text>
+  <text x="30" y="276" font-family="Arial, sans-serif" font-size="8.5" fill="#6c757d">Aggregate batch &amp; compute losses</text>
+
+  <!-- Step 5 Box -->
+  <rect x="20" y="300" width="180" height="40" fill="#f3e5f5" stroke="#8e24aa" stroke-width="1.5" rx="4" ry="4"/>
+  <text x="30" y="317" font-family="Arial, sans-serif" font-size="10.5" font-weight="bold" fill="#8e24aa">Step 5: Update Weights</text>
+  <text x="30" y="331" font-family="Arial, sans-serif" font-size="8.5" fill="#6c757d">Backward pass &amp; optimizer step</text>
+
+
+  <!-- ================= RIGHT: CODE EDITOR ================= -->
+  <g transform="translate(240, 45)" filter="url(#shadow)">
+    <!-- Editor Background -->
+    <rect width="480" height="315" fill="#1e1e1e" rx="6" ry="6"/>
+    <!-- Editor Header -->
+    <path d="M 0 6 A 6 6 0 0 1 6 0 L 474 0 A 6 6 0 0 1 480 6 L 480 25 L 0 25 Z" fill="#2d2d2d"/>
+    <circle cx="15" cy="12" r="4.5" fill="#ff5f56"/>
+    <circle cx="27" cy="12" r="4.5" fill="#ffbd2e"/>
+    <circle cx="39" cy="12" r="4.5" fill="#27c93f"/>
+    <text x="240" y="16" font-family="Consolas, Monaco, monospace" font-size="10" fill="#8e8e8e" text-anchor="middle">a2c_agent.py</text>
+    
+    <!-- Code Lines -->
+    <g font-family="Consolas, Monaco, monospace" font-size="10" fill="#d4d4d4">
+      <text x="15" y="45" fill="#6a9955"># Step 1: Sample actions from the global policy</text>
+      <text x="15" y="60"><tspan fill="#9cdcfe">actions</tspan> = <tspan fill="#4fc1ff">global_policy</tspan>.<tspan fill="#dcdcaa">sample_actions</tspan>(states)</text>
+      
+      <text x="15" y="85" fill="#6a9955"># Step 2: Step environments synchronously in parallel</text>
+      <text x="15" y="100"><tspan fill="#9cdcfe">next_states</tspan>, <tspan fill="#9cdcfe">rewards</tspan> = <tspan fill="#4fc1ff">envs</tspan>.<tspan fill="#dcdcaa">step</tspan>(actions)</text>
+      
+      <text x="15" y="125" fill="#6a9955"># Step 3: Accumulate trajectories in local buffers</text>
+      <text x="15" y="140"><tspan fill="#9cdcfe">buffers</tspan>.<tspan fill="#dcdcaa">store</tspan>(states, actions, rewards, next_states)</text>
+      
+      <text x="15" y="165"><tspan fill="#c586c0">if</tspan> step % <tspan fill="#b5cea8">T</tspan> == <tspan fill="#b5cea8">0</tspan>:</text>
+      <text x="35" y="180" fill="#6a9955"># Step 4: Batch calculate GAE advantages &amp; losses</text>
+      <text x="35" y="195"><tspan fill="#9cdcfe">advs</tspan> = <tspan fill="#dcdcaa">compute_gae_advantages</tspan>(buffers)</text>
+      <text x="35" y="210"><tspan fill="#9cdcfe">loss</tspan> = <tspan fill="#dcdcaa">policy_loss</tspan>(advs) + <tspan fill="#dcdcaa">value_loss</tspan>(buffers)</text>
+      
+      <text x="35" y="235" fill="#6a9955"># Step 5: Backpropagate and update global weights</text>
+      <text x="35" y="250"><tspan fill="#4fc1ff">optimizer</tspan>.<tspan fill="#dcdcaa">zero_grad</tspan>()</text>
+      <text x="35" y="265"><tspan fill="#9cdcfe">loss</tspan>.<tspan fill="#dcdcaa">backward</tspan>()</text>
+      <text x="35" y="280"><tspan fill="#4fc1ff">optimizer</tspan>.<tspan fill="#dcdcaa">step</tspan>()</text>
+      <text x="35" y="295"><tspan fill="#9cdcfe">buffers</tspan>.<tspan fill="#dcdcaa">clear</tspan>()</text>
+    </g>
+  </g>
+
+  <!-- ================= CONNECTING ARROWS ================= -->
+  <!-- Step 1 Connect -->
+  <path d="M 200 75 L 225 75 L 225 105 L 250 105" fill="none" stroke="#0d6efd" stroke-dasharray="3,3" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Step 2 Connect -->
+  <path d="M 200 130 L 220 130 L 220 145 L 250 145" fill="none" stroke="#2e7d32" stroke-dasharray="3,3" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Step 3 Connect -->
+  <path d="M 200 185 L 250 185" fill="none" stroke="#856404" stroke-dasharray="3,3" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Step 4 Connect -->
+  <path d="M 200 265 L 215 265 L 215 245 L 270 245" fill="none" stroke="#dc3545" stroke-dasharray="3,3" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Step 5 Connect -->
+  <path d="M 200 320 L 210 320 L 210 310 L 270 310" fill="none" stroke="#8e24aa" stroke-dasharray="3,3" stroke-width="1.5" marker-end="url(#arrow)"/>
+</svg>

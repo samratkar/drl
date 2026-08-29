@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 260" width="700" height="260">
+  <rect width="700" height="260" fill="#fcfcfc" rx="8" ry="8" stroke="#dee2e6" stroke-width="1"/>
+  
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="5" refY="2.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,5 L5,2.5 z" fill="#495057"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="350" y="25" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333" text-anchor="middle">Numerical Case Study: 3-State Stochastic MDP</text>
+
+  <!-- State S_0 (Start) -->
+  <circle cx="100" cy="130" r="25" fill="#fff3cd" stroke="#ffc107" stroke-width="2"/>
+  <text x="100" y="134" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#856404" text-anchor="middle">S₀</text>
+  <text x="100" y="170" font-family="Arial, sans-serif" font-size="10" fill="#6c757d" text-anchor="middle">Start State</text>
+
+  <!-- State S_1 (Intermediate) -->
+  <circle cx="350" cy="70" r="25" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2"/>
+  <text x="350" y="74" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#2e7d32" text-anchor="middle">S₁</text>
+  <text x="350" y="110" font-family="Arial, sans-serif" font-size="10" fill="#6c757d" text-anchor="middle">Intermediate</text>
+
+  <!-- State S_terminal -->
+  <circle cx="600" cy="130" r="25" fill="#e9ecef" stroke="#495057" stroke-width="2"/>
+  <text x="600" y="134" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#333" text-anchor="middle">S_term</text>
+  <text x="600" y="170" font-family="Arial, sans-serif" font-size="10" fill="#6c757d" text-anchor="middle">Terminal</text>
+
+  <!-- ================= TRANSITIONS FROM S_0 ================= -->
+  <!-- Action a_1 (Go to S_1) -->
+  <path d="M 120 115 C 180 80, 260 60, 322 65" fill="none" stroke="#007bff" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="210" y="75" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#007bff">Action a₁ (Go Left)</text>
+  <text x="210" y="90" font-family="Arial, sans-serif" font-size="9" fill="#495057">Reward R = 0 (prob 1.0)</text>
+
+  <!-- Action a_2 (Go directly to Terminal) -->
+  <path d="M 125 130 L 572 130" fill="none" stroke="#e64a19" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="350" y="145" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#d35400">Action a₂ (Go Right)</text>
+  <text x="350" y="158" font-family="Arial, sans-serif" font-size="9" fill="#495057">Reward R = +2 (prob 1.0)</text>
+
+  <!-- ================= TRANSITIONS FROM S_1 ================= -->
+  <!-- Stochastic Branch 1: Goal (80%) -->
+  <path d="M 372 60 C 430 45, 520 60, 582 112" fill="none" stroke="#28a745" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="490" y="65" font-family="Arial, sans-serif" font-size="9.5" font-weight="bold" fill="#1e7e34" text-anchor="middle">Goal (80%)</text>
+  <text x="490" y="78" font-family="Arial, sans-serif" font-size="9.5" fill="#495057" text-anchor="middle">Reward R = +10</text>
+
+  <!-- Stochastic Branch 2: Trap (20%) -->
+  <path d="M 372 78 C 430 95, 520 115, 577 125" fill="none" stroke="#dc3545" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="470" y="112" font-family="Arial, sans-serif" font-size="9.5" font-weight="bold" fill="#c62828" text-anchor="middle">Trap (20%)</text>
+  <text x="470" y="125" font-family="Arial, sans-serif" font-size="9.5" fill="#495057" text-anchor="middle">Reward R = -10</text>
+
+  <!-- Summary of Expected Values -->
+  <rect x="200" y="195" width="300" height="50" fill="#f8f9fa" stroke="#ced4da" stroke-width="1" rx="4" ry="4"/>
+  <text x="350" y="212" font-family="Arial, sans-serif" font-size="10.5" font-weight="bold" fill="#333" text-anchor="middle">Expected Return Comparison</text>
+  <text x="350" y="228" font-family="Arial, sans-serif" font-size="9.5" fill="#495057" text-anchor="middle">Action a₁: Expected R = +6  |  Action a₂: Expected R = +2</text>
+  <text x="350" y="240" font-family="Arial, sans-serif" font-size="8.5" fill="#28a745" font-weight="bold" text-anchor="middle">a₁ is globally optimal, but has high variance!</text>
+</svg>
