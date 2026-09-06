@@ -302,9 +302,10 @@ Evaluating an agent solely by its final reward is misleading because:
 
 ## Certificate & Artifact Submission Checklist
 
-- [x] **MATLAB Reinforcement Learning Onramp Certificate:** Filed at [matlab-onramp-rl-certificate.pdf](./matlab-onramp-rl-certificate.pdf).
-- [x] **Executable MATLAB Live Script:** Verified and runnable at [Lab_4_MATLAB_RL_Onramp_Learning_Curve_Analysis.mlx](./Lab_4_MATLAB_RL_Onramp_Learning_Curve_Analysis.mlx).
-- [x] **MATLAB Code:** Complete source code at [Lab_4_MATLAB_RL_Onramp_Learning_Curve_Analysis.m](./Lab_4_MATLAB_RL_Onramp_Learning_Curve_Analysis.m).
+- [x] **MATLAB Reinforcement Learning Onramp Certificate:** Filed at [matlab-onramp-rl-certificate.pdf](./BL.SC.R4CSE24007_SamratKar_CSE_PHD_matlab-onramp-rl-certificate.pdf).
+- [x] **Executable MATLAB Live Script:** Verified and runnable at [BL.SC.R4CSE24007_SamratKar_CSE_PHD_Lab_4_MATLAB_RL.mlx](./BL.SC.R4CSE24007_SamratKar_CSE_PHD_Lab_4_MATLAB_RL.mlx).
+- [x] **MATLAB Code:** Complete source code at [BL.SC.R4CSE24007_SamratKar_CSE_PHD_Lab_4_MATLAB_RL.m](./BL.SC.R4CSE24007_SamratKar_CSE_PHD_Lab_4_MATLAB_RL.m).
 - [x] **High-Resolution Learning Curve Figure:** Saved at [MATLAB_RL_Onramp_Learning_Curve_Diagnostics.png](./MATLAB_RL_Onramp_Learning_Curve_Diagnostics.png).
 - [x] **Completed Observation Tables:** Task 2 and Task 3 tables fully documented above.
 - [x] **Comprehensive Answers to Questions 20–32:** Detailed academic responses provided above.
+
