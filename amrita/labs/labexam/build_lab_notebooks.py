@@ -5,14 +5,28 @@ from nbclient import NotebookClient
 OUT_DIR = r"C:\github\drl\amrita\labs\labexam"
 
 def add_code(cells, code_str):
-    # Verify Python syntax before adding
+    """
+    Description: Validates Python syntax and appends a new code cell to the cell list.
+    Pre-conditions: code_str is a string of valid Python code; cells is a list.
+    Post-conditions: cells has one new code cell appended.
+    """
     compile(code_str, "<cell>", "exec")
     cells.append(nbf.v4.new_code_cell(code_str))
 
 def add_md(cells, md_str):
+    """
+    Description: Appends a new markdown cell to the cell list.
+    Pre-conditions: md_str is a markdown-formatted string; cells is a list.
+    Post-conditions: cells has one new markdown cell appended.
+    """
     cells.append(nbf.v4.new_markdown_cell(md_str))
 
 def build_notebook_1_and_2():
+    """
+    Description: Constructs all markdown and code cells for Lab Assignments 1 & 2.
+    Pre-conditions: OUT_DIR directory exists and is writable.
+    Post-conditions: Writes Lab_Assignment_1_and_2.ipynb to disk and returns file path.
+    """
     nb = nbf.v4.new_notebook()
     nb.metadata = {
         "language_info": {"name": "python", "version": "3.11"},
@@ -20,7 +34,7 @@ def build_notebook_1_and_2():
     }
     cells = []
 
-    # Title
+    # Title & Metadata
     add_md(cells, """# Reinforcement Learning Laboratory
 ## Lab Assignment 1 & 2: Gymnasium Exploration & RL with Tic-Tac-Toe
 **Course Outcome:** CO1 (Identify RL components, understand environment spaces, execute agent interactions, and evaluate learning dynamics)  
@@ -28,7 +42,11 @@ def build_notebook_1_and_2():
 - **Lab Assignment 1:** Explore OpenAI Gymnasium using a 3D Tic-Tac-Toe Environment (Questions 1 to 5)
 - **Lab Assignment 2:** Reinforcement Learning using Tic-Tac-Toe (Questions 1 to 5)
 
-Each question is documented with the exact problem statement, theoretical context, complete runnable Python implementation, output display, and comprehensive analytical answers.
+Each question includes:
+1. Exact question text and theoretical formulation.
+2. Complete, robust Python implementation with **comprehensive function descriptions, pre-conditions, and post-conditions**.
+3. Fully executed outputs, tables, and visualization graphics.
+4. Detailed analytical answers and conclusions.
 """)
 
     # Part I Header
@@ -38,7 +56,7 @@ Each question is documented with the exact problem statement, theoretical contex
 Gymnasium is the standard API for reinforcement learning environments. In this assignment, we explore environment creation, reset operations, observation and action spaces, random action execution, and episode termination tracking on a **3D Tic-Tac-Toe Environment** ($3 \\times 3 \\times 3$ grid = 27 cells).
 """)
 
-    # Environment implementation
+    # Environment Implementation with Detailed Function Contracts
     add_md(cells, """### 3D Tic-Tac-Toe Gymnasium Environment Definition
 Before answering the individual questions, we implement the complete Gymnasium-compliant `TicTacToe3DEnv` class:
 - **Board Configuration:** $3 \\times 3 \\times 3$ grid (27 total cells arranged across 3 layers: Layer 0, Layer 1, Layer 2).
@@ -60,6 +78,22 @@ from gymnasium import spaces
 class TicTacToe3DEnv(gym.Env):
     metadata = {"render_modes": ["ansi", "human"]}
 
+    # ==============================================================================
+    # Function: __init__
+    # Description:
+    #   Initializes the 3D Tic-Tac-Toe environment instance conforming to Gymnasium API.
+    #   Defines the discrete action space (27 cells) and 3D tensor observation space
+    #   Box(-1, 1, (3, 3, 3), int8). Generates all 49 valid 3D winning lines and
+    #   initializes internal board buffers and step counters.
+    # Pre-conditions:
+    #   - opponent_type (str): Type of opponent policy ("random" supported).
+    #   - max_steps (int): Maximum allowable agent steps before episode truncation (must be > 0).
+    # Post-conditions:
+    #   - Action space initialized as spaces.Discrete(27).
+    #   - Observation space initialized as spaces.Box of shape (3, 3, 3).
+    #   - Winning lines list precomputed containing exactly 49 lines.
+    #   - Internal board instantiated as a 3x3x3 numpy array of zeros.
+    # ==============================================================================
     def __init__(self, opponent_type="random", max_steps=14):
         super().__init__()
         self.grid_size = 3
@@ -76,8 +110,20 @@ class TicTacToe3DEnv(gym.Env):
         self.current_step = 0
         self.winning_lines = self._generate_winning_lines()
 
+    # ==============================================================================
+    # Function: _generate_winning_lines
+    # Description:
+    #   Enumerates all 49 winning collinear triplets of coordinate tuples in a 3x3x3
+    #   cube: 27 1D orthogonal lines parallel to X, Y, and Z axes; 18 2D planar diagonals
+    #   across XY, XZ, and YZ slices; and 4 3D space diagonals intersecting the center.
+    # Pre-conditions:
+    #   - Grid dimensions are 3x3x3.
+    # Post-conditions:
+    #   - Returns a list containing 49 unique lists of 3 coordinate tuples [(x, y, z), ...].
+    # ==============================================================================
     def _generate_winning_lines(self):
         lines = []
+        # 1D Orthogonal lines (27 lines)
         for y in range(3):
             for z in range(3):
                 lines.append([(x, y, z) for x in range(3)])
@@ -88,6 +134,7 @@ class TicTacToe3DEnv(gym.Env):
             for y in range(3):
                 lines.append([(x, y, z) for z in range(3)])
                 
+        # 2D Planar diagonals (18 lines)
         for z in range(3):
             lines.append([(i, i, z) for i in range(3)])
             lines.append([(i, 2 - i, z) for i in range(3)])
@@ -98,18 +145,44 @@ class TicTacToe3DEnv(gym.Env):
             lines.append([(x, i, i) for i in range(3)])
             lines.append([(x, i, 2 - i) for i in range(3)])
             
+        # 3D Space diagonals (4 lines)
         lines.append([(i, i, i) for i in range(3)])
         lines.append([(i, i, 2 - i) for i in range(3)])
         lines.append([(i, 2 - i, i) for i in range(3)])
         lines.append([(i, 2 - i, 2 - i) for i in range(3)])
         return lines
 
+    # ==============================================================================
+    # Function: _check_winner
+    # Description:
+    #   Checks whether the specified player has achieved 3 consecutive marks along
+    #   any of the 49 precomputed winning lines in the 3D board.
+    # Pre-conditions:
+    #   - player (int): The player identifier to check (+1 for Agent X, -1 for Opponent O).
+    #   - self.board: A 3x3x3 numpy array representing current board occupancy.
+    # Post-conditions:
+    #   - Returns True if player occupies all 3 cells in at least one line; False otherwise.
+    # ==============================================================================
     def _check_winner(self, player):
         for line in self.winning_lines:
             if all(self.board[z, y, x] == player for (x, y, z) in line):
                 return True
         return False
 
+    # ==============================================================================
+    # Function: reset
+    # Description:
+    #   Resets the environment to the initial clean state. Clears the 3D board to all zeros,
+    #   resets the step counter to 0, optionally seeds the random number generator,
+    #   and returns the initial observation and diagnostic info dictionary.
+    # Pre-conditions:
+    #   - seed (int or None): Optional seed for pseudo-random number generator reproducibility.
+    #   - options (dict or None): Optional dictionary of environment configuration options.
+    # Post-conditions:
+    #   - self.board is reset to an all-zero tensor of shape (3, 3, 3) and dtype int8.
+    #   - self.current_step is reset to 0.
+    #   - Returns 2-tuple (observation, info) conforming to Gymnasium specification.
+    # ==============================================================================
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         if seed is not None:
@@ -123,6 +196,16 @@ class TicTacToe3DEnv(gym.Env):
         }
         return self.board.copy(), info
 
+    # ==============================================================================
+    # Function: action_to_coord
+    # Description:
+    #   Decodes a flat discrete action index in [0, 26] into 3D spatial grid coordinates:
+    #   (layer z, row y, col x) using modular arithmetic.
+    # Pre-conditions:
+    #   - action (int): Integer action in range [0, 26].
+    # Post-conditions:
+    #   - Returns 3-tuple (layer, row, col) where each element is an integer in {0, 1, 2}.
+    # ==============================================================================
     def action_to_coord(self, action):
         layer = action // 9
         rem = action % 9
@@ -130,6 +213,22 @@ class TicTacToe3DEnv(gym.Env):
         col = rem % 3
         return layer, row, col
 
+    # ==============================================================================
+    # Function: step
+    # Description:
+    #   Applies the agent's action (+1) to the designated cell, validates legality, checks
+    #   for agent victory or board saturation, executes the opponent's counter-move (-1),
+    #   evaluates opponent victory, checks truncation limits, and returns Gymnasium step tuple.
+    # Pre-conditions:
+    #   - action (int): Action index in [0, 26].
+    #   - Environment must have been reset prior to calling step.
+    # Post-conditions:
+    #   - Returns 5-tuple: (observation, reward, terminated, truncated, info).
+    #   - observation is a copy of the updated 3D board tensor.
+    #   - reward is +10.0 (win), -10.0 (loss/illegal), or 0.0 (step/draw).
+    #   - terminated is True if win, loss, draw, or illegal move occurs.
+    #   - truncated is True if self.current_step >= self.max_steps without game termination.
+    # ==============================================================================
     def step(self, action):
         self.current_step += 1
         layer, row, col = self.action_to_coord(action)
@@ -181,6 +280,16 @@ class TicTacToe3DEnv(gym.Env):
         }
         return self.board.copy(), 0.0, terminated, truncated, info
 
+    # ==============================================================================
+    # Function: render
+    # Description:
+    #   Visualizes the current 3D board configuration as three 2D planar slices (Layer 0, 1, 2)
+    #   in human-readable ASCII format using '.' for vacant, 'X' for agent, 'O' for opponent.
+    # Pre-conditions:
+    #   - self.board is an instantiated 3x3x3 numpy array.
+    # Post-conditions:
+    #   - Prints formatted board representation to standard output; does not mutate state.
+    # ==============================================================================
     def render(self):
         symbols = {0: ".", 1: "X", -1: "O"}
         print("+-----------------------------------------------+")
@@ -354,6 +463,20 @@ env.render()
 
     q5_code = """print("=== QUESTION 5 OUTPUT ===")
 
+# ==============================================================================
+# Function: run_episode_and_check_flags
+# Description:
+#   Simulates an entire game episode in the Gymnasium 3D Tic-Tac-Toe environment,
+#   sampling valid unoccupied actions at each time step until either natural MDP
+#   termination (win/loss/draw) or horizon truncation (max step limit reached).
+#   Demonstrates how to test, differentiate, and handle terminated vs truncated flags.
+# Pre-conditions:
+#   - env: An instantiated TicTacToe3DEnv environment.
+#   - run_id (int): Seed offset to ensure reproducible trajectory generation.
+# Post-conditions:
+#   - Prints per-step telemetry of action index, reward, terminated, truncated, status.
+#   - Formally prints explicit diagnostic banner upon episode conclusion.
+# ==============================================================================
 def run_episode_and_check_flags(env, run_id=1):
     state, info = env.reset(seed=42 + run_id)
     step = 0
@@ -400,7 +523,7 @@ In this section, we build a **Temporal Difference (TD(0)) / Tabular Q-Learning A
 5. Parameter sensitivity analysis (**varying the learning rate $\\alpha$**).
 """)
 
-    # RL Environment and Agent
+    # RL Environment and Agent with Function Contracts
     add_md(cells, """### Tabular Tic-Tac-Toe RL Environment and Q-Learning Agent
 We implement a fast 2D Tic-Tac-Toe ($3 \\times 3$) environment and a Q-learning agent with $\\epsilon$-greedy exploration:
 - **Q-Learning Update Rule:**
@@ -412,16 +535,57 @@ We implement a fast 2D Tic-Tac-Toe ($3 \\times 3$) environment and a Q-learning 
 import pandas as pd
 
 class TicTacToe2D:
+    # ==============================================================================
+    # Function: __init__
+    # Description:
+    #   Initializes the standard 3x3 Tic-Tac-Toe environment using a 9-element 1D numpy array.
+    # Pre-conditions:
+    #   - None.
+    # Post-conditions:
+    #   - self.board is initialized to an all-zero 9-element integer numpy array.
+    # ==============================================================================
     def __init__(self):
         self.board = np.zeros(9, dtype=int)
 
+    # ==============================================================================
+    # Function: reset
+    # Description:
+    #   Resets the 3x3 board to all zeros and returns an immutable 9-element state tuple.
+    # Pre-conditions:
+    #   - TicTacToe2D instance initialized.
+    # Post-conditions:
+    #   - All 9 board cells are set to 0.
+    #   - Returns tuple(self.board) representing the empty starting state.
+    # ==============================================================================
     def reset(self):
         self.board = np.zeros(9, dtype=int)
         return tuple(self.board)
 
+    # ==============================================================================
+    # Function: available_actions
+    # Description:
+    #   Scans the 9 board cells and returns indices of all empty cells (value == 0).
+    # Pre-conditions:
+    #   - self.board is a 9-element array.
+    # Post-conditions:
+    #   - Returns a list of integer indices in [0, 8] corresponding to legal moves.
+    # ==============================================================================
     def available_actions(self):
         return [i for i in range(9) if self.board[i] == 0]
 
+    # ==============================================================================
+    # Function: check_winner
+    # Description:
+    #   Evaluates all 8 winning lines (3 horizontal rows, 3 vertical columns, 2 diagonals)
+    #   to determine if either player has won, if the board is full (draw), or in-progress.
+    # Pre-conditions:
+    #   - self.board is a 9-element array with cell values in {-1, 0, 1}.
+    # Post-conditions:
+    #   - Returns +1 if Agent (X) won.
+    #   - Returns -1 if Opponent (O) won.
+    #   - Returns 0 if game ended in a draw (full board with no winner).
+    #   - Returns None if game is still active.
+    # ==============================================================================
     def check_winner(self):
         b = self.board
         lines = [
@@ -438,15 +602,49 @@ class TicTacToe2D:
         return None
 
 class QLearningTTTAgent:
+    # ==============================================================================
+    # Function: __init__
+    # Description:
+    #   Initializes the tabular Q-learning agent with hyperparameter configurations
+    #   (learning rate alpha, exploration epsilon, discount gamma) and empty Q-table.
+    # Pre-conditions:
+    #   - alpha (float): Learning rate step size in (0, 1].
+    #   - epsilon (float): Epsilon-greedy exploration probability in [0, 1].
+    #   - gamma (float): Discount factor in [0, 1].
+    # Post-conditions:
+    #   - self.q dictionary instantiated as empty {} to store state-action values.
+    # ==============================================================================
     def __init__(self, alpha=0.2, epsilon=0.3, gamma=0.95):
         self.q = {}
         self.alpha = alpha
         self.epsilon = epsilon
         self.gamma = gamma
 
+    # ==============================================================================
+    # Function: get_q
+    # Description:
+    #   Retrieves the expected return Q(s, a) for given state tuple and action index.
+    #   Returns 0.0 default for unvisited state-action pairs without modifying table.
+    # Pre-conditions:
+    #   - state (tuple): Hashable 9-element tuple.
+    #   - action (int): Action index in [0, 8].
+    # Post-conditions:
+    #   - Returns float Q-value Q(s, a).
+    # ==============================================================================
     def get_q(self, state, action):
         return self.q.get((state, action), 0.0)
 
+    # ==============================================================================
+    # Function: choose_action
+    # Description:
+    #   Selects an action using epsilon-greedy exploration or pure greedy exploitation.
+    # Pre-conditions:
+    #   - state (tuple): Current board state tuple.
+    #   - available_actions (list): List of legal unoccupied cell indices.
+    #   - greedy (bool): If True, forces deterministic argmax action selection.
+    # Post-conditions:
+    #   - Returns an integer action from available_actions, breaking ties randomly.
+    # ==============================================================================
     def choose_action(self, state, available_actions, greedy=False):
         if not available_actions:
             return None
@@ -457,6 +655,21 @@ class QLearningTTTAgent:
         best_actions = [a for a, q in zip(available_actions, q_vals) if q == max_q]
         return random.choice(best_actions)
 
+    # ==============================================================================
+    # Function: update
+    # Description:
+    #   Performs one-step Q-learning Bellman optimality backup:
+    #   Q(s, a) <- Q(s, a) + alpha * [Reward + gamma * max_a' Q(s', a') - Q(s, a)]
+    # Pre-conditions:
+    #   - state (tuple): Pre-transition board configuration.
+    #   - action (int): Executed action index.
+    #   - reward (float): Immediate scalar reward feedback.
+    #   - next_state (tuple): Successor board configuration.
+    #   - next_actions (list): Legal moves available in next_state.
+    #   - done (bool): Flag indicating if transition terminates the episode.
+    # Post-conditions:
+    #   - Entry self.q[(state, action)] is updated with new estimate.
+    # ==============================================================================
     def update(self, state, action, reward, next_state, next_actions, done):
         curr_q = self.get_q(state, action)
         if done:
@@ -466,6 +679,18 @@ class QLearningTTTAgent:
             target = reward + self.gamma * max_next_q
         self.q[(state, action)] = curr_q + self.alpha * (target - curr_q)
 
+# ==============================================================================
+# Function: train_ttt_agent
+# Description:
+#   Coordinates the complete reinforcement learning training loop over a specified
+#   number of episodes, alternating agent moves and random opponent responses.
+# Pre-conditions:
+#   - episodes (int): Positive integer count of training games to execute.
+#   - alpha (float), epsilon (float), gamma (float): Valid RL hyperparameters.
+#   - seed (int): Seed for deterministic pseudorandom training traces.
+# Post-conditions:
+#   - Returns trained QLearningTTTAgent instance containing populated Q-table.
+# ==============================================================================
 def train_ttt_agent(episodes, alpha=0.2, epsilon=0.3, gamma=0.95, seed=42):
     random.seed(seed)
     np.random.seed(seed)
@@ -503,6 +728,18 @@ def train_ttt_agent(episodes, alpha=0.2, epsilon=0.3, gamma=0.95, seed=42):
                 
     return agent
 
+# ==============================================================================
+# Function: evaluate_ttt_agent
+# Description:
+#   Evaluates a trained agent under a strictly greedy policy against a random opponent
+#   across a tournament of games, tallying wins, losses, and draws.
+# Pre-conditions:
+#   - agent: An instance of QLearningTTTAgent.
+#   - num_games (int): Number of benchmark tournament games to simulate (> 0).
+#   - seed (int): Seed for tournament opponent repeatability.
+# Post-conditions:
+#   - Returns a dictionary: {"wins": int, "losses": int, "draws": int, "total": int}.
+# ==============================================================================
 def evaluate_ttt_agent(agent, num_games=500, seed=123):
     random.seed(seed)
     env = TicTacToe2D()
@@ -685,6 +922,16 @@ plt.show()
 
     q3_lab2_code = """print("=== QUESTION 3 (LAB 2) OUTPUT ===")
 
+# ==============================================================================
+# Function: render_2d_board
+# Description:
+#   Formats a 9-element 1D Tic-Tac-Toe board into a 3x3 ASCII visual layout,
+#   mapping integers 0 -> '.', 1 -> 'X', -1 -> 'O' with grid lines.
+# Pre-conditions:
+#   - board: A 9-element array-like collection of values in {-1, 0, 1}.
+# Post-conditions:
+#   - Outputs formatted ASCII board string to stdout; does not mutate board array.
+# ==============================================================================
 def render_2d_board(board):
     sym = {0: ".", 1: "X", -1: "O"}
     for r in range(3):
@@ -881,6 +1128,11 @@ Conclusion & Observations:
 
 
 def build_notebook_3():
+    """
+    Description: Constructs all markdown and code cells for Lab Assignment 3.
+    Pre-conditions: OUT_DIR directory exists and is writable.
+    Post-conditions: Writes Lab_Assignment_3.ipynb to disk and returns file path.
+    """
     nb = nbf.v4.new_notebook()
     nb.metadata = {
         "language_info": {"name": "python", "version": "3.11"},
@@ -888,7 +1140,7 @@ def build_notebook_3():
     }
     cells = []
 
-    # Title
+    # Title & Metadata
     add_md(cells, """# Reinforcement Learning Laboratory
 ## Lab Assignment 3: 3x3 GridWorld – Policy Evaluation and Value Iteration
 **Course Outcomes:** CO2, CO3, CO4 (Formulate MDP environments, compute Bellman Expectation equations, implement Value Iteration, extract optimal policies, and perform trajectory analysis)  
@@ -920,7 +1172,7 @@ Row 2: [  .  ] [  .  ] [  G  ]
 ---
 """)
 
-    # GridWorld implementation
+    # GridWorld Implementation with Detailed Function Contracts
     add_md(cells, """### 3x3 GridWorld MDP Formalization
 We implement the exact $3 \\times 3$ GridWorld MDP in Python, encapsulating state transitions, boundary/obstacle collision physics, and reward dynamics.
 """)
@@ -931,6 +1183,19 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 class GridWorld3x3:
+    # ==============================================================================
+    # Function: __init__
+    # Description:
+    #   Configures the 3x3 GridWorld MDP environment with exact specified parameters:
+    #   Start at S(0, 0), Obstacle at X(1, 1), Goal at G(2, 2). Sets reward structure
+    #   (step = -1.0, goal = +10.0), discount gamma = 0.9, and the 4 cardinal action deltas.
+    # Pre-conditions:
+    #   - gamma (float): Discount factor in [0, 1].
+    #   - step_reward (float): Penalty incurred per transition (default -1.0).
+    #   - goal_reward (float): Terminal reward on reaching goal (default +10.0).
+    # Post-conditions:
+    #   - GridWorld3x3 object initialized with coordinate tuples and action mappings.
+    # ==============================================================================
     def __init__(self, gamma=0.9, step_reward=-1.0, goal_reward=10.0):
         self.rows = 3
         self.cols = 3
@@ -952,12 +1217,34 @@ class GridWorld3x3:
             3: (0, 1)
         }
         
+    # ==============================================================================
+    # Function: get_states
+    # Description:
+    #   Generates the complete set of valid, traversable non-obstacle states in the 3x3 grid.
+    # Pre-conditions:
+    #   - None.
+    # Post-conditions:
+    #   - Returns a list of 8 coordinate tuples (r, c) excluding the blocked cell (1, 1).
+    # ==============================================================================
     def get_states(self):
         return [
             (r, c) for r in range(self.rows) for c in range(self.cols)
             if (r, c) != self.obstacle
         ]
 
+    # ==============================================================================
+    # Function: transition
+    # Description:
+    #   Computes deterministic state transition T(s, a) -> (s', reward, is_terminal).
+    #   Enforces collision dynamics: attempts to move off the grid or into obstacle (1, 1)
+    #   leave the agent at s with step_reward. Entering goal (2, 2) yields goal_reward
+    #   and terminates the episode.
+    # Pre-conditions:
+    #   - state (tuple): Current coordinate pair (r, c) in grid and not obstacle.
+    #   - action (int): Integer action in {0, 1, 2, 3}.
+    # Post-conditions:
+    #   - Returns 3-tuple: (next_state, reward, is_terminal).
+    # ==============================================================================
     def transition(self, state, action):
         if state == self.goal:
             return self.goal, 0.0, True
@@ -1064,6 +1351,21 @@ Convergence is achieved when $\\max_{s} |V_{k+1}(s) - V_k(s)| < 10^{-6}$.
 
     q2_lab3_code = """print("=== QUESTION 2 OUTPUT ===")
 
+# ==============================================================================
+# Function: evaluate_policy_to_convergence
+# Description:
+#   Implements Iterative Policy Evaluation using Bellman Expectation backups under
+#   the uniform random policy pi(a|s) = 0.25 until maximum absolute delta falls
+#   below the specified convergence threshold tolerance.
+# Pre-conditions:
+#   - grid: Initialized GridWorld3x3 instance.
+#   - tol (float): Convergence threshold (default 1e-6).
+#   - max_iter (int): Upper bound on allowed evaluation iterations.
+# Post-conditions:
+#   - Returns 2-tuple: (V_pi, history).
+#   - V_pi is a 3x3 numpy array of converged state values V^pi(s).
+#   - history is a list of maximum deltas per iteration.
+# ==============================================================================
 def evaluate_policy_to_convergence(grid, tol=1e-6, max_iter=1000):
     V = np.zeros((3, 3))
     history = []
@@ -1144,6 +1446,19 @@ $$\\pi^*(s) = \\arg\\max_{a \\in \\mathcal{A}} Q^*(s, a) = \\arg\\max_{a \\in \\
 
     q3_lab3_code = """print("=== QUESTION 3 OUTPUT ===")
 
+# ==============================================================================
+# Function: value_iteration
+# Description:
+#   Implements Value Iteration using the Bellman Optimality Equation:
+#   V(s) <- max_a [ R(s, a) + gamma * V(s') ]
+#   Repeatedly updates state values synchronously until convergence delta < tol.
+# Pre-conditions:
+#   - grid: Initialized GridWorld3x3 instance.
+#   - tol (float): Maximum absolute difference tolerance for stopping.
+#   - max_iter (int): Maximum iterations allowed.
+# Post-conditions:
+#   - Returns 3x3 numpy array V_opt containing optimal state values V*(s).
+# ==============================================================================
 def value_iteration(grid, tol=1e-6, max_iter=1000):
     V_opt = np.zeros((3, 3))
     
@@ -1236,6 +1551,21 @@ display(pd.DataFrame(policy_grid, index=[f"Row {r}" for r in range(3)], columns=
 
     q4_lab3_code = """print("=== QUESTION 4 OUTPUT ===")
 
+# ==============================================================================
+# Function: find_shortest_path
+# Description:
+#   Traces the deterministic greedy trajectory from Start state (0, 0) to Goal state (2, 2)
+#   by querying the optimal Q-values derived from V*. Records visited states, actions taken,
+#   and transition rewards until goal is achieved.
+# Pre-conditions:
+#   - grid: Initialized GridWorld3x3 instance.
+#   - optimal_policy (dict): Mapping from (r, c) states to optimal directional actions.
+# Post-conditions:
+#   - Returns 3-tuple: (path, actions_taken, rewards).
+#   - path is list of coordinate pairs starting with (0, 0) and terminating at (2, 2).
+#   - actions_taken is list of action strings.
+#   - rewards is list of floats representing rewards encountered per step.
+# ==============================================================================
 def find_shortest_path(grid, optimal_policy):
     curr = grid.start
     path = [curr]
@@ -1319,6 +1649,20 @@ We compare:
 
     q5_lab3_code = """print("=== QUESTION 5 OUTPUT ===")
 
+# ==============================================================================
+# Function: evaluate_trajectory
+# Description:
+#   Analyzes an arbitrary trajectory of state coordinates through the GridWorld MDP.
+#   Identifies matching valid transitions, step costs, undiscounted cumulative reward,
+#   and discounted return G = sum_{t=0}^{T-1} gamma^t * R_{t+1}.
+# Pre-conditions:
+#   - path_states (list): Ordered list of (r, c) coordinate tuples representing trajectory.
+#   - grid: Initialized GridWorld3x3 instance.
+# Post-conditions:
+#   - Returns dictionary with keys:
+#     'Path Coordinates', 'Path Length (Steps)', 'Total Undiscounted Reward',
+#     'Discounted Return (G)', 'Goal Reached'.
+# ==============================================================================
 def evaluate_trajectory(path_states, grid):
     rewards = []
     actions = []
@@ -1403,6 +1747,15 @@ Key Takeaways & Analysis:
 
 
 def execute_notebook(path):
+    """
+    Description:
+      Executes all code cells in the given notebook file in place, populating them
+      with graphical outputs, pandas dataframes, and stdout text.
+    Pre-conditions:
+      - path (str): Valid filesystem path to a .ipynb notebook.
+    Post-conditions:
+      - Re-writes notebook file containing executed output streams and MIME bundles.
+    """
     print(f"Executing notebook: {path} ...")
     with open(path, "r", encoding="utf-8") as f:
         nb = nbf.read(f, as_version=4)
@@ -1414,6 +1767,16 @@ def execute_notebook(path):
 
 
 def create_master_combined_notebook(nb1_path, nb3_path):
+    """
+    Description:
+      Merges all cells from Lab_Assignment_1_and_2.ipynb and Lab_Assignment_3.ipynb
+      into a single consolidated master notebook with unified navigation and execution.
+    Pre-conditions:
+      - nb1_path (str): File path to executed Lab 1 & 2 notebook.
+      - nb3_path (str): File path to executed Lab 3 notebook.
+    Post-conditions:
+      - Generates Lab_Assignments_1_2_3_Master.ipynb containing all 40 cells and outputs.
+    """
     print("Creating consolidated master notebook...")
     with open(nb1_path, "r", encoding="utf-8") as f:
         nb1 = nbf.read(f, as_version=4)
@@ -1464,4 +1827,4 @@ if __name__ == "__main__":
 
     p_master = create_master_combined_notebook(p1, p3)
     execute_notebook(p_master)
-    print("\nALL NOTEBOOKS CREATED AND EXECUTED WITH FULL OUTPUTS SUCCESSFULLY!")
+    print("\nALL NOTEBOOKS WITH FUNCTION DESCRIPTIONS, PRE-CONDITIONS & POST-CONDITIONS EXECUTED SUCCESSFULLY!")
